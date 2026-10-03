@@ -18,6 +18,7 @@ package com.github.laxika.magicalvibes.model.action;
  * {@code GameData} god-class.
  */
 public sealed interface DelayedAction permits
+        DelayedZoneChangeTrigger,
         DelayedCleanupTrigger,
         DelayedAdditionalCombatBeginningEffect,
         TargetCreatureMustAttackNextCombat,

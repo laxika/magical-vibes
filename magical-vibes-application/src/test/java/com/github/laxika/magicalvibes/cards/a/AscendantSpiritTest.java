@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AscendantSpirit.class, MaskwoodNexus.class})
 class AscendantSpiritTest extends BaseCardTest {
 
     private Permanent addSpirit() {
@@ -124,9 +127,80 @@ class AscendantSpiritTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         spirit.setAttacking(true);
         resolveCombat();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Returning to the Warrior form prevents further final upgrades")
+    void firstAbilityRemovesAngelType() {
+        Permanent spirit = addSpirit();
+        addSnowMana(11);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        resetPriority();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        resetPriority();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(3);
+        assertThat(spirit.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(gqs.hasEffectiveSubtype(gd, spirit, CardSubtype.WARRIOR)).isTrue();
+        resetPriority();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasEffectiveSubtype(gd, spirit, CardSubtype.ANGEL)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Maskwood Nexus supplies the Warrior prerequisite for the second ability")
+    void secondAbilityRecognizesContinuousCreatureTypes() {
+        Permanent spirit = addSpirit();
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        assertThat(gqs.hasEffectiveSubtype(gd, spirit, CardSubtype.WARRIOR)).isTrue();
+        addSnowMana(3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(spirit.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Maskwood Nexus supplies the Angel prerequisite for the final ability")
+    void finalAbilityRecognizesContinuousCreatureTypes() {
+        Permanent spirit = addSpirit();
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        assertThat(gqs.hasEffectiveSubtype(gd, spirit, CardSubtype.ANGEL)).isTrue();
+        addSnowMana(4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A Warrior form gained in response satisfies the second ability at resolution")
+    void prerequisiteGainedInResponse() {
+        Permanent spirit = addSpirit();
+        addSnowMana(5);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(spirit.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(4);
     }
 }

@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
 import com.github.laxika.magicalvibes.cards.g.Ghostfire;
 import com.github.laxika.magicalvibes.cards.s.SproutSwarm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -28,7 +26,7 @@ class BitterOrdealTest extends BaseCardTest {
 
         castAndResolveBitterOrdeal(player2.getId());
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiledCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
@@ -78,11 +76,11 @@ class BitterOrdealTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         // Each copy shuffles the library, so find the intended second card in its new order.
         int secondCardIndex = gd.playerDecks.get(player2.getId()).indexOf(secondCard);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(secondCardIndex));
+        harness.handleCardChosen(player1, secondCardIndex);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(firstCard, secondCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(thirdCard);
@@ -104,9 +102,9 @@ class BitterOrdealTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(player1FirstCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(player1SecondCard);
@@ -123,6 +121,54 @@ class BitterOrdealTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void countsPermanentPutIntoGraveyardInResponseToGravestorm() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
+
+        castBitterOrdeal();
+        destroyWithGhostfire(creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+    }
+
+    @Test
+    void includesAdditionalDeathWhileGravestormIsOnStack() {
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
+        destroyWithGhostfire(firstCreature.getId());
+
+        castBitterOrdeal();
+        destroyWithGhostfire(secondCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+    }
+
+    @Test
+    void resolvedInstantDoesNotIncreaseGravestormCount() {
+        destroyWithGhostfire(player2.getId());
+
+        castBitterOrdeal();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void maySearchAndExileFromControllersOwnLibrary() {
+        Card exiledCard = new BladeOfTheSixthPride();
+        Card remainingCard = new Ghostfire();
+        harness.setLibrary(player1, List.of(exiledCard, remainingCard));
+
+        castAndResolveBitterOrdeal(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiledCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
     }
 
     private void castBitterOrdeal() {
@@ -143,7 +189,6 @@ class BitterOrdealTest extends BaseCardTest {
     private void destroyWithGhostfire(UUID targetId) {
         harness.setHand(player1, List.of(new Ghostfire()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

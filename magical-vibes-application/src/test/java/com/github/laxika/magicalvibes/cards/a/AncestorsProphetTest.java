@@ -73,4 +73,62 @@ class AncestorsProphetTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerBattlefields.get(player2.getId())).allMatch(permanent -> !permanent.isTapped());
     }
+
+    @Test
+    @DisplayName("Summoning-sick Clerics pay the cost before life is gained")
+    void summoningSickClericsPayBeforeResolution() {
+        harness.setLife(player1, 10);
+        Permanent prophet = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
+        prophet.setSummoningSick(true);
+        for (int i = 0; i < 4; i++) {
+            Permanent cleric = harness.addToBattlefieldAndReturn(player1, new DiscipleOfGrace());
+            cleric.setSummoningSick(true);
+        }
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Prophet can activate by tapping five other Clerics")
+    void tappedProphetCanUseOtherClerics() {
+        harness.setLife(player1, 10);
+        Permanent prophet = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
+        prophet.tap();
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new DiscipleOfGrace());
+        }
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Removing the Prophet after activation does not stop the life gain")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player1, 10);
+        Permanent prophet = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new DiscipleOfGrace());
+        }
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(prophet);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+    }
 }

@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -118,11 +120,83 @@ class BusterSwordTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void equipTransfersBoostForTwoMana() {
+        Permanent first = addCreatureReady(player1);
+        Permanent second = addCreatureReady(player1);
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sword),
+                null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+    }
+
+    @Test
+    void decliningCastKeepsDrawnCard() {
+        Permanent creature = addAttacker(player1);
+        addSwordReady(player1).setAttachedTo(creature.getId());
+        CounselOfTheSoratami spell = new CounselOfTheSoratami();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(drawn));
+
+        resolveCombatAndTrigger(player1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell, drawn);
+    }
+
+    @Test
+    void castsCreatureAtExactDamageBoundaryWithoutMana() {
+        Permanent creature = addAttacker(player1);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addSwordReady(player1).setAttachedTo(creature.getId());
+        CrawWurm spell = new CrawWurm();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(drawn));
+
+        resolveCombatAndTrigger(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Craw Wurm").getCard().getId()).isEqualTo(spell.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void castsOnlyOneOfMultipleEligibleSpells() {
+        Permanent creature = addAttacker(player1);
+        addSwordReady(player1).setAttachedTo(creature.getId());
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(drawn));
+
+        resolveCombatAndTrigger(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(first.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second, drawn);
+    }
+
     private Permanent addSwordReady(Player player) {
-        Permanent permanent = new Permanent(new BusterSword());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new BusterSword());
     }
 
     private Permanent addCreatureReady(Player player) {
@@ -137,6 +211,6 @@ class BusterSwordTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger(Player activePlayer) {
         resolveCombat(activePlayer);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

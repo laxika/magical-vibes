@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.Dismember;
+import com.github.laxika.magicalvibes.cards.m.MaulSplicer;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BladeSplicer.class, MaulSplicer.class, Dismember.class, Xenograft.class})
 class BladeSplicerTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("ETB creates a 3/3 colorless Phyrexian Golem artifact creature token")
@@ -24,16 +27,14 @@ class BladeSplicerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).hasSize(2); // Blade Splicer + Golem token
 
-        Permanent golemToken = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Golem"))
-                .findFirst()
-                .orElseThrow();
+        Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
+        assertThat(golemToken.getCard().isToken()).isTrue();
+        assertThat(golemToken.getEffectiveColors()).isEmpty();
         assertThat(golemToken.getCard().getSubtypes()).contains(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
         assertThat(golemToken.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(golemToken.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
@@ -48,8 +49,7 @@ class BladeSplicerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
@@ -71,23 +71,15 @@ class BladeSplicerTest extends BaseCardTest {
     void grantsFirstStrikeToOtherGolems() {
         harness.addToBattlefield(player1, new BladeSplicer());
 
-        // Create a Golem token from another source (Golem Foundry's 3/3 Golem)
-        // Simulate by using addToBattlefield with a Golem-subtype creature token
-        // We use the Golem Foundry to get a different Golem on the battlefield
-        // Instead, let's just add a second Blade Splicer and check both tokens
-        harness.setHand(player1, List.of(new BladeSplicer()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.setHand(player1, List.of(new MaulSplicer()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
-        // Both Blade Splicers are on the field, plus a Golem token
-        List<Permanent> golems = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.GOLEM))
-                .toList();
+        List<Permanent> golems = findPermanents(player1, "Phyrexian Golem");
 
-        assertThat(golems).isNotEmpty();
+        assertThat(golems).hasSize(2);
         for (Permanent golem : golems) {
             assertThat(gqs.hasKeyword(gd, golem, Keyword.FIRST_STRIKE)).isTrue();
         }
@@ -98,22 +90,17 @@ class BladeSplicerTest extends BaseCardTest {
     void opponentGolemsDoNotGetFirstStrike() {
         harness.addToBattlefield(player1, new BladeSplicer());
 
-        // Put a Golem on the opponent's battlefield via a second Blade Splicer
-        harness.setHand(player2, List.of(new BladeSplicer()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.setHand(player2, List.of(new MaulSplicer()));
+        harness.addMana(player2, ManaColor.GREEN, 7);
         harness.forceActivePlayer(player2);
         harness.castCreature(player2, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
-        // Player 2's Golem token should have first strike from player 2's Blade Splicer,
-        // but let's verify player 1's Blade Splicer doesn't affect player 2's non-Golem creatures.
-        // Actually, player 2 now has their own Blade Splicer granting first strike.
-        // To properly test, remove player 2's Blade Splicer and check the token.
-        Permanent p2BladeSplicer = findPermanent(player2, "Blade Splicer");
-
-        // Player 2's Blade Splicer should not get first strike from Player 1's Blade Splicer
-        assertThat(gqs.hasKeyword(gd, p2BladeSplicer, Keyword.FIRST_STRIKE)).isFalse();
+        List<Permanent> golems = findPermanents(player2, "Phyrexian Golem");
+        assertThat(golems).hasSize(2);
+        for (Permanent golem : golems) {
+            assertThat(gqs.hasKeyword(gd, golem, Keyword.FIRST_STRIKE)).isFalse();
+        }
     }
 
     @Test
@@ -123,8 +110,7 @@ class BladeSplicerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         Permanent golemToken = findPermanent(player1, "Phyrexian Golem");
 
@@ -137,5 +123,40 @@ class BladeSplicerTest extends BaseCardTest {
 
         // Golem should no longer have first strike
         assertThat(gqs.hasKeyword(gd, golemToken, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enter trigger creates its token even if Blade Splicer dies in response")
+    void enterTriggerSurvivesSourceRemoval() {
+        harness.setHand(player1, List.of(new BladeSplicer()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent splicer = findPermanent(player1, "Blade Splicer");
+        harness.setHand(player1, List.of(new Dismember()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, splicer.getId());
+        harness.assertInGraveyard(player1, "Blade Splicer");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Phyrexian Golem")).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Phyrexian Golem"), Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blade Splicer grants itself first strike when Xenograft makes it a Golem")
+    void grantsFirstStrikeToItselfWhenItBecomesGolem() {
+        harness.addToBattlefield(player1, new BladeSplicer());
+        harness.setHand(player1, List.of(new Xenograft()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOLEM");
+        resolveAllTriggers();
+
+        Permanent splicer = findPermanent(player1, "Blade Splicer");
+        assertThat(gqs.hasEffectiveSubtype(gd, splicer, CardSubtype.GOLEM)).isTrue();
+        assertThat(gqs.hasKeyword(gd, splicer, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

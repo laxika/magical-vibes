@@ -164,4 +164,83 @@ class ChaosMoonTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
+
+    @Test
+    @DisplayName("Red creatures entering after resolution do not receive the boost")
+    void laterRedCreaturesAreNotBoosted() {
+        harness.addToBattlefield(player1, new ChaosMoon());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addToBattlefield(player1, new BalduvianBarbarians());
+
+        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(3);
+        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mountains entering after resolution receive the mana bonus despite changed parity")
+    void laterMountainsReceiveExtraMana() {
+        harness.addToBattlefield(player1, new ChaosMoon());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addToBattlefield(player2, new SnowCoveredMountain());
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolved creature and mana effects persist after Chaos Moon leaves")
+    void resolvedEffectsPersistWithoutSource() {
+        Permanent moon = harness.addToBattlefieldAndReturn(player1, new ChaosMoon());
+        harness.addToBattlefield(player1, new BalduvianBarbarians());
+        harness.addToBattlefield(player2, new SnowCoveredMountain());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, moon));
+        harness.tapPermanent(player2, 0);
+
+        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
+        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mountains entering after an even resolution produce colorless despite changed parity")
+    void laterMountainsProduceColorless() {
+        harness.addToBattlefield(player1, new ChaosMoon());
+        harness.addToBattlefield(player1, new BalduvianBears());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addToBattlefield(player2, new SnowCoveredMountain());
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("The creature boost and additional mana expire at end of turn")
+    void oddEffectsExpireAtEndOfTurn() {
+        harness.addToBattlefield(player1, new ChaosMoon());
+        harness.addToBattlefield(player1, new BalduvianBarbarians());
+        harness.addToBattlefield(player1, new SnowCoveredMountain());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 2);
+
+        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(3);
+        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
 }

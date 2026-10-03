@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
+import com.github.laxika.magicalvibes.cards.i.ImmovableRod;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PalaceGuard;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({BattleStrain.class, DwarvenGrunt.class, Ornithopter.class})
+@CardUsed({BattleStrain.class, DwarvenGrunt.class, Ornithopter.class, PalaceGuard.class, ImmovableRod.class})
 class BattleStrainTest extends BaseCardTest {
 
     @Test
@@ -51,7 +53,6 @@ class BattleStrainTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PalaceGuard.class)
     @DisplayName("Triggers only once when one creature blocks multiple attackers")
     void triggersOnceWhenOneCreatureBlocksMultipleAttackers() {
         Permanent attacker1 = addCreatureReady(player1, new DwarvenGrunt());
@@ -81,5 +82,26 @@ class BattleStrainTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger while Immovable Rod removes its abilities")
+    void doesNotTriggerWithoutAbilities() {
+        Permanent strain = harness.addToBattlefieldAndReturn(player1, new BattleStrain());
+        harness.addToBattlefield(player1, new ImmovableRod());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, null, strain.getId());
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player1, new DwarvenGrunt());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new DwarvenGrunt());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 }

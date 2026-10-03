@@ -191,5 +191,40 @@ class BloodfireColossusTest extends BaseCardTest {
         // Enchantment should still be on the battlefield
         harness.assertOnBattlefield(player2, "Glorious Anthem");
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        var colossus = harness.addToBattlefieldAndReturn(player1, new BloodfireColossus());
+        colossus.setSummoningSick(true);
+        colossus.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Bloodfire Colossus");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Damages creatures that enter after activation but before resolution")
+    void damagesCreaturesEnteringBeforeResolution() {
+        harness.addToBattlefield(player1, new BloodfireColossus());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+    }
 }
 

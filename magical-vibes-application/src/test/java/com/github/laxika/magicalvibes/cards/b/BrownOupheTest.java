@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BrownOuphe.class, BarbedSextant.class, IcyManipulator.class,
-        Incinerate.class, OrcishCannoneers.class, TalismanOfUnity.class})
+        Incinerate.class, OrcishCannoneers.class, TalismanOfUnity.class, LiquimetalCoating.class})
 class BrownOupheTest extends BaseCardTest {
 
     /** The Ouphe's ability needs {T}, so it must have been under its controller's control since their turn began. */
@@ -131,8 +131,7 @@ class BrownOupheTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, cannoneers.getCard().getId());
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, cannoneers.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, cannoneers.getId());
 
         harness.assertNotOnBattlefield(player2, "Orcish Cannoneers");
         harness.passBothPriorities();
@@ -165,7 +164,6 @@ class BrownOupheTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(LiquimetalCoating.class)
     @DisplayName("Counters an ability after its non-artifact source becomes an artifact")
     void countersAbilityAfterSourceBecomesArtifact() {
         addReadyOuphe(player1);
@@ -188,5 +186,72 @@ class BrownOupheTest extends BaseCardTest {
         harness.assertLife(player1, player1LifeBefore);
         harness.assertLife(player2, player2LifeBefore);
         assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's artifact ability without refunding activation costs")
+    void countersOwnArtifactAbility() {
+        addReadyOuphe(player1);
+        Permanent ouphe = findPermanent(player1, "Brown Ouphe");
+        Permanent target = addCreatureReady(player2, new OrcishCannoneers());
+        Permanent icy = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 0, null, icy.getCard().getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(ouphe.isTapped()).isTrue();
+        assertThat(icy.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Icy Manipulator");
+        harness.assertNotInGraveyard(player1, "Icy Manipulator");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent ouphe = harness.addToBattlefieldAndReturn(player1, new BrownOuphe());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Permanent target = addCreatureReady(player1, new OrcishCannoneers());
+        IcyManipulator icy = new IcyManipulator();
+        harness.addToBattlefield(player2, icy);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, icy.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ouphe.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without the required green mana")
+    void cannotActivateWithoutGreenMana() {
+        Permanent ouphe = addCreatureReady(player1, new BrownOuphe());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = addCreatureReady(player1, new OrcishCannoneers());
+        IcyManipulator icy = new IcyManipulator();
+        harness.addToBattlefield(player2, icy);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, icy.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ouphe.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
     }
 }

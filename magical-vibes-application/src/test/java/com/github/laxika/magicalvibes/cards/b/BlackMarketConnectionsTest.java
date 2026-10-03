@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BlackMarketConnections.class)
+@CardUsed({BlackMarketConnections.class})
 class BlackMarketConnectionsTest extends BaseCardTest {
 
     private static final String SELL_CONTRABAND =
@@ -89,6 +89,60 @@ class BlackMarketConnectionsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Shapeshifter"))
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Modes are chosen before players can respond to the main-phase trigger")
+    void choosesModesWhenTriggerIsPutOnStack() {
+        harness.addToBattlefield(player1, new BlackMarketConnections());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, SELL_CONTRABAND);
+        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Treasure");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Choosing two modes omits the unselected mode")
+    void choosesTwoModes() {
+        harness.addToBattlefield(player1, new BlackMarketConnections());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveModes(player1, HIRE_A_MERCENARY, SELL_CONTRABAND);
+
+        harness.assertOnBattlefield(player1, "Treasure");
+        harness.assertOnBattlefield(player1, "Shapeshifter");
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during the opponent's first main phase")
+    void doesNotTriggerForOpponent() {
+        harness.addToBattlefield(player1, new BlackMarketConnections());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        harness.assertNotOnBattlefield(player1, "Shapeshifter");
     }
 
     private void resolveModes(Player player, String... modes) {

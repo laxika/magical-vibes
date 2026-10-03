@@ -18,11 +18,7 @@ class BriarbridgeTrackerTest extends BaseCardTest {
     @Test
     @DisplayName("Investigates on entering and gets +2/+0 while controlling the Clue")
     void investigatesAndGetsBoosted() {
-        harness.setHand(player1, List.of(new BriarbridgeTracker()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BriarbridgeTracker(), "{2}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -44,12 +40,9 @@ class BriarbridgeTrackerTest extends BaseCardTest {
     @Test
     @DisplayName("Loses the boost when its Clue is sacrificed")
     void losesBoostWhenClueLeaves() {
-        harness.setHand(player1, List.of(new BriarbridgeTracker()));
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new BriarbridgeTracker(), "{2}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -62,6 +55,43 @@ class BriarbridgeTrackerTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Clue")).isEmpty();
         assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A token copy counts itself for the power bonus")
+    void tokenCopyCountsItself() {
+        BriarbridgeTracker tokenCopy = new BriarbridgeTracker();
+        tokenCopy.setToken(true);
+        Permanent tracker = harness.addToBattlefieldAndReturn(player1, tokenCopy);
+
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's token does not grant the power bonus")
+    void opponentsTokenDoesNotGrantBonus() {
+        Permanent tracker = harness.addToBattlefieldAndReturn(player1, new BriarbridgeTracker());
+        BriarbridgeTracker tokenCopy = new BriarbridgeTracker();
+        tokenCopy.setToken(true);
+        harness.addToBattlefield(player2, tokenCopy);
+
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creature tokens grant the bonus only once regardless of their number")
+    void multipleCreatureTokensGrantOnlyOneBonus() {
+        Permanent tracker = harness.addToBattlefieldAndReturn(player1, new BriarbridgeTracker());
+        for (int i = 0; i < 2; i++) {
+            BriarbridgeTracker tokenCopy = new BriarbridgeTracker();
+            tokenCopy.setToken(true);
+            harness.addToBattlefield(player1, tokenCopy);
+        }
+
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
     }
 }

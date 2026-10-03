@@ -61,8 +61,7 @@ class AuriokSiegeSledTest extends BaseCardTest {
     void rejectsTargetsThatAreNotArtifactCreatures() {
         addCreatureReady(player1, new AuriokSiegeSled());
         Permanent nonArtifactCreature = addCreatureReady(player2, new AuriokGlaivemaster());
-        Permanent nonCreatureArtifact = new Permanent(new DarksteelBrute());
-        gd.playerBattlefields.get(player2.getId()).add(nonCreatureArtifact);
+        Permanent nonCreatureArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelBrute());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, nonArtifactCreature.getId()))
@@ -114,5 +113,63 @@ class AuriokSiegeSledTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A blocking prohibition overrides the same source's blocking requirement")
+    void cantBlockOverridesMustBlock() {
+        Permanent sled = addCreatureReady(player1, new AuriokSiegeSled());
+        Permanent blocker = addCreatureReady(player2, new DrossGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, blocker.getId());
+        harness.passBothPriorities();
+
+        sled.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature required to block two Siege Sleds can choose either")
+    void canChooseBetweenTwoRequiredAttackers() {
+        Permanent firstSled = addCreatureReady(player1, new AuriokSiegeSled());
+        Permanent secondSled = addCreatureReady(player1, new AuriokSiegeSled());
+        Permanent blocker = addCreatureReady(player2, new DrossGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        firstSled.setAttacking(true);
+        secondSled.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A blocking requirement does not force a block when its source is not attacking")
+    void nonAttackingSourceDoesNotRequireBlocking() {
+        addCreatureReady(player1, new AuriokSiegeSled());
+        Permanent attackingSled = addCreatureReady(player1, new AuriokSiegeSled());
+        Permanent blocker = addCreatureReady(player2, new DrossGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        attackingSled.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
     }
 }

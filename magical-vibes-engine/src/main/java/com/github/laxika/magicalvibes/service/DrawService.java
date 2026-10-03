@@ -1954,6 +1954,8 @@ public class DrawService {
     }
 
     private void completeDrawCard(GameData gameData, UUID playerId, Card drawn) {
+        boolean basicLandInLibrary = drawn.hasType(CardType.LAND)
+                && gameQueryService.cardHasSupertype(drawn, CardSupertype.BASIC, gameData, playerId);
         gameData.addCardToHand(playerId, drawn);
         triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
                 gameData, playerId, drawn);
@@ -1971,7 +1973,7 @@ public class DrawService {
         checkPlanarDrawTriggers(gameData, playerId, drawn);
         checkEnchantedPlayerDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
-        checkRevealFirstDrawTriggers(gameData, playerId, drawn);
+        checkRevealFirstDrawTriggers(gameData, playerId, drawn, basicLandInLibrary);
         breathstealersCryptDrawReplacementHandler.afterDraw(gameData, playerId, drawn);
         checkMiracleReveal(gameData, playerId, drawn);
     }
@@ -2008,7 +2010,8 @@ public class DrawService {
      * revealed — {@code cardsDrawnThisTurn} has already been incremented for this draw, so first draw
      * means a count of exactly 1. The extra draw is therefore never revealed itself.
      */
-    private void checkRevealFirstDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
+    private void checkRevealFirstDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn,
+                                              boolean basicLandInLibrary) {
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
             return;
         }
@@ -2030,9 +2033,7 @@ public class DrawService {
                     .text(".")
                     .build());
 
-            boolean basicLand = drawn.hasType(CardType.LAND)
-                    && drawn.getSupertypes().contains(CardSupertype.BASIC);
-            if (basicLand) {
+            if (basicLandInLibrary) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),

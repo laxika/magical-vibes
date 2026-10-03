@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
 import com.github.laxika.magicalvibes.cards.h.HangedExecutioner;
+import com.github.laxika.magicalvibes.cards.r.RapaciousDragon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AdrixAndNevTwincasters.class, HangedExecutioner.class, Shock.class, BladeSplicer.class})
+@CardUsed({AdrixAndNevTwincasters.class, HangedExecutioner.class, Shock.class, BladeSplicer.class,
+        RapaciousDragon.class, TurnToFrog.class})
 class AdrixAndNevTwincastersTest extends BaseCardTest {
 
     @Test
@@ -56,8 +59,7 @@ class AdrixAndNevTwincastersTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, adrixAndNev.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, adrixAndNev.getId());
 
         harness.assertInGraveyard(player2, "Shock");
         harness.assertOnBattlefield(player1, "Adrix and Nev, Twincasters");
@@ -73,13 +75,103 @@ class AdrixAndNevTwincastersTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 3);
 
-        harness.castInstant(player2, 0, adrixAndNev.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, adrixAndNev.getId());
 
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
         assertThat(adrixAndNev.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("Doubles noncreature tokens and a batch of multiple tokens")
+    void doublesTreasures() {
+        harness.addToBattlefield(player1, new AdrixAndNevTwincasters());
+        harness.setHand(player1, List.of(new RapaciousDragon()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Does not double tokens after losing all abilities")
+    void abilityLossDisablesTokenDoubling() {
+        Permanent adrixAndNev = harness.addToBattlefieldAndReturn(player1, new AdrixAndNevTwincasters());
+        harness.setHand(player1, List.of(new TurnToFrog(), new HangedExecutioner()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0, adrixAndNev.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Ward does not counter its controller's spell")
+    void ownSpellDoesNotTriggerWard() {
+        Permanent adrixAndNev = harness.addToBattlefieldAndReturn(player1, new AdrixAndNevTwincasters());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, adrixAndNev.getId());
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Adrix and Nev, Twincasters");
+    }
+
+    @Test
+    @DisplayName("Ward counters an unpaid activated ability even when its source was exiled as a cost")
+    void wardCountersUnpaidActivatedAbility() {
+        Permanent adrixAndNev = harness.addToBattlefieldAndReturn(player1, new AdrixAndNevTwincasters());
+        harness.addToBattlefield(player2, new HangedExecutioner());
+        harness.addMana(player2, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player2, 0, null, adrixAndNev.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Adrix and Nev, Twincasters");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getName()).contains("Hanged Executioner");
+    }
+
+    @Test
+    @DisplayName("Ward allows an activated ability to resolve when its controller pays")
+    void wardPaymentAllowsActivatedAbility() {
+        Permanent adrixAndNev = harness.addToBattlefieldAndReturn(player1, new AdrixAndNevTwincasters());
+        harness.addToBattlefield(player2, new HangedExecutioner());
+        harness.addMana(player2, ManaColor.WHITE, 6);
+
+        harness.activateAbility(player2, 0, null, adrixAndNev.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).contains("Adrix and Nev, Twincasters");
+    }
+
+    @Test
+    @DisplayName("Losing all abilities also removes ward")
+    void abilityLossDisablesWard() {
+        Permanent adrixAndNev = harness.addToBattlefieldAndReturn(player1, new AdrixAndNevTwincasters());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, adrixAndNev.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, adrixAndNev.getId());
+
+        harness.assertInGraveyard(player1, "Adrix and Nev, Twincasters");
         harness.assertInGraveyard(player2, "Shock");
     }
 }

@@ -28,8 +28,9 @@ class AphemiaTheCacophonyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
                 .validCardIds()).containsExactly(enchantment.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () ->
+                harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId())));
+        assertThat(gd.stack).isEmpty();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
@@ -68,12 +69,82 @@ class AphemiaTheCacophonyTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
     }
 
+    @Test
+    @DisplayName("Aphemia can exile itself after dying in response to its trigger")
+    void canExileItselfAfterDyingInResponse() {
+        AphemiaTheCacophony aphemia = new AphemiaTheCacophony();
+        var permanent = harness.addToBattlefieldAndReturn(player1, aphemia);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        permanent.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aphemia);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(aphemia.getId());
+        harness.withAutoStop(TurnStep.END_STEP, () ->
+                harness.handleMultipleCardsChosen(player1, List.of(aphemia.getId())));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(aphemia);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Zombie"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Only one of multiple enchantments is exiled for one Zombie")
+    void choosesOneOfMultipleEnchantments() {
+        Card first = new OmenOfTheSea();
+        Card second = new OmenOfTheSea();
+        harness.setGraveyard(player1, List.of(first, second));
+        triggerAphemia();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.withAutoStop(TurnStep.END_STEP, () ->
+                harness.handleMultipleCardsChosen(player1, List.of(second.getId())));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Zombie"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchantment cannot be exiled")
+    void cannotExileOpponentsEnchantment() {
+        Card enchantment = new OmenOfTheSea();
+        harness.setGraveyard(player2, List.of(enchantment));
+        triggerAphemia();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(enchantment);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Aphemia does not trigger during its opponent's end step")
+    void doesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new AphemiaTheCacophony());
+        Card enchantment = new OmenOfTheSea();
+        harness.setGraveyard(player1, List.of(enchantment));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
+    }
+
     private void triggerAphemia() {
         harness.addToBattlefield(player1, new AphemiaTheCacophony());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
     }
 }

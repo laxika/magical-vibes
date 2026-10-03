@@ -31,9 +31,8 @@ class ConsumedByGreedTest extends BaseCardTest {
         harness.castInstantWithGift(player1, 0, null, List.of(player2.getId()), false);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard().getId().equals(smallerCreature.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(greatestCreature.getId()));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
     }
 
@@ -55,9 +54,8 @@ class ConsumedByGreedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize + 1);
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(returnedCreature.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard().getId().equals(smallerCreature.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(greatestCreature.getId()));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
     }
 
     @Test
@@ -88,5 +86,80 @@ class ConsumedByGreedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ConsumedByGreed()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    void opponentChoosesOneOfTheCreaturesTiedForGreatestPower() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.addToBattlefield(player2, new HillGiant());
+        var chosenId = gd.playerBattlefields.get(player2.getId()).get(2).getId();
+        var otherId = gd.playerBattlefields.get(player2.getId()).get(1).getId();
+        prepareSpell();
+
+        harness.castInstantWithGift(player1, 0, null, List.of(player2.getId()), false);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosenId));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2)
+                .anyMatch(permanent -> permanent.getId().equals(otherId))
+                .noneMatch(permanent -> permanent.getId().equals(chosenId));
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void giftReturnsCreatureEvenWhenOpponentHasNoCreatures() {
+        Card returnedCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setLibrary(player2, List.of(new HolyDay()));
+        prepareSpell();
+
+        harness.castInstantWithGift(player1, 0, null,
+                List.of(player2.getId(), returnedCreature.getId()), true);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Holy Day");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void missingGraveyardTargetDoesNotPreventGiftOrSacrifice() {
+        Card returnedCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setLibrary(player2, List.of(new HolyDay()));
+        harness.addToBattlefield(player2, new HillGiant());
+        prepareSpell();
+
+        harness.castInstantWithGift(player1, 0, null,
+                List.of(player2.getId(), returnedCreature.getId()), true);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Holy Day");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void promisedGiftCannotTargetOpponentsGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castInstantWithGift(player1, 0, null,
+                List.of(player2.getId(), creature.getId()), true))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetTheCasterForSacrifice() {
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castInstantWithGift(player1, 0, null,
+                List.of(player1.getId()), false))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

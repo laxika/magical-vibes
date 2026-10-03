@@ -84,6 +84,27 @@ class BattlewiseAvenTest extends BaseCardTest {
                 .toList();
     }
 
+    @Test
+    @DisplayName("More than seven graveyard cards grants the same threshold bonus")
+    void thresholdBonusDoesNotScaleWithGraveyardSize() {
+        harness.setGraveyard(player1, graveyardWithCards(14));
+        harness.addToBattlefield(player1, new BattlewiseAven());
+
+        assertStats(3, 3);
+        assertThat(gqs.hasKeyword(gd, findAven(), Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cards in different players' graveyards are not combined for threshold")
+    void graveyardsAreNotCombinedForThreshold() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        harness.setGraveyard(player2, graveyardWithCards(1));
+        harness.addToBattlefield(player1, new BattlewiseAven());
+
+        assertStats(2, 2);
+        assertThat(gqs.hasKeyword(gd, findAven(), Keyword.FIRST_STRIKE)).isFalse();
+    }
+
     private Permanent findAven() {
         return findPermanent(player1, "Battlewise Aven");
     }

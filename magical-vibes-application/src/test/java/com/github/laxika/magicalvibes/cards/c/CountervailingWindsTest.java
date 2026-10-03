@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CountervailingWinds.class, GrizzlyBears.class, LlanowarElves.class})
 class CountervailingWindsTest extends BaseCardTest {
 
     @Test
@@ -29,8 +31,7 @@ class CountervailingWindsTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
@@ -52,8 +53,7 @@ class CountervailingWindsTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -77,8 +77,7 @@ class CountervailingWindsTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -96,10 +95,96 @@ class CountervailingWindsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Countervailing Winds");
+        harness.assertNotInHand(player1, "Countervailing Winds");
+        harness.assertNotInHand(player1, "Grizzly Bears");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Countervailing Winds");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An empty caster graveyard allows payment of zero despite the opponent's graveyard")
+    void canPayZeroWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new CountervailingWinds()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elves.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The controller may decline even a zero payment")
+    void canDeclineZeroPayment() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new CountervailingWinds()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elves.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Payment counts all card types in the graveyard at resolution")
+    void countsGraveyardAtResolution() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new CountervailingWinds()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elves.getId());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new CountervailingWinds()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The spell controller can activate mana abilities when offered payment")
+    void canGenerateManaDuringPayment() {
+        harness.addToBattlefieldAndReturn(player1, new LlanowarElves()).setSummoningSick(false);
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new CountervailingWinds()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elves.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(elves.getId()));
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
     }
 }

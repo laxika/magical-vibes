@@ -26,13 +26,38 @@ class AdventurersInnTest extends BaseCardTest {
 
     @Test
     void tapsForColorlessMana() {
-        Permanent inn = new Permanent(new AdventurersInn());
+        Permanent inn = harness.addToBattlefieldAndReturn(player1, new AdventurersInn());
         inn.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(inn);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(inn.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void canTapImmediatelyWhileLifeGainTriggerIsPending() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new AdventurersInn()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        Permanent inn = findPermanent(player1, "Adventurer's Inn");
+        assertThat(inn.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(inn.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 }

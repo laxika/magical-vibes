@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionEnvoy;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,19 +15,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenthicInfiltrator.class, GrizzlyBears.class})
+@CardUsed({BenthicInfiltrator.class, ExpeditionEnvoy.class})
 class BenthicInfiltratorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Benthic Infiltrator cannot be blocked")
     void cannotBeBlocked() {
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new ExpeditionEnvoy());
         addAttackingInfiltrator(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -40,7 +36,7 @@ class BenthicInfiltratorTest extends BaseCardTest {
     @DisplayName("Combat damage exiles the top card of the damaged player's library")
     void combatDamageExilesTopCard() {
         Permanent infiltrator = addAttackingInfiltrator(player1);
-        GrizzlyBears topCard = new GrizzlyBears();
+        ExpeditionEnvoy topCard = new ExpeditionEnvoy();
         harness.setLibrary(player2, List.of(topCard));
 
         resolveCombatAndTrigger();
@@ -60,6 +56,67 @@ class BenthicInfiltratorTest extends BaseCardTest {
         resolveCombatAndTrigger();
 
         assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ingest waits for resolution and survives its source leaving the battlefield")
+    void ingestResolvesAfterSourceLeaves() {
+        Permanent infiltrator = addAttackingInfiltrator(player1);
+        ExpeditionEnvoy topCard = new ExpeditionEnvoy();
+        ExpeditionEnvoy nextCard = new ExpeditionEnvoy();
+        ExpeditionEnvoy ownCard = new ExpeditionEnvoy();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, nextCard);
+
+        gd.playerBattlefields.get(player1.getId()).remove(infiltrator);
+        gd.playerGraveyards.get(player1.getId()).add(infiltrator.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.findExiledCard(nextCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+    }
+
+    @Test
+    @DisplayName("Ingest exiles from player one's library when player two attacks")
+    void ingestUsesDamagedPlayerForEitherController() {
+        addAttackingInfiltrator(player2);
+        ExpeditionEnvoy topCard = new ExpeditionEnvoy();
+        ExpeditionEnvoy ownCard = new ExpeditionEnvoy();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player2, List.of(ownCard));
+        harness.forceActivePlayer(player2);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(ownCard);
+    }
+
+    @Test
+    @DisplayName("Prevented combat damage does not trigger ingest")
+    void preventedDamageDoesNotTriggerIngest() {
+        addAttackingInfiltrator(player1);
+        ExpeditionEnvoy topCard = new ExpeditionEnvoy();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.forceActivePlayer(player1);
+        gd.preventAllCombatDamage = true;
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
     }
 
     private Permanent addAttackingInfiltrator(Player player) {

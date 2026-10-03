@@ -76,6 +76,70 @@ class BasaltMonolithTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Basalt Monolith can produce mana immediately after entering the battlefield")
+    void canProduceManaImmediately() {
+        Permanent monolith = harness.addToBattlefieldAndReturn(player1, new BasaltMonolith());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(monolith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The untap ability uses the stack and untaps only its source")
+    void untapAbilityUsesStackAndOnlyUntapsSource() {
+        Permanent monolith = addReadyMonolith(player1, true);
+        Permanent otherMonolith = addReadyMonolith(player1, true);
+        Permanent opponentMonolith = addReadyMonolith(player2, true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(monolith.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(monolith.isTapped()).isFalse();
+        assertThat(otherMonolith.isTapped()).isTrue();
+        assertThat(opponentMonolith.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic untap cost")
+    void coloredManaCanPayUntapCost() {
+        Permanent monolith = addReadyMonolith(player1, true);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(monolith.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("The untap ability can be activated while Basalt Monolith is untapped")
+    void canActivateUntapAbilityWhileUntapped() {
+        Permanent monolith = addReadyMonolith(player1, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(monolith.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(monolith.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
     private Permanent addReadyMonolith(Player player, boolean tapped) {
         Permanent monolith = harness.addToBattlefieldAndReturn(player, new BasaltMonolith());
         monolith.setSummoningSick(false);
@@ -91,6 +155,6 @@ class BasaltMonolithTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntil(player1, TurnStep.UNTAP);
     }
 }

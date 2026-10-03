@@ -53,7 +53,7 @@ class ChimericStaffTest extends BaseCardTest {
     // ===== Activate ability — basic animation =====
 
     @Test
-    @DisplayName("Activating ability puts AnimateSelf on the stack with self as target")
+    @DisplayName("Activating ability puts an animation on the stack referencing its source")
     void activatingAbilityPutsOnStack() {
         Permanent staffPerm = addStaffReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -151,9 +151,7 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).containsExactly(CardSubtype.CONSTRUCT);
 
         // Advance to cleanup step
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).isEmpty();
     }
@@ -252,9 +250,7 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
 
         // Advance to cleanup step
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, staffPerm)).isFalse();
         assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(0);
@@ -264,8 +260,8 @@ class ChimericStaffTest extends BaseCardTest {
     // ===== Ability fizzles if removed =====
 
     @Test
-    @DisplayName("Ability fizzles if Chimeric Staff is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability has no effect if Chimeric Staff is removed before resolution")
+    void abilityHasNoEffectIfSourceRemoved() {
         addStaffReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -361,7 +357,76 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("becomes a 3/3 creature"));
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Each pending activation retains its X and the last resolution sets the base size")
+    void pendingActivationsResolveWithTheirOwnXValues() {
+        Permanent staffPerm = addStaffReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(5);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Glorious Anthem keeps a Staff animated with X=0 alive")
+    void zeroAnimationSurvivesWithGloriousAnthem() {
+        Permanent staffPerm = addStaffReady(player1);
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chimeric Staff");
+        assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Animating one Staff does not animate another Staff")
+    void animationOnlyAffectsItsSource() {
+        Permanent staffPerm = addStaffReady(player1);
+        Permanent otherStaff = harness.addToBattlefieldAndReturn(player1, new ChimericStaff());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, otherStaff)).isFalse();
+    }
+
+    @Test
+    @DisplayName("March of the Machines supplies the Staff's base size after self-animation expires")
+    void marchAnimationRemainsAfterSelfAnimationExpires() {
+        Permanent staffPerm = addStaffReady(player1);
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(2);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.isCreature(gd, staffPerm)).isTrue();
+        assertThat(gqs.isArtifact(gd, staffPerm)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, staffPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, staffPerm)).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, staffPerm)).isEmpty();
+    }
 
     private Permanent addStaffReady(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new ChimericStaff());

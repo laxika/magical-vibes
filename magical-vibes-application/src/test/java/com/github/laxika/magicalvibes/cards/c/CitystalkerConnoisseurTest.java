@@ -27,8 +27,7 @@ class CitystalkerConnoisseurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.DiscardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
@@ -53,5 +52,68 @@ class CitystalkerConnoisseurTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("The opponent chooses exactly one card among tied greatest mana values")
+    void opponentChoosesAmongTiedCards() {
+        harness.setHand(player1, List.of(new CitystalkerConnoisseur()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new Shock()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIndices()).containsExactly(0, 1);
+        assertThat(countPermanents(player1, "Blood")).isZero();
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Shock");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Blood")).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A hand containing only lands still allows Blood creation")
+    void createsBloodWhenOpponentHasOnlyLands() {
+        harness.setHand(player1, List.of(new CitystalkerConnoisseur()));
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(countPermanents(player1, "Blood")).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty opposing hand still allows Blood creation")
+    void createsBloodWhenOpponentHasEmptyHand() {
+        harness.setHand(player1, List.of(new CitystalkerConnoisseur()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Blood")).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

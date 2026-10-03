@@ -83,4 +83,53 @@ class BreakExpectationsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(lowManaValue);
     }
+
+    @Test
+    void canTargetYourselfAndDraftIntoYourOwnHand() {
+        Card qualifyingCard = new ColossalPlow();
+        Card lowManaValue = new LeatherArmor();
+        harness.setHand(player1, List.of(new BreakExpectations(), qualifyingCard, lowManaValue));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealedMatchingHandCardChoice handChoice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedMatchingHandCardChoice.class);
+        assertThat(handChoice).isNotNull();
+        assertThat(handChoice.choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(handChoice.cards()).containsExactly(qualifyingCard);
+        harness.handleMultipleCardsChosen(player1, List.of(qualifyingCard.getId()));
+
+        PendingInteraction.SpellbookDraftChoice draft =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(draft).isNotNull();
+        assertThat(draft.playerId()).isEqualTo(player1.getId());
+        assertThat(draft.cards()).hasSize(3);
+        assertThat(draft.cards()).extracting(Card::getName).doesNotHaveDuplicates();
+        assertThat(draft.revealChosenCard()).isTrue();
+        Card drafted = draft.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(qualifyingCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(lowManaValue, drafted);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void resolvesWithoutDraftingWhenTargetHandIsEmpty() {
+        harness.setHand(player1, List.of(new BreakExpectations()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 }

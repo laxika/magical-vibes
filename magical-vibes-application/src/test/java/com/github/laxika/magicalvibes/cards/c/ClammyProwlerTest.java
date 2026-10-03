@@ -17,9 +17,9 @@ class ClammyProwlerTest extends BaseCardTest {
 
     @Test
     void attackTriggerTargetsAnotherAttackingCreature() {
-        Permanent prowler = addReadyCreature(player1, new ClammyProwler());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-        Permanent nonattacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent prowler = addCreatureReady(player1, new ClammyProwler());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -37,7 +37,7 @@ class ClammyProwlerTest extends BaseCardTest {
 
     @Test
     void doesNotTriggerWhenThereIsNoOtherAttackingCreature() {
-        Permanent prowler = addReadyCreature(player1, new ClammyProwler());
+        Permanent prowler = addCreatureReady(player1, new ClammyProwler());
 
         declareAttackers(player1, List.of(0));
 
@@ -47,8 +47,8 @@ class ClammyProwlerTest extends BaseCardTest {
 
     @Test
     void unblockableWearsOffAtEndOfTurn() {
-        addReadyCreature(player1, new ClammyProwler());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ClammyProwler());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -63,10 +63,43 @@ class ClammyProwlerTest extends BaseCardTest {
         assertThat(attacker.isCantBeBlocked()).isFalse();
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void doesNotTriggerWhenProwlerDoesNotAttack() {
+        Permanent prowler = addCreatureReady(player1, new ClammyProwler());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.isCantBeBlocked()).isFalse();
+        assertThat(prowler.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void targetRemovedFromCombatBeforeResolutionIsNotMadeUnblockable() {
+        addCreatureReady(player1, new ClammyProwler());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void triggerResolvesAfterProwlerLeavesBattlefield() {
+        Permanent prowler = addCreatureReady(player1, new ClammyProwler());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(prowler);
+        gd.playerGraveyards.get(player1.getId()).add(prowler.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.isCantBeBlocked()).isTrue();
     }
 }

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class EachOpponentDiscardsOrControllerDrawsEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.EffectResolutionService> effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +49,7 @@ public class EachOpponentDiscardsOrControllerDrawsEffectHandler implements Norma
                     sourceCard.getName() + "'s effect",
                     List.of(drawCards));
             completion.setEventValue(followUp.eachPlayerNoDiscardCount());
-            gameData.stack.add(completion);
+            effectResolutionService.getObject().resolveEffects(gameData, completion);
         }
     }
 

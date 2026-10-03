@@ -37,8 +37,7 @@ class ConsecrateLandTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, forest.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, forest.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
     }
@@ -68,9 +67,56 @@ class ConsecrateLandTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
+    @Test
+    @DisplayName("Consecrate Land puts an existing Aura into its owner's graveyard")
+    void removesExistingAura() {
+        Permanent forest = addForest();
+        harness.setHand(player1, List.of(new WildGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Wild Growth");
+
+        castConsecrateLand(forest);
+
+        harness.assertNotOnBattlefield(player1, "Wild Growth");
+        harness.assertInGraveyard(player1, "Wild Growth");
+        harness.assertOnBattlefield(player1, "Consecrate Land");
+        assertThat(findPermanent(player1, "Consecrate Land").getAttachedTo()).isEqualTo(forest.getId());
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Consecrate Land removes an opponent's Aura from an opponent's land")
+    void removesOpponentsExistingAura() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent growth = harness.addToBattlefieldAndReturn(player2, new WildGrowth());
+        growth.setAttachedTo(forest.getId());
+
+        castConsecrateLand(forest);
+
+        harness.assertNotOnBattlefield(player2, "Wild Growth");
+        harness.assertInGraveyard(player2, "Wild Growth");
+        harness.assertNotInGraveyard(player1, "Wild Growth");
+        harness.assertOnBattlefield(player1, "Consecrate Land");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A second Consecrate Land cannot target the enchanted land")
+    void cannotBeEnchantedBySecondConsecrateLand() {
+        Permanent forest = addForest();
+        castConsecrateLand(forest);
+        harness.setHand(player1, List.of(new ConsecrateLand()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addForest() {
-        harness.addToBattlefield(player1, new Forest());
-        return findPermanent(player1, "Forest");
+        return harness.addToBattlefieldAndReturn(player1, new Forest());
     }
 
     private void castConsecrateLand(Permanent forest) {

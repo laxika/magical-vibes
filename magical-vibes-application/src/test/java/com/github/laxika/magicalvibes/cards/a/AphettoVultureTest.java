@@ -115,6 +115,34 @@ class AphettoVultureTest extends BaseCardTest {
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().equals(zombie));
     }
 
+    @Test
+    @DisplayName("A Zombie dying alongside the Vulture can be put above the existing library cards")
+    void canTargetZombieThatDiesSimultaneously() {
+        AphettoVulture vulture = new AphettoVulture();
+        Card zombie = new GluttonousZombie();
+        Card firstLibraryCard = new DiscipleOfMalice();
+        Card secondLibraryCard = new SliceAndDice();
+        harness.addToBattlefield(player1, vulture);
+        harness.addToBattlefield(player1, zombie);
+        harness.setLibrary(player1, List.of(firstLibraryCard, secondLibraryCard));
+
+        destroyVulture();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(vulture.getId(), zombie.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(zombie.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(zombie, firstLibraryCard, secondLibraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vulture);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(zombie);
+        harness.assertNotOnBattlefield(player1, "Aphetto Vulture");
+        harness.assertNotOnBattlefield(player1, "Gluttonous Zombie");
+    }
+
     private void destroyVulture() {
         harness.castFromHand(player1, new SliceAndDice(), "{4}{R}{R}");
         harness.passBothPriorities();

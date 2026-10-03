@@ -65,10 +65,54 @@ class CarrionAntsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ants)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ants)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, ants)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapped, summoning-sick Carrion Ants can pay colored mana to boost itself")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent ants = harness.addToBattlefieldAndReturn(player1, new CarrionAnts());
+        ants.setSummoningSick(true);
+        ants.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, ants)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, ants)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ants)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ants)).isEqualTo(2);
+        assertThat(ants.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Activation during an opponent's turn boosts only the source creature")
+    void boostsOnlySourceDuringOpponentsTurn() {
+        Permanent ants = addCreatureReady(player1, new CarrionAnts());
+        Permanent otherAnts = addCreatureReady(player1, new CarrionAnts());
+        Permanent opposingAnts = addCreatureReady(player2, new CarrionAnts());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ants)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ants)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherAnts)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, otherAnts)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingAnts)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, opposingAnts)).isEqualTo(1);
     }
 }

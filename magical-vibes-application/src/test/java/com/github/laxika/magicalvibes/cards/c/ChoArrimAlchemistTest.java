@@ -107,6 +107,82 @@ class ChoArrimAlchemistTest extends BaseCardTest {
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("Can choose a sacrificed source whose damage ability is on the stack")
+    void canChooseSacrificedSourceOfPendingAbility() {
+        harness.setLife(player1, 20);
+        addReadyAlchemist(player1);
+        Permanent source = addReadyCinderElemental(player2);
+        harness.setHand(player1, List.of(new CinderElemental()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, 3, player1.getId());
+        harness.assertInGraveyard(player2, "Cinder Elemental");
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Prevents damage from a chosen source after it is sacrificed")
+    void preventsDamageAfterChosenSourceIsSacrificed() {
+        harness.setLife(player1, 20);
+        addReadyAlchemist(player1);
+        Permanent source = addReadyCinderElemental(player2);
+        harness.setHand(player1, List.of(new CinderElemental()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.activateAbility(player2, 0, 3, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Cinder Elemental");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Damage to a creature is not prevented and does not consume the player's shield")
+    void damageToCreatureDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        Permanent alchemist = addReadyAlchemist(player1);
+        Permanent source = addReadyKrisMage(player2);
+        harness.setHand(player1, List.of(new CinderElemental()));
+        harness.setHand(player2, List.of(new CinderElemental(), new CinderElemental()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.activateAbility(player2, 0, 0, null, alchemist.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cho-Arrim Alchemist");
+        harness.assertLife(player1, 20);
+        source.untap();
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
     private Permanent addReadyAlchemist(Player player) {
         return addCreatureReady(player, new ChoArrimAlchemist());
     }

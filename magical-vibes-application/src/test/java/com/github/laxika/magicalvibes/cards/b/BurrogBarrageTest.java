@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BurrogBarrage.class, AirElemental.class, GiantGrowth.class, GrizzlyBears.class, LlanowarElves.class})
 class BurrogBarrageTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Without another instant or sorcery cast, bite uses base power and no boost")
@@ -33,7 +34,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bearId, elvesId));
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isZero();
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
@@ -54,7 +55,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bearId, elvesId));
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(4);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
@@ -70,21 +71,13 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player1.getId());
-        UUID bearId = bf.stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .map(Permanent::getId)
-                .findFirst()
-                .orElseThrow();
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
 
         harness.castInstant(player1, 0, List.of(bearId, elvesId));
         harness.passBothPriorities();
 
-        Permanent bear = bf.stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst()
-                .orElseThrow();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isZero();
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
@@ -100,7 +93,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bearId));
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isZero();
         harness.assertInGraveyard(player1, "Burrog Barrage");
     }
@@ -155,5 +148,99 @@ class BurrogBarrageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bearId, elvesId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you control");
+    }
+
+    @Test
+    @CardUsed({MindRot.class})
+    void priorSorceryEnablesBoostWithoutDamageTarget() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MindRot(), new BurrogBarrage()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, List.of(harness.getPermanentId(player1, "Grizzly Bears")));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Grizzly Bears").getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Burrog Barrage");
+    }
+
+    @Test
+    void instantCastInResponseEnablesBoostAndUsesCurrentPower() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new BurrogBarrage(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID elementalId = harness.getPermanentId(player2, "Air Elemental");
+
+        harness.castInstant(player1, 0, List.of(bearId, elementalId));
+        harness.castInstant(player1, 0, elementalId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(1);
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(3);
+        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void opponentsInstantDoesNotEnableBoost() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new BurrogBarrage()));
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID elementalId = harness.getPermanentId(player2, "Air Elemental");
+
+        harness.castInstant(player1, 0, List.of(bearId, elementalId));
+        harness.castInstant(player2, 0, elementalId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isZero();
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void missingDamageTargetDoesNotPreventConditionalBoost() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new GiantGrowth(), new BurrogBarrage()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
+
+        harness.castInstant(player1, 0, bearId);
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, List.of(bearId, elvesId));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Burrog Barrage");
+    }
+
+    @Test
+    void missingSourceTargetDealsNoDamage() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new BurrogBarrage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID elementalId = harness.getPermanentId(player2, "Air Elemental");
+
+        harness.castInstant(player1, 0, List.of(bearId, elementalId));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Burrog Barrage");
     }
 }

@@ -49,21 +49,68 @@ class AngelOfEternalDawnTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
-        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void becomesDayWhenNoDesignationHasBeenEstablished() {
+        gd.dayNight = DayNight.NEITHER;
+
+        castAngel();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+    }
+
+    @Test
+    void cannotBecomeNightOnControllersTurnAfterNoSpellsWereCast() {
+        harness.addToBattlefield(player1, new AngelOfEternalDawn());
+        gd.dayNight = DayNight.DAY;
+        gd.spellsCastLastTurn.put(player1.getId(), 0);
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+    }
+
+    @Test
+    void cannotBecomeNightOnOpponentsTurnAfterNoSpellsWereCast() {
+        harness.addToBattlefield(player1, new AngelOfEternalDawn());
+        gd.dayNight = DayNight.DAY;
+        gd.spellsCastLastTurn.put(player2.getId(), 0);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+    }
+
+    @Test
+    void controllerMayCastSpellsAboveTheirTurnsBegun() {
+        gd.turnsTakenByPlayer.put(player1.getId(), 1);
+        harness.addToBattlefield(player1, new AngelOfEternalDawn());
+
+        harness.castFromHand(player1, new AngelOfEternalDawn(), "{2}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void restrictionUsesOpponentsTurnsRatherThanAngelsControllersTurns() {
+        gd.turnsTakenByPlayer.put(player1.getId(), 1);
+        gd.turnsTakenByPlayer.put(player2.getId(), 3);
+        harness.addToBattlefield(player1, new AngelOfEternalDawn());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new AngelOfEternalDawn(), "{2}{W}");
 
         assertThat(gd.stack).hasSize(1);
     }
 
     private void castAngel() {
-        harness.setHand(player1, List.of(new AngelOfEternalDawn()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new AngelOfEternalDawn(), "{2}{W}");
+        resolveAllTriggers();
     }
 }

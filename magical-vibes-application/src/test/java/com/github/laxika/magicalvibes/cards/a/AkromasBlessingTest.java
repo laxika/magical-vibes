@@ -87,4 +87,68 @@ class AkromasBlessingTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Akroma's Blessing");
         harness.assertInHand(player1, "Glory Seeker");
     }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and does not grant protection")
+    void cyclingDiscardsBeforeDrawingWithoutGrantingProtection() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        harness.setHand(player1, List.of(new AkromasBlessing()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Akroma's Blessing");
+        harness.assertNotInHand(player1, "Akroma's Blessing");
+        harness.assertNotInHand(player1, "Glory Seeker");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Glory Seeker");
+        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Protection makes an already cast Shock's target illegal on resolution")
+    void protectionStopsShockAlreadyOnStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.castFromHand(player1, new AkromasBlessing(), "{2}{W}");
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glory Seeker");
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain protection")
+    void laterCreaturesDoNotGainProtection() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        harness.castFromHand(player1, new AkromasBlessing(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+
+        assertThat(original.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(later.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution gain protection")
+    void recipientsAreDeterminedOnResolution() {
+        harness.castFromHand(player1, new AkromasBlessing(), "{2}{W}");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.GREEN);
+    }
 }

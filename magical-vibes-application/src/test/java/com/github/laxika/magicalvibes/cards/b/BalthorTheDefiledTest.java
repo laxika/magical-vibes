@@ -93,4 +93,48 @@ class BalthorTheDefiledTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, balthor)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, balthor)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Exiling Balthor immediately removes the Minion bonus before resolution")
+    void exileCostImmediatelyRemovesMinionBonus() {
+        harness.addToBattlefield(player1, new BalthorTheDefiled());
+        Permanent minion = addCreatureReady(player2, new CabalTrainee());
+        harness.setGraveyard(player1, List.of(new DwarvenBloodboiler()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThat(gqs.getEffectivePower(gd, minion)).isEqualTo(2);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Balthor the Defiled");
+        harness.assertInGraveyard(player1, "Dwarven Bloodboiler");
+        assertThat(gqs.getEffectivePower(gd, minion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, minion)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dwarven Bloodboiler");
+        harness.assertNotInGraveyard(player1, "Dwarven Bloodboiler");
+    }
+
+    @Test
+    @DisplayName("Balthor can activate while tapped and newly entered with no matching cards")
+    void activatesWhileTappedWithNoMatchingCards() {
+        Permanent balthor = harness.addToBattlefieldAndReturn(player1, new BalthorTheDefiled());
+        balthor.tap();
+        harness.setGraveyard(player1, List.of(new GiantWarthog()));
+        harness.setGraveyard(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Balthor the Defiled");
+        harness.assertNotInGraveyard(player1, "Balthor the Defiled");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .contains("Balthor the Defiled");
+        harness.assertInGraveyard(player1, "Giant Warthog");
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
+        assertThat(gd.stack).isEmpty();
+    }
 }

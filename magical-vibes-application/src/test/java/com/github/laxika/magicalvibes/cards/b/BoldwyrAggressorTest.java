@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoldwyrAggressor.class, HillGiant.class, GrizzlyBears.class})
 class BoldwyrAggressorTest extends BaseCardTest {
 
     @Test
@@ -52,6 +54,27 @@ class BoldwyrAggressorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HillGiant());
 
         Permanent hillGiant = findPermanent(player1, "Hill Giant");
+        assertThat(gqs.hasKeyword(gd, hillGiant, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(p -> p.getCard().getName().equals("Boldwyr Aggressor"));
+
+        assertThat(gqs.hasKeyword(gd, hillGiant, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Giant retains double strike while another Boldwyr Aggressor remains")
+    void retainsDoubleStrikeUntilLastAggressorLeaves() {
+        harness.addToBattlefield(player1, new BoldwyrAggressor());
+        Permanent firstAggressor = findPermanent(player1, "Boldwyr Aggressor");
+        harness.addToBattlefield(player1, new BoldwyrAggressor());
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent hillGiant = findPermanent(player1, "Hill Giant");
+
+        assertThat(gqs.hasKeyword(gd, hillGiant, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAggressor);
+
         assertThat(gqs.hasKeyword(gd, hillGiant, Keyword.DOUBLE_STRIKE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())

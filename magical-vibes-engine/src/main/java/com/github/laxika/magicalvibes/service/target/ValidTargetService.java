@@ -1749,6 +1749,12 @@ public class ValidTargetService {
 
         List<UUID> validIds = new ArrayList<>();
         for (UUID playerId : searchPlayerIds) {
+            if (filter.minimumPoisonCounters() != null
+                    && !playerId.equals(controllerId)
+                    && gameData.playerPoisonCounters.getOrDefault(playerId, 0)
+                    < filter.minimumPoisonCounters()) {
+                continue;
+            }
             if (isOnePerControllerConstraint(constraint)
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
@@ -2098,7 +2104,7 @@ public class ValidTargetService {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
             return (e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId))
-                    && (e.maxManaValue() == null
+                    && (e.maxManaValue() == null || e.checkManaValueOnlyOnResolution()
                     || c.getManaValue() <= amountEvaluationService.evaluate(
                     gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.ArcboundWorker;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChimericEgg.class, CrazedGoblin.class, DarksteelIngot.class})
+@CardUsed({ChimericEgg.class, CrazedGoblin.class, DarksteelIngot.class, ArcboundWorker.class})
 class ChimericEggTest extends BaseCardTest {
 
     @Test
@@ -53,6 +54,17 @@ class ChimericEggTest extends BaseCardTest {
     }
 
     @Test
+    void opponentArtifactCreatureSpellDoesNotAddChargeCounter() {
+        Permanent egg = addCreatureReady(player1, new ChimericEgg());
+        castSpell(player2, new ArcboundWorker(), "{1}");
+
+        harness.passBothPriorities();
+
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Removing three charge counters animates Chimeric Egg until end of turn")
     void activatesAnimation() {
         Permanent egg = addCreatureReady(player1, new ChimericEgg());
@@ -85,6 +97,82 @@ class ChimericEggTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chargeCounterTriggerResolvesBeforeTheSpell() {
+        Permanent egg = addCreatureReady(player1, new ChimericEgg());
+        castSpell(player2, new CrazedGoblin(), "{R}");
+
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void activationPaysCountersImmediatelyAndWorksWhileTappedAndSummoningSick() {
+        Permanent egg = addCreatureReady(player1, new ChimericEgg());
+        egg.setSummoningSick(true);
+        egg.setTapped(true);
+        egg.setCounterCount(CounterType.CHARGE, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, egg)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, egg)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, egg)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, egg)).isEqualTo(6);
+        assertThat(egg.isTapped()).isTrue();
+        assertThat(egg.isSummoningSick()).isTrue();
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateAgainWhileAlreadyAnimated() {
+        Permanent egg = addCreatureReady(player1, new ChimericEgg());
+        egg.setCounterCount(CounterType.CHARGE, 6);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, egg)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, egg)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, egg)).isEqualTo(6);
+        assertThat(egg.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+    }
+
+    @Test
+    void animatedEggStillTriggersForOpponentsNonartifactSpells() {
+        Permanent egg = addCreatureReady(player1, new ChimericEgg());
+        egg.setCounterCount(CounterType.CHARGE, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        castSpell(player2, new CrazedGoblin(), "{R}");
+        harness.passBothPriorities();
+
+        assertThat(egg.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, egg)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, egg)).isEqualTo(6);
     }
 
     private void castSpell(Player caster, Card spell, String manaCost) {

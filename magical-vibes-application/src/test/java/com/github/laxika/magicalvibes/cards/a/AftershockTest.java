@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AftershockTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Destroys the target creature and deals 3 damage to its controller")
+    @DisplayName("Destroys the target creature and deals 3 damage to the spell's controller")
     void destroysTargetCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FightingDrake());
 
@@ -51,6 +51,19 @@ class AftershockTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Island");
         harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Can destroy a permanent controlled by the caster")
+    void destroysOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LotusPetal());
+
+        castAftershock(target);
+
+        harness.assertNotOnBattlefield(player1, "Lotus Petal");
+        harness.assertInGraveyard(player1, "Lotus Petal");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
     }
 
     @Test

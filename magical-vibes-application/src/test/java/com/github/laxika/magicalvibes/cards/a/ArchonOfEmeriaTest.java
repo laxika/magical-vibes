@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FieldOfRuin;
+import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.c.CrawlingBarrens;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionHealer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArchonOfEmeria.class, FieldOfRuin.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ArchonOfEmeria.class, FieldOfRuin.class, Forest.class, GrizzlyBears.class,
+        CrawlingBarrens.class, ExpeditionHealer.class, Frogify.class})
 class ArchonOfEmeriaTest extends BaseCardTest {
 
     @Test
@@ -85,6 +89,48 @@ class ArchonOfEmeriaTest extends BaseCardTest {
 
         Permanent land = findPermanent(player1, "Field of Ruin");
         assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    void castingArchonUsesTheOneSpellAllowance() {
+        harness.setHand(player1, List.of(new ArchonOfEmeria(), new ExpeditionHealer()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Archon of Emeria");
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void nonbasicLandPutOntoBattlefieldWithoutBeingPlayedEntersTapped() {
+        harness.addToBattlefield(player1, new ArchonOfEmeria());
+
+        Permanent land = harness.enterBattlefieldAndReturn(player2, new CrawlingBarrens());
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    void losingAllAbilitiesStopsBothRestrictions() {
+        Permanent archon = harness.addToBattlefieldAndReturn(player1, new ArchonOfEmeria());
+        harness.setHand(player1, List.of(new Frogify(), new ExpeditionHealer(), new ExpeditionHealer()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, archon.getId());
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof ExpeditionHealer)).hasSize(2);
+
+        playLand(player2, new CrawlingBarrens());
+        assertThat(findPermanent(player2, "Crawling Barrens").isTapped()).isFalse();
     }
 
     private void playLand(com.github.laxika.magicalvibes.model.Player player, com.github.laxika.magicalvibes.model.Card land) {

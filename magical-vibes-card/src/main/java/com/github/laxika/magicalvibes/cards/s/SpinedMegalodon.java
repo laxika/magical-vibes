@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "72")
+@CardRegistration(set = "HBG", collectorNumber = "914")
 public class SpinedMegalodon extends Card {
 
     public SpinedMegalodon() {

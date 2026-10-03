@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DaruHealer;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Backslide.class, DaruHealer.class, GlorySeeker.class})
+@CardUsed({Backslide.class, DaruHealer.class, GlorySeeker.class, Humble.class})
 class BackslideTest extends BaseCardTest {
 
     @Test
@@ -65,6 +66,55 @@ class BackslideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Backslide");
+        harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    void controllerCanTurnCreatureFaceUpAgainAfterBackslide() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player1, new DaruHealer());
+        harness.setHand(player1, List.of(new Backslide()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+        assertThat(healer.isFaceDown()).isTrue();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(healer.isFaceDown()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(healer);
+    }
+
+    @Test
+    void cannotTargetMorphCreatureThatHasLostAllAbilities() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player2, new DaruHealer());
+        harness.setHand(player1, List.of(new Humble(), new Backslide()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, healer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(healer.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void cyclingDiscardsAsACostBeforeDrawingOnResolution() {
+        harness.setHand(player1, List.of(new Backslide()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Backslide");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
         harness.assertInHand(player1, "Glory Seeker");
     }
 }

@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "C21", collectorNumber = "15")
+@CardRegistration(set = "BRC", collectorNumber = "71")
 public class DigsiteEngineer extends Card {
 
     public DigsiteEngineer() {

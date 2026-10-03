@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
-import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.cards.d.DesertNomads;
+import com.github.laxika.magicalvibes.cards.d.DimirHouseGuard;
 import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGuildpact;
+import com.github.laxika.magicalvibes.cards.r.ReaverTitan;
+import com.github.laxika.magicalvibes.cards.s.Sewerdreg;
 import com.github.laxika.magicalvibes.cards.s.SiegeWurm;
 import com.github.laxika.magicalvibes.cards.w.WeatherseedFaeries;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -22,7 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ConcertedEffort.class, BorosRecruit.class, BorosSwiftblade.class, CourierHawk.class,
-        SiegeWurm.class, WeatherseedFaeries.class, DesertNomads.class, GuardianOfTheGuildpact.class})
+        SiegeWurm.class, WeatherseedFaeries.class, DesertNomads.class, GuardianOfTheGuildpact.class,
+        DimirHouseGuard.class, Sewerdreg.class, ReaverTitan.class})
 class ConcertedEffortTest extends BaseCardTest {
 
     private void resolveUpkeepTrigger(Player activePlayer) {
@@ -128,5 +131,64 @@ class ConcertedEffortTest extends BaseCardTest {
         resolveUpkeepTrigger(player1);
 
         assertThat(gqs.hasProtectionFromSource(gd, recruit, guardian)).isTrue();
+    }
+
+    @Test
+    void sharesFearAndSwampwalk() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.addToBattlefield(player1, new DimirHouseGuard());
+        harness.addToBattlefield(player1, new Sewerdreg());
+
+        resolveUpkeepTrigger(player1);
+
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.SWAMPWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.ISLANDWALK)).isFalse();
+    }
+
+    @Test
+    void doesNotShareOpponentsAbilitiesOrGrantToOpponents() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent opponentHawk = harness.addToBattlefieldAndReturn(player2, new CourierHawk());
+
+        resolveUpkeepTrigger(player2);
+
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentHawk, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotGainSharedAbilities() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        harness.addToBattlefield(player1, new CourierHawk());
+        harness.addToBattlefield(player1, new WeatherseedFaeries());
+
+        resolveUpkeepTrigger(player1);
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, recruit, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    void sharesProtectionFromLowManaValuesFromCrewedVehicle() {
+        harness.addToBattlefield(player1, new ConcertedEffort());
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new ReaverTitan());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new SiegeWurm());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new CourierHawk());
+        Permanent opposingWurm = harness.addToBattlefieldAndReturn(player2, new SiegeWurm());
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, wurm.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, titan)).isTrue();
+        assertThat(gqs.hasProtectionFromSource(gd, titan, hawk)).isTrue();
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, hawk)).isTrue();
+        assertThat(gqs.hasProtectionFromSource(gd, recruit, opposingWurm)).isFalse();
     }
 }

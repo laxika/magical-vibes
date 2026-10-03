@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.Gravecrawler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BladestitchedSkaab.class, Gravecrawler.class, GrizzlyBears.class})
 class BladestitchedSkaabTest extends BaseCardTest {
 
     @Test
@@ -89,6 +91,35 @@ class BladestitchedSkaabTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(skaab);
 
         assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Zombies entering after the Skaab receive its bonus immediately")
+    void buffsZombiesEnteringLater() {
+        harness.addToBattlefield(player1, new BladestitchedSkaab());
+        harness.addToBattlefield(player1, new Gravecrawler());
+
+        Permanent zombie = findPermanent(player1, "Gravecrawler");
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Three Skaabs each receive two bonuses and other Zombies receive three")
+    void multipleBonusesStackWithoutIncludingTheirSource() {
+        harness.addToBattlefield(player1, new BladestitchedSkaab());
+        harness.addToBattlefield(player1, new BladestitchedSkaab());
+        harness.addToBattlefield(player1, new BladestitchedSkaab());
+        harness.addToBattlefield(player1, new Gravecrawler());
+
+        for (Permanent skaab : findPermanents(player1, "Bladestitched Skaab")) {
+            assertThat(gqs.getEffectivePower(gd, skaab)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, skaab)).isEqualTo(3);
+        }
+        Permanent zombie = findPermanent(player1, "Gravecrawler");
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(1);
     }
 }

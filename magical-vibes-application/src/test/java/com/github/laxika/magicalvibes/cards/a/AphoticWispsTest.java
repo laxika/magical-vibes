@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -128,5 +129,47 @@ class AphoticWispsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("A colorless artifact creature becomes black and gains fear")
+    void colorlessArtifactCreatureBecomesBlack() {
+        Permanent target = addCreatureReady(player2, new HeapDoll());
+        harness.setHand(player1, List.of(new AphoticWisps()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLACK);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, target)).isEmpty();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not draw when its only target is sacrificed in response")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent target = addCreatureReady(player2, new HeapDoll());
+        IlluminatedFolio graveyardCard = new IlluminatedFolio();
+        BallynockCohort libraryCard = new BallynockCohort();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new AphoticWisps()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player2, 0, 0, null, graveyardCard.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        harness.assertInGraveyard(player1, "Aphotic Wisps");
+        assertThat(gd.stack).isEmpty();
     }
 }

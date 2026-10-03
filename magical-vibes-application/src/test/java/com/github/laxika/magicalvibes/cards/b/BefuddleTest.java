@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Befuddle.class, GrizzlyBears.class, FountainOfYouth.class})
 class BefuddleTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Befuddle puts it on stack with target creature")
@@ -39,7 +39,7 @@ class BefuddleTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Befuddle");
+        assertThat(entry.getCard()).isInstanceOf(Befuddle.class);
         assertThat(entry.getTargetId()).isEqualTo(bearId);
     }
 
@@ -53,8 +53,7 @@ class BefuddleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(-4);
@@ -73,8 +72,7 @@ class BefuddleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -146,12 +144,51 @@ class BefuddleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(-4);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Repeated Befuddles stack their reductions and each draw exactly one card")
+    void repeatedCastsStackAndEachDrawOneCard() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears firstDraw = new GrizzlyBears();
+        GrizzlyBears secondDraw = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remainingCard));
+        harness.setHand(player1, List.of(new Befuddle(), new Befuddle()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).contains(firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw, remainingCard);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(-6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast Befuddle merely to draw when no creature exists")
+    void cannotCastWithoutCreature() {
+        harness.setHand(player1, List.of(new Befuddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

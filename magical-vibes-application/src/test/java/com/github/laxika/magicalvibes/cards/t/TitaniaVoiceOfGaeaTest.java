@@ -1,21 +1,25 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.a.ArgothSanctumOfNature;
+import com.github.laxika.magicalvibes.cards.a.ArgothianOpportunist;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TitaniaVoiceOfGaea.class, TitaniaGaeaIncarnate.class, ArgothSanctumOfNature.class,
+        Forest.class, ArgothianOpportunist.class})
 class TitaniaVoiceOfGaeaTest extends BaseCardTest {
 
     @Test
@@ -37,7 +41,7 @@ class TitaniaVoiceOfGaeaTest extends BaseCardTest {
     void meldsWithArgothAtUpkeep() {
         Permanent titania = harness.addToBattlefieldAndReturn(player1, new TitaniaVoiceOfGaea());
         harness.addToBattlefield(player1, new Forest());
-        Permanent argoth = harness.addToBattlefieldAndReturn(player1, argoth());
+        Permanent argoth = harness.addToBattlefieldAndReturn(player1, new ArgothSanctumOfNature());
         harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
 
         assertThat(gqs.isLand(gd, argoth)).isTrue();
@@ -84,11 +88,71 @@ class TitaniaVoiceOfGaeaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
     }
 
-    private static Card argoth() {
-        Card argoth = new Card();
-        argoth.setName("Argoth, Sanctum of Nature");
-        argoth.setType(CardType.LAND);
-        argoth.setSubtypes(List.of(CardSubtype.FOREST));
-        return argoth;
+    @Test
+    void copiedArgothIsExiledButCannotMeld() {
+        Permanent titania = harness.addToBattlefieldAndReturn(player1, new TitaniaVoiceOfGaea());
+        Permanent copy = harness.addToBattlefieldAndReturn(player1, new Forest());
+        copy.setCard(new ArgothSanctumOfNature());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof TitaniaGaeaIncarnate);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(titania, copy);
+        assertThat(gd.findExiledCard(titania.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(copy.getOriginalCard().getId())).isNotNull();
+    }
+
+    @Test
+    void upkeepConditionIsRecheckedWhenTriggerResolves() {
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        harness.addToBattlefield(player1, new ArgothSanctumOfNature());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Titania, Voice of Gaea");
+        harness.assertOnBattlefield(player1, "Argoth, Sanctum of Nature");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof TitaniaGaeaIncarnate);
+    }
+
+    @Test
+    void meldedFaceReturnsOnlyItsControllersLands() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setGraveyard(player1, List.of(new Forest(), new ArgothianOpportunist()));
+        harness.setGraveyard(player2, List.of(new Forest()));
+
+        Permanent titania = harness.enterBattlefieldAndReturn(player1, new TitaniaGaeaIncarnate());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).allMatch(card -> card instanceof ArgothianOpportunist);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof Forest).hasSize(2)
+                .filteredOn(Permanent::isTapped).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, titania)).isEqualTo(2);
+        harness.addToBattlefield(player1, new Forest());
+        assertThat(gqs.getEffectivePower(gd, titania)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, titania)).isEqualTo(3);
+    }
+
+    @Test
+    void meldedFaceCannotAnimateOpponentsLand() {
+        harness.addToBattlefield(player1, new TitaniaGaeaIncarnate());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

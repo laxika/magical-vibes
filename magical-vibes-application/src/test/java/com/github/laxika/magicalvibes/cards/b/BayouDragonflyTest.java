@@ -51,6 +51,19 @@ class BayouDragonflyTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("A Swamp controlled by the attacker does not prevent a flying blocker")
+    void attackersSwampDoesNotPreventBlocking() {
+        Permanent blocker = addCreatureReady(player2, new BayouDragonfly());
+        Permanent attacker = addCreatureReady(player1, new BayouDragonfly());
+        harness.addToBattlefield(player1, new Swamp());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addBayouDragonflyAttacker() {
         Permanent attacker = addCreatureReady(player1, new BayouDragonfly());
         declareAttackersAndPrepareBlockers(List.of(0));

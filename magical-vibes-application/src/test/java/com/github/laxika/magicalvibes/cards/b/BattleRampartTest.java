@@ -71,4 +71,63 @@ class BattleRampartTest extends BaseCardTest {
     private Permanent addReadyBattleRampart() {
         return addCreatureReady(player1, new BattleRampart());
     }
+
+    @Test
+    @DisplayName("Can target itself without untapping itself")
+    void canTargetItself() {
+        Permanent rampart = addReadyBattleRampart();
+
+        harness.activateAbility(player1, 0, null, rampart.getId());
+        assertThat(rampart.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, rampart, Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, rampart, Keyword.HASTE)).isTrue();
+        assertThat(rampart.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent rampart = harness.addToBattlefieldAndReturn(player1, new BattleRampart());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, rampart.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(rampart.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent rampart = addReadyBattleRampart();
+        harness.activateAbility(player1, 0, null, rampart.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, rampart.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(rampart.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted haste lets a newly entered Battle Rampart pay its tap cost")
+    void grantedHasteAllowsTapAbilityDespiteSummoningSickness() {
+        Permanent readyRampart = addReadyBattleRampart();
+        Permanent newRampart = harness.addToBattlefieldAndReturn(player1, new BattleRampart());
+
+        harness.activateAbility(player1, 0, null, newRampart.getId());
+        harness.passBothPriorities();
+        assertThat(newRampart.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, newRampart, Keyword.HASTE)).isTrue();
+
+        harness.activateAbility(player1, 1, null, readyRampart.getId());
+        harness.passBothPriorities();
+
+        assertThat(newRampart.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, readyRampart, Keyword.HASTE)).isTrue();
+    }
 }

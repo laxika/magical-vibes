@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.DaxosBlessedByTheSun;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.i.Ichthyomorphosis;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArchonOfSunsGrace.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({ArchonOfSunsGrace.class, GloriousAnthem.class, GrizzlyBears.class, DaxosBlessedByTheSun.class, Ichthyomorphosis.class})
 class ArchonOfSunsGraceTest extends BaseCardTest {
 
     @Test
@@ -30,11 +31,8 @@ class ArchonOfSunsGraceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent pegasus = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.PEGASUS))
-                .findFirst()
-                .orElse(null);
+        Permanent pegasus = findPermanent(player1, "Pegasus");
+
         assertThat(pegasus).isNotNull();
         assertThat(gqs.getEffectivePower(gd, pegasus)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
@@ -53,8 +51,104 @@ class ArchonOfSunsGraceTest extends BaseCardTest {
         harness.castEnchantment(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getSubtypes().contains(CardSubtype.PEGASUS))).isFalse();
+        assertThat(countPermanents(player1, "Pegasus")).isZero();
+    }
+
+    @Test
+    @DisplayName("An enchantment creature entering without being cast triggers every Archon")
+    void enchantmentCreatureTriggersEachArchon() {
+        addCreatureReady(player1, new ArchonOfSunsGrace());
+        addCreatureReady(player1, new ArchonOfSunsGrace());
+
+        harness.enterBattlefieldAndReturn(player1, new DaxosBlessedByTheSun());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Pegasus")).isEqualTo(2);
+        for (Permanent pegasus : findPermanents(player1, "Pegasus")) {
+            assertThat(gqs.getEffectivePower(gd, pegasus)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, pegasus)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, pegasus, Keyword.LIFELINK)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("A pending constellation trigger survives the Archon leaving, but the token has no lifelink")
+    void pendingTriggerSurvivesSourceRemoval() {
+        Permanent archon = addCreatureReady(player1, new ArchonOfSunsGrace());
+        harness.enterBattlefieldAndReturn(player1, new DaxosBlessedByTheSun());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, archon));
+
+        resolveAllTriggers();
+
+        Permanent pegasus = findPermanent(player1, "Pegasus");
+        assertThat(countPermanents(player1, "Pegasus")).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pegasus tokens lose lifelink when the last Archon leaves")
+    void lifelinkEndsWhenLastArchonLeaves() {
+        Permanent first = addCreatureReady(player1, new ArchonOfSunsGrace());
+        Permanent second = addCreatureReady(player1, new ArchonOfSunsGrace());
+        harness.enterBattlefieldAndReturn(player1, new DaxosBlessedByTheSun());
+        resolveAllTriggers();
+        Permanent pegasus = findPermanent(player1, "Pegasus");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, first));
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.LIFELINK)).isTrue();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, second));
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Archon with no abilities does not trigger constellation")
+    void losingAbilitiesStopsConstellation() {
+        Permanent archon = addCreatureReady(player1, new ArchonOfSunsGrace());
+        harness.setHand(player2, List.of(new Ichthyomorphosis()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+        harness.castEnchantment(player2, 0, archon.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, archon, Keyword.FLYING)).isFalse();
+        harness.enterBattlefieldAndReturn(player1, new DaxosBlessedByTheSun());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Pegasus")).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Archons do not multiply life gained from one Pegasus dealing damage")
+    void multipleLifelinkGrantsGainLifeOnlyOnce() {
+        addCreatureReady(player1, new ArchonOfSunsGrace());
+        addCreatureReady(player1, new ArchonOfSunsGrace());
+        harness.enterBattlefieldAndReturn(player1, new DaxosBlessedByTheSun());
+        resolveAllTriggers();
+        Permanent pegasus = findPermanent(player1, "Pegasus");
+        pegasus.setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(pegasus)));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Your Archon does not grant lifelink to an opponent's Pegasus")
+    void opponentsPegasusDoesNotGainLifelink() {
+        Permanent opponentArchon = addCreatureReady(player2, new ArchonOfSunsGrace());
+        harness.enterBattlefieldAndReturn(player2, new DaxosBlessedByTheSun());
+        resolveAllTriggers();
+        Permanent pegasus = findPermanent(player2, "Pegasus");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, opponentArchon));
+        addCreatureReady(player1, new ArchonOfSunsGrace());
+
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
     }
 }

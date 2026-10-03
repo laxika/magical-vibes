@@ -37,16 +37,95 @@ class AmplifireTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns the whole revealed library to the bottom when no creature is found")
-    void noCreatureLeavesBasePowerToughnessUnchanged() {
+    void noCreatureSetsBasePowerToughnessToZero() {
         Permanent amplifire = addCreatureReady(player1, new Amplifire());
         Card shock = new Shock();
         harness.setLibrary(player1, List.of(shock));
 
         advanceToUpkeepAndResolve(player1);
 
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(amplifire);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(amplifire.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
+    }
+
+    @Test
+    @DisplayName("An empty library makes Amplifire a 0/0 and it dies")
+    void emptyLibrarySetsBasePowerToughnessToZero() {
+        Permanent amplifire = addCreatureReady(player1, new Amplifire());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeepAndResolve(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(amplifire);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(amplifire.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only revealed cards go to the bottom, leaving unrevealed cards in order")
+    void leavesUnrevealedCardsOnTop() {
+        Permanent amplifire = addCreatureReady(player1, new Amplifire());
+        Card revealedShock = new Shock();
+        Card bears = new GrizzlyBears();
+        Card unrevealedShock = new Shock();
+        Card maro = new Maro();
+        harness.setLibrary(player1, List.of(revealedShock, bears, unrevealedShock, maro));
+
+        advanceToUpkeepAndResolve(player1);
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library.subList(0, 2)).containsExactly(unrevealedShock, maro);
+        assertThat(library.subList(2, library.size())).containsExactlyInAnyOrder(revealedShock, bears);
+        assertThat(gqs.getEffectivePower(gd, amplifire)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, amplifire)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The revealed creature's power and toughness are fixed at resolution")
+    void characteristicDefiningValuesAreNotUpdatedAfterResolution() {
+        Permanent amplifire = addCreatureReady(player1, new Amplifire());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(new Maro()));
+
+        advanceToUpkeepAndResolve(player1);
+        harness.setHand(player1, List.of(new Shock()));
+
+        assertThat(gqs.getEffectivePower(gd, amplifire)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, amplifire)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The reveal still happens if Amplifire leaves before its trigger resolves")
+    void revealsAfterSourceLeavesBattlefield() {
+        Permanent amplifire = addCreatureReady(player1, new Amplifire());
+        Card bears = new GrizzlyBears();
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(bears, shock));
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(amplifire);
+        gd.playerGraveyards.get(player1.getId()).add(amplifire.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock, bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(amplifire);
+    }
+
+    @Test
+    @DisplayName("Amplifire does not reveal cards during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent amplifire = addCreatureReady(player1, new Amplifire());
+        Card bears = new GrizzlyBears();
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(bears, shock));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears, shock);
         assertThat(gqs.getEffectivePower(gd, amplifire)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, amplifire)).isEqualTo(1);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
     }
 
     @Test
@@ -89,9 +168,7 @@ class AmplifireTest extends BaseCardTest {
         harness.setHand(activePlayer, List.of());
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        for (int step = 0; step < 10 && activePlayer.getId().equals(gd.activePlayerId); step++) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer == player1 ? player2 : player1, TurnStep.UPKEEP);
     }
 }

@@ -40,8 +40,7 @@ class BenevolentHydraTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -71,5 +70,121 @@ class BenevolentHydraTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(hydra.isTapped()).isFalse();
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void anotherHydraAddsOneToEntryCountersAsABatch() {
+        harness.addToBattlefield(player1, new BenevolentHydra());
+        harness.setHand(player1, List.of(new BenevolentHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Benevolent Hydra").get(1)
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void zeroEntryCountersRemainZeroWithAnotherHydra() {
+        harness.addToBattlefield(player1, new BenevolentHydra());
+        harness.setHand(player1, List.of(new BenevolentHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Benevolent Hydra").get(1)
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opposingHydraDoesNotIncreaseEntryCounters() {
+        harness.addToBattlefield(player2, new BenevolentHydra());
+        harness.setHand(player1, List.of(new BenevolentHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Benevolent Hydra")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleHydrasEachAddOneButRecipientDoesNotAddToItself() {
+        Permanent source = addCreatureReady(player1, new BenevolentHydra());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new BenevolentHydra());
+        harness.addToBattlefield(player1, new BenevolentHydra());
+
+        harness.activateAbility(player1, 0, null, recipient.getId());
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void counterPlacementOnSourceIsNotIncreased() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new BenevolentHydra());
+        harness.setHand(player1, List.of(new TimberlandGuide()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0, hydra.getId());
+        resolveAllTriggers();
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void counterPlacementOnOpposingCreatureIsNotIncreased() {
+        harness.addToBattlefield(player1, new BenevolentHydra());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new BenevolentHydra());
+        harness.setHand(player1, List.of(new TimberlandGuide()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0, opponent.getId());
+        resolveAllTriggers();
+
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void activatedAbilityCannotTargetOpposingCreature() {
+        Permanent source = addCreatureReady(player1, new BenevolentHydra());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new BenevolentHydra());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void activatedAbilityRequiresCounterToRemove() {
+        Permanent source = addCreatureReady(player1, new BenevolentHydra());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new BenevolentHydra());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, recipient.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void summoningSickHydraCannotActivateTapAbility() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new BenevolentHydra());
+        source.setSummoningSick(true);
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new BenevolentHydra());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, recipient.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

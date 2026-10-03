@@ -146,4 +146,83 @@ class CelestialGatekeeperTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactly(opponentCleric.getId());
     }
+
+    @Test
+    @DisplayName("Two Birds can be returned without selecting a Cleric")
+    void returnsTwoBirds() {
+        Card firstBird = new AvenEnvoy();
+        Card secondBird = new AvenEnvoy();
+        killGatekeeper(List.of(firstBird, secondBird));
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstBird.getId(), secondBird.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(firstBird.getId(), secondBird.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> !p.isTapped());
+    }
+
+    @Test
+    @DisplayName("Removing Gatekeeper from the graveyard does not prevent returning its legal targets")
+    void returnsTargetsWhenSourceHasLeftGraveyard() {
+        Card bird = new AvenEnvoy();
+        Card cleric = new DaruMender();
+        Card gatekeeperCard = killGatekeeper(List.of(bird, cleric));
+        harness.handleMultipleCardsChosen(player1, List.of(bird.getId(), cleric.getId()));
+
+        harness.setGraveyard(player1, List.of(bird, cleric));
+        harness.setExile(player1, List.of(gatekeeperCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(bird.getId(), cleric.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(gatekeeperCard.getId());
+    }
+
+    @Test
+    @DisplayName("A remaining legal target returns when the other target leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card bird = new AvenEnvoy();
+        Card cleric = new DaruMender();
+        Card gatekeeperCard = killGatekeeper(List.of(bird, cleric));
+        harness.handleMultipleCardsChosen(player1, List.of(bird.getId(), cleric.getId()));
+
+        harness.setGraveyard(player1, List.of(gatekeeperCard, cleric));
+        harness.setExile(player1, List.of(bird));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .extracting(Card::getId)
+                .containsExactly(cleric.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(bird.getId(), gatekeeperCard.getId());
+    }
+
+    @Test
+    @DisplayName("Gatekeeper is not exiled when all chosen targets become illegal")
+    void doesNotExileSourceWhenAllTargetsBecomeIllegal() {
+        Card bird = new AvenEnvoy();
+        Card gatekeeperCard = killGatekeeper(List.of(bird));
+        harness.handleMultipleCardsChosen(player1, List.of(bird.getId()));
+
+        harness.setGraveyard(player1, List.of(gatekeeperCard));
+        harness.setExile(player1, List.of(bird));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(gatekeeperCard.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(bird.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
 }

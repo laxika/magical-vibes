@@ -60,4 +60,35 @@ class AdamaroFirstToDesireTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, adamaro)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, adamaro)).isZero();
     }
+
+    @Test
+    @DisplayName("Power and toughness decrease when the opponent's hand shrinks")
+    void decreasesWhenOpponentsHandShrinks() {
+        harness.setHand(player2, List.of(new HandOfHonor(), new HandOfHonor(), new HandOfHonor()));
+        Permanent adamaro = harness.addToBattlefieldAndReturn(player1, new AdamaroFirstToDesire());
+
+        assertThat(gqs.getEffectivePower(gd, adamaro)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, adamaro)).isEqualTo(3);
+
+        harness.setHand(player2, List.of(new HandOfHonor()));
+
+        assertThat(gqs.getEffectivePower(gd, adamaro)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, adamaro)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dies when the opponent's hand becomes empty")
+    void diesWhenOpponentsHandBecomesEmpty() {
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfHonor()));
+        harness.setHand(player2, List.of(new HandOfHonor()));
+        Permanent adamaro = harness.addToBattlefieldAndReturn(player1, new AdamaroFirstToDesire());
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(adamaro);
+
+        harness.setHand(player2, List.of());
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(adamaro);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(adamaro.getCard());
+    }
 }

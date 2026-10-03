@@ -18,9 +18,7 @@ class AngelicShieldTest extends BaseCardTest {
     @DisplayName("Creatures you control get +0/+1")
     void buffsOwnCreatures() {
         harness.addToBattlefield(player1, new AngelicShield());
-        harness.addToBattlefield(player1, new BenalishLancer());
-
-        Permanent lancer = findPermanent(player1, "Benalish Lancer");
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new BenalishLancer());
 
         assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(3);
@@ -30,9 +28,7 @@ class AngelicShieldTest extends BaseCardTest {
     @DisplayName("Angelic Shield does not buff creatures an opponent controls")
     void doesNotBuffOpponentCreatures() {
         harness.addToBattlefield(player1, new AngelicShield());
-        harness.addToBattlefield(player2, new BenalishLancer());
-
-        Permanent lancer = findPermanent(player2, "Benalish Lancer");
+        Permanent lancer = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
 
         assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(2);
@@ -42,9 +38,7 @@ class AngelicShieldTest extends BaseCardTest {
     @DisplayName("Sacrificing Angelic Shield returns any target creature to its owner's hand")
     void sacrificesAndBouncesTargetCreature() {
         harness.addToBattlefield(player1, new AngelicShield());
-        harness.addToBattlefield(player2, new BenalishLancer());
-
-        Permanent lancer = findPermanent(player2, "Benalish Lancer");
+        Permanent lancer = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
         harness.activateAbility(player1, 0, null, lancer.getId());
         harness.passBothPriorities();
 
@@ -58,13 +52,17 @@ class AngelicShieldTest extends BaseCardTest {
     @DisplayName("Sacrificing Angelic Shield removes its boost from your creatures")
     void sacrificingShieldRemovesItsStaticBoost() {
         harness.addToBattlefield(player1, new AngelicShield());
-        harness.addToBattlefield(player1, new BenalishLancer());
+        Permanent ownLancer = harness.addToBattlefieldAndReturn(player1, new BenalishLancer());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
-        Permanent ownLancer = findPermanent(player1, "Benalish Lancer");
 
         assertThat(gqs.getEffectiveToughness(gd, ownLancer)).isEqualTo(3);
 
         harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Angelic Shield");
+        harness.assertOnBattlefield(player2, "Benalish Lancer");
+        assertThat(gqs.getEffectiveToughness(gd, ownLancer)).isEqualTo(2);
+
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveToughness(gd, ownLancer)).isEqualTo(2);
@@ -87,12 +85,45 @@ class AngelicShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can sacrifice Angelic Shield to return your own creature")
+    void bouncesOwnCreature() {
+        harness.addToBattlefield(player1, new AngelicShield());
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new BenalishLancer());
+
+        harness.activateAbility(player1, 0, null, lancer.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Angelic Shield");
+        harness.assertNotOnBattlefield(player1, "Benalish Lancer");
+        harness.assertInHand(player1, "Benalish Lancer");
+    }
+
+    @Test
+    @DisplayName("Multiple Angelic Shields grant cumulative toughness bonuses")
+    void multipleShieldsStackAndOnlySacrificedShieldsBoostEnds() {
+        harness.addToBattlefield(player1, new AngelicShield());
+        harness.addToBattlefield(player1, new AngelicShield());
+        Permanent lancer = harness.addToBattlefieldAndReturn(player1, new BenalishLancer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
+
+        assertThat(gqs.getEffectivePower(gd, lancer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(3);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Angelic Shield");
+        harness.assertInHand(player2, "Benalish Lancer");
+        assertThat(gqs.getEffectiveToughness(gd, lancer)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("The activated ability cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         harness.addToBattlefield(player1, new AngelicShield());
-        harness.addToBattlefield(player2, new Mountain());
-
-        Permanent mountain = findPermanent(player2, "Mountain");
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

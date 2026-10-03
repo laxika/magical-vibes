@@ -30,8 +30,7 @@ class BloodCurdleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BloodCurdle()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(ownCreature.getCounterCount(CounterType.MENACE)).isEqualTo(1);
@@ -48,8 +47,7 @@ class BloodCurdleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BloodCurdle()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
@@ -83,8 +81,7 @@ class BloodCurdleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BloodCurdle()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertOnBattlefield(player2, "Darksteel Myr");
         assertThat(ownCreature.getCounterCount(CounterType.MENACE)).isEqualTo(1);
@@ -100,5 +97,75 @@ class BloodCurdleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, spellbook.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroys the target even when you control no creature")
+    void destroysTargetWithoutOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setHand(player1, List.of(new BloodCurdle()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(artifact.getCounterCount(CounterType.MENACE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Blood Curdle");
+    }
+
+    @Test
+    @DisplayName("Destroys your own creature before choosing the counter recipient")
+    void destroysOwnCreatureBeforeCounterChoice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BloodCurdle()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target).contains(survivor);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(survivor.getCounterCount(CounterType.MENACE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can put the menace counter on the indestructible creature it targeted")
+    void counterRecipientCanBeTheSurvivingTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DarksteelMyr());
+        harness.setHand(player1, List.of(new BloodCurdle()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Darksteel Myr");
+        assertThat(target.getCounterCount(CounterType.MENACE)).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.MENACE)).isTrue();
+        harness.assertInGraveyard(player1, "Blood Curdle");
+    }
+
+    @Test
+    @DisplayName("Cannot decline the mandatory menace counter when creatures are available")
+    void cannotDeclineMenaceCounterChoice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BloodCurdle()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(first.getCounterCount(CounterType.MENACE)).isZero();
+        assertThat(second.getCounterCount(CounterType.MENACE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Blood Curdle");
     }
 }

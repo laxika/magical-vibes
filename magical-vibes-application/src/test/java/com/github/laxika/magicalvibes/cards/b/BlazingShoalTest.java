@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +16,59 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlazingShoal.class, GrizzlyBears.class, TendoIceBridge.class})
+@CardUsed({BlazingShoal.class, GrizzlyBears.class, TendoIceBridge.class, GoblinCohort.class})
 class BlazingShoalTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Alternative cost needs no mana and can boost an opponent's creature")
+    void alternativeCostWithoutManaBoostsOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GoblinCohort());
+        GoblinCohort exiled = new GoblinCohort();
+        harness.setHand(player1, List.of(exiled, new BlazingShoal()));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 1, 1, creature.getId(), 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("The spell being cast cannot itself pay the exile cost")
+    void cannotExileTheShoalBeingCast() {
+        Permanent creature = addCreatureReady(player1, new GoblinCohort());
+        BlazingShoal shoal = new BlazingShoal();
+        harness.setHand(player1, List.of(shoal));
+
+        assertThatThrownBy(() ->
+                harness.castInstantWithAlternateExileFromHand(player1, 0, 2, creature.getId(), 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shoal);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land cannot pay the alternate cost even when X is zero")
+    void zeroXDoesNotAllowExilingAColorlessLand() {
+        Permanent creature = addCreatureReady(player1, new GoblinCohort());
+        TendoIceBridge land = new TendoIceBridge();
+        BlazingShoal shoal = new BlazingShoal();
+        harness.setHand(player1, List.of(shoal, land));
+
+        assertThatThrownBy(() ->
+                harness.castInstantWithAlternateExileFromHand(player1, 0, 0, creature.getId(), 1))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shoal, land);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("Resolving gives target creature +X/+0")

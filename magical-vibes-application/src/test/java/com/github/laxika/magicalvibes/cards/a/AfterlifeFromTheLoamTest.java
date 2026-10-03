@@ -93,6 +93,88 @@ class AfterlifeFromTheLoamTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void mayReturnOnlyTheOpponentsCreature() {
+        Card ownCreature = new GrizzlyBears();
+        Card opponentCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setHand(player1, List.of(new AfterlifeFromTheLoam()));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCreature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature);
+        assertThat(findPermanent(player1, "Hill Giant").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Hill Giant").getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    void resolvesForTheRemainingTargetWhenOneLeavesTheGraveyard() {
+        Card ownCreature = new GrizzlyBears();
+        Card opponentCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setHand(player1, List.of(new AfterlifeFromTheLoam()));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(findPermanent(player1, "Hill Giant").getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    void delvePaysTheGenericCostWhileLeavingChosenCreaturesInTheGraveyards() {
+        Card ownCreature = new GrizzlyBears();
+        Card opponentCreature = new HillGiant();
+        List<Card> delvedCards = List.of(new HolyDay(), new HolyDay(), new HolyDay(),
+                new HolyDay(), new HolyDay());
+        harness.setGraveyard(player1, List.of(ownCreature, delvedCards.get(0), delvedCards.get(1),
+                delvedCards.get(2), delvedCards.get(3), delvedCards.get(4)));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setHand(player1, List.of(new AfterlifeFromTheLoam()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, null, List.of(1, 2, 3, 4, 5));
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(delvedCards);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    void mayTargetACreatureThatIsExiledToPayForDelve() {
+        Card ownCreature = new GrizzlyBears();
+        Card opponentCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setHand(player1, List.of(new AfterlifeFromTheLoam()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(ownCreature.getId(), opponentCreature.getId()), List.of(),
+                false, null, null, null, null, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCreature);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLACK, 3);

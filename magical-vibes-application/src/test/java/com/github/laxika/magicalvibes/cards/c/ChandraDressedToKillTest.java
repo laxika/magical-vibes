@@ -1,20 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BurrentonForgeTender;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChandraDressedToKill.class, FieryTemper.class, ThinkTwice.class, BurrentonForgeTender.class})
 class ChandraDressedToKillTest extends BaseCardTest {
 
     @Test
@@ -61,31 +59,33 @@ class ChandraDressedToKillTest extends BaseCardTest {
     @DisplayName("+1 exile grants cast permission when the top card is red")
     void secondPlusOneExilesRedWithCastPermission() {
         Permanent chandra = addReadyChandra(player1);
-        Card shock = putColoredSpellOnTop(player1, "Shock", CardColor.RED, "{R}");
+        Card temper = new FieryTemper();
+        harness.setLibrary(player1, List.of(temper));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getId().equals(shock.getId()));
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(shock.getId());
+                .anyMatch(c -> c.getId().equals(temper.getId()));
+        assertThat(gd.exilePlayPermissions.get(temper.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(temper.getId());
     }
 
     @Test
     @DisplayName("+1 exile does not grant cast permission when the top card is not red")
     void secondPlusOneExilesNonRedWithoutCastPermission() {
         Permanent chandra = addReadyChandra(player1);
-        Card opt = putColoredSpellOnTop(player1, "Opt", CardColor.BLUE, "{U}");
+        Card thinkTwice = new ThinkTwice();
+        harness.setLibrary(player1, List.of(thinkTwice));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getId().equals(opt.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(opt.getId());
+                .anyMatch(c -> c.getId().equals(thinkTwice.getId()));
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(thinkTwice.getId());
     }
 
     @Test
@@ -94,11 +94,12 @@ class ChandraDressedToKillTest extends BaseCardTest {
         Permanent chandra = addReadyChandra(player1);
         chandra.setCounterCount(CounterType.LOYALTY, 7);
 
-        Card red1 = putColoredSpellOnTop(player1, "Red One", CardColor.RED, "{R}");
-        Card blue = putColoredSpellOnTop(player1, "Blue One", CardColor.BLUE, "{U}");
-        Card red2 = putColoredSpellOnTop(player1, "Red Two", CardColor.RED, "{1}{R}");
-        Card green = putColoredSpellOnTop(player1, "Green One", CardColor.GREEN, "{G}");
-        Card red3 = putColoredSpellOnTop(player1, "Red Three", CardColor.RED, "{R}");
+        Card red1 = new FieryTemper();
+        Card blue = new ThinkTwice();
+        Card red2 = new FieryTemper();
+        Card nonRed = new ThinkTwice();
+        Card red3 = new FieryTemper();
+        harness.setLibrary(player1, List.of(red1, blue, red2, nonRed, red3));
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -106,55 +107,43 @@ class ChandraDressedToKillTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Chandra, Dressed to Kill");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
-                .contains(red1.getId(), blue.getId(), red2.getId(), green.getId(), red3.getId());
+                .contains(red1.getId(), blue.getId(), red2.getId(), nonRed.getId(), red3.getId());
         assertThat(gd.exilePlayPermissions.get(red1.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissions.get(red2.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissions.get(red3.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissions).doesNotContainKey(blue.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(green.getId());
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(nonRed.getId());
 
         assertThat(gd.emblems).hasSize(1);
-        Emblem emblem = gd.emblems.getFirst();
-        assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-        assertThat(emblem.staticEffects().getFirst())
-                .isInstanceOf(DealDamageEqualToManaSpentToCastToAnyTargetEffect.class);
+        assertThat(gd.emblems.getFirst().controllerId()).isEqualTo(player1.getId());
     }
 
     @Test
     @DisplayName("Emblem deals mana spent to cast a red spell to any target")
     void emblemDealsManaSpentDamageOnRedSpell() {
-        addReadyChandra(player1);
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new DealDamageEqualToManaSpentToCastToAnyTargetEffect(
-                        new CardColorPredicate(CardColor.RED))
-        ), new ChandraDressedToKill()));
+        createEmblem();
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        // Shock the controller so emblem damage to the opponent is unambiguous
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        // Target the controller so emblem damage to the opponent is unambiguous.
         harness.castInstant(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        // Shock costs {R} — emblem deals 1 to the opponent
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
     }
 
     @Test
     @DisplayName("Emblem does not trigger on a non-red spell")
     void emblemIgnoresNonRedSpells() {
-        addReadyChandra(player1);
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new DealDamageEqualToManaSpentToCastToAnyTargetEffect(
-                        new CardColorPredicate(CardColor.RED))
-        ), new ChandraDressedToKill()));
+        createEmblem();
 
-        harness.setHand(player1, List.of(new Opt()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
@@ -171,24 +160,154 @@ class ChandraDressedToKillTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
+    @Test
+    void firstPlusOneUsesTheStackEvenWithoutATarget() {
+        addReadyChandra(player1);
+        int redBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.RED);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(redBefore);
+        harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(redBefore + 1);
+    }
+
+    @Test
+    void firstPlusOneCanDamageAPlaneswalker() {
+        addReadyChandra(player1);
+        Permanent opposingChandra = harness.addToBattlefieldAndReturn(player2, new ChandraDressedToKill());
+        opposingChandra.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, 0, 0, null, opposingChandra.getId());
+        harness.passBothPriorities();
+
+        assertThat(opposingChandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    void firstPlusOneAddsNoManaIfItsOnlyTargetBecomesIllegal() {
+        addReadyChandra(player1);
+        Permanent opposingChandra = harness.addToBattlefieldAndReturn(player2, new ChandraDressedToKill());
+        opposingChandra.setCounterCount(CounterType.LOYALTY, 3);
+        int redBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.RED);
+        harness.activateAbility(player1, 0, 0, null, opposingChandra.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(opposingChandra);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(redBefore);
+    }
+
+    @Test
+    void secondPlusOneAllowsCastingTheExiledRedCardByPayingItsCost() {
+        addReadyChandra(player1);
+        Card temper = new FieryTemper();
+        harness.setLibrary(player1, List.of(temper));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 3);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromExile(player1, temper.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(temper);
+    }
+
+    @Test
+    void secondPlusOneDoesNotWaiveTheExiledCardsManaCost() {
+        addReadyChandra(player1);
+        Card temper = new FieryTemper();
+        harness.setLibrary(player1, List.of(temper));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, temper.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(temper);
+    }
+
+    @Test
+    void secondPlusOneResolvesWithAnEmptyLibrary() {
+        Permanent chandra = addReadyChandra(player1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void ultimateExilesTheRemainingCardsOfAShortLibrary() {
+        Permanent chandra = addReadyChandra(player1);
+        chandra.setCounterCount(CounterType.LOYALTY, 8);
+        Card temper = new FieryTemper();
+        Card thinkTwice = new ThinkTwice();
+        harness.setLibrary(player1, List.of(temper, thinkTwice));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(temper, thinkTwice);
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.emblems).hasSize(1);
+    }
+
+    @Test
+    void ultimateCreatesAnEmblemEvenWithAnEmptyLibrary() {
+        createEmblem();
+
+        assertThat(gd.emblems).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Chandra, Dressed to Kill");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void emblemCanTargetAndDamageACreatureWithProtectionFromRed() {
+        createEmblem();
+        Permanent forgeTender = harness.addToBattlefieldAndReturn(player2, new BurrentonForgeTender());
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.handlePermanentChosen(player1, forgeTender.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Burrenton Forge-Tender");
+    }
+
+    @Test
+    void emblemDoesNotTriggerForAnOpponentsRedSpell() {
+        createEmblem();
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
+
     private Permanent addReadyChandra(Player player) {
-        Permanent perm = new Permanent(new ChandraDressedToKill());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChandraDressedToKill());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
-    private Card putColoredSpellOnTop(Player player, String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.setColors(List.of(color));
-        gd.playerDecks.get(player.getId()).addFirst(card);
-        return card;
+    private void createEmblem() {
+        Permanent chandra = addReadyChandra(player1);
+        chandra.setCounterCount(CounterType.LOYALTY, 7);
+        harness.setLibrary(player1, List.of());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
     }
 }

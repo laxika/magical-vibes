@@ -78,6 +78,47 @@ class AetherBarrierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller can sacrifice Aether Barrier before their creature resolves")
+    void controllerCanSacrificeBarrierItself() {
+        harness.addToBattlefield(player1, new AetherBarrier());
+        harness.addToBattlefield(player1, new Oraxid());
+        var barrierId = harness.getPermanentId(player1, "Aether Barrier");
+
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new Oraxid(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).contains(barrierId).hasSize(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(barrierId));
+
+        harness.assertInGraveyard(player1, "Aether Barrier");
+        harness.assertNotOnBattlefield(player1, "Aether Barrier");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A caster with no permanents can decline payment and still resolve the creature")
+    void noPermanentsDoesNotPreventCreatureResolving() {
+        harness.addToBattlefield(player1, new AetherBarrier());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Oraxid(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Aether Barrier");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Oraxid");
+        harness.assertNotInGraveyard(player2, "Oraxid");
+    }
+
+    @Test
     @DisplayName("Declining to pay makes the caster sacrifice a permanent of their choice")
     void casterSacrificesWhenTheyDeclineToPay() {
         harness.addToBattlefield(player1, new AetherBarrier());

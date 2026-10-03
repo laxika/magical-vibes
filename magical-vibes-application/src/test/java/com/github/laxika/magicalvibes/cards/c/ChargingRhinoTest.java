@@ -19,12 +19,11 @@ class ChargingRhinoTest extends BaseCardTest {
     @Test
     @DisplayName("Charging Rhino can be blocked by one creature")
     void canBeBlockedByOneCreature() {
-        Permanent attacker = addCreatureReady(player1, new ChargingRhino());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new ChargingRhino());
 
         Permanent blocker = addCreatureReady(player2, new BayouDragonfly());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -34,13 +33,12 @@ class ChargingRhinoTest extends BaseCardTest {
     @Test
     @DisplayName("Charging Rhino cannot be blocked by two creatures")
     void cannotBeBlockedByTwoCreatures() {
-        Permanent attacker = addCreatureReady(player1, new ChargingRhino());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new ChargingRhino());
 
         addCreatureReady(player2, new BayouDragonfly());
         addCreatureReady(player2, new BayouDragonfly());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -53,15 +51,13 @@ class ChargingRhinoTest extends BaseCardTest {
     @Test
     @DisplayName("Each Charging Rhino can be blocked by one creature")
     void eachAttackerCanBeBlockedByOneCreature() {
-        Permanent firstAttacker = addCreatureReady(player1, new ChargingRhino());
-        firstAttacker.setAttacking(true);
-        Permanent secondAttacker = addCreatureReady(player1, new ChargingRhino());
-        secondAttacker.setAttacking(true);
+        addCreatureReady(player1, new ChargingRhino());
+        addCreatureReady(player1, new ChargingRhino());
 
         Permanent firstBlocker = addCreatureReady(player2, new BayouDragonfly());
         Permanent secondBlocker = addCreatureReady(player2, new BayouDragonfly());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -75,15 +71,13 @@ class ChargingRhinoTest extends BaseCardTest {
     @Test
     @DisplayName("Charging Rhino's block limit applies only to Charging Rhino")
     void blockLimitAppliesOnlyToChargingRhino() {
-        Permanent rhino = addCreatureReady(player1, new ChargingRhino());
-        rhino.setAttacking(true);
-        Permanent otherAttacker = addCreatureReady(player1, new BayouDragonfly());
-        otherAttacker.setAttacking(true);
+        addCreatureReady(player1, new ChargingRhino());
+        addCreatureReady(player1, new BayouDragonfly());
 
         Permanent firstBlocker = addCreatureReady(player2, new BayouDragonfly());
         Permanent secondBlocker = addCreatureReady(player2, new BayouDragonfly());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 1),
@@ -92,5 +86,20 @@ class ChargingRhinoTest extends BaseCardTest {
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Charging Rhino may go unblocked and deal combat damage")
+    void canGoUnblocked() {
+        addCreatureReady(player1, new ChargingRhino());
+        Permanent availableBlocker = addCreatureReady(player2, new BayouDragonfly());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(availableBlocker.isBlocking()).isFalse();
+        harness.assertLife(player2, 16);
     }
 }

@@ -68,6 +68,96 @@ class CloudOfDarknessTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Nonpermanent cards alone give no debuff")
+    void noPermanentCardsMeansZeroDebuff() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock()));
+
+        castCloud(target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The graveyard is counted when the triggered ability resolves")
+    void countsGraveyardAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        castCloud(target.getId());
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The resolved debuff does not change when the graveyard changes")
+    void resolvedDebuffIsFixed() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        castCloud(target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature reduced to zero toughness dies")
+    void lethalDebuffPutsTargetInGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Forest(), new GrizzlyBears()));
+
+        castCloud(target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The ability survives its source dying and counts that source in the graveyard")
+    void sourceDyingBeforeResolutionStillCounts() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castCloud(target.getId());
+        harness.passBothPriorities();
+        UUID cloudId = harness.getPermanentId(player1, "Cloud of Darkness");
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, cloudId);
+        harness.castAndResolveInstant(player2, 0, cloudId);
+
+        harness.assertInGraveyard(player1, "Cloud of Darkness");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cloud can enter when there are no opposing creatures to target")
+    void canEnterWithoutLegalTargets() {
+        harness.castFromHand(player1, new CloudOfDarkness(), "{2}{B}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cloud of Darkness");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castCloud(UUID targetId) {
         harness.setHand(player1, List.of(new CloudOfDarkness()));
         addCloudMana();

@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CorpseDance.class, GrizzlyBears.class, SerraAngel.class, LightningBolt.class})
+@CardUsed({CorpseDance.class, GrizzlyBears.class, SerraAngel.class, LightningBolt.class, Counterspell.class})
 class CorpseDanceTest extends BaseCardTest {
 
     @Test
@@ -161,14 +161,76 @@ class CorpseDanceTest extends BaseCardTest {
     @DisplayName("Does nothing when the graveyard holds no creature card")
     void doesNothingWithoutCreatureCard() {
         harness.setGraveyard(player1, List.of(new LightningBolt()));
-        harness.setHand(player1, List.of(new CorpseDance()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new CorpseDance(), "{2}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Corpse Dance");
+    }
+
+    @Test
+    @DisplayName("The top creature is determined on resolution, after responding spells")
+    void choosesTopCreatureAtResolution() {
+        harness.setGraveyard(player1, List.of(new SerraAngel()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        harness.castFromHand(player1, new CorpseDance(), "{2}{B}");
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Serra Angel");
+        harness.assertNotOnBattlefield(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Casting during the end step delays exile until the next turn and haste expires")
+    void endStepReanimationWaitsUntilNextEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new CorpseDance(), "{2}{B}");
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(returned.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Countering Corpse Dance prevents buyback from returning it to hand")
+    void counteredSpellDoesNotReturnWithBuyback() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        CorpseDance dance = new CorpseDance();
+        harness.setHand(player1, List.of(dance));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castInstantWithBuyback(player1, 0, null);
+
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, dance.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Corpse Dance");
+        harness.assertNotInHand(player1, "Corpse Dance");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }

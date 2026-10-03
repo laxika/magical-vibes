@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ClifftopRetreat.class, Mountain.class, Plains.class, Swamp.class})
 class ClifftopRetreatTest extends BaseCardTest {
-
-    // ===== Enters tapped (no qualifying lands) =====
 
     @Test
     @DisplayName("Enters tapped when you control no lands")
@@ -46,8 +46,6 @@ class ClifftopRetreatTest extends BaseCardTest {
         Permanent retreat = findRetreat(player1);
         assertThat(retreat.isTapped()).isTrue();
     }
-
-    // ===== Enters untapped (qualifying lands present) =====
 
     @Test
     @DisplayName("Enters untapped when you control a Mountain")
@@ -95,8 +93,6 @@ class ClifftopRetreatTest extends BaseCardTest {
         assertThat(retreat.isTapped()).isFalse();
     }
 
-    // ===== Only checks your lands, not opponent's =====
-
     @Test
     @DisplayName("Opponent's Mountain does not satisfy the check")
     void opponentMountainDoesNotCount() {
@@ -111,8 +107,6 @@ class ClifftopRetreatTest extends BaseCardTest {
         Permanent retreat = findRetreat(player1);
         assertThat(retreat.isTapped()).isTrue();
     }
-
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Tapping for red mana produces one red")
@@ -136,12 +130,70 @@ class ClifftopRetreatTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("A tapped Mountain still allows Clifftop Retreat to enter untapped")
+    void tappedMountainQualifies() {
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+        harness.setHand(player1, List.of(new ClifftopRetreat()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findRetreat(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Clifftop Retreat does not satisfy the entry condition")
+    void anotherRetreatDoesNotQualify() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new ClifftopRetreat());
+        harness.setHand(player1, List.of(new ClifftopRetreat()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> !permanent.getId().equals(existing.getId()))
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.isTapped()).isTrue());
+    }
+
+    @Test
+    @DisplayName("Opponent's Plains does not satisfy the entry condition")
+    void opponentPlainsDoesNotCount() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new ClifftopRetreat()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findRetreat(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Entering without a land play still applies the tapped replacement")
+    void entersTappedWhenPutOntoBattlefield() {
+        Permanent retreat = harness.enterBattlefieldAndReturn(player1, new ClifftopRetreat());
+
+        assertThat(retreat.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Entering without a land play checks the new controller's Plains")
+    void entersUntappedWhenPutOntoBattlefieldWithPlains() {
+        harness.addToBattlefield(player2, new Plains());
+
+        Permanent retreat = harness.enterBattlefieldAndReturn(player2, new ClifftopRetreat());
+
+        assertThat(retreat.isTapped()).isFalse();
+    }
 
     private Permanent addRetreatReady(Player player) {
-        Permanent perm = new Permanent(new ClifftopRetreat());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ClifftopRetreat());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

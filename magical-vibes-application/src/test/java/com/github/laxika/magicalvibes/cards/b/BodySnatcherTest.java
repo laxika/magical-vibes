@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.cards.r.RapidDecay;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BodySnatcher.class, Forest.class, GrizzlyBears.class, Juggernaut.class, WrathOfGod.class})
+@CardUsed({BodySnatcher.class, Forest.class, GrizzlyBears.class, Juggernaut.class, RapidDecay.class, WrathOfGod.class})
 class BodySnatcherTest extends BaseCardTest {
 
     @Test
@@ -151,6 +153,55 @@ class BodySnatcherTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(opponentCreature.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
+    }
+
+    @Test
+    @DisplayName("The death trigger returns its target even if Body Snatcher is exiled in response")
+    void deathTriggerReturnsTargetWhenSourceLeavesGraveyard() {
+        Card bodySnatcher = new BodySnatcher();
+        Card target = new GrizzlyBears();
+        addCreatureReady(player1, bodySnatcher);
+        harness.setGraveyard(player1, List.of(target));
+        castWrathOfGod();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        exileGraveyardCardInResponse(bodySnatcher);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bodySnatcher.getId()));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An illegal death-trigger target prevents both the exile and the return")
+    void illegalDeathTriggerTargetLeavesBodySnatcherInGraveyard() {
+        Card bodySnatcher = new BodySnatcher();
+        Card target = new GrizzlyBears();
+        addCreatureReady(player1, bodySnatcher);
+        harness.setGraveyard(player1, List.of(target));
+        castWrathOfGod();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        exileGraveyardCardInResponse(target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Body Snatcher");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getId().equals(target.getId()))
+                .noneMatch(entry -> entry.card().getId().equals(bodySnatcher.getId()));
+    }
+
+    private void exileGraveyardCardInResponse(Card card) {
+        harness.setHand(player1, List.of(new RapidDecay()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.passBothPriorities();
     }
 
     private Card castBodySnatcherWithCreatureInHand() {

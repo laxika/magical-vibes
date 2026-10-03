@@ -24,12 +24,11 @@ class AmbushCommanderTest extends BaseCardTest {
     @Test
     @DisplayName("Only your Forests become 1/1 green Elf creatures that are still lands")
     void animatesForests() {
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player1, new Mountain());
+        Permanent forest1 = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent forest2 = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.addToBattlefield(player1, new AmbushCommander());
 
-        Permanent forest1 = findPermanent(player1, "Forest");
         assertThat(gqs.isCreature(gd, forest1)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest1)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, forest1)).isEqualTo(1);
@@ -37,12 +36,10 @@ class AmbushCommanderTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, forest1)).containsExactly(CardColor.GREEN);
         assertThat(gqs.effectiveCreatureSubtypes(gd, forest1)).contains(CardSubtype.ELF);
 
-        Permanent forest2 = findPermanent(player2, "Forest");
         assertThat(gqs.isCreature(gd, forest2)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, forest2)).doesNotContain(CardSubtype.ELF);
         assertThat(gqs.isLand(gd, forest2)).isTrue();
 
-        Permanent mountain = findPermanent(player1, "Mountain");
         assertThat(gqs.isCreature(gd, mountain)).isFalse();
     }
 
@@ -158,5 +155,67 @@ class AmbushCommanderTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
         assertThat(gqs.isLand(gd, forest)).isTrue();
         harness.assertInGraveyard(player1, "Elvish Mystic");
+    }
+
+    @Test
+    @DisplayName("Sacrificing the commander ends its animation before the ability resolves")
+    void sacrificingCommanderMakesForestTargetIllegal() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new AmbushCommander());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.handlePermanentChosen(player1, commander.getId());
+
+        harness.assertInGraveyard(player1, "Ambush Commander");
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, forest)).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, forest)).doesNotContain(CardSubtype.ELF);
+
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new AmbushCommander());
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A second commander keeps the Forest target animated when the first is sacrificed")
+    void secondCommanderKeepsForestTargetLegal() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new AmbushCommander());
+        harness.addToBattlefield(player1, new AmbushCommander());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.handlePermanentChosen(player1, commander.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The target Elf may itself be sacrificed and the ability then has no legal target")
+    void canSacrificeTargetElf() {
+        harness.addToBattlefield(player1, new AmbushCommander());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Ambush Commander");
+        assertThat(gd.stack).isEmpty();
     }
 }

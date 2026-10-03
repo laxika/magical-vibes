@@ -64,4 +64,70 @@ class CastleLocthwainTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
     }
+
+    @Test
+    @DisplayName("An opponent's Swamp does not let the land enter untapped")
+    void entersTappedWithOnlyOpponentsSwamp() {
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new CastleLocthwain()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Castle Locthwain").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Swamp still lets the land enter untapped")
+    void entersUntappedWithTappedSwamp() {
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
+        harness.setHand(player1, List.of(new CastleLocthwain()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Castle Locthwain").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Drawing with an empty hand loses one life and affects only the controller")
+    void drawsFromEmptyHandAndLosesOneLife() {
+        harness.addToBattlefield(player1, new CastleLocthwain());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Swamp(), new Swamp()));
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanent(player1, "Castle Locthwain").isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Life loss uses the hand size at resolution rather than activation")
+    void countsHandAtResolution() {
+        harness.addToBattlefield(player1, new CastleLocthwain());
+        harness.setHand(player1, List.of(new Swamp(), new Swamp(), new Swamp()));
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
 }

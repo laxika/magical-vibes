@@ -22,7 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Bandage.class, BallistaSquad.class, GrizzlyBears.class})
+@CardUsed({Bandage.class, BallistaSquad.class, GrizzlyBears.class, BlackKnight.class,
+        GarrukWildspeaker.class, Shock.class})
 class BandageTest extends BaseCardTest {
 
     @Test
@@ -179,7 +180,7 @@ class BandageTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
@@ -288,6 +289,42 @@ class BandageTest extends BaseCardTest {
         Permanent afterCleanup = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(afterCleanup.getDamagePreventionShield()).isEqualTo(0);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Bandage prevents only one damage across successive spells")
+    void onlyPreventsTheNextDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Bandage(), new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 19);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 17);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Two Bandages prevent two damage and each draws a card")
+    void preventionFromMultipleBandagesAccumulates() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Bandage(), new Bandage(), new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 }
 

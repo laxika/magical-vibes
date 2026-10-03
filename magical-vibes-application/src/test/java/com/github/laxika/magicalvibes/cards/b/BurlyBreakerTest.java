@@ -48,7 +48,7 @@ class BurlyBreakerTest extends BaseCardTest {
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(breaker.getCard()).isInstanceOf(DireStrainDemolisher.class);
 
-        gd.spellsCastLastTurn.put(player1.getId(), 2);
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
         advanceToUntap(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
@@ -76,6 +76,76 @@ class BurlyBreakerTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Shock");
     }
 
+    @Test
+    void enteringWhenNeitherDayNorNightEstablishesDay() {
+        gd.dayNight = DayNight.NEITHER;
+
+        Permanent breaker = harness.enterBattlefieldAndReturn(player1, new BurlyBreaker());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(breaker.isTransformed()).isFalse();
+    }
+
+    @Test
+    void remainsDayWhenPreviousActivePlayerCastOneSpell() {
+        Permanent breaker = addReadyBreaker(DayNight.DAY);
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(breaker.isTransformed()).isFalse();
+    }
+
+    @Test
+    void remainsNightWhenOnlyNonactivePlayerCastTwoSpellsLastTurn() {
+        Permanent breaker = addReadyBreaker(DayNight.NIGHT);
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+        gd.spellsCastLastTurn.put(player1.getId(), 2);
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(breaker.isTransformed()).isTrue();
+    }
+
+    @Test
+    void frontFaceWardCountersSpellWhenPaymentIsDeclined() {
+        Permanent breaker = addReadyBreaker(DayNight.DAY);
+        castShockAt(breaker, 1);
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(breaker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void backFaceWardAllowsPaymentOfThreeAndSpellResolves() {
+        Permanent breaker = addReadyBreaker(DayNight.NIGHT);
+        castShockAt(breaker, 3);
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(breaker.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void wardDoesNotTriggerForControllersOwnSpell() {
+        Permanent breaker = addReadyBreaker(DayNight.NIGHT);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, breaker.getId());
+
+        assertThat(breaker.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
     private Permanent addReadyBreaker(DayNight dayNight) {
         gd.dayNight = dayNight;
         Permanent breaker = harness.enterBattlefieldAndReturn(player1, new BurlyBreaker());
@@ -89,8 +159,7 @@ class BurlyBreakerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1 + extraMana);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 
     private void advanceToUntap(Player activePlayer) {

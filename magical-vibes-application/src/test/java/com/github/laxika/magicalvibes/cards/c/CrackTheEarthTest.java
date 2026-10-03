@@ -112,4 +112,61 @@ class CrackTheEarthTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Gnarled Mass");
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Automatic sacrifices wait until the other player has chosen")
+    void automaticSacrificeWaitsForOtherPlayersChoice() {
+        harness.addToBattlefield(player1, new GnarledMass());
+        harness.addToBattlefield(player2, new TendoIceBridge());
+        harness.addToBattlefield(player2, new GodsEyeGateToTheReikai());
+
+        harness.castFromHand(player1, new CrackTheEarth(), "{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertNotInGraveyard(player1, "Gnarled Mass");
+        harness.handleMultiplePermanentsChosen(player2,
+                List.of(harness.getPermanentId(player2, "Tendo Ice Bridge")));
+
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+        harness.assertInGraveyard(player2, "Tendo Ice Bridge");
+        harness.assertOnBattlefield(player2, "Gods' Eye, Gate to the Reikai");
+    }
+
+    @Test
+    @DisplayName("A chosen permanent stays on the battlefield until every player has chosen")
+    void chosenPermanentWaitsForLastChoice() {
+        harness.addToBattlefield(player1, new TendoIceBridge());
+        harness.addToBattlefield(player1, new GnarledMass());
+        harness.addToBattlefield(player2, new TendoIceBridge());
+        harness.addToBattlefield(player2, new GnarledMass());
+
+        harness.castFromHand(player1, new CrackTheEarth(), "{R}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Tendo Ice Bridge")));
+
+        harness.assertOnBattlefield(player1, "Tendo Ice Bridge");
+        harness.assertNotInGraveyard(player1, "Tendo Ice Bridge");
+        harness.handleMultiplePermanentsChosen(player2,
+                List.of(harness.getPermanentId(player2, "Gnarled Mass")));
+
+        harness.assertInGraveyard(player1, "Tendo Ice Bridge");
+        harness.assertInGraveyard(player2, "Gnarled Mass");
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertOnBattlefield(player2, "Tendo Ice Bridge");
+    }
+
+    @Test
+    @DisplayName("The spell resolves when neither player controls a permanent")
+    void resolvesWithEmptyBattlefields() {
+        harness.castFromHand(player1, new CrackTheEarth(), "{R}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Crack the Earth");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
 }

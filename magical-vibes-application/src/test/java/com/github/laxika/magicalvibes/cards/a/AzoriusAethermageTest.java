@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AzoriusAethermage.class, Boomerang.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({AzoriusAethermage.class, Boomerang.class, Forest.class, GrizzlyBears.class, Humility.class, Island.class})
 class AzoriusAethermageTest extends BaseCardTest {
 
     @Test
@@ -101,6 +102,81 @@ class AzoriusAethermageTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).contains(target.getOriginalCard());
+    }
+
+    @Test
+    @DisplayName("Your permanent returning from an opponent's battlefield triggers the ability")
+    void ownedPermanentControlledByOpponentTriggers() {
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addToBattlefield(player1, new AzoriusAethermage());
+        GrizzlyBears bear = new GrizzlyBears();
+        bear.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, bear);
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        castAndResolveBounce(target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear, drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(bear);
+    }
+
+    @Test
+    @DisplayName("An opponent's permanent you control returning to their hand does not trigger")
+    void controlledPermanentOwnedByOpponentDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AzoriusAethermage());
+        GrizzlyBears bear = new GrizzlyBears();
+        bear.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, bear);
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).contains(bear);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bear);
+    }
+
+    @Test
+    @DisplayName("Two Aethermages require separate payments for their draws")
+    void twoAethermagesHaveSeparatePayments() {
+        Forest firstDraw = new Forest();
+        Forest secondDraw = new Forest();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addToBattlefield(player1, new AzoriusAethermage());
+        harness.addToBattlefield(player1, new AzoriusAethermage());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        castAndResolveBounce(target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target.getOriginalCard(), firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Humility removes Aethermage's return-to-hand trigger")
+    void humilitySuppressesReturnToHandTrigger() {
+        harness.addToBattlefield(player1, new AzoriusAethermage());
+        harness.addToBattlefield(player2, new Humility());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target.getOriginalCard());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private void castAndResolveBounce(UUID targetId) {

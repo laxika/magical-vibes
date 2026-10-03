@@ -1,8 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.t.TezzeretAgentOfBolas;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
+import com.github.laxika.magicalvibes.cards.g.GustSkimmer;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,58 +21,46 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlisterstickShaman.class, LeoninSkyhunter.class, GustSkimmer.class, TezzeretAgentOfBolas.class})
 class BlisterstickShamanTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
-    @DisplayName("Casting Blisterstick Shaman targeting a creature puts it on the stack")
-    void castingTargetingCreaturePutsItOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+    @DisplayName("Casting Blisterstick Shaman does not target a creature")
+    void castingDoesNotTargetCreature() {
+        harness.addToBattlefield(player2, new LeoninSkyhunter());
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Blisterstick Shaman");
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test
-    @DisplayName("Casting Blisterstick Shaman targeting a player puts it on the stack")
-    void castingTargetingPlayerPutsItOnStack() {
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, player2.getId(), null);
+    @DisplayName("Casting Blisterstick Shaman does not target a player")
+    void castingDoesNotTargetPlayer() {
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Blisterstick Shaman");
-        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isNull();
     }
-
-    // ===== ETB trigger =====
 
     @Test
     @DisplayName("Resolving Blisterstick Shaman enters battlefield and triggers ETB")
     void resolvingEntersBattlefieldAndTriggersEtb() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.addToBattlefield(player2, new LeoninSkyhunter());
+        UUID targetId = harness.getPermanentId(player2, "Leonin Skyhunter");
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Blisterstick Shaman");
@@ -80,82 +73,65 @@ class BlisterstickShamanTest extends BaseCardTest {
         assertThat(trigger.getTargetId()).isEqualTo(targetId);
     }
 
-    // ===== Damage to creature =====
-
     @Test
-    @DisplayName("ETB deals 1 damage to target creature, killing a 1/1")
-    void etbDeals1DamageToCreatureKillsOneOne() {
-        GrizzlyBears smallCreature = new GrizzlyBears();
-        smallCreature.setPower(1);
-        smallCreature.setToughness(1);
+    @DisplayName("ETB deals 1 damage to target creature, killing a creature with 1 toughness")
+    void etbDeals1DamageKillsOneToughnessCreature() {
+        GustSkimmer smallCreature = new GustSkimmer();
         harness.addToBattlefield(player2, smallCreature);
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Gust-Skimmer");
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         // Resolve creature spell
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Gust-Skimmer");
+        harness.assertInGraveyard(player2, "Gust-Skimmer");
     }
 
     @Test
     @DisplayName("ETB deals 1 damage to a 2/2 creature but does not kill it")
     void etbDeals1DamageDoesNotKillTwoTwo() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.addToBattlefield(player2, new LeoninSkyhunter());
+        UUID targetId = harness.getPermanentId(player2, "Leonin Skyhunter");
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         // Resolve creature spell
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Leonin Skyhunter");
     }
-
-    // ===== Damage to player =====
 
     @Test
     @DisplayName("ETB deals 1 damage to target player")
     void etbDeals1DamageToPlayer() {
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, player2.getId(), null);
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         // Resolve creature spell
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
-    // ===== No target scenarios =====
-
     @Test
-    @DisplayName("Can cast without a target when no valid targets exist")
+    @DisplayName("Can cast without choosing an ETB target")
     void canCastWithoutTarget() {
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -163,35 +139,32 @@ class BlisterstickShamanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.castCreature(player1, 0);
+    @DisplayName("ETB requires a target even when none was supplied during casting")
+    void etbTriggersWithoutCastTimeTarget() {
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         // Resolve creature spell
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Blisterstick Shaman");
-        assertThat(gd.stack).isEmpty();
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("ETB fizzles if target creature is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BlisterstickShaman()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.addToBattlefield(player2, new LeoninSkyhunter());
+        UUID targetId = harness.getPermanentId(player2, "Leonin Skyhunter");
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
 
         // Remove target before ETB resolves
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
@@ -202,5 +175,77 @@ class BlisterstickShamanTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("A supplied cast-time target must not become the ETB target")
+    void castTimeTargetDoesNotBindEtbTarget() {
+        harness.setHand(player1, List.of(new BlisterstickShaman()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0, player2.getId());
+
+        assertThat(harness.getGameData().stack.getFirst().getTargetId()).isNull();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("ETB can target the Shaman itself")
+    void etbCanTargetItself() {
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Blisterstick Shaman"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blisterstick Shaman");
+        harness.assertInGraveyard(player1, "Blisterstick Shaman");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("ETB still deals damage after the Shaman leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB can damage a creature controlled by its controller")
+    void etbCanTargetOwnCreature() {
+        harness.addToBattlefield(player1, new GustSkimmer());
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Gust-Skimmer"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gust-Skimmer");
+        harness.assertOnBattlefield(player1, "Blisterstick Shaman");
+    }
+
+    @Test
+    @DisplayName("ETB deals 1 damage to a planeswalker")
+    void etbDamagesPlaneswalker() {
+        Permanent tezzeret = new Permanent(new TezzeretAgentOfBolas());
+        tezzeret.setCounterCount(CounterType.LOYALTY, 3);
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(tezzeret);
+        harness.castFromHand(player1, new BlisterstickShaman(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, tezzeret.getId());
+        harness.passBothPriorities();
+
+        assertThat(tezzeret.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Tezzeret, Agent of Bolas");
+        harness.assertLife(player2, 20);
     }
 }

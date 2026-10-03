@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LiquimetalTorque;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArcboundShikari.class, BronzeSable.class, GrizzlyBears.class, Assassinate.class})
+@CardUsed({ArcboundShikari.class, BronzeSable.class, GrizzlyBears.class, Assassinate.class, LiquimetalTorque.class})
 class ArcboundShikariTest extends BaseCardTest {
 
     @Test
@@ -23,12 +25,7 @@ class ArcboundShikariTest extends BaseCardTest {
         Permanent artifactCreature = harness.addToBattlefieldAndReturn(player1, new BronzeSable());
         Permanent nonartifactCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentArtifactCreature = harness.addToBattlefieldAndReturn(player2, new BronzeSable());
-        harness.setHand(player1, List.of(new ArcboundShikari()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArcboundShikari(), "{1}{R}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -68,7 +65,81 @@ class ArcboundShikariTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, shikari.getId(), null);
+        harness.castSorcery(player2, 0, shikari.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    void entryCountersArePresentBeforeTriggerAndNoncreatureArtifactsAreExcluded() {
+        Permanent otherShikari = addCreatureReady(player1, new ArcboundShikari());
+        otherShikari.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LiquimetalTorque());
+
+        harness.castFromHand(player1, new ArcboundShikari(), "{1}{R}{W}");
+        harness.passBothPriorities();
+
+        Permanent enteringShikari = findPermanents(player1, "Arcbound Shikari").getLast();
+        assertThat(enteringShikari.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(otherShikari.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(enteringShikari.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(otherShikari.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modularCanBeDeclinedAfterChoosingATarget() {
+        Permanent shikari = addCreatureReady(player1, new ArcboundShikari());
+        shikari.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        shikari.tap();
+        Permanent target = addCreatureReady(player1, new ArcboundShikari());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyShikari(shikari);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        String description = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)
+                .description();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Arcbound Shikari");
+        assertThat(description).contains("+1/+1").doesNotContain("-1/-1");
+    }
+
+    @Test
+    void modularCanGiveAllCountersAtDeathToAnOpponentsArtifactCreature() {
+        Permanent shikari = addCreatureReady(player1, new ArcboundShikari());
+        shikari.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        shikari.tap();
+        Permanent target = addCreatureReady(player2, new ArcboundShikari());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyShikari(shikari);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+    }
+
+    @Test
+    void firstStrikeKillsBlockerBeforeItCanDealDamage() {
+        Permanent shikari = addCreatureReady(player1, new ArcboundShikari());
+        shikari.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shikari);
+        assertThat(shikari.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

@@ -144,6 +144,49 @@ class BlackScarabTest extends BaseCardTest {
     }
 
     @Test
+    void canResolveOnOpponentsCreatureAndUsesAuraControllersOpponents() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DrudgeSkeletons());
+        harness.setHand(player1, List.of(new BlackScarab()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Black Scarab");
+        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    void auraControllersOwnBlackPermanentDoesNotBoostOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
+        aura.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player1, new DrudgeSkeletons());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void multipleBlackPermanentsGrantOnlyOneBoostAndOnlyToEnchantedCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
+        aura.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player2, new DrudgeSkeletons());
+        harness.addToBattlefield(player2, new UnderworldDreams());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+    }
+
+    @Test
     void cannotEnchantNonCreature() {
         Permanent underworldDreams = harness.addToBattlefieldAndReturn(player1, new UnderworldDreams());
         harness.setHand(player1, List.of(new BlackScarab()));

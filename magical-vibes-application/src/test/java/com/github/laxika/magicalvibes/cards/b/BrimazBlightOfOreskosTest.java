@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.m.MyrSire;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BrimazBlightOfOreskos.class, BasilicaShepherd.class, MyrSire.class, GrizzlyBears.class})
+@CardUsed({BrimazBlightOfOreskos.class, BasilicaShepherd.class, MyrSire.class, GrizzlyBears.class,
+        DoublingSeason.class})
 class BrimazBlightOfOreskosTest extends BaseCardTest {
 
     @Test
@@ -90,7 +92,79 @@ class BrimazBlightOfOreskosTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+    }
+
+    @Test
+    void eachDoubledIncubatorReceivesCounters() {
+        harness.addToBattlefield(player1, new BrimazBlightOfOreskos());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.setHand(player1, List.of(new MyrSire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Incubator")).hasSize(2)
+                .allSatisfy(token -> assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(4));
+    }
+
+    @Test
+    void incubatorTransformsAndRetainsItsCounters() {
+        harness.addToBattlefield(player1, new BrimazBlightOfOreskos());
+        harness.setHand(player1, List.of(new MyrSire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator),
+                null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, incubator)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, incubator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotIncubateForAnOpponentsQualifiedSpell() {
+        harness.addToBattlefield(player1, new BrimazBlightOfOreskos());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new MyrSire()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void doesNotProliferateForAnOpponentsPhyrexianDeath() {
+        harness.addToBattlefield(player1, new BrimazBlightOfOreskos());
+        gd.creatureSubtypeDeathCountThisTurn.put(player2.getId(), Map.of(CardSubtype.PHYREXIAN, 1));
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void proliferatesAfterAnActualPhyrexianDeath() {
+        harness.addToBattlefield(player1, new BrimazBlightOfOreskos());
+        harness.addToBattlefield(player1, new BasilicaShepherd());
+        Permanent shepherd = findPermanent(player1, "Basilica Shepherd");
+        gd.playerPoisonCounters.put(player2.getId(), 1);
+
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, shepherd);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(2);
     }
 }

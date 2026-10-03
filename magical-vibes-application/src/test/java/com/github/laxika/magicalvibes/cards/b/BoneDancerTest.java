@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.a.Abeyance;
-import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.e.EverlastingTorment;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({BoneDancer.class, BenalishKnight.class, Abeyance.class})
+@CardUsed({BoneDancer.class, BenalishKnight.class, Abeyance.class, EverlastingTorment.class, GrafdiggersCage.class})
 class BoneDancerTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -59,8 +60,7 @@ class BoneDancerTest extends BaseCardTest {
 
         // "If you do, this creature assigns no combat damage this turn."
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 20);
     }
 
@@ -103,8 +103,7 @@ class BoneDancerTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactly(noncreature.getId());
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 18);
     }
 
@@ -118,8 +117,7 @@ class BoneDancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 18);
     }
 
@@ -140,8 +138,7 @@ class BoneDancerTest extends BaseCardTest {
                 .contains(creature.getId());
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 18);
     }
 
@@ -163,5 +160,63 @@ class BoneDancerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getId)
                 .contains(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Successful reanimation assigns no combat damage even when damage cannot be prevented")
+    void reanimationAssignsNoDamageDespiteEverlastingTorment() {
+        addAttacker();
+        harness.addToBattlefield(player1, new EverlastingTorment());
+        Card creature = new BenalishKnight();
+        harness.setGraveyard(player2, List.of(creature));
+
+        attackUnblocked();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Benalish Knight");
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A creature barred from entering stays in the defender's graveyard and combat damage is assigned")
+    void cageLeavesCreatureInDefendingPlayersGraveyardAndDamageIsAssigned() {
+        addAttacker();
+        harness.addToBattlefield(player1, new GrafdiggersCage());
+        Card creature = new BenalishKnight();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setGraveyard(player1, List.of());
+
+        attackUnblocked();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Benalish Knight");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The creature closest to the top is determined when the ability resolves")
+    void usesCurrentTopCreatureAtResolution() {
+        addAttacker();
+        Card earlierCreature = new BenalishKnight();
+        Card laterCreature = new BenalishKnight();
+        Card ownCreature = new BenalishKnight();
+        harness.setGraveyard(player2, List.of(earlierCreature));
+        harness.setGraveyard(player1, List.of(ownCreature));
+
+        attackUnblocked();
+        harness.setGraveyard(player2, List.of(earlierCreature, laterCreature));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .extracting(Card::getId)
+                .contains(laterCreature.getId())
+                .doesNotContain(earlierCreature.getId(), ownCreature.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(earlierCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCreature);
     }
 }

@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "SOC", collectorNumber = "242")
 @CardRegistration(set = "C21", collectorNumber = "50")
 @CardRegistration(set = "OTC", collectorNumber = "161")
+@CardRegistration(set = "BRC", collectorNumber = "115")
 public class CursedMirror extends Card {
 
     public CursedMirror() {

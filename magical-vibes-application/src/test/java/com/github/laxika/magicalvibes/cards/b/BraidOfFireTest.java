@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.r.RonomUnicorn;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BraidOfFire.class)
+@CardUsed({BraidOfFire.class, RonomUnicorn.class})
 class BraidOfFireTest extends BaseCardTest {
 
     @Test
@@ -75,5 +76,83 @@ class BraidOfFireTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Braid of Fire");
         harness.assertInGraveyard(player1, "Braid of Fire");
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger uses the stack and adds no mana before payment")
+    void doesNotAddManaBeforePayment() {
+        Permanent braid = harness.addToBattlefieldAndReturn(player1, new BraidOfFire());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(braid.getCounterCount(CounterType.AGE)).isZero();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+
+            harness.passBothPriorities();
+            assertThat(braid.getCounterCount(CounterType.AGE)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        });
+    }
+
+    @Test
+    @DisplayName("Mana is added only during its controller's upkeep and to that controller")
+    void onlyTriggersDuringControllersUpkeep() {
+        Permanent braid = harness.addToBattlefieldAndReturn(player2, new BraidOfFire());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            assertThat(gd.stack).isEmpty();
+            assertThat(braid.getCounterCount(CounterType.AGE)).isZero();
+
+            advanceToUpkeep(player2);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+
+            assertThat(braid.getCounterCount(CounterType.AGE)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        });
+    }
+
+    @Test
+    @DisplayName("Unused mana empties before the draw step without losing life")
+    void unusedManaEmptiesBeforeDrawStep() {
+        harness.addToBattlefield(player1, new BraidOfFire());
+        int startingLife = gd.getLife(player1.getId());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        });
+        harness.passUntil(player1, TurnStep.DRAW);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
+    }
+
+    @Test
+    @DisplayName("Removing Braid of Fire before its upkeep resolves produces no mana or payment choice")
+    void removedSourceDoesNotProduceMana() {
+        Permanent braid = harness.addToBattlefieldAndReturn(player1, new BraidOfFire());
+        harness.addToBattlefield(player1, new RonomUnicorn());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.activateAbility(player1, 1, null, braid.getId());
+            harness.passBothPriorities();
+            harness.assertInGraveyard(player1, "Braid of Fire");
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        });
     }
 }

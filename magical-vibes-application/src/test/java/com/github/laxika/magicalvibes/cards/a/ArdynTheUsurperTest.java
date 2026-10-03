@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BlackWaltzNo3;
 import com.github.laxika.magicalvibes.cards.d.DemonOfDeathsGate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArdynTheUsurper.class, DemonOfDeathsGate.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ArdynTheUsurper.class, AdelineResplendentCathar.class, BlackWaltzNo3.class,
+        DemonOfDeathsGate.class, Forest.class, GrizzlyBears.class})
 class ArdynTheUsurperTest extends BaseCardTest {
 
     @Test
@@ -77,10 +79,113 @@ class ArdynTheUsurperTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void canChooseNoTargetEvenWhenCreatureCardsAreAvailable() {
+        BlackWaltzNo3 creature = new BlackWaltzNo3();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addToBattlefield(player1, new ArdynTheUsurper());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Black Waltz No. 3");
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    void triggersWithoutTargetsWhenGraveyardsAreEmpty() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.addToBattlefield(player1, new ArdynTheUsurper());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    void copiesOwnGraveyardCreatureAndPreservesItsKeywords() {
+        BlackWaltzNo3 creature = new BlackWaltzNo3();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addToBattlefield(player1, new ArdynTheUsurper());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(token.getCard().getColors()).containsExactly(CardColor.BLACK);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DEMON);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+    }
+
+    @Test
+    void createsNoTokenWhenTargetLeavesGraveyardBeforeResolution() {
+        BlackWaltzNo3 creature = new BlackWaltzNo3();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addToBattlefield(player1, new ArdynTheUsurper());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Black Waltz No. 3");
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().isToken());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    void resolvesAfterArdynLeavesButTokenDoesNotReceiveHisKeywords() {
+        BlackWaltzNo3 creature = new BlackWaltzNo3();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addToBattlefield(player1, new ArdynTheUsurper());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void doesNotCopyPowerDefiningAbilityWhenCreatingFiveFiveToken() {
+        AdelineResplendentCathar creature = new AdelineResplendentCathar();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addToBattlefield(player1, new ArdynTheUsurper());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 }

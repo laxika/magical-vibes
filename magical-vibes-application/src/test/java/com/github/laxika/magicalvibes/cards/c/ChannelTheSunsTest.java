@@ -26,4 +26,25 @@ class ChannelTheSunsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Mana is added only when the sorcery resolves")
+    void manaIsAddedOnlyOnResolution() {
+        harness.castFromHand(player1, new ChannelTheSuns(), "{3}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        for (ManaColor color : new ManaColor[]{ManaColor.WHITE, ManaColor.BLUE,
+                ManaColor.BLACK, ManaColor.RED, ManaColor.GREEN}) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        }
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Channel the Suns");
+    }
 }

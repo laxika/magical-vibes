@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
 import com.github.laxika.magicalvibes.cards.i.IriniSengir;
 import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
 import com.github.laxika.magicalvibes.cards.r.RevekaWizardSavant;
@@ -14,21 +13,17 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BaronSengir.class, MesaFalcon.class, IriniSengir.class, DwarvenTrader.class, RevekaWizardSavant.class})
+@CardUsed({BaronSengir.class, MesaFalcon.class, IriniSengir.class, RevekaWizardSavant.class})
 class BaronSengirTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets a +2/+2 counter when a creature it damaged in combat dies")
     void getsCounterWhenDamagedCreatureDies() {
-        harness.addToBattlefield(player1, new BaronSengir());
-        harness.addToBattlefield(player2, new MesaFalcon());
+        Permanent baron = addCreatureReady(player1, new BaronSengir());
+        Permanent blocker = addCreatureReady(player2, new MesaFalcon());
 
-        Permanent baron = gd.playerBattlefields.get(player1.getId()).getFirst();
-        baron.setSummoningSick(false);
         baron.setAttacking(true);
 
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
-        blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -44,19 +39,15 @@ class BaronSengirTest extends BaseCardTest {
     @Test
     @DisplayName("No counter when the blocking creature survives")
     void noCounterWhenDamagedCreatureSurvives() {
-        harness.addToBattlefield(player1, new BaronSengir());
+        Permanent baron = addCreatureReady(player1, new BaronSengir());
 
         MesaFalcon toughBlocker = new MesaFalcon();
         toughBlocker.setPower(1);
         toughBlocker.setToughness(8);
-        harness.addToBattlefield(player2, toughBlocker);
+        Permanent blocker = addCreatureReady(player2, toughBlocker);
 
-        Permanent baron = gd.playerBattlefields.get(player1.getId()).getFirst();
-        baron.setSummoningSick(false);
         baron.setAttacking(true);
 
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
-        blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -69,19 +60,16 @@ class BaronSengirTest extends BaseCardTest {
     @Test
     @DisplayName("Gets a counter when a creature damaged in combat dies later that turn")
     void getsCounterWhenDamagedCreatureDiesLaterThatTurn() {
-        harness.addToBattlefield(player1, new BaronSengir());
+        Permanent baron = addCreatureReady(player1, new BaronSengir());
         Permanent reveka = addCreatureReady(player1, new RevekaWizardSavant());
 
-        DwarvenTrader damagedCard = new DwarvenTrader();
+        MesaFalcon damagedCard = new MesaFalcon();
         damagedCard.setPower(0);
         damagedCard.setToughness(7);
-        Permanent damagedCreature = harness.addToBattlefieldAndReturn(player2, damagedCard);
+        Permanent damagedCreature = addCreatureReady(player2, damagedCard);
 
-        Permanent baron = gd.playerBattlefields.get(player1.getId()).getFirst();
-        baron.setSummoningSick(false);
         baron.setAttacking(true);
 
-        damagedCreature.setSummoningSick(false);
         damagedCreature.setBlocking(true);
         damagedCreature.addBlockingTarget(0);
 
@@ -96,7 +84,7 @@ class BaronSengirTest extends BaseCardTest {
                 damagedCreature.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Dwarven Trader");
+        harness.assertInGraveyard(player2, "Mesa Falcon");
         assertThat(baron.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
 
         resolveAllTriggers();
@@ -126,6 +114,31 @@ class BaronSengirTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentVampire.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration saves another Vampire from lethal damage")
+    void regenerationPreventsLethalDamage() {
+        Permanent baron = addCreatureReady(player1, new BaronSengir());
+        Permanent vampire = addCreatureReady(player1, new IriniSengir());
+        addCreatureReady(player2, new RevekaWizardSavant());
+
+        harness.activateAbility(player1, 0, null, vampire.getId());
+        harness.passBothPriorities();
+
+        assertThat(baron.isTapped()).isTrue();
+        assertThat(vampire.isTapped()).isFalse();
+
+        harness.activateAbility(player2, 0, null, vampire.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Irini Sengir");
+        harness.assertNotInGraveyard(player1, "Irini Sengir");
+        assertThat(vampire.getRegenerationShield()).isZero();
+        assertThat(vampire.getMarkedDamage()).isZero();
+        assertThat(vampire.isTapped()).isTrue();
+        assertThat(baron.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MH2", collectorNumber = "190")
+@CardRegistration(set = "BRC", collectorNumber = "123")
 public class ChromeCourier extends Card {
 
     public ChromeCourier() {

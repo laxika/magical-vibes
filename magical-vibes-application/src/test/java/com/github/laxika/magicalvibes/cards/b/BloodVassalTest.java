@@ -36,4 +36,33 @@ class BloodVassalTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Blood Vassal");
     }
+
+    @Test
+    @DisplayName("Blood Vassal can be sacrificed for mana while summoning sick")
+    void sacrificeAbilityDoesNotRequireSummoningSicknessToEnd() {
+        Permanent bloodVassal = harness.addToBattlefieldAndReturn(player1, new BloodVassal());
+        bloodVassal.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Blood Vassal");
+        harness.assertInGraveyard(player1, "Blood Vassal");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Blood Vassal adds mana only to its controller's pool")
+    void sacrificeAddsManaOnlyToController() {
+        harness.addToBattlefield(player2, new BloodVassal());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Blood Vassal");
+        harness.assertInGraveyard(player2, "Blood Vassal");
+    }
 }

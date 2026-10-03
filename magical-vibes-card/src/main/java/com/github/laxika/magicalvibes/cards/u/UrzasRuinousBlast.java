@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "39")
 @CardRegistration(set = "DMC", collectorNumber = "107")
+@CardRegistration(set = "BRC", collectorNumber = "79")
 public class UrzasRuinousBlast extends Card {
 
     public UrzasRuinousBlast() {

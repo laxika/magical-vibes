@@ -85,6 +85,47 @@ class AlibansTowerTest extends BaseCardTest {
         assertThat(blocker.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Cannot target an attacking creature that is not blocking")
+    void cannotTargetAttackingCreature() {
+        Permanent attacker = addCreatureReady(player1, new DeathSpeakers());
+        attacker.setAttacking(true);
+        setupTower();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blocking");
+    }
+
+    @Test
+    @DisplayName("A resolved boost remains when the creature stops blocking")
+    void resolvedBoostDoesNotRequireContinuedBlocking() {
+        Permanent blocker = addBlockingCreature(player2);
+        setupTower();
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        blocker.setBlocking(false);
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Two copies give the same blocker a cumulative +6/+2")
+    void multipleBoostsAccumulate() {
+        Permanent blocker = addBlockingCreature(player2);
+        setupTower();
+        harness.setHand(player1, List.of(new AlibansTower(), new AlibansTower()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
+    }
+
     private void setupTower() {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.forceActivePlayer(player1);

@@ -63,4 +63,44 @@ class AltarsLightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can exile an artifact you control")
+    void exilesOwnArtifact() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        UUID targetId = harness.getPermanentId(player1, "Ornithopter");
+        prepareAltarsLight();
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Ornithopter"));
+    }
+
+    @Test
+    @DisplayName("Does not resolve when its target has already left the battlefield")
+    void targetLeavesBeforeResolution() {
+        harness.addToBattlefield(player2, new Ornithopter());
+        UUID targetId = harness.getPermanentId(player2, "Ornithopter");
+        prepareAltarsLight();
+        harness.setHand(player1, List.of(new AltarsLight(), new AltarsLight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .filteredOn(c -> c.getName().equals("Ornithopter"))
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Altar's Light"))
+                .hasSize(2);
+    }
 }

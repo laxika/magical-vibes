@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BreakingPoint;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.f.FuneralPyre;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BreakingPoint.class, CabalTherapy.class, FuneralPyre.class, KrosanVerge.class, SuntailHawk.class})
+@CardUsed({BreakingPoint.class, CabalTherapy.class, FireIce.class, FuneralPyre.class, KrosanVerge.class, SuntailHawk.class})
 class CabalTherapyTest extends BaseCardTest {
 
     @Test
@@ -131,8 +132,7 @@ class CabalTherapyTest extends BaseCardTest {
         Card krosanVerge = new KrosanVerge();
         harness.setHand(player1, new ArrayList<>(List.of(therapy, firstHawk, secondHawk, funeralPyre, krosanVerge)));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         harness.handleListChoice(player1, "Suntail Hawk");
 
@@ -164,5 +164,107 @@ class CabalTherapyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(land);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(therapy);
+    }
+
+    @Test
+    @DisplayName("Naming the second half of a split card discards every matching split card")
+    void namingSecondSplitHalfDiscardsMatchingCards() {
+        Card first = new FireIce();
+        Card second = new FireIce();
+        Card other = new BreakingPoint();
+        castFromHand(new ArrayList<>(List.of(first, second, other)));
+
+        harness.handleListChoice(player1, "Ice");
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(other);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    @DisplayName("Rejects a land name without consuming the pending name choice")
+    void rejectsLandName() {
+        Card land = new KrosanVerge();
+        Card hawk = new SuntailHawk();
+        castFromHand(new ArrayList<>(List.of(land, hawk)));
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Krosan Verge"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land, hawk);
+
+        harness.handleListChoice(player1, "Suntail Hawk");
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(hawk);
+    }
+
+    @Test
+    @DisplayName("Reveals the whole hand to both players only after the controller names a card")
+    void revealsWholeHandAfterNameChoice() {
+        Card hawk = new SuntailHawk();
+        Card land = new KrosanVerge();
+        castFromHand(new ArrayList<>(List.of(hawk, land)));
+
+        assertThat(harness.getConn1().getSentMessages()).noneMatch(message -> message.contains("REVEAL_HAND"));
+        assertThat(harness.getConn2().getSentMessages()).noneMatch(message -> message.contains("REVEAL_HAND"));
+
+        harness.handleListChoice(player1, "Suntail Hawk");
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("REVEAL_HAND") && message.contains("Suntail Hawk") && message.contains("Krosan Verge"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("REVEAL_HAND") && message.contains("Suntail Hawk") && message.contains("Krosan Verge"));
+    }
+
+    @Test
+    @DisplayName("Resolves against an empty hand after naming a nonland card")
+    void resolvesAgainstEmptyHand() {
+        harness.setHand(player1, List.of(new CabalTherapy(), new SuntailHawk()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "Suntail Hawk");
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Cabal Therapy");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback can sacrifice a tapped creature with summoning sickness without paying mana")
+    void flashbackCanSacrificeTappedNewCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        creature.setTapped(true);
+        CabalTherapy therapy = new CabalTherapy();
+        Card discarded = new BreakingPoint();
+        harness.setGraveyard(player1, List.of(therapy));
+        harness.setHand(player2, List.of(discarded));
+
+        harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature.getCard());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Breaking Point");
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(therapy);
+    }
+
+    @Test
+    @DisplayName("Flashback cannot sacrifice an opponent's creature")
+    void flashbackCannotSacrificeOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        CabalTherapy therapy = new CabalTherapy();
+        harness.setGraveyard(player1, List.of(therapy));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(therapy);
+        assertThat(gd.stack).isEmpty();
     }
 }

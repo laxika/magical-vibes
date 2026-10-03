@@ -107,6 +107,7 @@ public class GraveyardReturnSupport {
     private final EquipSupport equipSupport;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final MakeChosenPermanentAttackingEffectHandler makeChosenPermanentAttackingEffectHandler;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -377,6 +378,10 @@ public class GraveyardReturnSupport {
 
         if (effect.loseLifeEqualToManaValue()) {
             applyLifeLossEqualToManaValue(gameData, entry, controllerId, targetCard);
+        }
+        if (returnedPermanent != null && effect.enterAttacking()) {
+            makeChosenPermanentAttackingEffectHandler.resolve(gameData, entry,
+                    new com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect(returnedPermanent.getId()));
         }
     }
 

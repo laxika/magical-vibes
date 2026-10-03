@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AuramancersGuise;
+import com.github.laxika.magicalvibes.cards.d.DustOfMoments;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Calciderm.class, AuramancersGuise.class, CauterySliver.class})
+@CardUsed({Calciderm.class, AuramancersGuise.class, CauterySliver.class, DustOfMoments.class})
 class CalcidermTest extends BaseCardTest {
 
     @Test
@@ -76,6 +77,35 @@ class CalcidermTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(calciderm);
+    }
+
+    @Test
+    @DisplayName("Vanishing does not trigger at upkeep without time counters")
+    void noTimeCountersDoesNotCreateUpkeepTrigger() {
+        addCreatureReady(player1, new Calciderm());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({Calciderm.class, DustOfMoments.class})
+    @DisplayName("Removing the last time counters with another spell causes sacrifice")
+    void externalRemovalOfLastTimeCountersCausesSacrifice() {
+        Permanent calciderm = addCreatureReady(player1, new Calciderm());
+        calciderm.setCounterCount(CounterType.TIME, 2);
+        harness.setHand(player2, List.of(new DustOfMoments()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player2);
+
+        harness.castModalInstant(player2, 0, 0, List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Calciderm");
+        harness.assertInGraveyard(player1, "Calciderm");
     }
 
     @Test

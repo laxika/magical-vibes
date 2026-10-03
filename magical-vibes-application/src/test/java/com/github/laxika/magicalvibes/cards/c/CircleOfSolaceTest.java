@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.e.EmbermageGoblin;
 import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfSolace.class, EmbermageGoblin.class, GoblinSharpshooter.class})
+@CardUsed({CircleOfSolace.class, EmbermageGoblin.class, GoblinSharpshooter.class, Shock.class})
 class CircleOfSolaceTest extends BaseCardTest {
 
     @Test
@@ -117,6 +118,61 @@ class CircleOfSolaceTest extends BaseCardTest {
         activateDamage(wizard);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A matching creature's damage is prevented after the creature leaves the battlefield")
+    void preventsDamageUsingDepartedSourcesLastKnownInformation() {
+        harness.setLife(player1, 20);
+        Permanent circle = addCircle(player1, CardSubtype.WIZARD);
+        Permanent wizard = addCreatureReady(player2, new EmbermageGoblin());
+
+        activatePrevention(circle);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(wizard), null, player1.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, wizard.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Embermage Goblin");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Two activations prevent two separate matching damage events")
+    void multipleActivationsProvideSeparateShields() {
+        harness.setLife(player1, 20);
+        Permanent circle = addCircle(player1, CardSubtype.WIZARD);
+        Permanent first = addCreatureReady(player2, new EmbermageGoblin());
+        Permanent second = addCreatureReady(player2, new EmbermageGoblin());
+        Permanent third = addCreatureReady(player2, new EmbermageGoblin());
+
+        activatePrevention(circle);
+        activatePrevention(circle);
+        activateDamage(first);
+        activateDamage(second);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        activateDamage(third);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Damage to a creature does not consume the shield protecting its controller")
+    void damageToCreatureDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        Permanent circle = addCircle(player1, CardSubtype.WIZARD);
+        Permanent recipient = addCreatureReady(player1, new GoblinSharpshooter());
+        Permanent first = addCreatureReady(player2, new EmbermageGoblin());
+        Permanent second = addCreatureReady(player2, new EmbermageGoblin());
+
+        activatePrevention(circle);
+        activateDamage(first, recipient.getId());
+        harness.assertInGraveyard(player1, "Goblin Sharpshooter");
+        activateDamage(second);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
     private Permanent addCircle(Player player, CardSubtype chosenSubtype) {

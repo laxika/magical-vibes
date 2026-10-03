@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.cards.w.WhispersilkCloak;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AuraOfSilence.class, AngelicChorus.class, AngelsFeather.class, GrizzlyBears.class, Juggernaut.class})
+@CardUsed({AuraOfSilence.class, AngelicChorus.class, AngelsFeather.class, GrizzlyBears.class, Juggernaut.class, WhispersilkCloak.class})
 class AuraOfSilenceTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -107,11 +109,8 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         // Grizzly Bears costs {1}{G} = 2 mana, no increase for creatures
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -377,6 +376,53 @@ class AuraOfSilenceTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Angel's Feather");
         harness.assertInGraveyard(player2, "Angel's Feather");
+    }
+
+    @Test
+    @DisplayName("Aura of Silence cannot target an artifact creature with shroud")
+    void cannotTargetArtifactCreatureWithShroud() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+        Permanent juggernaut = harness.addToBattlefieldAndReturn(player2, new Juggernaut());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player2, new WhispersilkCloak());
+        cloak.setAttachedTo(juggernaut.getId());
+
+        assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, juggernaut.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Aura of Silence");
+        harness.assertNotInGraveyard(player1, "Aura of Silence");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Aura of Silence can target itself before paying its sacrifice cost")
+    void canTargetItself() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+        UUID auraId = harness.getPermanentId(player1, "Aura of Silence");
+
+        harness.sacrificePermanent(player1, 0, auraId);
+
+        harness.assertInGraveyard(player1, "Aura of Silence");
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Aura of Silence");
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Aura of Silence destroys artifact creatures as artifacts")
+    void sacrificeDestroysArtifactCreature() {
+        harness.addToBattlefield(player1, new AuraOfSilence());
+        harness.addToBattlefield(player2, new Juggernaut());
+
+        harness.sacrificePermanent(player1, 0, harness.getPermanentId(player2, "Juggernaut"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Juggernaut");
+        harness.assertInGraveyard(player2, "Juggernaut");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }
 

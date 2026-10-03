@@ -1276,6 +1276,7 @@ public class PlayerInteractionSupport {
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
             if (gameData.discardCausedByOpponent
                     && gameQueryService.isDiscardPrevented(gameData, nextPlayerId)) {
+                followUp = followUp.incrementEachPlayerNoDiscardCount();
                 continue;
             }
             List<Card> hand = gameData.playerHands.get(nextPlayerId);

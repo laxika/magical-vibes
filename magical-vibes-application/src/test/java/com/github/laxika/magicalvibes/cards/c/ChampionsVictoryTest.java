@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AlertShuInfantry.class, ChampionsVictory.class})
+@CardUsed({AlertShuInfantry.class, ChampionsVictory.class, ChandraNalaar.class})
 class ChampionsVictoryTest extends BaseCardTest {
 
     @Test
@@ -80,7 +80,6 @@ class ChampionsVictoryTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     @DisplayName("Cannot cast when only a planeswalker is attacked")
     void cannotCastWhenOnlyPlaneswalkerIsAttacked() {
         Permanent attacker = addCreatureReady(player1, new AlertShuInfantry());
@@ -97,5 +96,51 @@ class ChampionsVictoryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Can target a planeswalker attacker when the caster was also attacked")
+    void canReturnPlaneswalkerAttackerWhenAlsoAttacked() {
+        addCreatureReady(player1, new AlertShuInfantry());
+        Permanent planeswalkerAttacker = addCreatureReady(player1, new AlertShuInfantry());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        harness.setHand(player2, List.of(new ChampionsVictory()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0, 1),
+                Map.of(0, player2.getId(), 1, planeswalker.getId()));
+
+        harness.castInstant(player2, 0, planeswalkerAttacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(planeswalkerAttacker);
+        assertThat(gd.playerHands.get(player1.getId())).contains(planeswalkerAttacker.getCard());
+    }
+
+    @Test
+    @DisplayName("Being attacked earlier this step remains sufficient after that creature stops attacking")
+    void canCastAfterDirectAttackerStopsAttacking() {
+        Permanent directAttacker = addCreatureReady(player1, new AlertShuInfantry());
+        Permanent planeswalkerAttacker = addCreatureReady(player1, new AlertShuInfantry());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        harness.setHand(player2, List.of(new ChampionsVictory()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0, 1),
+                Map.of(0, player2.getId(), 1, planeswalker.getId()));
+
+        directAttacker.setAttacking(false);
+        harness.castInstant(player2, 0, planeswalkerAttacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(directAttacker)
+                .doesNotContain(planeswalkerAttacker);
+        assertThat(gd.playerHands.get(player1.getId())).contains(planeswalkerAttacker.getCard());
     }
 }

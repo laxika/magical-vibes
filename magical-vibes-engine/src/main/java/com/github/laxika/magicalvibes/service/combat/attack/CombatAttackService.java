@@ -891,6 +891,9 @@ public class CombatAttackService {
 
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
+        if (declaredAttackers.stream().anyMatch(attacker -> attacker.getCard().isToken())) {
+            gameData.playersWhoAttackedWithTokenThisTurn.add(playerId);
+        }
         gameData.creaturesAttackedCountThisTurn.merge(playerId, attackerIndices.size(), Integer::sum);
         Map<CardSubtype, Integer> subtypeCounts = gameData.creaturesAttackedCountBySubtypeThisTurn
                 .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());
@@ -1210,6 +1213,12 @@ public class CombatAttackService {
                                 gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, null,
                                         attacker.getId(), defendingPlayerId, new Permanent(attacker));
                             }
+                        } else if (may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
+                                && sequence.steps().stream().anyMatch(step ->
+                                step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
+                                        && skip.controllerStepOnly())) {
+                            gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, otherAttackerId,
+                                    attacker.getId(), playerId, new Permanent(attacker));
                         } else {
                             gameData.queueMayAbility(attacker.getCard(), playerId, may, otherAttackerId, attacker.getId(),
                                     attacker.getAttackTarget());
@@ -1349,8 +1358,7 @@ public class CombatAttackService {
         }
 
         // Engine-level melee triggers: each attacking creature with melee gets +1/+1 until end
-        // of turn for each distinct opponent attacked by this combat. Attacking a planeswalker
-        // counts as attacking its controller, while attacking a battle does not count.
+        // of turn for each distinct opponent attacked by this combat.
         Set<UUID> opponentsAttackedThisCombat = new HashSet<>();
         for (int idx : attackerIndices) {
             UUID attackTarget = resolvedTargets.get(idx);
@@ -1361,15 +1369,8 @@ public class CombatAttackService {
                 opponentsAttackedThisCombat.add(attackTarget);
                 continue;
             }
-            Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackTarget);
-            if (attackedPermanent != null && attackedPermanent.getCard().hasType(CardType.PLANESWALKER)) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, attackTarget);
-                if (controllerId != null) {
-                    opponentsAttackedThisCombat.add(controllerId);
-                }
-            }
         }
-        if (!opponentsAttackedThisCombat.isEmpty()) {
+        {
             int meleeBoost = opponentsAttackedThisCombat.size();
             for (int idx : attackerIndices) {
                 Permanent attacker = battlefield.get(idx);
@@ -1378,6 +1379,7 @@ public class CombatAttackService {
                 }
                 int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
                 try {
+                    for (int instance = 0; instance < gameQueryService.meleeInstances(gameData, attacker); instance++) {
                     StackEntry meleeTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             attacker.getCard(),
@@ -1394,6 +1396,7 @@ public class CombatAttackService {
                             GameLog.builder().card(attacker.getCard()).text("'s melee triggers.").build());
                     log.info("Game {} - {} melee trigger pushed onto stack", gameData.id,
                             attacker.getCard().getName());
+                    }
                 } finally {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
@@ -1654,7 +1657,7 @@ public class CombatAttackService {
                                 gameData.id, perm.getCard().getName());
                         continue;
                     }
-                    filteredEffects.add(effect);
+                    filteredEffects.add(ce.wrapped());
                 } else if (effect instanceof ConditionalEffect ce
                         && containsHasAttackerCondition(ce.condition())) {
                     if (!conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -1790,6 +1793,8 @@ public class CombatAttackService {
                             attackTrigger.setEventValue(matchingAttackerCount);
                         }
                         attackTrigger.setMarkSourceOncePerTurnOnAcceptance(markOncePerTurnOnAcceptance);
+                        attackTrigger.setAttackingPermanentSnapshots(attackerIndices.stream()
+                                .map(battlefield::get).map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                         gameData.stack.add(attackTrigger);
                         if (oncePerTurn && !markOncePerTurnOnAcceptance) {
                             gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
@@ -2010,6 +2015,8 @@ public class CombatAttackService {
                                     perm.getId()
                             );
                             attackTrigger.setAttackedTargetId(attackedTargetId);
+                            attackTrigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
+                                    ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
                             // Record the triggering attacker as a non-targeting reference so effects that
                             // act on "that creature" can find it.
                             attackTrigger.setTargetId(attacker.getId());
@@ -2644,6 +2651,10 @@ public class CombatAttackService {
         // attacker snapshot because paying one cost can remove permanents from the battlefield.
         attackSacrificeCostService.paySacrificeAttackCosts(gameData, playerId, declaredAttackers);
         attackReturnToHandCostService.payReturnToHandAttackCosts(gameData, playerId, declaredAttackers);
+
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
 
         return CombatResult.AUTO_PASS_ONLY;
     }
@@ -3755,6 +3766,20 @@ public class CombatAttackService {
      * Renders a boost the way Magic writes it — "+1/+1", "-1/-0". A zero component takes the sign of
      * the non-zero one, so a -1/-0 debuff never reads as "-1/+0".
      */
+    private Permanent snapshotDeclaredAttacker(GameData gameData, Permanent attacker) {
+        Permanent snapshot = new Permanent(attacker);
+        Card card = attacker.getCard().createRuntimeCopy();
+        Set<com.github.laxika.magicalvibes.model.CardType> types = gameQueryService.getEffectiveCardTypes(gameData, attacker);
+        card.setType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+        card.setAdditionalTypes(types);
+        card.setSupertypes(java.util.Arrays.stream(com.github.laxika.magicalvibes.model.CardSupertype.values())
+                .filter(type -> gameQueryService.hasEffectiveSupertype(gameData, attacker, type))
+                .collect(Collectors.toSet()));
+        snapshot.setCard(card);
+        snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, attacker));
+        return snapshot;
+    }
+
     private static String formatBoostPair(int power, int toughness) {
         String sign = (power < 0 || toughness < 0) ? "-" : "+";
         return sign + Math.abs(power) + "/" + sign + Math.abs(toughness);

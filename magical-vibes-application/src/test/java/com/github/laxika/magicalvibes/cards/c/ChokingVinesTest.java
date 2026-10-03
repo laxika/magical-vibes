@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -72,9 +73,7 @@ class ChokingVinesTest extends BaseCardTest {
     void alreadyBlockedAttackerTakesDamage() {
         Permanent blockedAttacker = addCreatureReady(player1, new BenalishKnight());
         addCreatureReady(player2, new BenalishKnight());
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
         giveSpell(2); // X=1
@@ -190,5 +189,45 @@ class ChokingVinesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantForX(player2, 0, 1, List.of(bystander.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an attacking creature");
+    }
+
+    @Test
+    @DisplayName("X can exceed 100 when that many attackers are available")
+    void targetsMoreThanOneHundredAttackers() {
+        List<Permanent> attackers = IntStream.range(0, 101)
+                .mapToObj(i -> addCreatureReady(player1, new BenalishKnight()))
+                .toList();
+        addCreatureReady(player2, new BenalishKnight());
+        declareAttackersAndPrepareBlockers(IntStream.range(0, 101).boxed().toList());
+        giveSpell(102);
+        gs.declareBlockers(gd, player2, List.of());
+        harness.clearPriorityPassed();
+
+        harness.castInstantForX(player2, 0, 101,
+                attackers.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(attackers).allSatisfy(attacker -> {
+            assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+            assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    @DisplayName("The caster can target their own attacking creature")
+    void canTargetOwnAttacker() {
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        addCreatureReady(player2, new BenalishKnight());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new ChokingVines()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        gs.declareBlockers(gd, player2, List.of());
+        harness.clearPriorityPassed();
+
+        harness.castInstantForX(player1, 0, 1, List.of(attacker.getId()));
+        harness.passBothPriorities();
+
+        assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 }

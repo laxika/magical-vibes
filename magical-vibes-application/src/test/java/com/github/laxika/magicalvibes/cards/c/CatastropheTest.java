@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Catastrophe.class, Forest.class, Plains.class, UnworthyDead.class})
@@ -73,20 +74,56 @@ class CatastropheTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing an invalid mode is rejected while Catastrophe is cast")
-    void invalidModeIsRejected() {
+    @DisplayName("An invalid destruction choice is rejected during resolution")
+    void invalidChoiceIsRejected() {
+        harness.setHand(player1, List.of(new Catastrophe()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Destroy all artifacts"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("The destruction choice is made during resolution, after players can respond")
+    void choosesDuringResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new UnworthyDead());
         harness.setHand(player1, List.of(new Catastrophe()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 99))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid mode index");
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Unworthy Dead");
+        harness.handleListChoice(player1, "Destroy all creatures");
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player2, "Unworthy Dead");
+    }
+
+    @Test
+    @DisplayName("A noncreature land with a regeneration shield survives land destruction")
+    void noncreatureLandCanRegenerate() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.setRegenerationShield(1);
+
+        castCatastrophe(0);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(land.isTapped()).isTrue();
+        assertThat(land.getRegenerationShield()).isZero();
     }
 
     private void castCatastrophe(int mode) {
         harness.setHand(player1, List.of(new Catastrophe()));
         harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castSorcery(player1, 0, mode);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleListChoice(player1, mode == 0 ? "Destroy all lands" : "Destroy all creatures");
     }
 }

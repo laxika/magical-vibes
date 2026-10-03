@@ -141,6 +141,63 @@ class CatacombDragonTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Each qualifying blocker gets its own power reduction")
+    void shrinksEachQualifyingBlocker() {
+        addAttackingDragon();
+        Permanent first = addFlyingBlocker(new ZhalfirinKnight());
+        Permanent second = addFlyingBlocker(new StalkingTiger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gaining the Dragon subtype after blocking does not stop the reduction")
+    void qualifyingBlockerBecomingDragonStillShrinks() {
+        addAttackingDragon();
+        Permanent blocker = addFlyingBlocker(new StalkingTiger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        blocker.getGrantedSubtypes().add(CardSubtype.DRAGON);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The reduction resolves even after Catacomb Dragon leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        addAttackingDragon();
+        Permanent blocker = addFlyingBlocker(new StalkingTiger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A blocker with one power receives no reduction")
+    void onePowerBlockerIsUnchanged() {
+        addAttackingDragon();
+        Permanent blocker = addFlyingBlocker(new ZhalfirinKnight());
+        blocker.setPowerModifier(-1);
+
+        block();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+    }
     private void addAttackingDragon() {
         Permanent dragon = addCreatureReady(player1, new CatacombDragon());
         dragon.setAttacking(true);

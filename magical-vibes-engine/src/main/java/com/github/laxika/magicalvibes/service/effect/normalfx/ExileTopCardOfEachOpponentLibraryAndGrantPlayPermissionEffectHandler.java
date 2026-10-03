@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves Brainstealer Dragon's end-step exile ability. */
+/** Resolves end-step abilities that exile qualifying opponents' top cards. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -37,9 +37,15 @@ public class ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffectHandle
             return;
         }
 
+        ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect exileEffect =
+                (ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect) effect;
         String controllerName = gameData.playerIdToName.get(controllerId);
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (controllerId.equals(opponentId)) {
+                continue;
+            }
+            if (gameData.playerPoisonCounters.getOrDefault(opponentId, 0)
+                    < exileEffect.minimumPoisonCounters()) {
                 continue;
             }
 

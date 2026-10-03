@@ -48,11 +48,38 @@ class BondOfDisciplineTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.LIFELINK)).isFalse();
     }
 
+    @Test
+    @DisplayName("Grants lifelink even when the opponent controls no creatures")
+    void grantsLifelinkWithoutOpposingCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        cast();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.LIFELINK)).isFalse();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not affected")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        Permanent originalCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast();
+
+        Permanent laterOwnCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent laterOpposingCreature = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, originalCreature, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterOwnCreature, Keyword.LIFELINK)).isFalse();
+        assertThat(laterOpposingCreature.isTapped()).isFalse();
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new BondOfDiscipline()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodfireExpert.class, GrizzlyBears.class, Shock.class})
 class BloodfireExpertTest extends BaseCardTest {
 
     private Permanent addExpert() {
-        harness.addToBattlefield(player1, new BloodfireExpert());
+        Permanent expert = harness.addToBattlefieldAndReturn(player1, new BloodfireExpert());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return expert;
     }
 
     private void endTurn() {
@@ -100,6 +102,61 @@ class BloodfireExpertTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, expert)).isEqualTo(4);
+
+        endTurn();
+
+        assertThat(gqs.getEffectivePower(gd, expert)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, expert)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Prowess resolves before the triggering spell")
+    void prowessResolvesBeforeSpell() {
+        Permanent expert = addExpert();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, expert)).isEqualTo(3);
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, expert)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, expert)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife - 2);
+    }
+
+    @Test
+    @DisplayName("Two noncreature spells each trigger prowess once and their boosts accumulate")
+    void multipleSpellsAccumulateBoosts() {
+        Permanent expert = addExpert();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack.stream()
+                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .count()).isEqualTo(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, expert)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, expert)).isEqualTo(3);
 
         endTurn();
 

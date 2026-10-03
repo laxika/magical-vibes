@@ -74,4 +74,50 @@ class ChiefWargsCompanyTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
     }
+
+    @Test
+    @DisplayName("Cannot attack when the other Wolves belong to an opponent")
+    void opposingWolvesDoNotSatisfyAttackRestriction() {
+        addCreatureReady(player1, new ChiefWargsCompany());
+        addCreatureReady(player2, new ChiefWargsCompany());
+        addCreatureReady(player2, new ChiefWargsCompany());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Other copies count as Wolves even when tapped and summoning sick")
+    void otherCopiesNeedNotBeAbleToAttack() {
+        addCreatureReady(player1, new ChiefWargsCompany());
+        Permanent firstWolf = harness.addToBattlefieldAndReturn(player1, new ChiefWargsCompany());
+        Permanent secondWolf = harness.addToBattlefieldAndReturn(player1, new ChiefWargsCompany());
+        firstWolf.setTapped(true);
+        secondWolf.setTapped(true);
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Upkeep Wolf tokens satisfy the attack restriction after two upkeeps")
+    void generatedWolfTokensEnableAttacking() {
+        harness.addToBattlefield(player1, new ChiefWargsCompany());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Wolf")).hasSize(1);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Wolf")).hasSize(2);
+        declareAttackers(player1, List.of(0));
+
+        harness.assertLife(player2, 15);
+    }
 }

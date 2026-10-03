@@ -26,4 +26,40 @@ class BalothPupTest extends BaseCardTest {
         balothPup.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         assertThat(gqs.hasKeyword(gd, balothPup, Keyword.TRAMPLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Other counter types do not enable trample")
+    void otherCounterTypesDoNotGrantTrample() {
+        Permanent balothPup = harness.addToBattlefieldAndReturn(player1, new BalothPup());
+        balothPup.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 2);
+        balothPup.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThat(gqs.hasKeyword(gd, balothPup, Keyword.TRAMPLE)).isFalse();
+
+        balothPup.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        assertThat(gqs.hasKeyword(gd, balothPup, Keyword.TRAMPLE)).isTrue();
+
+        balothPup.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.hasKeyword(gd, balothPup, Keyword.TRAMPLE)).isTrue();
+
+        balothPup.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        assertThat(gqs.hasKeyword(gd, balothPup, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the Pup with a +1/+1 counter gains trample")
+    void countersAndTrampleAreLocalToEachPup() {
+        Permanent counteredPup = harness.addToBattlefieldAndReturn(player1, new BalothPup());
+        Permanent otherPup = harness.addToBattlefieldAndReturn(player1, new BalothPup());
+        Permanent opposingPup = harness.addToBattlefieldAndReturn(player2, new BalothPup());
+        counteredPup.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.hasKeyword(gd, counteredPup, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherPup, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingPup, Keyword.TRAMPLE)).isFalse();
+
+        opposingPup.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.hasKeyword(gd, opposingPup, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherPup, Keyword.TRAMPLE)).isFalse();
+    }
 }

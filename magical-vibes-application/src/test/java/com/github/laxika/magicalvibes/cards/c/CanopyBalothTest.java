@@ -36,9 +36,7 @@ class CanopyBalothTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(baloth.getEffectivePower()).isEqualTo(4);
         assertThat(baloth.getEffectiveToughness()).isEqualTo(3);
@@ -56,5 +54,34 @@ class CanopyBalothTest extends BaseCardTest {
 
         assertThat(baloth.getEffectivePower()).isEqualTo(4);
         assertThat(baloth.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Lands entering without being played trigger each Baloth and the boosts accumulate")
+    void landEntriesBoostEachBalothAndAccumulate() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CanopyBaloth());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CanopyBaloth());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(6);
+        assertThat(first.getEffectiveToughness()).isEqualTo(5);
+        assertThat(second.getEffectivePower()).isEqualTo(6);
+        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(8);
+        assertThat(first.getEffectiveToughness()).isEqualTo(7);
+        assertThat(second.getEffectivePower()).isEqualTo(8);
+        assertThat(second.getEffectiveToughness()).isEqualTo(7);
     }
 }

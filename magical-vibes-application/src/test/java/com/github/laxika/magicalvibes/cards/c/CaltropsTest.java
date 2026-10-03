@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.e.ElvishLookout;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlatedSpider;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -13,7 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Caltrops.class, ElvishLookout.class, GrizzlyBears.class, PlatedSpider.class})
+@CardUsed({Caltrops.class, ElvishLookout.class, GrizzlyBears.class, PlatedSpider.class,
+        Boomerang.class, Shatter.class})
 class CaltropsTest extends BaseCardTest {
 
     @Test
@@ -53,7 +57,7 @@ class CaltropsTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
@@ -78,7 +82,7 @@ class CaltropsTest extends BaseCardTest {
 
         // Caltrops is at index 0, the attacking Grizzly Bears at index 1.
         declareAttackers(player1, List.of(1));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
@@ -169,5 +173,57 @@ class CaltropsTest extends BaseCardTest {
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
         harness.assertInGraveyard(player2, "Elvish Lookout");
+    }
+
+    @Test
+    @DisplayName("Damages only declared attackers and leaves other creatures unharmed")
+    void doesNotDamageNonAttackingCreatures() {
+        harness.addToBattlefield(player1, new Caltrops());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(nonAttacker.getMarkedDamage()).isZero();
+        assertThat(defender.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The trigger still deals damage after Caltrops is destroyed")
+    void dealsDamageAfterSourceLeavesBattlefield() {
+        Permanent caltrops = harness.addToBattlefieldAndReturn(player1, new Caltrops());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        declareAttackers(player2, List.of(0));
+        harness.castAndResolveInstant(player2, 0, caltrops.getId());
+        harness.assertInGraveyard(player1, "Caltrops");
+        resolveAllTriggers();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The trigger does nothing to an attacker returned to hand in response")
+    void doesNotDamageAttackerAfterItLeavesBattlefield() {
+        harness.addToBattlefield(player1, new Caltrops());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        declareAttackers(player2, List.of(0));
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        harness.assertInHand(player2, "Grizzly Bears");
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(otherCreature.getMarkedDamage()).isZero();
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 }

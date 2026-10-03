@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.s.StormriderSpirit;
+import com.github.laxika.magicalvibes.cards.t.ThornhideWolves;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ClipWings.class, StormriderSpirit.class, ThornhideWolves.class})
 class ClipWingsTest extends BaseCardTest {
 
     @Test
@@ -26,8 +30,7 @@ class ClipWingsTest extends BaseCardTest {
         harness.addToBattlefield(player2, flyingCreature("Opponent Flyer"));
         harness.addToBattlefield(player2, creature("Ground Creature"));
 
-        castClipWings();
-        harness.passBothPriorities();
+        castAndResolveClipWings();
 
         harness.assertOnBattlefield(player1, "Controller Flyer");
         harness.assertNotOnBattlefield(player2, "Opponent Flyer");
@@ -37,13 +40,10 @@ class ClipWingsTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent chooses which eligible flying creature to sacrifice")
     void opponentChoosesFlyingCreature() {
-        Permanent first = new Permanent(flyingCreature("First Flyer"));
-        Permanent second = new Permanent(flyingCreature("Second Flyer"));
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(first);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(second);
+        harness.addToBattlefield(player2, flyingCreature("First Flyer"));
+        Permanent second = harness.addToBattlefieldAndReturn(player2, flyingCreature("Second Flyer"));
 
-        castClipWings();
-        harness.passBothPriorities();
+        castAndResolveClipWings();
 
         GameData gameData = harness.getGameData();
         PendingInteraction.MultiPermanentChoice choice =
@@ -63,17 +63,65 @@ class ClipWingsTest extends BaseCardTest {
     void noFlyingCreatureIsUnaffected() {
         harness.addToBattlefield(player2, creature("Ground Creature"));
 
-        castClipWings();
-        harness.passBothPriorities();
+        castAndResolveClipWings();
 
         harness.assertOnBattlefield(player2, "Ground Creature");
     }
 
+    @Test
+    @DisplayName("Hexproof and indestructible do not prevent sacrificing a flying creature")
+    void sacrificesProtectedFlyingCreature() {
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new StormriderSpirit());
+        flyer.getGrantedKeywords().addAll(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE));
+        harness.addToBattlefield(player2, new ThornhideWolves());
+
+        castAndResolveClipWings();
+
+        harness.assertNotOnBattlefield(player2, "Stormrider Spirit");
+        harness.assertInGraveyard(player2, "Stormrider Spirit");
+        harness.assertOnBattlefield(player2, "Thornhide Wolves");
+    }
+
+    @Test
+    @DisplayName("A creature that gains flying before resolution is eligible for sacrifice")
+    void usesFlyingGainedBeforeResolution() {
+        Permanent wolves = harness.addToBattlefieldAndReturn(player2, new ThornhideWolves());
+
+        castClipWings();
+        wolves.getGrantedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Thornhide Wolves");
+        harness.assertInGraveyard(player2, "Thornhide Wolves");
+    }
+
+    @Test
+    @DisplayName("A creature that loses flying before resolution is not sacrificed")
+    void ignoresFlyingLostBeforeResolution() {
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new StormriderSpirit());
+
+        castClipWings();
+        flyer.getRemovedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Stormrider Spirit");
+        harness.assertNotInGraveyard(player2, "Stormrider Spirit");
+    }
+
+    private void castAndResolveClipWings() {
+        prepareClipWings();
+        harness.castAndResolveInstant(player1, 0);
+    }
+
     private void castClipWings() {
+        prepareClipWings();
+        harness.castInstant(player1, 0);
+    }
+
+    private void prepareClipWings() {
         harness.setHand(player1, List.of(new ClipWings()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
     }
 
     private static Card flyingCreature(String name) {

@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Nightmare;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,8 +23,60 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Balance.class, Bloodbriar.class, Forest.class, GrizzlyBears.class, TamiyoCollectorOfTales.class})
+@CardUsed({Balance.class, Bloodbriar.class, Forest.class, GrizzlyBears.class, Nightmare.class,
+        Plains.class, Swamp.class, TamiyoCollectorOfTales.class})
 class BalanceTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Counts zero-toughness creatures until Balance finishes resolving")
+    void doesNotCheckStateBasedActionsBetweenCategories() {
+        harness.setHand(player1, List.of(new Balance()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player1, new Nightmare());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(swamp.getId()));
+
+        // Nightmare still counts during resolution, even though it now has zero toughness.
+        harness.assertOnBattlefield(player1, "Nightmare");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultiplePermanentsChosen(player2, creatureIds(player2, 1));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creatureCount(player2)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Nightmare");
+    }
+
+    @Test
+    @DisplayName("Leaves equal land, hand, and creature counts unchanged")
+    void leavesEqualCountsUnchanged() {
+        harness.setHand(player1, List.of(new Balance(), new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        for (Player player : List.of(player1, player2)) {
+            harness.addToBattlefield(player, new Forest());
+            harness.addToBattlefield(player, new GrizzlyBears());
+        }
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        for (Player player : List.of(player1, player2)) {
+            assertThat(landCount(player)).isEqualTo(1);
+            assertThat(creatureCount(player)).isEqualTo(1);
+            assertThat(gd.playerHands.get(player.getId())).hasSize(1);
+        }
+    }
 
     private List<UUID> landIds(Player player, int limit) {
         return gd.playerBattlefields.get(player.getId()).stream()
@@ -48,8 +103,6 @@ class BalanceTest extends BaseCardTest {
                 .count();
     }
 
-    // ===== Lands =====
-
     @Test
     @DisplayName("Each player keeps lands down to the fewest any player controls, of their choice")
     void balancesLandsDownToFewest() {
@@ -63,8 +116,7 @@ class BalanceTest extends BaseCardTest {
             harness.addToBattlefield(player2, new Forest());
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // fewest = 2, so player1 sacrifices 5 - 2 = 3 lands of their choice.
         PendingInteraction.MultiPermanentChoice choice =
@@ -91,14 +143,11 @@ class BalanceTest extends BaseCardTest {
         }
         // player2 controls no lands -> fewest = 0.
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(landCount(player1)).isEqualTo(0);
     }
-
-    // ===== Discard =====
 
     @Test
     @DisplayName("Each player discards down to the smallest hand size, of their choice")
@@ -109,8 +158,7 @@ class BalanceTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // fewest hand = 1, so player1 discards 3 - 1 = 2 cards; player2 discards none.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -124,8 +172,6 @@ class BalanceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
-    // ===== Creatures =====
-
     @Test
     @DisplayName("Each player keeps creatures down to the fewest any player controls, of their choice")
     void balancesCreaturesDownToFewest() {
@@ -137,8 +183,7 @@ class BalanceTest extends BaseCardTest {
         }
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // fewest = 1, so player1 sacrifices 3 - 1 = 2 creatures of their choice.
         PendingInteraction.MultiPermanentChoice choice =
@@ -153,8 +198,6 @@ class BalanceTest extends BaseCardTest {
         assertThat(creatureCount(player1)).isEqualTo(1);
         assertThat(creatureCount(player2)).isEqualTo(1);
     }
-
-    // ===== Full sequence =====
 
     @Test
     @DisplayName("Runs lands, discard, then creatures in order for the caster")
@@ -171,8 +214,7 @@ class BalanceTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GrizzlyBears()); // player2 has 0 -> sacrifice all 3
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // 1) Lands: fewest 1 -> sacrifice 2 (choice).
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
@@ -204,8 +246,7 @@ class BalanceTest extends BaseCardTest {
             harness.addToBattlefield(player2, new GrizzlyBears());
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice landChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -250,8 +291,7 @@ class BalanceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -275,8 +315,7 @@ class BalanceTest extends BaseCardTest {
         tamiyo.setCounterCount(CounterType.LOYALTY, 5);
         harness.addToBattlefield(player2, new Forest());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Tamiyo, Collector of Tales");
@@ -292,8 +331,7 @@ class BalanceTest extends BaseCardTest {
         Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
         tamiyo.setCounterCount(CounterType.LOYALTY, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -309,8 +347,7 @@ class BalanceTest extends BaseCardTest {
         addCreatureReady(player1, new Bloodbriar());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Bloodbriar");

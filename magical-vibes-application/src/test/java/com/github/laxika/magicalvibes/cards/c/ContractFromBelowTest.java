@@ -33,12 +33,11 @@ class ContractFromBelowTest extends BaseCardTest {
         harness.setLibrary(player1, library);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactly(antedCard.getId());
+                .doesNotContain(antedCard.getId());
         assertThat(gd.antedCardIds).containsExactly(antedCard.getId());
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
@@ -58,15 +57,33 @@ class ContractFromBelowTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(antedCard));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactly(antedCard.getId());
+                .doesNotContain(antedCard.getId());
         assertThat(gd.antedCardIds).containsExactly(antedCard.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent discarding the hand or attempting to draw")
+    void emptyLibraryStillDiscardsAndLosesOnDraw() {
+        HillGiant discardedCard = new HillGiant();
+        harness.setHand(player1, List.of(new ContractFromBelow(), discardedCard));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.antedCardIds).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .contains(discardedCard.getId());
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }

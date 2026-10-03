@@ -61,7 +61,60 @@ class CloudgoatRangerTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Activated ability")
+    @CardUsed({CloudgoatRanger.class, BurrentonForgeTender.class, AxegrinderGiant.class})
     class ActivatedAbilityTests {
+
+        @Test
+        @DisplayName("Newly created Kithkin can pay the cost even while summoning sick")
+        void newlyCreatedKithkinCanPayCost() {
+            castAndResolveRanger();
+            Permanent ranger = findPermanent(player1, "Cloudgoat Ranger");
+
+            harness.activateAbility(player1, 0, null, null);
+
+            assertThat(findPermanents(player1, "Kithkin Soldier"))
+                    .allMatch(Permanent::isTapped);
+            harness.passBothPriorities();
+
+            assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(5);
+            assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Two activations give a cumulative +4/+0 only to their source")
+        void multipleActivationsAccumulateOnTheirSource() {
+            Permanent ranger = addRangerReady(player1);
+            Permanent otherRanger = addRangerReady(player1);
+            addKithkin(player1, 6);
+
+            harness.activateAbility(player1, 0, null, null);
+            tapKithkin(player1, 3);
+            harness.passBothPriorities();
+            harness.activateAbility(player1, 0, null, null);
+            tapKithkin(player1, 3);
+            harness.passBothPriorities();
+
+            assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(7);
+            assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isTrue();
+            assertThat(gqs.getEffectivePower(gd, otherRanger)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, otherRanger, Keyword.FLYING)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A tapped Cloudgoat Ranger can activate its ability")
+        void tappedRangerCanActivate() {
+            Permanent ranger = addRangerReady(player1);
+            ranger.tap();
+            addKithkin(player1, 3);
+
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+
+            assertThat(ranger.isTapped()).isTrue();
+            assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(5);
+            assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isTrue();
+        }
 
         @Test
         @DisplayName("Activating ability puts it on the stack")
@@ -237,10 +290,7 @@ class CloudgoatRangerTest extends BaseCardTest {
     }
 
     private Permanent findKithkinSoldierToken(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Kithkin Soldier"))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No Kithkin Soldier token found"));
+        return findPermanent(player, "Kithkin Soldier");
     }
 
     private void tapKithkin(Player player, int count) {

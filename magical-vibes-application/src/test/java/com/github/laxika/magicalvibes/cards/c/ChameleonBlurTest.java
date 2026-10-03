@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.f.FledglingMawcor;
 import com.github.laxika.magicalvibes.cards.r.RiftBolt;
+import com.github.laxika.magicalvibes.cards.s.SuddenDeath;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChameleonBlur.class, AshcoatBear.class, FledglingMawcor.class, RiftBolt.class})
+@CardUsed({ChameleonBlur.class, AshcoatBear.class, FledglingMawcor.class, RiftBolt.class, SuddenDeath.class})
 class ChameleonBlurTest extends BaseCardTest {
 
     @Test
@@ -118,9 +119,45 @@ class ChameleonBlurTest extends BaseCardTest {
     }
 
     private void castChameleonBlur() {
-        harness.setHand(player1, List.of(new ChameleonBlur()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new ChameleonBlur(), "{3}{G}");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Prevents damage from creatures entering after resolution and from repeated damage events")
+    void preventsDamageFromLaterCreaturesAndRepeatedEvents() {
+        castChameleonBlur();
+        Permanent mawcor = addCreatureReady(player2, new FledglingMawcor());
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(mawcor), null,
+                player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        Permanent secondMawcor = addCreatureReady(player2, new FledglingMawcor());
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(secondMawcor), null,
+                player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents damage from a creature ability after its source leaves the battlefield")
+    void preventsDamageAfterSourceLeavesBattlefield() {
+        Permanent mawcor = addCreatureReady(player2, new FledglingMawcor());
+        castChameleonBlur();
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(mawcor), null,
+                player1.getId());
+
+        harness.setHand(player1, List.of(new SuddenDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, mawcor.getId());
+        harness.assertInGraveyard(player2, "Fledgling Mawcor");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
     }
 }

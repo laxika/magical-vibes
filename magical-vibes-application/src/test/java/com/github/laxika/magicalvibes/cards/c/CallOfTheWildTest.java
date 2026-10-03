@@ -112,4 +112,53 @@ class CallOfTheWildTest extends BaseCardTest {
                 .extracting(p -> p.getCard().getId())
                 .containsExactly(source.getId());
     }
+
+    @Test
+    @DisplayName("Each activation reveals only the current top card on resolution")
+    void repeatedActivationsResolveOneCardAtATime() {
+        harness.addToBattlefield(player1, new CallOfTheWild());
+        Card nonCreature = new WoodenSphere();
+        Card creature = new GrizzlyBears();
+        Card remainingCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonCreature, creature, remainingCard));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(nonCreature, creature, remainingCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, remainingCard);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getId().equals(creature.getId()))
+                .singleElement().satisfies(p -> assertThat(p.isTapped()).isFalse());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Four mana cannot pay the activation cost with only one green mana")
+    void requiresTwoGreenMana() {
+        harness.addToBattlefield(player1, new CallOfTheWild());
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
 }

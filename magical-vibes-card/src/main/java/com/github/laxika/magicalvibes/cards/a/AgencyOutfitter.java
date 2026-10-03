@@ -14,9 +14,7 @@ public class AgencyOutfitter extends Card {
         // When this creature enters, you may search your graveyard, hand, and/or library for a card
         // named Magnifying Glass and/or a card named Thinking Cap and put them onto the battlefield.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                SequenceEffect.of(
-                        new SearchZonesForCardNamedToBattlefieldEffect("Magnifying Glass"),
-                        new SearchZonesForCardNamedToBattlefieldEffect("Thinking Cap")),
+                new SearchZonesForCardNamedToBattlefieldEffect(java.util.List.of("Magnifying Glass", "Thinking Cap")),
                 "Search your graveyard, hand, and/or library for a card named Magnifying Glass and/or "
                         + "a card named Thinking Cap?"));
     }

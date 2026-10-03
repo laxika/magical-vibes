@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcatianSkirmishers;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -75,12 +74,64 @@ class ChatzukMightyGuitaristTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Unbanded attackers do not trigger Chatzuk")
+    void unbandedAttackersDoNotTrigger() {
+        addCreatureReady(player1, new ChatzukMightyGuitarist());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersWithoutBand();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each qualifying attacking band creates a separate Chatzuk trigger")
+    void triggersSeparatelyForEachBand() {
+        addCreatureReady(player1, new ChatzukMightyGuitarist());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new IcatianSkirmishers());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1, 2, 3), List.of(List.of(0, 1), List.of(2, 3)));
+
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getCard() instanceof ChatzukMightyGuitarist))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A triggered band still boosts its sole surviving member")
+    void boostsSurvivingMemberWhenBandmateLeaves() {
+        Permanent chatzuk = addCreatureReady(player1, new ChatzukMightyGuitarist());
+        Permanent bandmate = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersInBand();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bandmate));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, chatzuk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, chatzuk)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does not reduce an opponent's banding creature spells")
+    void doesNotReduceOpponentSpells() {
+        harness.addToBattlefield(player1, new ChatzukMightyGuitarist());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new IcatianSkirmishers(), "{1}{W}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void declareAttackersInBand() {
         declareAttackers(List.of(0, 1), List.of(List.of(0, 1)));
     }
 
     private void declareAttackersWithoutBand() {
-        declareAttackers(List.of(0, 1), null);
+        declareAttackers(List.of(0, 1));
     }
 
     private void declareAttackers(List<Integer> attackers, List<List<Integer>> bands) {

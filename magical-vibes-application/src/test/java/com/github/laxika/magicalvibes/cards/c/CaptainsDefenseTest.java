@@ -60,6 +60,42 @@ class CaptainsDefenseTest extends BaseCardTest {
                 .hasMessageContaining("blocking creature");
     }
 
+    @Test
+    @DisplayName("Does not boost or draw when the target stops blocking before resolution")
+    void doesNotResolveWhenTargetStopsBlocking() {
+        Permanent blocker = addBlockingCreature(player2);
+        Forest draw = new Forest();
+        harness.setLibrary(player1, List.of(draw));
+        setupSpell();
+        harness.castInstant(player1, 0, blocker.getId());
+
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        harness.assertInGraveyard(player1, "Captain's Defense");
+    }
+
+    @Test
+    @DisplayName("Does not draw when the blocking creature leaves the battlefield before resolution")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent blocker = addBlockingCreature(player2);
+        Forest draw = new Forest();
+        harness.setLibrary(player1, List.of(draw));
+        setupSpell();
+        harness.castInstant(player1, 0, blocker.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(blocker);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        harness.assertInGraveyard(player1, "Captain's Defense");
+    }
+
     private Permanent addBlockingCreature(Player player) {
         Permanent blocker = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         blocker.setBlocking(true);
@@ -68,8 +104,7 @@ class CaptainsDefenseTest extends BaseCardTest {
 
     private void castAt(Permanent target) {
         setupSpell();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void setupSpell() {

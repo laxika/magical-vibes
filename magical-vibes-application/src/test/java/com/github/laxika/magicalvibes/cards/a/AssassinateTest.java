@@ -119,8 +119,7 @@ class AssassinateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, tappedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, tappedCreature.getId());
 
         harness.assertOnBattlefield(player2, "Stuffy Doll");
         harness.assertNotInGraveyard(player2, "Stuffy Doll");
@@ -188,6 +187,25 @@ class AssassinateTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Assassinate still goes to graveyard
         harness.assertInGraveyard(player1, "Assassinate");
+    }
+
+    @Test
+    @DisplayName("Destroys a target that becomes untapped and tapped again before resolution")
+    void destroysTargetTappedAgainBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+        target.tap();
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, target.getId());
+        target.untap();
+        target.tap();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benalish Cavalry");
+        harness.assertInGraveyard(player2, "Benalish Cavalry");
+        harness.assertInGraveyard(player1, "Assassinate");
+        assertThat(gd.stack).isEmpty();
     }
 }
 

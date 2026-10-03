@@ -119,6 +119,51 @@ class BarrinsUnmakingTest extends BaseCardTest {
         harness.assertInHand(player2, "Benalish Lancer");
     }
 
+    @Test
+    @DisplayName("Counts the target itself and ignores colorless permanents")
+    void returnsOnlyColoredPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
+        harness.addToBattlefield(player1, new BloodstoneCameo());
+        harness.addToBattlefield(player2, new BloodstoneCameo());
+
+        castBarrinsUnmaking(target);
+
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInHand(player2, "Benalish Lancer");
+    }
+
+    @Test
+    @DisplayName("Does nothing when all permanents are colorless")
+    void doesNothingOnEntirelyColorlessBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BloodstoneCameo());
+        harness.addToBattlefield(player1, new BloodstoneCameo());
+
+        castBarrinsUnmaking(target);
+
+        harness.assertOnBattlefield(player2, "Bloodstone Cameo");
+        harness.assertNotInHand(player2, "Bloodstone Cameo");
+    }
+
+    @Test
+    @DisplayName("Can target a less common color that becomes tied before resolution")
+    void returnsTargetThatBecomesEligibleBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
+        harness.addToBattlefield(player1, new BlindSeer());
+        harness.addToBattlefield(player1, new GalinasKnight());
+        harness.addToBattlefield(player2, new GalinasKnight());
+        Permanent alloyGolem = harness.addToBattlefieldAndReturn(player1, new AlloyGolem());
+        alloyGolem.setChosenColor(CardColor.BLUE);
+        harness.setHand(player1, List.of(new BarrinsUnmaking()));
+        addCastingMana();
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.addToBattlefield(player1, new BenalishLancer());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertInHand(player2, "Benalish Lancer");
+    }
+
     private Permanent addColoredPermanent(Player owner, String name, CardColor... colors) {
         Card card = new Card();
         card.setName(name);

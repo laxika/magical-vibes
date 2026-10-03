@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "IKO", collectorNumber = "41")
+@CardRegistration(set = "HBG", collectorNumber = "902")
 public class Archipelagore extends Card {
 
     public Archipelagore() {

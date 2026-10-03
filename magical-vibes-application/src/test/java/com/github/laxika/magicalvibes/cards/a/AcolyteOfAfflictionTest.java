@@ -58,6 +58,63 @@ class AcolyteOfAfflictionTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Acolyte of Affliction");
     }
 
+    @Test
+    @DisplayName("A land milled by the ability can be returned, and only two cards are milled")
+    void returnsNewlyMilledLand() {
+        Forest land = new Forest();
+        Shock milledSpell = new Shock();
+        Forest remainingCard = new Forest();
+        harness.setLibrary(player1, List.of(land, milledSpell, remainingCard));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        castAndResolveToMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milledSpell);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent returning an existing permanent")
+    void returnsPermanentWithEmptyLibrary() {
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of(land));
+
+        castAndResolveToMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With no eligible permanent, accepting the return finishes without using an opponent's graveyard")
+    void noEligiblePermanentFinishesResolution() {
+        Shock spell = new Shock();
+        Forest opponentsLand = new Forest();
+        harness.setLibrary(player1, List.of(spell));
+        harness.setGraveyard(player2, List.of(opponentsLand));
+
+        castAndResolveToMay();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsLand);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void castAndResolveToMay() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -67,7 +124,6 @@ class AcolyteOfAfflictionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

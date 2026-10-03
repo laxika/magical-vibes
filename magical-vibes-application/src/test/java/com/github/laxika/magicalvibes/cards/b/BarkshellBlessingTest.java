@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoldenglowMoth;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BarkshellBlessing.class, GrizzlyBears.class, FountainOfYouth.class, Ornithopter.class,
+        GoldenglowMoth.class})
 class BarkshellBlessingTest extends BaseCardTest {
 
     @Test
@@ -31,7 +35,7 @@ class BarkshellBlessingTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
     }
@@ -51,7 +55,7 @@ class BarkshellBlessingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }
@@ -106,5 +110,96 @@ class BarkshellBlessingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithConspire(player1, 0, target.getId(),
                 List.of(bears.getId(), thopter.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Conspire can tap summoning-sick creatures and keep the original target")
+    void conspireWithSummoningSickCreaturesResolvesBothBoosts() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BarkshellBlessing()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castWithConspire(player1, 0, first.getId(), List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(first.getEffectivePower()).isEqualTo(6);
+        assertThat(first.getEffectiveToughness()).isEqualTo(6);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conspire copy can target an opponent's creature independently of the original")
+    void conspireCopyCanChooseOpponentsCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BarkshellBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castWithConspire(player1, 0, first.getId(), List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, opponent.getId());
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(opponent.getEffectivePower()).isEqualTo(4);
+        assertThat(opponent.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conspire cannot tap the same creature twice")
+    void conspireRejectsDuplicateCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BarkshellBlessing()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0, bear.getId(),
+                List.of(bear.getId(), bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bear.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Conspire rejects an already tapped creature")
+    void conspireRejectsTappedCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        second.tap();
+        harness.setHand(player1, List.of(new BarkshellBlessing()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0, first.getId(),
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(first.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Conspire accepts one green creature and one white creature")
+    void conspireAcceptsDifferentColorsSharingWithHybridSpell() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent moth = harness.addToBattlefieldAndReturn(player1, new GoldenglowMoth());
+        harness.setHand(player1, List.of(new BarkshellBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castWithConspire(player1, 0, moth.getId(), List.of(bear.getId(), moth.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(moth.isTapped()).isTrue();
+        assertThat(moth.getEffectivePower()).isEqualTo(4);
+        assertThat(moth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
     }
 }

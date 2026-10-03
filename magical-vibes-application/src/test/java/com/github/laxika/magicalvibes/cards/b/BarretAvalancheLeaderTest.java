@@ -60,12 +60,115 @@ class BarretAvalancheLeaderTest extends BaseCardTest {
         assertThat(equipment.getAttachedTo()).isEqualTo(rebel.getId());
     }
 
+    @Test
+    void opposingEquipmentDoesNotCreateRebel() {
+        addCreatureReady(player1, new BarretAvalancheLeader());
+
+        harness.enterBattlefieldAndReturn(player2, new LeoninScimitar());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void eachEquipmentEntryCreatesAnotherRebel() {
+        addCreatureReady(player1, new BarretAvalancheLeader());
+
+        harness.enterBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
+    }
+
+    @Test
+    void canAttachEquipmentToBarretHimselfAndExcludeOpposingPermanents() {
+        Permanent barret = addCreatureReady(player1, new BarretAvalancheLeader());
+        Permanent opposingBarret = addCreatureReady(player2, new BarretAvalancheLeader());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent opposingEquipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(equipment.getId()).doesNotContain(opposingEquipment.getId());
+        harness.handlePermanentChosen(player1, equipment.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(barret.getId()).doesNotContain(opposingBarret.getId());
+        harness.handlePermanentChosen(player1, barret.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(barret.getId());
+        assertThat(opposingEquipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void canDeclineEquipmentWhileStillChoosingRebel() {
+        Permanent barret = addCreatureReady(player1, new BarretAvalancheLeader());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        advanceToCombat(player1);
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(barret.getId());
+        harness.handlePermanentChosen(player1, barret.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void stillTargetsRebelWhenNoEquipmentIsAvailable() {
+        Permanent barret = addCreatureReady(player1, new BarretAvalancheLeader());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(barret.getId());
+        harness.handlePermanentChosen(player1, barret.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(barret);
+    }
+
+    @Test
+    void doesNotTriggerAtOpponentsBeginningOfCombat() {
+        addCreatureReady(player1, new BarretAvalancheLeader());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void doesNotAttachWhenTargetRebelLeavesBeforeResolution() {
+        Permanent barret = addCreatureReady(player1, new BarretAvalancheLeader());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.handlePermanentChosen(player1, barret.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(barret);
+        gd.playerGraveyards.get(player1.getId()).add(barret.getCard());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private Card rebelToken() {

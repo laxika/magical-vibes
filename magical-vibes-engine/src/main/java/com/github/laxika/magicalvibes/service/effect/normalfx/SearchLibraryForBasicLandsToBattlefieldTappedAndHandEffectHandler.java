@@ -27,6 +27,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -38,6 +39,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
     private final LibrarySearchSupport librarySearchSupport;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -70,7 +72,8 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
                                 card, effect.filter(), null, gameData, controllerId)
                         : !effect.basicOnly()
                                 || (card.hasType(CardType.LAND)
-                                && card.getSupertypes().contains(CardSupertype.BASIC)))
+                                && gameQueryService.cardHasSupertype(
+                                card, CardSupertype.BASIC, gameData, controllerId)))
                 .filter(card -> subtype == null || card.getSubtypes().contains(subtype))
                 .toList();
 

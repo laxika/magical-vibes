@@ -27,8 +27,7 @@ class BakuAltarTest extends BaseCardTest {
         harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(altar.getCounterCount(CounterType.KI)).isEqualTo(1);
     }
@@ -52,8 +51,7 @@ class BakuAltarTest extends BaseCardTest {
         harness.castFromHand(player1, new TeardropKami(), "{U}");
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(altar.getCounterCount(CounterType.KI)).isEqualTo(1);
     }
@@ -115,5 +113,70 @@ class BakuAltarTest extends BaseCardTest {
 
     private Permanent addAltar(Player player) {
         return harness.addToBattlefieldAndReturn(player, new BakuAltar());
+    }
+
+    @Test
+    @DisplayName("Activation pays costs immediately and creates only one token on resolution")
+    void activationPaysCostsBeforeResolution() {
+        Permanent altar = addAltar(player1);
+        altar.setCounterCount(CounterType.KI, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(altar.isTapped()).isTrue();
+        assertThat(altar.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        assertThat(altar.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped altar cannot activate even with mana and ki counters")
+    void cannotActivateWhileTapped() {
+        Permanent altar = addAltar(player1);
+        altar.setCounterCount(CounterType.KI, 1);
+        altar.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(altar.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana prevents activation without spending the counter")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent altar = addAltar(player1);
+        altar.setCounterCount(CounterType.KI, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(altar.isTapped()).isFalse();
+        assertThat(altar.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent casting an Arcane spell does not trigger the altar")
+    void opponentArcaneSpellDoesNotTrigger() {
+        Permanent altar = addAltar(player1);
+        harness.castFromHand(player2, new VitalSurge(), "{1}{G}");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(altar.getCounterCount(CounterType.KI)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

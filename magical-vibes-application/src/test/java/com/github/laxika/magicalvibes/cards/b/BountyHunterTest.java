@@ -134,4 +134,104 @@ class BountyHunterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Target must be a creature with a bounty counter on it");
     }
+
+    @Test
+    @DisplayName("Bounty counters accumulate and tapping pays the activation cost")
+    void bountyCountersAccumulate() {
+        Permanent hunter = addCreatureReady(player1, new BountyHunter());
+        Permanent armodon = addCreatureReady(player2, new TrainedArmodon());
+        armodon.setCounterCount(CounterType.BOUNTY, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, armodon.getId());
+        assertThat(hunter.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(armodon.getCounterCount(CounterType.BOUNTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature losing its last bounty counter is an illegal target on resolution")
+    void cannotDestroyAfterLastBountyCounterIsRemoved() {
+        addCreatureReady(player1, new BountyHunter());
+        Permanent armodon = addCreatureReady(player2, new TrainedArmodon());
+        armodon.setCounterCount(CounterType.BOUNTY, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, armodon.getId());
+        armodon.setCounterCount(CounterType.BOUNTY, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Trained Armodon");
+        harness.assertNotInGraveyard(player2, "Trained Armodon");
+    }
+
+    @Test
+    @DisplayName("Destroying a creature does not consume its bounty counters if it regenerates")
+    void regenerationPreservesBountyCounters() {
+        addCreatureReady(player1, new BountyHunter());
+        Permanent armodon = addCreatureReady(player2, new TrainedArmodon());
+        armodon.setCounterCount(CounterType.BOUNTY, 2);
+        armodon.setRegenerationShield(1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, armodon.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Trained Armodon");
+        harness.assertNotInGraveyard(player2, "Trained Armodon");
+        assertThat(armodon.getRegenerationShield()).isZero();
+        assertThat(armodon.isTapped()).isTrue();
+        assertThat(armodon.getCounterCount(CounterType.BOUNTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The counter ability resolves even if Bounty Hunter leaves the battlefield")
+    void counterAbilityResolvesWithoutItsSource() {
+        Permanent hunter = addCreatureReady(player1, new BountyHunter());
+        Permanent armodon = addCreatureReady(player2, new TrainedArmodon());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, armodon.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(hunter);
+        gd.playerGraveyards.get(player1.getId()).add(hunter.getCard());
+        harness.passBothPriorities();
+
+        assertThat(armodon.getCounterCount(CounterType.BOUNTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bounty Hunter can destroy itself if it has a bounty counter")
+    void canDestroyItselfWithBountyCounter() {
+        Permanent hunter = addCreatureReady(player1, new BountyHunter());
+        hunter.setCounterCount(CounterType.BOUNTY, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, hunter.getId());
+        assertThat(hunter.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bounty Hunter");
+        harness.assertInGraveyard(player1, "Bounty Hunter");
+    }
+
+    @Test
+    @DisplayName("Neither tap ability can be activated while Bounty Hunter is summoning sick")
+    void summoningSicknessPreventsBothAbilities() {
+        harness.addToBattlefield(player1, new BountyHunter());
+        Permanent armodon = addCreatureReady(player2, new TrainedArmodon());
+        armodon.setCounterCount(CounterType.BOUNTY, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, armodon.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, armodon.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

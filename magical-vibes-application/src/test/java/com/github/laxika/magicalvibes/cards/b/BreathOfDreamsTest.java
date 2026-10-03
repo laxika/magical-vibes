@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
+import com.github.laxika.magicalvibes.cards.l.Lifelace;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,9 +13,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreathOfDreams.class, FyndhornElves.class, ZuranSpellcaster.class})
+@CardUsed({BreathOfDreams.class, FyndhornElves.class, ZuranSpellcaster.class,
+        Opalescence.class, Lifelace.class})
 class BreathOfDreamsTest extends BaseCardTest {
 
     @Test
@@ -127,6 +132,87 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elves);
+    }
+
+    @Test
+    @CardUsed({BreathOfDreams.class, Opalescence.class, Lifelace.class})
+    @DisplayName("A green animated Breath of Dreams grants cumulative upkeep to itself")
+    void greenAnimatedBreathGrantsUpkeepToItself() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent breath = harness.addToBattlefieldAndReturn(player1, new BreathOfDreams());
+        harness.setHand(player1, List.of(new Lifelace()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, breath.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(breath.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(breath);
+    }
+
+    @Test
+    @DisplayName("Two copies grant separate cumulative upkeeps that share age counters")
+    void multipleCopiesShareAgeCounters() {
+        harness.addToBattlefield(player2, new BreathOfDreams());
+        harness.addToBattlefield(player2, new BreathOfDreams());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new FyndhornElves());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passBothPriorities();
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elves);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Granted upkeep still resolves after Breath of Dreams is sacrificed")
+    void grantedTriggerSurvivesEnchantmentLeaving() {
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new FyndhornElves());
+        harness.addToBattlefield(player1, new BreathOfDreams());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Breath of Dreams");
+
+        harness.passBothPriorities();
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Fyndhorn Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elves);
+    }
+
+    @Test
+    @DisplayName("Insufficient mana cannot partially pay granted cumulative upkeep")
+    void insufficientManaSacrificesGreenCreature() {
+        harness.addToBattlefield(player2, new BreathOfDreams());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new FyndhornElves());
+        elves.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Fyndhorn Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elves);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test

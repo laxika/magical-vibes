@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @CardUsed({Angel.class, GrizzlyBears.class})
 class AngelTest extends BaseCardTest {
@@ -19,27 +18,27 @@ class AngelTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking Angel")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
-        Permanent angel = new Permanent(new Angel());
-        angel.setSummoningSick(false);
-        angel.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(angel);
+        addCreatureReady(player1, new Angel());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block");
+    }
+
+    @Test
+    @DisplayName("A flying Angel can block another flying Angel")
+    void flyingCreatureCanBlockAngel() {
+        addCreatureReady(player1, new Angel());
+        addCreatureReady(player2, new Angel());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
     }
 }

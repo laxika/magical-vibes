@@ -27,6 +27,33 @@ class CoalStokerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Coal Stoker's mana trigger uses the stack and only awards its controller")
+    void manaIsAddedOnlyWhenTheEnterTriggerResolves() {
+        harness.castFromHand(player1, new CoalStoker(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Coal Stoker");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Coal Stoker entering without being cast creates no mana trigger")
+    void enteringWithoutCastingDoesNotTrigger() {
+        harness.enterBattlefieldAndReturn(player1, new CoalStoker());
+
+        harness.assertOnBattlefield(player1, "Coal Stoker");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Returning Coal Stoker from a graveyard does not add mana")
     void returningFromGraveyardDoesNotAddMana() {
         CoalStoker stoker = new CoalStoker();

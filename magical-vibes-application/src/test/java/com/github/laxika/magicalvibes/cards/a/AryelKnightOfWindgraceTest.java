@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiftOfGrowth;
+import com.github.laxika.magicalvibes.cards.k.KnightOfNewBenalia;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.y.YavimayaSapherd;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +23,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AryelKnightOfWindgrace.class, KnightOfNewBenalia.class,
+        YavimayaSapherd.class, GiftOfGrowth.class, LlanowarElves.class})
 class AryelKnightOfWindgraceTest extends BaseCardTest {
 
     @Test
@@ -27,8 +33,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -51,8 +56,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -69,8 +73,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         // Only 1 white mana — not enough for {2}{W}
@@ -87,8 +90,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         // Add exactly 2 untapped Knights
@@ -96,8 +98,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         Permanent knight2 = addReadyKnight(player1);
 
         // Add target creature for player2
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new YavimayaSapherd());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -108,9 +109,9 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.activateAbility(player1, aryelIdx, 1, 2, targetId);
         harness.passBothPriorities();
 
-        // Grizzly Bears (2/2) should be destroyed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Yavimaya Sapherd (2/2) should be destroyed
+        harness.assertNotOnBattlefield(player2, "Yavimaya Sapherd");
+        harness.assertInGraveyard(player2, "Yavimaya Sapherd");
 
         // Knights should be tapped as cost
         assertThat(knight1.isTapped()).isTrue();
@@ -125,18 +126,16 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
-        Permanent knight1 = addReadyKnight(player1);
+        addReadyKnight(player1);
 
         // Add a 3/3 creature
-        Card bigCreature = new GrizzlyBears();
+        Card bigCreature = new YavimayaSapherd();
         bigCreature.setPower(3);
         bigCreature.setToughness(3);
-        Permanent bigPerm = new Permanent(bigCreature);
-        gd.playerBattlefields.get(player2.getId()).add(bigPerm);
+        Permanent bigPerm = harness.addToBattlefieldAndReturn(player2, bigCreature);
 
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -154,16 +153,14 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         // Add a 0/4 wall
-        Card wall = new GrizzlyBears();
+        Card wall = new YavimayaSapherd();
         wall.setPower(0);
         wall.setToughness(4);
-        Permanent wallPerm = new Permanent(wall);
-        gd.playerBattlefields.get(player2.getId()).add(wallPerm);
+        Permanent wallPerm = harness.addToBattlefieldAndReturn(player2, wall);
 
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -184,15 +181,13 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         // Only 1 Knight
         addReadyKnight(player1);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new YavimayaSapherd());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -210,8 +205,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         // 3 Knights, but X=2
@@ -219,8 +213,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         Permanent knight2 = addReadyKnight(player1);
         Permanent knight3 = addReadyKnight(player1);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new YavimayaSapherd());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -236,8 +229,8 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Bears destroyed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        // Target destroyed
+        harness.assertNotOnBattlefield(player2, "Yavimaya Sapherd");
 
         // Chosen knights tapped, unchosen untapped
         assertThat(knight1.isTapped()).isTrue();
@@ -256,8 +249,7 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
 
         addReadyKnight(player1);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -271,13 +263,11 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new AryelKnightOfWindgrace());
-        Permanent aryel = findPermanent(player1, "Aryel, Knight of Windgrace");
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
         aryel.setSummoningSick(false);
 
         // No other Knights — Aryel is a Knight but excluded as source
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -289,14 +279,56 @@ class AryelKnightOfWindgraceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Summoning-sick Knights can pay the additional tap cost")
+    void summoningSickKnightsCanPayCost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
+        aryel.setSummoningSick(false);
+        Permanent knight1 = harness.addToBattlefieldAndReturn(player1, new KnightOfNewBenalia());
+        Permanent knight2 = harness.addToBattlefieldAndReturn(player1, new KnightOfNewBenalia());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YavimayaSapherd());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, 2, target.getId());
+        assertThat(knight1.isTapped()).isTrue();
+        assertThat(knight2.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Yavimaya Sapherd");
+    }
+
+    @Test
+    @DisplayName("A target whose power increases above X survives resolution")
+    void increasedPowerMakesTargetIllegal() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent aryel = harness.addToBattlefieldAndReturn(player1, new AryelKnightOfWindgrace());
+        aryel.setSummoningSick(false);
+        Permanent knight1 = addReadyKnight(player1);
+        Permanent knight2 = addReadyKnight(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YavimayaSapherd());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 1, 2, target.getId());
+
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new GiftOfGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Yavimaya Sapherd");
+        harness.assertNotInGraveyard(player2, "Yavimaya Sapherd");
+        assertThat(aryel.isTapped()).isTrue();
+        assertThat(knight1.isTapped()).isTrue();
+        assertThat(knight2.isTapped()).isTrue();
+    }
 
     private Permanent addReadyKnight(Player player) {
-        Card knightCard = new GrizzlyBears();
-        knightCard.setSubtypes(List.of(CardSubtype.KNIGHT));
-        Permanent perm = new Permanent(knightCard);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new KnightOfNewBenalia());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

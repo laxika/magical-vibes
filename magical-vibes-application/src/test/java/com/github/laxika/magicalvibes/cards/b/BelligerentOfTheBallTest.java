@@ -39,7 +39,7 @@ class BelligerentOfTheBallTest extends BaseCardTest {
     @DisplayName("Celebration does not trigger without two nonland permanents")
     void doesNotTriggerWithoutTwoNonlandPermanents() {
         castBelligerentOfTheBall();
-        harness.addToBattlefield(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
 
         advanceToBeginningOfCombat();
 
@@ -82,6 +82,70 @@ class BelligerentOfTheBallTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bear, Keyword.MENACE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Celebration can target itself after another qualifying permanent leaves")
+    void canTargetSelfAfterOtherPermanentLeaves() {
+        castBelligerentOfTheBall();
+        Permanent bear = castGrizzlyBears();
+        Permanent belligerent = findPermanent(player1, "Belligerent of the Ball");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, bear));
+
+        advanceToBeginningOfCombat();
+        harness.handlePermanentChosen(player1, belligerent.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, belligerent)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, belligerent)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, belligerent, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent entries do not enable celebration")
+    void opponentEntriesDoNotCount() {
+        castBelligerentOfTheBall();
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Celebration does not trigger during an opponent's combat")
+    void doesNotTriggerDuringOpponentCombat() {
+        castBelligerentOfTheBall();
+        castGrizzlyBears();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Removing the target does not boost another creature")
+    void removedTargetDoesNotBoostAnotherCreature() {
+        castBelligerentOfTheBall();
+        Permanent bear = castGrizzlyBears();
+        Permanent belligerent = findPermanent(player1, "Belligerent of the Ball");
+
+        advanceToBeginningOfCombat();
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, bear));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, belligerent)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, belligerent, Keyword.MENACE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castBelligerentOfTheBall() {
         harness.setHand(player1, List.of(new BelligerentOfTheBall()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -102,6 +166,6 @@ class BelligerentOfTheBallTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

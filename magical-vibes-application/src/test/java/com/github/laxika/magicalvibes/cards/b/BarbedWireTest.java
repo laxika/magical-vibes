@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.k.KarnSilverGolem;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BarbedWire.class)
+@CardUsed({BarbedWire.class, KarnSilverGolem.class})
 class BarbedWireTest extends BaseCardTest {
 
     @Test
@@ -95,6 +96,42 @@ class BarbedWireTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Prevention can be activated in response to the upkeep trigger")
+    void preventsPendingUpkeepDamage() {
+        harness.addToBattlefield(player1, new BarbedWire());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents only one damage when animated Barbed Wire deals three combat damage")
+    void preventsOnlyOneCombatDamageFromAnimatedWire() {
+        Permanent wire = addReadyBarbedWire(player1);
+        harness.addToBattlefield(player1, new KarnSilverGolem());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 1, null, wire.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(java.util.List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 
     private Permanent addReadyBarbedWire(Player player) {

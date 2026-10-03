@@ -93,6 +93,57 @@ class BulwarkTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Deals no damage when both players have equally sized hands")
+    void dealsNoDamageWhenHandsAreEqual() {
+        harness.addToBattlefield(player1, new Bulwark());
+        harness.setHand(player1, cards(3));
+        harness.setHand(player2, cards(3));
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Triggers with no hand-size advantage and uses an advantage gained before resolution")
+    void dealsDamageWhenHandSizeAdvantageAppearsBeforeResolution() {
+        harness.addToBattlefield(player1, new Bulwark());
+        harness.setHand(player1, cards(1));
+        harness.setHand(player2, cards(3));
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player1, cards(5));
+        harness.setHand(player2, cards(2));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Uses the other controller's hand and targets their opponent")
+    void worksWhenControlledByOtherPlayer() {
+        harness.addToBattlefield(player2, new Bulwark());
+        harness.setHand(player2, cards(5));
+        harness.setHand(player1, cards(1));
+        int opponentLifeBefore = gd.getLife(player1.getId());
+        int controllerLifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player1.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(opponentLifeBefore - 4);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(controllerLifeBefore);
+    }
+
     private List<Card> cards(int count) {
         return Stream.generate(Forest::new).limit(count).map(Card.class::cast).toList();
     }

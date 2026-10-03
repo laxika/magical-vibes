@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -52,7 +51,7 @@ class BloodhillBastionTest extends BaseCardTest {
         Permanent illegalTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
                 .processNextSpellTargetTrigger(gd));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -64,5 +63,52 @@ class BloodhillBastionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears)
                 .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+    }
+
+    @Test
+    void planeControlsTriggerWhenOpponentsCreatureEnters() {
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(BloodhillBastion.class);
+    }
+
+    @Test
+    void grantedKeywordsExpireAtEndOfTurn() {
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void chaosRejectsTokenAndReturnedCreatureGainsKeywords() {
+        GrizzlyBears tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextSpellTargetTrigger(gd));
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, token.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(token.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
     }
 }

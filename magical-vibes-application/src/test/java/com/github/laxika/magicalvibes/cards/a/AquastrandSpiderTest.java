@@ -102,8 +102,7 @@ class AquastrandSpiderTest extends BaseCardTest {
         assertThat(spider.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
@@ -154,6 +153,66 @@ class AquastrandSpiderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Reach ability does not resolve if the target loses its last +1/+1 counter")
+    void doesNotGrantReachWhenTargetLosesCounterBeforeResolution() {
+        addSpider(player1);
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Reach remains after the target loses its counter following resolution")
+    void retainsReachWhenCounterIsRemovedAfterResolution() {
+        addSpider(player1);
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target itself with reach while summoning sick")
+    void grantsReachToItselfWhileSummoningSick() {
+        Permanent spider = addSpider(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, spider.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.REACH)).isTrue();
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(spider.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Moving its last counter still gives the entering creature a counter before the Spider dies")
+    void movesLastCounterAndThenDies() {
+        Permanent spider = addSpider(player1);
+        spider.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Aquastrand Spider");
+        harness.assertInGraveyard(player1, "Aquastrand Spider");
     }
 
     private Permanent addSpider(Player player) {

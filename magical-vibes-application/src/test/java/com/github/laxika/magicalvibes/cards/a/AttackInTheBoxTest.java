@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AttackInTheBox.class)
+@CardUsed({AttackInTheBox.class})
 class AttackInTheBoxTest extends BaseCardTest {
 
     @Test
@@ -39,10 +39,8 @@ class AttackInTheBoxTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(box.getId()));
@@ -63,12 +61,58 @@ class AttackInTheBoxTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, box)).isEqualTo(4);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(box.getId()));
+    }
+
+    @Test
+    @DisplayName("The boost lasts through combat and sacrifice waits for the end-step trigger to resolve")
+    void boostPersistsUntilDelayedSacrificeResolves() {
+        Permanent box = addCreatureReady(player1, new AttackInTheBox());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN,
+                () -> harness.handleMayAbilityChosen(player1, true));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(box);
+        assertThat(gqs.getEffectivePower(gd, box)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, box)).isEqualTo(4);
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(box);
+        assertThat(gqs.getEffectivePower(gd, box)).isEqualTo(6);
+
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(box);
+        harness.assertInGraveyard(player1, "Attack-in-the-Box");
+    }
+
+    @Test
+    @DisplayName("Only the attacking Box is boosted and scheduled for sacrifice")
+    void anotherBoxIsUnaffected() {
+        Permanent attacker = addCreatureReady(player1, new AttackInTheBox());
+        Permanent otherBox = addCreatureReady(player1, new AttackInTheBox());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, otherBox)).isEqualTo(2);
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherBox).doesNotContain(attacker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(attacker.getCard());
     }
 }

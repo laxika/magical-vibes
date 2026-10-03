@@ -29,8 +29,7 @@ class AssembleFromPartsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -59,5 +58,116 @@ class AssembleFromPartsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetCreatureInOpponentsGraveyard() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setHand(player1, List.of(new AssembleFromParts()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tokenCopyRetainsSourcesManaCost() {
+        Card bears = grantAbilityToBears();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(token.getCard().getManaCost()).isEqualTo(bears.getManaCost());
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    void exilesSourceAsCostBeforeAbilityResolves() {
+        Card bears = grantAbilityToBears();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhaseOrDuringOpponentsTurn() {
+        Card bears = grantAbilityToBears();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player2);
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    void cannotActivateWithSpellOnStack() {
+        Card bears = grantAbilityToBears();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
+    }
+
+    @Test
+    void grantedAbilityPersistsAfterSourceReturnsFromLibraryToGraveyard() {
+        Card bears = grantAbilityToBears();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(bears);
+
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
+    }
+
+    @Test
+    void activationRequiresTwoBlackMana() {
+        Card bears = grantAbilityToBears();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bears);
+    }
+
+    private Card grantAbilityToBears() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new AssembleFromParts()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        return bears;
     }
 }

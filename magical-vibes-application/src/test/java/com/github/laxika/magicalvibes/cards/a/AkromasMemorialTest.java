@@ -21,6 +21,32 @@ class AkromasMemorialTest extends BaseCardTest {
             Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.HASTE);
 
     @Test
+    @DisplayName("A noncreature Memorial does not grant itself protection")
+    void doesNotProtectNoncreatureMemorial() {
+        Permanent memorial = harness.addToBattlefieldAndReturn(player1, new AkromasMemorial());
+
+        assertThat(gqs.isCreature(gd, memorial)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, memorial, CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, memorial, CardColor.RED)).isFalse();
+        for (Keyword keyword : GRANTED) {
+            assertThat(gqs.hasKeyword(gd, memorial, keyword)).as(keyword.name()).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the Memorial gain its abilities immediately")
+    void grantsAbilitiesToLaterCreatures() {
+        harness.addToBattlefield(player1, new AkromasMemorial());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new Imperiosaur());
+
+        for (Keyword keyword : GRANTED) {
+            assertThat(gqs.hasKeyword(gd, creature, keyword)).as(keyword.name()).isTrue();
+        }
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.RED)).isTrue();
+    }
+
+    @Test
     @DisplayName("Creatures you control gain all five keywords")
     void grantsKeywordsToOwnCreatures() {
         harness.addToBattlefield(player1, new AkromasMemorial());

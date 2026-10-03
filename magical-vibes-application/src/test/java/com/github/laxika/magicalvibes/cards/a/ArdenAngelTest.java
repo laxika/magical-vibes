@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -48,6 +50,65 @@ class ArdenAngelTest extends BaseCardTest {
     }
 
     @Test
+    void doesNotRollAfterLeavingGraveyardBeforeResolution() {
+        FixedD4RollService roller = setRoll(1);
+        ArdenAngel angel = new ArdenAngel();
+        harness.setGraveyard(player1, List.of(angel));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(angel));
+        harness.passBothPriorities();
+
+        assertThat(roller.rollCount).isZero();
+        harness.assertNotOnBattlefield(player1, "Arden Angel");
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        FixedD4RollService roller = setRoll(1);
+        harness.setGraveyard(player1, List.of(new ArdenAngel()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(roller.rollCount).isZero();
+        harness.assertInGraveyard(player1, "Arden Angel");
+        harness.assertNotOnBattlefield(player1, "Arden Angel");
+    }
+
+    @Test
+    void doesNotTriggerFromBattlefield() {
+        FixedD4RollService roller = setRoll(1);
+        harness.addToBattlefield(player1, new ArdenAngel());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(roller.rollCount).isZero();
+    }
+
+    @Test
+    void eachGraveyardCopyReturnsIndependently() {
+        FixedD4RollService roller = setRoll(1);
+        ArdenAngel first = new ArdenAngel();
+        ArdenAngel second = new ArdenAngel();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(roller.rollCount).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(first.getId(), second.getId());
+        harness.assertNotInGraveyard(player1, "Arden Angel");
+    }
+
+    @Test
     void staysInGraveyardOnOtherResults() {
         setRoll(2);
         ArdenAngel angel = new ArdenAngel();
@@ -62,13 +123,30 @@ class ArdenAngelTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(angel.getId()));
     }
 
-    private void setRoll(int result) {
-        ReflectionTestUtils.setField(rollD4EffectHandler, "d4RollService", new FixedD4RollService(result));
+    private FixedD4RollService setRoll(int result) {
+        FixedD4RollService roller = new FixedD4RollService(result);
+        ReflectionTestUtils.setField(rollD4EffectHandler, "d4RollService", roller);
+        return roller;
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {3, 4})
+    void higherDieResultsDoNotReturnAngel(int result) {
+        FixedD4RollService roller = setRoll(result);
+        harness.setGraveyard(player1, List.of(new ArdenAngel()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(roller.rollCount).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Arden Angel");
+        harness.assertNotOnBattlefield(player1, "Arden Angel");
     }
 
     private static final class FixedD4RollService extends D4RollService {
 
         private final int result;
+        private int rollCount;
 
         private FixedD4RollService(int result) {
             this.result = result;
@@ -76,6 +154,7 @@ class ArdenAngelTest extends BaseCardTest {
 
         @Override
         public int roll() {
+            rollCount++;
             return result;
         }
     }

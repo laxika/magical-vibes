@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArmoredArmadillo;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BonnyPallClearcutter.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({BonnyPallClearcutter.class, Forest.class, ArmoredArmadillo.class, Island.class})
 class BonnyPallClearcutterTest extends BaseCardTest {
 
     @Test
@@ -32,8 +32,7 @@ class BonnyPallClearcutterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent beau = findPermanent(player1, "Beau");
         assertThat(beau.getCard().getColor()).isEqualTo(CardColor.BLUE);
@@ -51,7 +50,7 @@ class BonnyPallClearcutterTest extends BaseCardTest {
     @Test
     @DisplayName("Draws before offering a land from hand to the battlefield when attacking")
     void drawsThenPutsLandFromHandOntoBattlefield() {
-        addAttackingBonnyAndBear();
+        addBonnyAndArmadillo();
         Card landInHand = new Forest();
         Card drawnLand = new Island();
         harness.setHand(player1, List.of(landInHand));
@@ -76,7 +75,7 @@ class BonnyPallClearcutterTest extends BaseCardTest {
     @Test
     @DisplayName("Offers a land from the graveyard and can decline the choice")
     void putsLandFromGraveyardOrDeclines() {
-        addAttackingBonnyAndBear();
+        addBonnyAndArmadillo();
         Card landInGraveyard = new Forest();
         Card drawnLand = new Island();
         harness.setHand(player1, List.of());
@@ -100,9 +99,70 @@ class BonnyPallClearcutterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private void addAttackingBonnyAndBear() {
+    @Test
+    @DisplayName("Returns a graveyard land when another creature attacks without Bonny")
+    void returnsGraveyardLandWithoutBonnyAttacking() {
+        addBonnyAndArmadillo();
+        Card land = new Forest();
+        Card nonland = new ArmoredArmadillo();
+        Card drawnCard = new BonnyPallClearcutter();
+        harness.setGraveyard(player1, List.of(land, nonland));
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        PendingInteraction.PutCardFromHandOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PutCardFromHandOrGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(land.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonland);
+        Permanent returnedLand = findPermanent(player1, "Forest");
+        assertThat(returnedLand.getCard().getId()).isEqualTo(land.getId());
+        assertThat(returnedLand.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The land drawn by the attack trigger can be put onto the battlefield")
+    void putsJustDrawnLandOntoBattlefield() {
+        addBonnyAndArmadillo();
+        Card drawnLand = new Island();
+        harness.setLibrary(player1, List.of(drawnLand));
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(drawnLand.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findPermanent(player1, "Island").getCard().getId()).isEqualTo(drawnLand.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Draws without offering nonlands or an opponent's lands")
+    void drawsWithNoEligibleLand() {
+        addBonnyAndArmadillo();
+        Card drawnCard = new ArmoredArmadillo();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setGraveyard(player1, List.of(new BonnyPallClearcutter()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(new Island()));
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void addBonnyAndArmadillo() {
         addCreatureReady(player1, new BonnyPallClearcutter());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ArmoredArmadillo());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
     }

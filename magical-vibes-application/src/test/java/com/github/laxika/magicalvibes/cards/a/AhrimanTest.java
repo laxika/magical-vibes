@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -66,6 +65,76 @@ class AhrimanTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the card is drawn")
+    void paysSacrificeBeforeResolution() {
+        addAhrimanReady();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Ahriman());
+        Ahriman drawn = new Ahriman();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
+        harness.assertInGraveyard(player1, "Ahriman");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Ahriman can activate its ability")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Ahriman());
+        source.setSummoningSick(true);
+        source.tap();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Ahriman());
+        Ahriman drawn = new Ahriman();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        addAhrimanReady();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new Ahriman());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two mana is insufficient to activate the ability")
+    void requiresThreeMana() {
+        addAhrimanReady();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Ahriman());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sacrifice);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addAhrimanReady() {

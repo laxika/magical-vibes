@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LordOfExtinction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CorpseExplosion.class, ChandraNalaar.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({CorpseExplosion.class, ChandraNalaar.class, GrizzlyBears.class, HillGiant.class,
+        LordOfExtinction.class})
 class CorpseExplosionTest extends BaseCardTest {
 
     private void castCorpseExplosion(int graveyardCardIndex) {
@@ -72,5 +73,71 @@ class CorpseExplosionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithGraveyardExile(player1, 0, null, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Uses characteristic-defined power as the creature last existed in the graveyard")
+    void usesGraveyardCharacteristicDefinedPower() {
+        Card exiledCreature = new LordOfExtinction();
+        harness.setGraveyard(player1, List.of(exiledCreature, new CorpseExplosion()));
+        harness.setGraveyard(player2, List.of(new CorpseExplosion()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+
+        castCorpseExplosion(0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Rejects a noncreature card even when another graveyard card is a creature")
+    void cannotExileNoncreatureCard() {
+        Card noncreature = new CorpseExplosion();
+        Card creature = new HillGiant();
+        harness.setGraveyard(player1, List.of(noncreature, creature));
+
+        assertThatThrownBy(() -> castCorpseExplosion(0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature, creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the additional cost with an opponent's creature card")
+    void cannotExileOpponentsCreature() {
+        Card creature = new HillGiant();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(creature));
+
+        assertThatThrownBy(() -> castCorpseExplosion(0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    @DisplayName("Marks nonlethal damage and damages planeswalkers controlled by either player")
+    void dealsNonlethalDamageAndDamagesBothPlayersPlaneswalkers() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent ownPlaneswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        Permanent opposingPlaneswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        ownPlaneswalker.setCounterCount(CounterType.LOYALTY, 2);
+        opposingPlaneswalker.setCounterCount(CounterType.LOYALTY, 5);
+
+        castCorpseExplosion(0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature, opposingPlaneswalker);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownPlaneswalker);
+        assertThat(opposingPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

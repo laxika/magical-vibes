@@ -71,4 +71,55 @@ class ComparativeAnalysisTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The caster can target themselves and draws exactly two cards")
+    void casterDrawsTwoCards() {
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(new ComparativeAnalysis()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Comparative Analysis");
+    }
+
+    @Test
+    @DisplayName("Surge is available while the earlier spell is still on the stack")
+    void surgeDoesNotRequireEarlierSpellToResolve() {
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setHand(player1, List.of(new Shock(), new ComparativeAnalysis()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castWithAlternateCost(player1, 0, player1.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Comparative Analysis");
+    }
+
+    @Test
+    @DisplayName("An opponent's spell does not enable surge")
+    void opponentsSpellDoesNotEnableSurge() {
+        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player1, List.of(new ComparativeAnalysis()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Comparative Analysis");
+    }
 }

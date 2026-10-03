@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BirthingHulk.class})
 class BirthingHulkTest extends BaseCardTest {
@@ -55,7 +56,72 @@ class BirthingHulkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.castCreature(player1, 0);
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Colored mana cannot pay the colorless part of regeneration")
+    void regenerationRequiresColorlessMana() {
+        castAndResolve();
+        Permanent hulk = findPermanent(player1, "Birthing Hulk");
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both newly created Scions can immediately pay for regeneration")
+    void scionsPayForRegeneration() {
+        castAndResolve();
+        Permanent hulk = findPermanent(player1, "Birthing Hulk");
+
+        for (Permanent scion : findPermanents(player1, "Eldrazi Scion")) {
+            harness.activateAbility(player1,
+                    gd.playerBattlefields.get(player1.getId()).indexOf(scion), null, null);
+            assertThat(gd.stack).isEmpty();
+        }
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 0, null, null);
+        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+
+        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Regeneration prevents lethal damage destruction and consumes the shield")
+    void regenerationSavesHulkFromLethalDamage() {
+        castAndResolve();
+        Permanent hulk = findPermanent(player1, "Birthing Hulk");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 0, null, null);
         harness.passBothPriorities();
+        assertThat(hulk.isTapped()).isFalse();
+
+        hulk.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(findPermanent(player1, "Birthing Hulk")).isSameAs(hulk);
+        assertThat(hulk.isTapped()).isTrue();
+        assertThat(hulk.getMarkedDamage()).isZero();
+        assertThat(hulk.getRegenerationShield()).isZero();
+
+        hulk.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(findPermanents(player1, "Birthing Hulk")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(hulk.getCard());
     }
 }

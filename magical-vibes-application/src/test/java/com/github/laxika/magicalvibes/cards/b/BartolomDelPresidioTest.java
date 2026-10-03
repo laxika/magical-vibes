@@ -53,4 +53,48 @@ class BartolomDelPresidioTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void sacrificeIsPaidBeforeCounterResolves() {
+        Permanent bartolom = addCreatureReady(player1, new BartolomDelPresidio());
+        harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        assertThat(bartolom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(bartolom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent bartolom = harness.addToBattlefieldAndReturn(player1, new BartolomDelPresidio());
+        bartolom.setSummoningSick(true);
+        bartolom.setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bartolom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotSacrificeOpponentsPermanent() {
+        Permanent bartolom = addCreatureReady(player1, new BartolomDelPresidio());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bartolom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

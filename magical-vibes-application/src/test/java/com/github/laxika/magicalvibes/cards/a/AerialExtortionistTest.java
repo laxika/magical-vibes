@@ -46,7 +46,7 @@ class AerialExtortionistTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castFromExile(player2, target.getOriginalCard().getId());
-        resolveStack();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -80,7 +80,7 @@ class AerialExtortionistTest extends BaseCardTest {
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         harness.castFlashback(player2, 0, fountain.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
     }
@@ -96,7 +96,7 @@ class AerialExtortionistTest extends BaseCardTest {
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         harness.castInstant(player2, 0, fountain.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }
@@ -109,9 +109,67 @@ class AerialExtortionistTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void resolveStack() {
-        for (int i = 0; i < 8 && !gd.stack.isEmpty(); i++) {
-            harness.passBothPriorities();
-        }
+    @Test
+    void mayChooseNoTargetOnEntry() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castAerialExtortionist();
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNull();
+    }
+
+    @Test
+    void mayChooseNoTargetAfterCombatDamage() {
+        Permanent aerial = addCreatureReady(player1, new AerialExtortionist());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        aerial.setAttacking(true);
+        aerial.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNull();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void doesNotDrawWhenControllerCastsFromGraveyard() {
+        harness.addToBattlefield(player1, new AerialExtortionist());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setGraveyard(player1, List.of(new AncientGrudge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castFlashback(player1, 0, fountain.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void mayExileItselfAndStillBeCastByItsOwner() {
+        castAerialExtortionist();
+        Permanent aerial = findPermanent(player1, "Aerial Extortionist");
+        harness.handlePermanentChosen(player1, aerial.getId());
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Aerial Extortionist");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromExile(player1, aerial.getOriginalCard().getId());
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Aerial Extortionist");
     }
 }

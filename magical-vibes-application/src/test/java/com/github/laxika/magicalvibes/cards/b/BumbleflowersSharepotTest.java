@@ -77,9 +77,71 @@ class BumbleflowersSharepotTest extends BaseCardTest {
     }
 
     private Permanent addReadySharepot(Player player) {
-        Permanent permanent = new Permanent(new BumbleflowersSharepot());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new BumbleflowersSharepot());
+    }
+
+    @Test
+    @DisplayName("The created Food can be sacrificed immediately for 3 life")
+    void createdFoodGainsLife() {
+        harness.setHand(player1, List.of(new BumbleflowersSharepot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Food");
+        harness.assertLife(player1, 10);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 13);
+        harness.assertOnBattlefield(player1, "Bumbleflower's Sharepot");
+    }
+
+    @Test
+    @DisplayName("Can destroy an opposing artifact and is sacrificed before resolution")
+    void destroysArtifact() {
+        addReadySharepot(player1);
+        harness.addToBattlefield(player2, new BumbleflowersSharepot());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player2, "Bumbleflower's Sharepot"));
+
+        harness.assertInGraveyard(player1, "Bumbleflower's Sharepot");
+        harness.assertOnBattlefield(player2, "Bumbleflower's Sharepot");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Bumbleflower's Sharepot");
+    }
+
+    @Test
+    @DisplayName("Can target itself even though sacrificing it makes the target illegal")
+    void canTargetItself() {
+        Permanent sharepot = addReadySharepot(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, sharepot.getId());
+
+        harness.assertInGraveyard(player1, "Bumbleflower's Sharepot");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Bumbleflower's Sharepot");
+    }
+
+    @Test
+    @DisplayName("Cannot activate during a main phase while a spell is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        Permanent sharepot = addReadySharepot(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BumbleflowersSharepot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.castArtifact(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sharepot.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        harness.assertOnBattlefield(player1, "Bumbleflower's Sharepot");
     }
 }

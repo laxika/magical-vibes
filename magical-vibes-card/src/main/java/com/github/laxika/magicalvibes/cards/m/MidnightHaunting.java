@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "22")
 @CardRegistration(set = "C14", collectorNumber = "80")
+@CardRegistration(set = "ONC", collectorNumber = "82")
 public class MidnightHaunting extends Card {
 
     public MidnightHaunting() {

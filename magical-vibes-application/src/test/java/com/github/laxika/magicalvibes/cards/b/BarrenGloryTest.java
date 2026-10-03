@@ -62,6 +62,66 @@ class BarrenGloryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not win if another permanent enters before resolution")
+    void doesNotWinWhenAnotherPermanentEntersBeforeResolution() {
+        harness.addToBattlefield(player1, new BarrenGlory());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new BarrenGlory());
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Opponent permanents and cards in hand do not prevent winning")
+    void ignoresOpponentsPermanentsAndHand() {
+        harness.addToBattlefield(player1, new BarrenGlory());
+        harness.addToBattlefield(player2, new BarrenGlory());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new BarrenGlory()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new BarrenGlory());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Returned Barren Glory is another permanent for the original trigger")
+    void doesNotWinWhenSourceLeavesAndReturnsBeforeResolution() {
+        BarrenGlory glory = new BarrenGlory();
+        harness.addToBattlefield(player1, glory);
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).removeLast();
+        harness.addToBattlefield(player1, glory);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
     @DisplayName("Wins if Barren Glory leaves before its trigger resolves")
     void winsWhenSourceLeavesBeforeResolution() {
         harness.addToBattlefield(player1, new BarrenGlory());

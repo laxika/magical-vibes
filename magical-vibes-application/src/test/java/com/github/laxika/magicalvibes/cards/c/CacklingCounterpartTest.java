@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.b.BlisterstickShaman;
 import com.github.laxika.magicalvibes.cards.b.BurningSunsAvatar;
+import com.github.laxika.magicalvibes.cards.d.DelverOfSecrets;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HomaridExplorer;
 import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +30,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CacklingCounterpart.class, GrizzlyBears.class, HomaridExplorer.class,
+        BlisterstickShaman.class, BurningSunsAvatar.class, MirriCatWarrior.class, DelverOfSecrets.class})
 class CacklingCounterpartTest extends BaseCardTest {
 
     
@@ -160,9 +164,7 @@ class CacklingCounterpartTest extends BaseCardTest {
     void tokenHomaridExplorerMillsChosenPlayer() {
         // Trim Bob's deck so we can easily see mill counts.
         List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player2.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player2, deck.subList(Math.max(0, deck.size() - 10), deck.size()));
 
         harness.addToBattlefield(player1, new HomaridExplorer());
         harness.setHand(player1, List.of(new CacklingCounterpart()));
@@ -229,9 +231,7 @@ class CacklingCounterpartTest extends BaseCardTest {
     @DisplayName("Token of Homarid Explorer can target the controller (self-mill)")
     void tokenHomaridExplorerCanTargetSelf() {
         List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player1, deck.subList(Math.max(0, deck.size() - 10), deck.size()));
 
         harness.addToBattlefield(player1, new HomaridExplorer());
         harness.setHand(player1, List.of(new CacklingCounterpart()));
@@ -261,7 +261,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CacklingCounterpart()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        gd.playerLifeTotals.put(player2.getId(), 20);
+        harness.setLife(player2, 20);
 
         UUID avatarId = harness.getPermanentId(player1, "Burning Sun's Avatar");
         harness.castInstant(player1, 0, avatarId);
@@ -294,7 +294,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CacklingCounterpart()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        gd.playerLifeTotals.put(player2.getId(), 20);
+        harness.setLife(player2, 20);
 
         UUID avatarId = harness.getPermanentId(player1, "Burning Sun's Avatar");
         harness.castInstant(player1, 0, avatarId);
@@ -478,5 +478,74 @@ class CacklingCounterpartTest extends BaseCardTest {
                         .filter(p -> p.getCard().getName().equals("Grizzly Bears") && !p.getCard().isToken())
                         .findFirst().orElseThrow().getCard().getKeywords()
         );
+    }
+
+    @Test
+    @DisplayName("Copying a transforming creature creates a token that can transform")
+    void tokenCopyOfDelverCanTransform() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new DelverOfSecrets());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        harness.setLibrary(player1, List.of(new CacklingCounterpart()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(token.isTransformed()).isTrue();
+        assertThat(token.getCard().getName()).isEqualTo("Insectile Aberration");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        assertThat(token.getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Token copy does not copy tapped state, counters, or marked damage")
+    void tokenCopyDoesNotCopyPermanentState() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        original.setTapped(true);
+        original.setSummoningSick(false);
+        original.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 2);
+        original.setMarkedDamage(1);
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isSummoningSick()).isTrue();
+        assertThat(token.getPlusOnePlusOneCounters()).isZero();
+        assertThat(token.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when its target disappears")
+    void flashbackExilesWhenTargetDisappears() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castFlashback(player1, 0, original.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Cackling Counterpart");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Cackling Counterpart"));
     }
 }

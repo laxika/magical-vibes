@@ -43,7 +43,7 @@ class ChitinousCrawlerTest extends BaseCardTest {
     }
 
     @Test
-    void descendExilesPermanentCardAndAllowsPlayingIt() {
+    void descendCannotDeferCastingUntilAfterResolution() {
         GrizzlyBears target = new GrizzlyBears();
         List<Card> graveyard = new ArrayList<>();
         graveyard.add(target);
@@ -61,12 +61,9 @@ class ChitinousCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(target.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(target.getId(), player1.getId());
-
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castFromExile(player1, target.getId());
-        harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castFromExile(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -79,5 +76,76 @@ class ChitinousCrawlerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("8 or more permanent cards");
+    }
+
+    @Test
+    void beginningOfCombatTargetsOnlyCreatureCardsInYourGraveyard() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, new Plains()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).containsExactly(target);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void beginningOfCombatDoesNotConjureWhenTargetLeavesGraveyard() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void beginningOfCombatDoesNotTriggerOnOpponentsTurn() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+        harness.forceActivePlayer(player2);
+
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void beginningOfCombatDoesNothingWithoutCreatureCardsInYourGraveyard() {
+        harness.setGraveyard(player1, List.of(new Plains()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void descendCannotBeActivatedOutsideMainPhase() {
+        harness.setGraveyard(player1, IntStream.range(0, 8)
+                .mapToObj(ignored -> (Card) new Plains()).toList());
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
     }
 }

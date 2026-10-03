@@ -74,6 +74,8 @@ class AbsorbingManTest extends BaseCardTest {
         assertThat(absorbingMan.getCard().hasType(CardType.LAND)).isTrue();
         assertThat(absorbingMan.getCard().hasType(CardType.CREATURE)).isTrue();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(absorbingMan.getCard().getName()).isEqualTo("Absorbing Man");
         assertThat(absorbingMan.getCard().hasType(CardType.LAND)).isTrue();

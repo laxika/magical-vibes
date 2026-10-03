@@ -27,8 +27,7 @@ class CityOnFireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
@@ -42,8 +41,7 @@ class CityOnFireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID serraId = harness.getPermanentId(player2, "Serra Angel");
-        harness.castInstant(player1, 0, serraId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, serraId);
 
         harness.assertInGraveyard(player2, "Serra Angel");
     }
@@ -52,9 +50,8 @@ class CityOnFireTest extends BaseCardTest {
     @DisplayName("Triples controlled combat damage")
     void triplesControlledCombatDamage() {
         harness.addToBattlefield(player1, new CityOnFire());
-        Permanent bear = new Permanent(new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
         harness.setLife(player2, 20);
 
         harness.forceActivePlayer(player1);
@@ -77,9 +74,52 @@ class CityOnFireTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Convoke pays the generic cost with summoning-sick creatures")
+    void castsWithConvoke() {
+        List<Permanent> creatures = java.util.stream.IntStream.range(0, 5)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()))
+                .toList();
+        harness.setHand(player1, List.of(new CityOnFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                creatures.stream().map(Permanent::getId).toList());
+
+        assertThat(creatures).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "City on Fire");
+    }
+
+    @Test
+    @DisplayName("Two copies multiply damage by nine")
+    void multipleCopiesMultiplyDamage() {
+        harness.addToBattlefield(player1, new CityOnFire());
+        harness.addToBattlefield(player1, new CityOnFire());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 2);
+    }
+
+    @Test
+    @DisplayName("Also triples damage to the source controller")
+    void triplesDamageToController() {
+        harness.addToBattlefield(player1, new CityOnFire());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 14);
     }
 }

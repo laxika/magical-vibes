@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
+import com.github.laxika.magicalvibes.cards.f.FrogtosserBanneret;
 import com.github.laxika.magicalvibes.cards.s.SharedAnimosity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChameleonColossus.class, PricklyBoggart.class, SharedAnimosity.class})
+@CardUsed({ChameleonColossus.class, PricklyBoggart.class, SharedAnimosity.class, FrogtosserBanneret.class})
 class ChameleonColossusTest extends BaseCardTest {
 
     @Test
@@ -69,6 +70,40 @@ class ChameleonColossusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Stacked activations each use the power when they resolve")
+    void stackedActivationsUseResolutionPower() {
+        Permanent colossus = addCreatureReady(player1, new ChameleonColossus());
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(16);
+        assertThat(gqs.getEffectiveToughness(gd, colossus)).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Both boosts use power even when toughness differs")
+    void boostsBothStatsByPowerRatherThanToughness() {
+        harness.addToBattlefield(player1, new SharedAnimosity());
+        Permanent colossus = addCreatureReady(player1, new ChameleonColossus());
+        addCreatureReady(player1, new PricklyBoggart());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        declareAttackers(List.of(1, 2));
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, colossus)).isEqualTo(4);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, colossus)).isEqualTo(9);
+    }
+
+    @Test
     @DisplayName("Protection from black prevents a black creature from blocking Chameleon Colossus")
     void blackCreatureCannotBlock() {
         addCreatureReady(player1, new ChameleonColossus());
@@ -94,5 +129,21 @@ class ChameleonColossusTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, boggart)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Protection prevents black combat damage while allowing Colossus to block")
+    void protectionPreventsBlackCombatDamage() {
+        addCreatureReady(player1, new FrogtosserBanneret());
+        Permanent colossus = addCreatureReady(player2, new ChameleonColossus());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(colossus);
+        assertThat(colossus.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

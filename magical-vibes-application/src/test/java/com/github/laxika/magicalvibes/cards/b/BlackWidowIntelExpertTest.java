@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -50,8 +51,7 @@ class BlackWidowIntelExpertTest extends BaseCardTest {
         Permanent widow = addCreatureReady(player1, new BlackWidowIntelExpert());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(widow))));
@@ -61,5 +61,54 @@ class BlackWidowIntelExpertTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both players draw when player two controls the attacking Widow")
+    void playerTwoAttackingMakesBothPlayersDraw() {
+        Card firstDraw = new BlackWidowIntelExpert();
+        Card secondDraw = new BlackWidowIntelExpert();
+        Card opponentFirstDraw = new BlackWidowIntelExpert();
+        Card opponentSecondDraw = new BlackWidowIntelExpert();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(firstDraw, secondDraw));
+        harness.setLibrary(player1, List.of(opponentFirstDraw, opponentSecondDraw));
+        harness.setLife(player1, 20);
+        addCreatureReady(player2, new BlackWidowIntelExpert());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentFirstDraw, opponentSecondDraw);
+    }
+
+    @Test
+    @DisplayName("Combat damage trigger draws for both players after Widow leaves the battlefield")
+    void triggerResolvesAfterWidowLeavesBattlefield() {
+        Card firstDraw = new BlackWidowIntelExpert();
+        Card secondDraw = new BlackWidowIntelExpert();
+        Card opponentFirstDraw = new BlackWidowIntelExpert();
+        Card opponentSecondDraw = new BlackWidowIntelExpert();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setLibrary(player2, List.of(opponentFirstDraw, opponentSecondDraw));
+        Permanent widow = addCreatureReady(player1, new BlackWidowIntelExpert());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, widow));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentFirstDraw, opponentSecondDraw);
     }
 }

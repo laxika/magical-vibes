@@ -14,18 +14,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AngelicVoices.class, KeepersOfTheFaith.class, BronzeHorse.class,
-        KoboldsOfKherKeep.class, Urborg.class})
+        KoboldsOfKherKeep.class, Urborg.class, Opalescence.class, AyeshaTanaka.class})
 class AngelicVoicesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Boosts own white and artifact creatures when the condition is met")
     void boostsOwnWhiteAndArtifactCreatures() {
         harness.addToBattlefield(player1, new AngelicVoices());
-        harness.addToBattlefield(player1, new KeepersOfTheFaith());
-        harness.addToBattlefield(player1, new BronzeHorse());
-
-        Permanent keepers = findPermanent(player1, "Keepers of the Faith");
-        Permanent bronzeHorse = findPermanent(player1, "Bronze Horse");
+        Permanent keepers = harness.addToBattlefieldAndReturn(player1, new KeepersOfTheFaith());
+        Permanent bronzeHorse = harness.addToBattlefieldAndReturn(player1, new BronzeHorse());
 
         assertThat(gqs.getEffectivePower(gd, keepers)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keepers)).isEqualTo(4);
@@ -37,13 +34,9 @@ class AngelicVoicesTest extends BaseCardTest {
     @DisplayName("Does not boost own creatures while controlling a nonartifact nonwhite creature")
     void conditionTurnsOffForNonartifactNonwhiteCreature() {
         harness.addToBattlefield(player1, new AngelicVoices());
-        harness.addToBattlefield(player1, new KeepersOfTheFaith());
-        harness.addToBattlefield(player1, new BronzeHorse());
-        harness.addToBattlefield(player1, new KoboldsOfKherKeep());
-
-        Permanent keepers = findPermanent(player1, "Keepers of the Faith");
-        Permanent bronzeHorse = findPermanent(player1, "Bronze Horse");
-        Permanent kobolds = findPermanent(player1, "Kobolds of Kher Keep");
+        Permanent keepers = harness.addToBattlefieldAndReturn(player1, new KeepersOfTheFaith());
+        Permanent bronzeHorse = harness.addToBattlefieldAndReturn(player1, new BronzeHorse());
+        Permanent kobolds = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
 
         assertThat(gqs.getEffectivePower(gd, keepers)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, keepers)).isEqualTo(3);
@@ -57,11 +50,8 @@ class AngelicVoicesTest extends BaseCardTest {
     @DisplayName("Does not boost creatures controlled by an opponent")
     void doesNotBoostOpponentCreatures() {
         harness.addToBattlefield(player1, new AngelicVoices());
-        harness.addToBattlefield(player1, new KeepersOfTheFaith());
-        harness.addToBattlefield(player2, new KoboldsOfKherKeep());
-
-        Permanent keepers = findPermanent(player1, "Keepers of the Faith");
-        Permanent opponentKobolds = findPermanent(player2, "Kobolds of Kher Keep");
+        Permanent keepers = harness.addToBattlefieldAndReturn(player1, new KeepersOfTheFaith());
+        Permanent opponentKobolds = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep());
 
         assertThat(gqs.getEffectivePower(gd, keepers)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keepers)).isEqualTo(4);
@@ -73,12 +63,9 @@ class AngelicVoicesTest extends BaseCardTest {
     @DisplayName("A nonartifact nonwhite noncreature does not turn off the boost")
     void conditionIgnoresNoncreaturePermanents() {
         harness.addToBattlefield(player1, new AngelicVoices());
-        harness.addToBattlefield(player1, new KeepersOfTheFaith());
-        harness.addToBattlefield(player1, new BronzeHorse());
+        Permanent keepers = harness.addToBattlefieldAndReturn(player1, new KeepersOfTheFaith());
+        Permanent bronzeHorse = harness.addToBattlefieldAndReturn(player1, new BronzeHorse());
         harness.addToBattlefield(player1, new Urborg());
-
-        Permanent keepers = findPermanent(player1, "Keepers of the Faith");
-        Permanent bronzeHorse = findPermanent(player1, "Bronze Horse");
 
         assertThat(gqs.getEffectivePower(gd, keepers)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keepers)).isEqualTo(4);
@@ -87,7 +74,6 @@ class AngelicVoicesTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Opalescence.class)
     @DisplayName("Boosts itself when Opalescence makes it a creature")
     void boostsItselfWhenItBecomesACreature() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -96,5 +82,35 @@ class AngelicVoicesTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, voices)).isTrue();
         assertThat(gqs.getEffectivePower(gd, voices)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, voices)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A multicolored white creature receives the boost and does not disable it")
+    void boostsMulticoloredWhiteCreature() {
+        harness.addToBattlefield(player1, new AngelicVoices());
+        Permanent ayesha = harness.addToBattlefieldAndReturn(player1, new AyeshaTanaka());
+
+        assertThat(gqs.getEffectivePower(gd, ayesha)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ayesha)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The boost turns off and back on as a disqualifying creature enters and leaves")
+    void conditionUpdatesWithBattlefieldChanges() {
+        harness.addToBattlefield(player1, new AngelicVoices());
+        Permanent keepers = harness.addToBattlefieldAndReturn(player1, new KeepersOfTheFaith());
+
+        assertThat(gqs.getEffectivePower(gd, keepers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, keepers)).isEqualTo(4);
+
+        Permanent kobolds = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
+
+        assertThat(gqs.getEffectivePower(gd, keepers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, keepers)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(kobolds);
+
+        assertThat(gqs.getEffectivePower(gd, keepers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, keepers)).isEqualTo(4);
     }
 }

@@ -217,7 +217,9 @@ public class CreatureControlService {
         if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
                 && gameData.getDelayedActions(EchoAtNextUpkeep.class).stream()
                 .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {
-            for (var effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            for (var effect : java.util.stream.Stream.concat(
+                    permanent.getCard().getEffects(EffectSlot.STATIC).stream(),
+                    permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()).toList()) {
                 if (effect instanceof RegisterEchoAtNextUpkeepEffect echo) {
                     gameData.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(),
                             echo.manaCost(), echo.dynamicManaCost(), echo.handCardCost(),

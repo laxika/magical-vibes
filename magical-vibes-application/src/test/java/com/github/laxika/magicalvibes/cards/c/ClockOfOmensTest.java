@@ -94,6 +94,96 @@ class ClockOfOmensTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact");
     }
 
+    @Test
+    @DisplayName("Summoning-sick artifact creatures can pay the tap cost")
+    void canTapSummoningSickArtifacts() {
+        Permanent clock = addClock(player1);
+        Permanent cost1 = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        Permanent cost2 = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        cost1.setSummoningSick(true);
+        cost2.setSummoningSick(true);
+        Permanent target = addArtifact(player1, true);
+
+        activateClock(clock, target.getId());
+
+        assertThat(cost1.isTapped()).isTrue();
+        assertThat(cost2.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped target can also be tapped to pay the cost")
+    void canTapTargetAsCost() {
+        Permanent clock = addClock(player1);
+        Permanent target = addArtifact(player1, false);
+        Permanent other = addArtifact(player1, false);
+
+        activateClock(clock, target.getId());
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(other.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Clock can target itself while tapped")
+    void canUntapSource() {
+        Permanent clock = addClock(player1);
+        Permanent cost1 = addArtifact(player1, false);
+        Permanent cost2 = addArtifact(player1, false);
+
+        activateClock(clock, clock.getId());
+        harness.passBothPriorities();
+
+        assertThat(clock.isTapped()).isFalse();
+        assertThat(cost1.isTapped()).isTrue();
+        assertThat(cost2.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent artifacts and non-artifacts cannot supply the missing cost")
+    void cannotUseOpponentArtifactsOrNonArtifactsForCost() {
+        Permanent clock = addClock(player1);
+        Permanent ownArtifact = addArtifact(player1, false);
+        Permanent opponentArtifact = addArtifact(player2, false);
+        Permanent creature = addCreatureReady(player1, new DrossCrocodile());
+
+        assertThatThrownBy(() -> activateClock(clock, opponentArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ownArtifact.isTapped()).isFalse();
+        assertThat(opponentArtifact.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Controller chooses two artifacts when more than two are available")
+    void choosesWhichArtifactsToTap() {
+        Permanent clock = addClock(player1);
+        Permanent unchosen = addArtifact(player1, false);
+        Permanent cost1 = addArtifact(player1, false);
+        Permanent cost2 = addArtifact(player1, false);
+        Permanent target = addArtifact(player1, true);
+
+        activateClock(clock, target.getId());
+        harness.handlePermanentChosen(player1, cost1.getId());
+        harness.handlePermanentChosen(player1, cost2.getId());
+        harness.passBothPriorities();
+
+        assertThat(unchosen.isTapped()).isFalse();
+        assertThat(cost1.isTapped()).isTrue();
+        assertThat(cost2.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+    }
+
     /**
      * Activates the Clock. With exactly two untapped artifacts on the battlefield the cost
      * auto-selects them, so no permanent choice needs to be answered.
@@ -104,8 +194,7 @@ class ClockOfOmensTest extends BaseCardTest {
     }
 
     private Permanent addArtifact(Player player, boolean tapped) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new Arachnoid());
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, new Arachnoid());
         if (tapped) {
             permanent.tap();
         }

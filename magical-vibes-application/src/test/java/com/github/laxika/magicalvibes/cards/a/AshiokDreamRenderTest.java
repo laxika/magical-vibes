@@ -35,8 +35,7 @@ class AshiokDreamRenderTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
@@ -78,17 +77,71 @@ class AshiokDreamRenderTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
     }
 
+    @Test
+    @DisplayName("Targeting yourself preserves your milled cards and exiles the opponent's graveyard")
+    void canMillControllerWithoutExilingTheirGraveyard() {
+        addReadyAshiok(player1, 5);
+        Card existingCard = new Forest();
+        Card opponentCard = new Shock();
+        List<Card> library = List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest());
+        harness.setLibrary(player1, library);
+        harness.setGraveyard(player1, List.of(existingCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(4));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(existingCard, library.get(0), library.get(1), library.get(2), library.get(3));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    @DisplayName("A short library is milled completely and the graveyard is still exiled")
+    void millsShortLibraryAndStillExilesGraveyard() {
+        addReadyAshiok(player1, 5);
+        Card milledCard = new Forest();
+        Card existingCard = new Shock();
+        harness.setLibrary(player2, List.of(milledCard));
+        harness.setGraveyard(player2, List.of(existingCard));
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(existingCard, milledCard);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its last loyalty counter puts Ashiok into the graveyard")
+    void abilityResolvesAfterAshiokDiesToLoyaltyCost() {
+        Permanent ashiok = addReadyAshiok(player1, 1);
+        Card opponentCard = new Forest();
+        harness.setLibrary(player2, List.of());
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ashiok);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ashiok.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
+    }
+
     private Permanent addReadyAshiok(Player player, int loyalty) {
-        Permanent ashiok = new Permanent(new AshiokDreamRender());
+        Permanent ashiok = harness.addToBattlefieldAndReturn(player, new AshiokDreamRender());
         ashiok.setCounterCount(CounterType.LOYALTY, loyalty);
         ashiok.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ashiok);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return ashiok;

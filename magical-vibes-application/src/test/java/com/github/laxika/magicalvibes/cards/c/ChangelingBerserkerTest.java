@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChangelingBerserker.class, GrizzlyBears.class, FieldMarshal.class, Unsummon.class})
 class ChangelingBerserkerTest extends BaseCardTest {
 
     private void castChangelingBerserker() {
@@ -81,14 +83,64 @@ class ChangelingBerserkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID berserkerId = harness.getPermanentId(player1, "Changeling Berserker");
-        harness.castInstant(player1, 0, berserkerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, berserkerId);
 
         harness.assertNotOnBattlefield(player1, "Changeling Berserker");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent's creature cannot satisfy champion")
+    void opponentCreatureCannotBeChampioned() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castChangelingBerserker();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Changeling Berserker");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Champion enter trigger can exile a creature after Berserker has left")
+    void enterTriggerStillResolvesAfterBerserkerLeaves() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castChangelingBerserker();
+        UUID berserkerId = harness.getPermanentId(player1, "Changeling Berserker");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, berserkerId);
+        // Resolve the leave trigger before the original enter trigger.
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertInHand(player1, "Changeling Berserker");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Can attack on the turn it enters after championing a creature")
+    void hasteAllowsAttackingImmediately() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castChangelingBerserker();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        declareAttackers(List.of(0));
+
+        assertThat(findPermanent(player1, "Changeling Berserker").isTapped()).isTrue();
+        harness.assertLife(player2, 15);
     }
 
     @Test

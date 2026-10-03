@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrazingWhiptail;
+import com.github.laxika.magicalvibes.cards.j.JaceCunningCastaway;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BurningSunsAvatar.class, RaptorCompanion.class, GrazingWhiptail.class, JaceCunningCastaway.class})
 class BurningSunsAvatarTest extends BaseCardTest {
 
     @Test
@@ -22,39 +27,34 @@ class BurningSunsAvatarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BurningSunsAvatar()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        assertThatThrownBy(() -> gs.playCard(
-                gd, player1, 0, 0, null, null, List.of(player1.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(player1.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent or planeswalker");
     }
 
-    // ===== ETB deals damage to opponent and creature =====
-
     @Test
     @DisplayName("ETB deals 3 damage to opponent and 3 damage to target creature")
     void etbDeals3DamageToOpponentAnd3DamageToCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RaptorCompanion());
         harness.setHand(player1, List.of(new BurningSunsAvatar()));
         harness.addMana(player1, ManaColor.RED, 6);
         harness.setLife(player2, 20);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(player2.getId(), creatureId), List.of());
+        UUID creatureId = harness.getPermanentId(player2, "Raptor Companion");
+        harness.castCreature(player1, 0, List.of(player2.getId(), creatureId));
 
-        // Resolve creature spell → enters battlefield, ETB triggers
+        // Resolve the creature spell and put its triggered ability on the stack.
         harness.passBothPriorities();
         // Resolve ETB triggered ability
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         // Opponent takes 3 damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        // Grizzly Bears (2/2) takes 3 damage and dies
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 17);
+        // Raptor Companion (3/1) takes 3 damage and dies
+        harness.assertNotOnBattlefield(player2, "Raptor Companion");
+        harness.assertInGraveyard(player2, "Raptor Companion");
     }
-
-    // ===== ETB deals damage to opponent only (no creature target) =====
 
     @Test
     @DisplayName("ETB deals 3 damage to opponent when no creature is targeted")
@@ -63,7 +63,7 @@ class BurningSunsAvatarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
         harness.setLife(player2, 20);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(player2.getId()), List.of());
+        harness.castCreature(player1, 0, List.of(player2.getId()));
 
         // Resolve creature spell
         harness.passBothPriorities();
@@ -71,35 +71,28 @@ class BurningSunsAvatarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
-    // ===== Creature damage doesn't kill a big creature =====
-
     @Test
-    @DisplayName("ETB deals 3 damage to a 4/4 creature but does not kill it")
+    @DisplayName("ETB deals 3 damage to a creature with 4 toughness but does not kill it")
     void etbDeals3DamageDoesNotKillBigCreature() {
-        GrizzlyBears bigCreature = new GrizzlyBears();
-        bigCreature.setPower(4);
-        bigCreature.setToughness(4);
-        harness.addToBattlefield(player2, bigCreature);
+        Permanent bigCreature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
         harness.setHand(player1, List.of(new BurningSunsAvatar()));
         harness.addMana(player1, ManaColor.RED, 6);
         harness.setLife(player2, 20);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(player2.getId(), creatureId), List.of());
+        UUID creatureId = bigCreature.getId();
+        harness.castCreature(player1, 0, List.of(player2.getId(), creatureId));
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        // 4/4 creature survives 3 damage
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player2, "Grazing Whiptail");
+        assertThat(bigCreature.getMarkedDamage()).isEqualTo(3);
     }
-
-    // ===== ETB trigger goes on stack =====
 
     @Test
     @DisplayName("Resolving creature puts ETB triggered ability on the stack")
@@ -107,9 +100,9 @@ class BurningSunsAvatarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BurningSunsAvatar()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(player2.getId()), List.of());
+        harness.castCreature(player1, 0, List.of(player2.getId()));
 
-        // Resolve creature spell → enters battlefield, ETB triggers
+        // Resolve the creature spell and put its triggered ability on the stack.
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Burning Sun's Avatar");
@@ -118,8 +111,6 @@ class BurningSunsAvatarTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Burning Sun's Avatar");
     }
-
-    // ===== Creature enters battlefield even without targets =====
 
     @Test
     @DisplayName("Creature enters battlefield when cast without targets")
@@ -133,5 +124,134 @@ class BurningSunsAvatarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Burning Sun's Avatar");
+    }
+
+    @Test
+    void canDamageOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrazingWhiptail());
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(player2.getId(), creature.getId()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player1, "Grazing Whiptail");
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetOwnPlaneswalkerWithoutCreatureTarget() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceCunningCastaway());
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(planeswalker.getId()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Jace, Cunning Castaway");
+        harness.assertInGraveyard(player1, "Jace, Cunning Castaway");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void damagesPlaneswalkerAndCreature() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(planeswalker.getId(), creature.getId()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Jace, Cunning Castaway");
+        harness.assertNotOnBattlefield(player2, "Jace, Cunning Castaway");
+        harness.assertOnBattlefield(player2, "Grazing Whiptail");
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stillDamagesOpponentWhenCreatureTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(player2.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertInHand(player2, "Grazing Whiptail");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stillDamagesCreatureWhenPlaneswalkerTargetLeaves() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(planeswalker.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, planeswalker));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Jace, Cunning Castaway");
+        harness.assertOnBattlefield(player2, "Grazing Whiptail");
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggerResolvesAfterAvatarLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(player2.getId(), creature.getId()));
+        harness.passBothPriorities();
+        Permanent avatar = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof BurningSunsAvatar)
+                .findFirst().orElseThrow();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, avatar));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Burning Sun's Avatar");
+        harness.assertLife(player2, 17);
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotResolveWhenAllTargetsLeave() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(planeswalker.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToHand(gd, planeswalker);
+            harness.getPermanentRemovalService().removePermanentToHand(gd, creature);
+        });
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Jace, Cunning Castaway");
+        harness.assertInHand(player2, "Grazing Whiptail");
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Burning Sun's Avatar");
+        assertThat(gd.stack).isEmpty();
     }
 }

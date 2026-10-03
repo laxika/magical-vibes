@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,13 +19,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ConquerorsGalleon.class, ConquerorsFoothold.class, GrizzlyBears.class, Shock.class, ColossalDreadmaw.class})
 class ConquerorsGalleonTest extends BaseCardTest {
-
-    // ===== Attack → exile → return transformed =====
 
     @Nested
     @DisplayName("Attack and transform")
+    @CardUsed({ConquerorsGalleon.class, ConquerorsFoothold.class})
     class AttackAndTransform {
 
         @Test
@@ -76,8 +78,9 @@ class ConquerorsGalleonTest extends BaseCardTest {
         @Test
         @DisplayName("Foothold returns under controller's control even if Galleon was stolen")
         void returnsUnderControllerControl() {
-            // The Galleon is controlled by player1
-            Permanent galleon = addGalleonReady(player1);
+            ConquerorsGalleon card = new ConquerorsGalleon();
+            card.setOwnerId(player2.getId());
+            Permanent galleon = addCreatureReady(player1, card);
             animateAsCreature(galleon);
 
             declareAttackers(List.of(0));
@@ -94,17 +97,16 @@ class ConquerorsGalleonTest extends BaseCardTest {
         }
     }
 
-    // ===== Conqueror's Foothold abilities =====
-
     @Nested
     @DisplayName("Conqueror's Foothold abilities")
+    @CardUsed({ConquerorsGalleon.class, ConquerorsFoothold.class, GrizzlyBears.class, Shock.class})
     class FootholdAbilities {
 
         @Test
         @DisplayName("{2}, {T}: Draw a card, then discard a card (loot)")
         void lootAbility() {
             Permanent foothold = addFootholdReady(player1);
-            setDeck(player1, List.of(new GrizzlyBears()));
+            harness.setLibrary(player1, List.of(new GrizzlyBears()));
             harness.setHand(player1, new ArrayList<>(List.of(new Shock())));
 
             harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -124,7 +126,7 @@ class ConquerorsGalleonTest extends BaseCardTest {
         @DisplayName("{4}, {T}: Draw a card")
         void drawAbility() {
             Permanent foothold = addFootholdReady(player1);
-            setDeck(player1, List.of(new GrizzlyBears()));
+            harness.setLibrary(player1, List.of(new GrizzlyBears()));
             harness.setHand(player1, new ArrayList<>());
 
             harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -152,22 +154,84 @@ class ConquerorsGalleonTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
+    @Test
+    void crewAnimatesVehicleAndTapsCrew() {
+        Permanent galleon = addGalleonReady(player1);
+        Permanent crew = addCreatureReady(player1, new ColossalDreadmaw());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, galleon)).isTrue();
+        assertThat(galleon.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotCrewWithOnlyTwoPower() {
+        addGalleonReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+    }
+
+    @Test
+    void footholdAddsColorlessManaImmediately() {
+        Permanent foothold = addFootholdReady(player1);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(foothold.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void footholdCanReturnNoncreatureCard() {
+        addFootholdReady(player1);
+        Card shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 2, null, shock.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Shock");
+        harness.assertNotInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void endOfCombatReturnUsesDelayedTriggerOnStack() {
+        Permanent galleon = addGalleonReady(player1);
+        animateAsCreature(galleon);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT,
+                () -> harness.passUntil(TurnStep.END_OF_COMBAT));
+
+        harness.assertOnBattlefield(player1, "Conqueror's Galleon");
+        harness.assertNotOnBattlefield(player1, "Conqueror's Foothold");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Conqueror's Foothold");
+        Permanent foothold = findPermanent(player1, "Conqueror's Foothold");
+        assertThat(foothold.getId()).isNotEqualTo(galleon.getId());
+        assertThat(foothold.isTapped()).isFalse();
+    }
 
     private Permanent addGalleonReady(Player player) {
-        Permanent perm = new Permanent(new ConquerorsGalleon());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ConquerorsGalleon());
     }
 
     private Permanent addFootholdReady(Player player) {
         ConquerorsGalleon galleon = new ConquerorsGalleon();
-        Permanent perm = new Permanent(galleon);
+        Permanent perm = addCreatureReady(player, galleon);
         perm.setCard(galleon.getBackFaceCard());
         perm.setTransformed(true);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
@@ -177,8 +241,4 @@ class ConquerorsGalleonTest extends BaseCardTest {
         perm.setAnimatedToughness(10);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,6 +13,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BattleSquadron.class, FreshVolunteers.class, Forest.class})
 class BattleSquadronTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Multiple Battle Squadrons count each other without recursion")
+    void multipleSquadronsCountEachOther() {
+        Permanent first = addCreatureReady(player1, new BattleSquadron());
+        Permanent second = addCreatureReady(player1, new BattleSquadron());
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        harness.addToBattlefield(player2, new BattleSquadron());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counters modify Battle Squadron's dynamically calculated base stats")
+    void countersApplyAfterCreatureCount() {
+        Permanent squadron = addCreatureReady(player1, new BattleSquadron());
+        squadron.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, squadron)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, squadron)).isEqualTo(3);
+
+        harness.addToBattlefield(player1, new FreshVolunteers());
+
+        assertThat(gqs.getEffectivePower(gd, squadron)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, squadron)).isEqualTo(4);
+    }
 
     @Test
     @DisplayName("Battle Squadron is 1/1 when it is your only creature")

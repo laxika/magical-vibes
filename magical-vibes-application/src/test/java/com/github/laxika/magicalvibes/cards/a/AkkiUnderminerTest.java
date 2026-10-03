@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CloudcrestLake;
+import com.github.laxika.magicalvibes.cards.g.GlacialRay;
 import com.github.laxika.magicalvibes.cards.j.JukaiMessenger;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,8 +15,49 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AkkiUnderminer.class, JukaiMessenger.class, CloudcrestLake.class})
+@CardUsed({AkkiUnderminer.class, JukaiMessenger.class, CloudcrestLake.class, GlacialRay.class})
 class AkkiUnderminerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The sacrifice trigger resolves even after its source dies")
+    void sacrificeResolvesAfterSourceDies() {
+        Permanent underminer = addCreatureReady(player1, new AkkiUnderminer());
+        underminer.setAttacking(true);
+        harness.addToBattlefield(player2, new CloudcrestLake());
+        harness.setHand(player2, List.of(new GlacialRay()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        resolveCombat();
+        harness.castInstant(player2, 0, underminer.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Akki Underminer");
+        harness.assertOnBattlefield(player2, "Cloudcrest Lake");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Cloudcrest Lake");
+        harness.assertInGraveyard(player2, "Cloudcrest Lake");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The damaged player may choose a creature rather than a land")
+    void damagedPlayerChoosesCreature() {
+        Permanent underminer = addCreatureReady(player1, new AkkiUnderminer());
+        underminer.setAttacking(true);
+        Permanent creature = addCreatureReady(player2, new JukaiMessenger());
+        harness.addToBattlefield(player2, new CloudcrestLake());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        harness.assertInGraveyard(player2, "Jukai Messenger");
+        harness.assertNotOnBattlefield(player2, "Jukai Messenger");
+        harness.assertOnBattlefield(player2, "Cloudcrest Lake");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     @Test
     @DisplayName("The damaged player chooses one of their own permanents to sacrifice")

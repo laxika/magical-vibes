@@ -25,14 +25,10 @@ class CidFreeflierPilotTest extends BaseCardTest {
     void equipmentAndVehicleSpellsCostOneLess() {
         harness.addToBattlefield(player1, new CidFreeflierPilot());
 
-        harness.setHand(player1, List.of(new LeoninScimitar()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new LeoninScimitar(), "");
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new ImperialRecoveryUnit()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new ImperialRecoveryUnit(), "{1}{W}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -75,6 +71,103 @@ class CidFreeflierPilotTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnsVehicleAndPaysManaAndTapCosts() {
+        Permanent cid = addCreatureReady(player1, new CidFreeflierPilot());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card vehicle = new ImperialRecoveryUnit();
+        harness.setGraveyard(player1, List.of(vehicle));
+
+        harness.activateAbility(player1, 0, 0, null, vehicle.getId(), Zone.GRAVEYARD);
+
+        assertThat(cid.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Imperial Recovery Unit");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Imperial Recovery Unit");
+        harness.assertNotInGraveyard(player1, "Imperial Recovery Unit");
+    }
+
+    @Test
+    void cannotTargetOpponentsEquipment() {
+        addCreatureReady(player1, new CidFreeflierPilot());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card equipment = new LeoninScimitar();
+        harness.setGraveyard(player2, List.of(equipment));
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, equipment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new CidFreeflierPilot());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card equipment = new LeoninScimitar();
+        harness.setGraveyard(player1, List.of(equipment));
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, equipment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithoutTwoMana() {
+        addCreatureReady(player1, new CidFreeflierPilot());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Card equipment = new LeoninScimitar();
+        harness.setGraveyard(player1, List.of(equipment));
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, equipment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeavesGraveyardBeforeResolution() {
+        addCreatureReady(player1, new CidFreeflierPilot());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card equipment = new LeoninScimitar();
+        harness.setGraveyard(player1, List.of(equipment));
+        harness.activateAbility(player1, 0, 0, null, equipment.getId(), Zone.GRAVEYARD);
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Leonin Scimitar");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotReduceOpponentsEquipmentSpells() {
+        harness.addToBattlefield(player2, new CidFreeflierPilot());
+        harness.setHand(player1, List.of(new LeoninScimitar()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReduceNonEquipmentNonVehicleSpells() {
+        harness.addToBattlefield(player1, new CidFreeflierPilot());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReduceColoredManaRequirement() {
+        harness.addToBattlefield(player1, new CidFreeflierPilot());
+        harness.setHand(player1, List.of(new ImperialRecoveryUnit()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

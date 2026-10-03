@@ -118,6 +118,62 @@ class ArmyAntsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Quicksand");
     }
 
+    @Test
+    @DisplayName("Sacrifice and tap costs are paid before the target is destroyed")
+    void paysCostsBeforeResolution() {
+        Permanent ants = addReadyAnts(player1);
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Quicksand());
+        Permanent enemyLand = harness.addToBattlefieldAndReturn(player2, new Quicksand());
+
+        harness.activateAbility(player1, 0, null, enemyLand.getId());
+
+        assertThat(ants.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownLand);
+        harness.assertInGraveyard(player1, "Quicksand");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enemyLand);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Quicksand");
+        harness.assertInGraveyard(player2, "Quicksand");
+    }
+
+    @Test
+    @DisplayName("Can destroy another land controlled by the ability's controller")
+    void canTargetOwnLand() {
+        addReadyAnts(player1);
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new Quicksand());
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player1, new Quicksand());
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        harness.handlePermanentChosen(player1, sacrificedLand.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(targetLand);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Quicksand");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(sacrificedLand.getCard(), targetLand.getCard());
+    }
+
+    @Test
+    @DisplayName("Can sacrifice the targeted land, making the target illegal on resolution")
+    void canSacrificeTargetedLand() {
+        Permanent ants = addReadyAnts(player1);
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Quicksand());
+        Permanent enemyLand = harness.addToBattlefieldAndReturn(player2, new Quicksand());
+
+        harness.activateAbility(player1, 0, null, ownLand.getId());
+
+        assertThat(ants.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Quicksand");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enemyLand);
+        harness.assertNotInGraveyard(player2, "Quicksand");
+    }
     private Permanent addReadyAnts(Player player) {
         Permanent perm = addCreatureReady(player, new ArmyAnts());
         prepareMainPhase(player);

@@ -2,20 +2,62 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({CoreProwler.class, GrizzlyBears.class, WrathOfGod.class})
 class CoreProwlerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Unblocked infect combat damage gives poison without reducing life")
+    void unblockedCombatGivesPoison() {
+        Permanent prowler = harness.addToBattlefieldAndReturn(player1, new CoreProwler());
+        prowler.setSummoningSick(false);
+        prowler.setAttacking(true);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Core Prowler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death trigger proliferates every kind of counter on a selected player only")
+    void proliferatePlayerAddsEveryExistingKind() {
+        harness.addToBattlefield(player1, new CoreProwler());
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+        gd.setPlayerEnergyCounters(player2.getId(), 3);
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.assertInGraveyard(player1, "Core Prowler");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
 
     /**
      * Sets up combat where Core Prowler (player1, 2/2 infect) attacks and is blocked by a 3/3 creature (player2).
@@ -29,18 +71,15 @@ class CoreProwlerTest extends BaseCardTest {
         GrizzlyBears bigBear = new GrizzlyBears();
         bigBear.setPower(3);
         bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, bigBear);
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
     }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Core Prowler puts it on the battlefield")
@@ -54,8 +93,6 @@ class CoreProwlerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Core Prowler");
     }
-
-    // ===== Death trigger: proliferate after combat =====
 
     @Test
     @DisplayName("When Core Prowler dies in combat, death trigger puts proliferate on the stack")
@@ -80,9 +117,8 @@ class CoreProwlerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CoreProwler());
 
         // Add a creature with an existing -1/-1 counter
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         setupCombatWhereCoreProwlerDies();
         harness.passBothPriorities(); // Combat damage — Core Prowler dies
@@ -125,9 +161,8 @@ class CoreProwlerTest extends BaseCardTest {
     void deathTriggerProliferateAddsPlusCounters() {
         harness.addToBattlefield(player1, new CoreProwler());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         setupCombatWhereCoreProwlerDies();
         harness.passBothPriorities(); // Core Prowler dies
@@ -138,16 +173,13 @@ class CoreProwlerTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Proliferate choices =====
-
     @Test
     @DisplayName("Proliferate can choose no permanents")
     void proliferateCanChooseNone() {
         harness.addToBattlefield(player1, new CoreProwler());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         setupCombatWhereCoreProwlerDies();
         harness.passBothPriorities(); // Core Prowler dies
@@ -164,13 +196,11 @@ class CoreProwlerTest extends BaseCardTest {
     void proliferateMultiplePermanents() {
         harness.addToBattlefield(player1, new CoreProwler());
 
-        Permanent bears1 = new Permanent(new GrizzlyBears());
+        Permanent bears1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears1.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears1);
 
-        Permanent bears2 = new Permanent(new GrizzlyBears());
+        Permanent bears2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears2.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears2);
 
         setupCombatWhereCoreProwlerDies();
         harness.passBothPriorities(); // Core Prowler dies
@@ -182,8 +212,6 @@ class CoreProwlerTest extends BaseCardTest {
         assertThat(bears2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
-    // ===== No eligible permanents =====
-
     @Test
     @DisplayName("Proliferate does nothing when no permanents have counters")
     void proliferateNoEligiblePermanents() {
@@ -194,8 +222,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath — all creatures die
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Core Prowler should be dead
         harness.assertInGraveyard(player1, "Core Prowler");
@@ -209,25 +236,19 @@ class CoreProwlerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Death trigger via Wrath of God =====
-
     @Test
     @DisplayName("Death trigger from Wrath of God still triggers proliferate")
     void deathTriggerFromWrathStillTriggers() {
         harness.addToBattlefield(player1, new CoreProwler());
 
-        // Add a creature with counters that survives (not a creature, so Wrath won't kill it)
-        // Use a Grizzly Bears with +1/+1 counter that is NOT on the battlefield (won't be killed)
-        // Actually, let's add a non-creature permanent or a creature that already has counters
-        Permanent bears = new Permanent(new GrizzlyBears());
+        // The other creature dies too, so its counters cannot be proliferated.
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath — all creatures die
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Core Prowler death trigger should be on the stack
         assertThat(gd.stack).hasSize(1);

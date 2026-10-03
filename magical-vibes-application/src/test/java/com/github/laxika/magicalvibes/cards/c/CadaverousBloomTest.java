@@ -96,4 +96,44 @@ class CadaverousBloomTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("exile");
     }
+
+    @Test
+    @DisplayName("Can exile a land chosen from a non-first hand position")
+    void canExileChosenLand() {
+        harness.addToBattlefield(player1, new CadaverousBloom());
+        harness.setHand(player1, List.of(new GiantMantis(), new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(c -> c.getName())
+                .containsExactly("Giant Mantis");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Bloom can repeatedly produce the same color without mana payment")
+    void tappedBloomCanRepeatedlyProduceGreenMana() {
+        var bloom = harness.addToBattlefieldAndReturn(player1, new CadaverousBloom());
+        bloom.setTapped(true);
+        harness.setHand(player1, List.of(new GiantMantis(), new Forest()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName())
+                .containsExactly("Giant Mantis", "Forest");
+        assertThat(bloom.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }

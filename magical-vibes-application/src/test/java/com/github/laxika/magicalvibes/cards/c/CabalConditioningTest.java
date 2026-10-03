@@ -27,8 +27,7 @@ class CabalConditioningTest extends BaseCardTest {
         harness.setHand(player2, interrogators(6));
         addBlackMana(7);
 
-        harness.castSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
 
         discardCards(player1, 6);
         discardCards(player2, 6);
@@ -64,8 +63,7 @@ class CabalConditioningTest extends BaseCardTest {
         harness.setHand(player2, interrogators(2));
         addBlackMana(7);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         discardCards(player2, 2);
 
@@ -79,8 +77,7 @@ class CabalConditioningTest extends BaseCardTest {
         harness.setHand(player2, interrogators(2));
         addBlackMana(7);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -91,8 +88,7 @@ class CabalConditioningTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CabalConditioning()));
         addBlackMana(7);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -107,6 +103,69 @@ class CabalConditioningTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 harness.getPermanentId(player2, "Cabal Interrogator")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void discardsOnlyAvailableCardsWhenHandIsSmallerThanTheAmount() {
+        harness.addToBattlefield(player1, new TwistedAbomination());
+        harness.setHand(player1, List.of(new CabalConditioning()));
+        harness.setHand(player2, interrogators(2));
+        addBlackMana(7);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        discardCards(player2, 2);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void ignoresManaValuesOfOpponentPermanents() {
+        harness.addToBattlefield(player1, new CabalInterrogator());
+        harness.addToBattlefield(player2, new TwistedAbomination());
+        harness.setHand(player1, List.of(new CabalConditioning()));
+        harness.setHand(player2, interrogators(6));
+        addBlackMana(7);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        discardCards(player2, 2);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void skipsEmptyHandAndContinuesWithTheOtherTarget() {
+        harness.addToBattlefield(player1, new CabalInterrogator());
+        harness.setHand(player1, List.of(new CabalConditioning()));
+        harness.setHand(player2, interrogators(3));
+        addBlackMana(7);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), player1.getId()));
+        discardCards(player2, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void activePlayerChoosesFirstRegardlessOfTargetOrder() {
+        harness.addToBattlefield(player1, new CabalInterrogator());
+        harness.setHand(player1, handWithConditioningAndInterrogators(3));
+        harness.setHand(player2, interrogators(3));
+        addBlackMana(7);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), player1.getId()));
+        discardCards(player1, 2);
+        discardCards(player2, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void addBlackMana(int amount) {

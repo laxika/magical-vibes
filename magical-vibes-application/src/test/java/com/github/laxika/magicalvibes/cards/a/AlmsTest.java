@@ -61,8 +61,7 @@ class AlmsTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
         assertThat(bears.getDamagePreventionShield()).isZero();
@@ -105,5 +104,61 @@ class AlmsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiles the graveyard card as a cost before the prevention ability resolves")
+    void paysExileCostBeforeResolution() {
+        addAlmsReady();
+        Forest costCard = new Forest();
+        harness.setGraveyard(player1, List.of(costCard));
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card()).contains(costCard);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(bears.getDamagePreventionShield()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations each pay a cost and combine their prevention")
+    void repeatedActivationsPreventTwoDamage() {
+        addAlmsReady();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setGraveyard(player1, List.of(new Plains(), new Forest()));
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(bears.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without the generic mana payment")
+    void requiresManaPayment() {
+        harness.addToBattlefield(player1, new Alms());
+        Plains costCard = new Plains();
+        harness.setGraveyard(player1, List.of(costCard));
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(costCard);
+        assertThat(gd.stack).isEmpty();
     }
 }

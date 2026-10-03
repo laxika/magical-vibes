@@ -281,7 +281,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(land.getId());
         harness.handlePermanentChosen(player1, land.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, this::resolveAllTriggers);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opposingLand, Keyword.VIGILANCE)).isFalse();
@@ -306,7 +306,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         harness.handlePermanentChosen(player1, land.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, this::resolveAllTriggers);
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CallTheScions.class)
+@CardUsed({CallTheScions.class})
 class CallTheScionsTest extends BaseCardTest {
 
     @Test
@@ -47,12 +47,29 @@ class CallTheScionsTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Both freshly created Scions can be sacrificed while tapped without using the stack")
+    void tappedScionsCanBothBeSacrificedImmediately() {
+        castCallTheScions();
+
+        List<Permanent> scions = findPermanents(player1, "Eldrazi Scion");
+        for (Permanent scion : scions) {
+            scion.tap();
+            int scionIndex = gd.playerBattlefields.get(player1.getId()).indexOf(scion);
+            harness.activateAbility(player1, scionIndex, 0, null, null);
+            assertThat(gd.stack).isEmpty();
+        }
+
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(findPermanents(player2, "Eldrazi Scion")).isEmpty();
+    }
+
     private void castCallTheScions() {
         harness.setHand(player1, List.of(new CallTheScions()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

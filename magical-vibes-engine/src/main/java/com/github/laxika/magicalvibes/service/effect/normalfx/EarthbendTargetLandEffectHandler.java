@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnEarthbendedLandEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -76,11 +77,10 @@ public class EarthbendTargetLandEffectHandler implements NormalEffectHandlerBean
             applied = true;
 
             UUID returnControllerId = entry.getControllerId();
-            target.addPersistentTriggeredEffect(EffectSlot.ON_DEATH,
-                    new ReturnEarthbendedLandEffect(returnControllerId, false));
-            target.addPersistentTriggeredEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                    new SelfExiledFromBattlefieldEffect(
-                            new ReturnEarthbendedLandEffect(returnControllerId, true)));
+            gameData.queueDelayedAction(new DelayedZoneChangeTrigger(target.getId(), returnControllerId,
+                    entry.getCard(), Map.of(
+                            Zone.GRAVEYARD, new ReturnEarthbendedLandEffect(returnControllerId, false),
+                            Zone.EXILE, new ReturnEarthbendedLandEffect(returnControllerId, true))));
         }
         if (applied) {
             triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.EARTHBEND);

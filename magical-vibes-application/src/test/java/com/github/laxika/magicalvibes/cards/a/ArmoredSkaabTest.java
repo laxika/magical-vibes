@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +12,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArmoredSkaab.class, Forest.class})
 class ArmoredSkaabTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Armored Skaab puts it on stack as creature spell")
@@ -53,8 +53,7 @@ class ArmoredSkaabTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new ArmoredSkaab()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(f1, f2, f3, f4));
+        harness.setLibrary(player1, List.of(f1, f2, f3, f4));
 
         int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
 
@@ -92,8 +91,7 @@ class ArmoredSkaabTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new ArmoredSkaab()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(f1, f2));
+        harness.setLibrary(player1, List.of(f1, f2));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
@@ -102,5 +100,67 @@ class ArmoredSkaabTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
+    }
+    @Test
+    @DisplayName("ETB mills exactly the top four cards and leaves the rest")
+    void etbMillsOnlyTopFourCards() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Forest fourth = new Forest();
+        Forest fifth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
+        harness.setHand(player1, List.of(new ArmoredSkaab()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(first, second, third, fourth)
+                .doesNotContain(fifth);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB resolves normally with an empty library")
+    void etbWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ArmoredSkaab()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(graveyardBefore);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Armored Skaab");
+    }
+
+    @Test
+    @DisplayName("ETB still mills after its source leaves the battlefield")
+    void etbResolvesWithoutSource() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Forest fourth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(new ArmoredSkaab()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(first, second, third, fourth);
+        assertThat(gd.stack).isEmpty();
     }
 }

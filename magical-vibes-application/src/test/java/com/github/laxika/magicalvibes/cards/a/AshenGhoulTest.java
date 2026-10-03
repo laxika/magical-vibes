@@ -132,6 +132,98 @@ class AshenGhoulTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot return without paying black mana")
+    void cannotActivateWithoutBlackMana() {
+        harness.setGraveyard(player1, List.of(new AshenGhoul(),
+                new BalduvianBears(), new BalduvianBears(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        setupUpkeep();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Ashen Ghoul");
+        harness.assertNotOnBattlefield(player1, "Ashen Ghoul");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creature cards need not be consecutive or immediately above Ashen Ghoul")
+    void returnsWithInterspersedNonCreatureCards() {
+        harness.setGraveyard(player1, List.of(new AshenGhoul(), new Counterspell(),
+                new BalduvianBears(), new Counterspell(), new BalduvianBears(),
+                new Counterspell(), new BalduvianBears(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        setupUpkeep();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ashen Ghoul");
+        harness.assertNotInGraveyard(player1, "Ashen Ghoul");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    @DisplayName("Can activate twice while still in the graveyard but returns only once")
+    void multipleActivationsReturnOnlyOnce() {
+        harness.setGraveyard(player1, List.of(new AshenGhoul(),
+                new BalduvianBears(), new BalduvianBears(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        setupUpkeep();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Ashen Ghoul");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not return another Ashen Ghoul if the source leaves before resolution")
+    void missingSourceDoesNotReturnAnotherGhoul() {
+        AshenGhoul ghoul = new AshenGhoul();
+        AshenGhoul otherGhoul = new AshenGhoul();
+        harness.setGraveyard(player1, List.of(ghoul, otherGhoul,
+                new BalduvianBears(), new BalduvianBears(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        setupUpkeep();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.setGraveyard(player1, List.of(otherGhoul,
+                new BalduvianBears(), new BalduvianBears(), new BalduvianBears()));
+        harness.setHand(player1, List.of(ghoul));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ashen Ghoul");
+        harness.assertInHand(player1, "Ashen Ghoul");
+        harness.assertInGraveyard(player1, "Ashen Ghoul");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can attack the turn it returns from the graveyard")
+    void canAttackAfterReturning() {
+        harness.setGraveyard(player1, List.of(new AshenGhoul(),
+                new BalduvianBears(), new BalduvianBears(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        setupUpkeep();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+
+        assertThat(findPermanent(player1, "Ashen Ghoul").isTapped()).isTrue();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("Checks the creature threshold when the ability is activated")
     void thresholdIsCheckedWhenActivated() {
         AshenGhoul ghoul = new AshenGhoul();

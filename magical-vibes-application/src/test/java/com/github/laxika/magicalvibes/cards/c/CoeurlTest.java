@@ -55,11 +55,83 @@ class CoeurlTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canTargetOwnCreature() {
+        addReadyCoeurl(player1);
+        Permanent target = addReadyCoeurl(player1);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetItself() {
+        Permanent coeurl = addReadyCoeurl(player1);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, coeurl.getId());
+        harness.passBothPriorities();
+
+        assertThat(coeurl.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetAlreadyTappedCreature() {
+        addReadyCoeurl(player1);
+        Permanent target = addReadyCoeurl(player2);
+        target.setTapped(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent coeurl = harness.addToBattlefieldAndReturn(player1, new Coeurl());
+        Permanent target = addReadyCoeurl(player2);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(coeurl.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent coeurl = addReadyCoeurl(player1);
+        coeurl.setTapped(true);
+        Permanent target = addReadyCoeurl(player2);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotPayWhiteRequirementWithOnlyColorlessMana() {
+        Permanent coeurl = addReadyCoeurl(player1);
+        Permanent target = addReadyCoeurl(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(coeurl.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
     private Permanent addReadyCoeurl(Player player) {
-        Permanent coeurl = new Permanent(new Coeurl());
-        coeurl.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(coeurl);
-        return coeurl;
+        return addCreatureReady(player, new Coeurl());
     }
 
     private void addActivationMana() {

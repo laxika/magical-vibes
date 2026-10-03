@@ -51,6 +51,7 @@ public class CharacteristicState {
     private final Set<CardColor> seededColors = EnumSet.noneOf(CardColor.class);
     private final Set<Keyword> keywords = new HashSet<>();
     private int flankingInstances;
+    private int meleeInstances;
     private boolean seeded;
     /** Keywords this permanent is prohibited from having or gaining by a granted restriction. */
     private final Set<Keyword> blockedKeywords = new HashSet<>();
@@ -182,6 +183,7 @@ public class CharacteristicState {
         this.seededColors.addAll(source.seededColors);
         this.keywords.addAll(source.keywords);
         this.flankingInstances = source.flankingInstances;
+        this.meleeInstances = source.meleeInstances;
         this.seeded = source.seeded;
         this.blockedKeywords.addAll(source.blockedKeywords);
         this.seededKeywords.addAll(source.seededKeywords);
@@ -264,6 +266,7 @@ public class CharacteristicState {
      */
     public void snapshotSeededCharacteristics() {
         flankingInstances = keywords.contains(Keyword.FLANKING) ? 1 : 0;
+        meleeInstances = keywords.contains(Keyword.MELEE) ? 1 : 0;
         seeded = true;
         seededColors.clear();
         seededColors.addAll(colors);
@@ -300,6 +303,7 @@ public class CharacteristicState {
         if (abilityGainProhibited) return;
         if (!blockedKeywords.contains(keyword)) {
             if (seeded && keyword == Keyword.FLANKING) flankingInstances++;
+            if (seeded && keyword == Keyword.MELEE) meleeInstances++;
             keywords.add(keyword);
         }
     }
@@ -311,6 +315,7 @@ public class CharacteristicState {
                 if (seeded && keyword == Keyword.FLANKING) {
                     flankingInstances++;
                 }
+                if (seeded && keyword == Keyword.MELEE) meleeInstances++;
                 keywords.add(keyword);
             }
         }
@@ -318,12 +323,14 @@ public class CharacteristicState {
 
     public void removeKeyword(Keyword keyword) {
         if (keyword == Keyword.FLANKING) flankingInstances = 0;
+        if (keyword == Keyword.MELEE) meleeInstances = 0;
         keywords.remove(keyword);
     }
 
     /** Applies a keyword restriction and removes the keyword already present, if any. */
     public void blockKeyword(Keyword keyword) {
         if (keyword == Keyword.FLANKING) flankingInstances = 0;
+        if (keyword == Keyword.MELEE) meleeInstances = 0;
         blockedKeywords.add(keyword);
         keywords.remove(keyword);
     }
@@ -376,6 +383,7 @@ public class CharacteristicState {
      */
     public void loseAllAbilities(long timestamp) {
         flankingInstances = 0;
+        meleeInstances = 0;
         keywords.clear();
         blockedKeywords.clear();
         protectionColors.clear();
@@ -396,6 +404,7 @@ public class CharacteristicState {
      */
     public void loseAllNonManaAbilities(long timestamp) {
         flankingInstances = 0;
+        meleeInstances = 0;
         keywords.clear();
         blockedKeywords.clear();
         protectionColors.clear();

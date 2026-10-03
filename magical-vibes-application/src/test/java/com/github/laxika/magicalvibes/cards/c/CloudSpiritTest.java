@@ -45,12 +45,23 @@ class CloudSpiritTest extends BaseCardTest {
         Permanent spiritPerm = addCreatureReady(player2, new CloudSpirit());
 
         addCreatureReady(player1, new SkyshroudFalcon());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(spiritPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cloud Spirit can block an opposing Cloud Spirit")
+    void canBlockOpposingCloudSpirit() {
+        addCreatureReady(player1, new CloudSpirit());
+        Permanent blocker = addCreatureReady(player2, new CloudSpirit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test

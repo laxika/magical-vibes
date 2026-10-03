@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.FlailingSoldier;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CommonCause.class, FreshVolunteers.class, FlailingSoldier.class})
+@CardUsed({CommonCause.class, FreshVolunteers.class, FlailingSoldier.class,
+        CrenellatedWall.class, Disenchant.class, Opalescence.class})
 class CommonCauseTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor... colors) {
@@ -102,5 +106,62 @@ class CommonCauseTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FlailingSoldier());
 
         assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A real colorless artifact creature neither prevents nor receives the bonus")
+    void artifactCreatureDoesNotPreventOrReceiveBonus() {
+        addCommonCause();
+        Permanent volunteer = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new CrenellatedWall());
+
+        assertThat(gqs.getEffectivePower(gd, volunteer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, volunteer)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wall)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple copies boost creatures on both battlefields cumulatively")
+    void multipleCopiesStackAcrossBothBattlefields() {
+        addCommonCause();
+        harness.addToBattlefield(player2, new CommonCause());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Destroying Common Cause removes its bonus immediately")
+    void destroyingSourceRemovesBonus() {
+        Permanent cause = addCommonCause();
+        Permanent volunteer = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        assertThat(gqs.getEffectivePower(gd, volunteer)).isEqualTo(4);
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, cause.getId());
+
+        harness.assertInGraveyard(player1, "Common Cause");
+        assertThat(gqs.getEffectivePower(gd, volunteer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, volunteer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Common Cause also boosts itself when Opalescence makes it a creature")
+    void boostsItselfWhenAnimated() {
+        Permanent cause = addCommonCause();
+        Permanent volunteer = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, cause)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, volunteer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, volunteer)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, cause)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, cause)).isEqualTo(5);
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SpidersilkNet;
+import com.github.laxika.magicalvibes.cards.d.DromokaWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,18 +17,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArtfulManeuver.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({ArtfulManeuver.class, DromokaWarrior.class, SpidersilkNet.class})
 class ArtfulManeuverTest extends BaseCardTest {
 
     @Test
     void boostsTargetCreatureAndExilesForRebound() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new DromokaWarrior());
         ArtfulManeuver card = new ArtfulManeuver();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
@@ -38,12 +37,11 @@ class ArtfulManeuverTest extends BaseCardTest {
 
     @Test
     void boostWearsOffAtEndOfTurn() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new DromokaWarrior());
         harness.setHand(player1, List.of(new ArtfulManeuver()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -54,13 +52,12 @@ class ArtfulManeuverTest extends BaseCardTest {
 
     @Test
     void reboundOffersAFreeCastAtNextUpkeep() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new DromokaWarrior());
         ArtfulManeuver card = new ArtfulManeuver();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -83,12 +80,68 @@ class ArtfulManeuverTest extends BaseCardTest {
 
     @Test
     void cannotTargetNonCreaturePermanent() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new SpidersilkNet());
         harness.setHand(player1, List.of(new ArtfulManeuver()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void canBoostAnOpponentsCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new DromokaWarrior());
+        harness.setHand(player1, List.of(new ArtfulManeuver()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(2);
+        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void illegalTargetPreventsRebound() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new DromokaWarrior());
+        ArtfulManeuver card = new ArtfulManeuver();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, bear.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Artful Maneuver");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void decliningReboundLeavesCardExiledWithoutAnotherOpportunity() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new DromokaWarrior());
+        ArtfulManeuver card = new ArtfulManeuver();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Artful Maneuver");
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
 }

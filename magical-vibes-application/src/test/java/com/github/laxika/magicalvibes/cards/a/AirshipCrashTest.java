@@ -23,8 +23,7 @@ class AirshipCrashTest extends BaseCardTest {
     void destroysArtifact() {
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new Millstone()).getId();
 
-        cast(targetId);
-        harness.passBothPriorities();
+        castAndResolve(targetId);
 
         harness.assertNotOnBattlefield(player2, "Millstone");
         harness.assertInGraveyard(player2, "Millstone");
@@ -35,8 +34,7 @@ class AirshipCrashTest extends BaseCardTest {
     void destroysFlyingCreature() {
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new AirElemental()).getId();
 
-        cast(targetId);
-        harness.passBothPriorities();
+        castAndResolve(targetId);
 
         harness.assertNotOnBattlefield(player2, "Air Elemental");
         harness.assertInGraveyard(player2, "Air Elemental");
@@ -47,8 +45,7 @@ class AirshipCrashTest extends BaseCardTest {
     void destroysEnchantment() {
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem()).getId();
 
-        cast(targetId);
-        harness.passBothPriorities();
+        castAndResolve(targetId);
 
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         harness.assertInGraveyard(player2, "Glorious Anthem");
@@ -59,7 +56,7 @@ class AirshipCrashTest extends BaseCardTest {
     void cannotTargetNonFlyingCreature() {
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
-        assertThatThrownBy(() -> cast(targetId))
+        assertThatThrownBy(() -> castAndResolve(targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -71,6 +68,12 @@ class AirshipCrashTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Airship Crash");
+        harness.assertNotInHand(player1, "Airship Crash");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -78,10 +81,37 @@ class AirshipCrashTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    private void cast(UUID targetId) {
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the caster")
+    void destroysOwnArtifact() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Millstone()).getId();
+
+        castAndResolve(targetId);
+
+        harness.assertNotOnBattlefield(player1, "Millstone");
+        harness.assertInGraveyard(player1, "Millstone");
+    }
+
+    @Test
+    @DisplayName("Cannot cycle without paying the full two mana")
+    void cannotCycleWithInsufficientMana() {
+        harness.setHand(player1, List.of(new AirshipCrash()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Airship Crash");
+        harness.assertNotInGraveyard(player1, "Airship Crash");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castAndResolve(UUID targetId) {
         harness.setHand(player1, List.of(new AirshipCrash()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

@@ -108,6 +108,56 @@ class ChoArrimBruiserTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The attack trigger cannot choose more than two creatures")
+    void cannotTargetThreeCreatures() {
+        Permanent bruiser = addReadyBruiser();
+        Permanent first = addCreatureReady(player2, new FreshVolunteers());
+        Permanent second = addCreatureReady(player2, new FreshVolunteers());
+        Permanent third = addCreatureReady(player2, new FreshVolunteers());
+
+        declareAttackers(List.of(indexOf(player1, bruiser)));
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The attack trigger still taps its remaining target when the other leaves")
+    void tapsRemainingLegalTarget() {
+        Permanent bruiser = addReadyBruiser();
+        Permanent first = addCreatureReady(player2, new FreshVolunteers());
+        Permanent second = addCreatureReady(player2, new FreshVolunteers());
+
+        declareAttackers(List.of(indexOf(player1, bruiser)));
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        gd.playerGraveyards.get(player2.getId()).add(first.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger does not resolve when its only target leaves")
+    void doesNotResolveWithoutLegalTargets() {
+        Permanent bruiser = addReadyBruiser();
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        Permanent unchosen = addCreatureReady(player2, new FreshVolunteers());
+
+        declareAttackers(List.of(indexOf(player1, bruiser)));
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(unchosen.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyBruiser() {
         return addCreatureReady(player1, new ChoArrimBruiser());
     }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CompanyCommander.class, GrizzlyBears.class})
+@CardUsed({CompanyCommander.class})
 class CompanyCommanderTest extends BaseCardTest {
 
     @Test
@@ -28,8 +27,7 @@ class CompanyCommanderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Soldier");
         assertThat(tokens).hasSize(1);
@@ -43,19 +41,53 @@ class CompanyCommanderTest extends BaseCardTest {
     @DisplayName("Its attack trigger gives your creatures deathtouch until end of turn")
     void attackGrantsDeathtouchUntilEndOfTurn() {
         Permanent commander = addCreatureReady(player1, new CompanyCommander());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCommander = addCreatureReady(player1, new CompanyCommander());
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(commander)));
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, commander, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCommander, Keyword.DEATHTOUCH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, commander, Keyword.DEATHTOUCH)).isFalse();
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCommander, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack trigger includes creatures entering before resolution but excludes opponents")
+    void attackGrantUsesCreaturesControlledAtResolution() {
+        Permanent commander = addCreatureReady(player1, new CompanyCommander());
+        Permanent opponent = addCreatureReady(player2, new CompanyCommander());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).isNotEmpty();
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new CompanyCommander());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1)
+                .allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.DEATHTOUCH)).isTrue());
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the attack trigger resolves do not gain deathtouch")
+    void attackGrantDoesNotIncludeLaterCreatures() {
+        Permanent commander = addCreatureReady(player1, new CompanyCommander());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new CompanyCommander());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1)
+                .allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.DEATHTOUCH)).isFalse());
     }
 }

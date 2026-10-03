@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.cards.s.SpringleafDrum;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,7 @@ class AustereCommandTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Artifacts and enchantments modes")
+    @CardUsed({AustereCommand.class, SpringleafDrum.class, BoggartShenanigans.class, HillcomberGiant.class})
     class ArtifactsAndEnchantments {
 
         @Test
@@ -34,8 +36,7 @@ class AustereCommandTest extends BaseCardTest {
             harness.setHand(player1, List.of(new AustereCommand()));
             harness.addMana(player1, ManaColor.WHITE, 6);
 
-            harness.castSorceryWithModes(player1, 0, 2, 0, 1);
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeModeSelection(2, 0, 1));
 
             harness.assertNotOnBattlefield(player1, "Springleaf Drum");
             harness.assertNotOnBattlefield(player2, "Boggart Shenanigans");
@@ -45,6 +46,7 @@ class AustereCommandTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Creature mana value modes")
+    @CardUsed({AustereCommand.class, BlindSpotGiant.class, HillcomberGiant.class, SpringleafDrum.class})
     class CreatureManaValueModes {
 
         @Test
@@ -56,8 +58,7 @@ class AustereCommandTest extends BaseCardTest {
             harness.setHand(player1, List.of(new AustereCommand()));
             harness.addMana(player1, ManaColor.WHITE, 6);
 
-            harness.castSorceryWithModes(player1, 0, 2, 2, 3);
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeModeSelection(2, 2, 3));
 
             harness.assertNotOnBattlefield(player1, "Blind-Spot Giant");
             harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
@@ -75,8 +76,7 @@ class AustereCommandTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AustereCommand()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castSorceryWithModes(player1, 0, 2, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeModeSelection(2, 0, 2));
 
         harness.assertNotOnBattlefield(player1, "Springleaf Drum");
         harness.assertOnBattlefield(player1, "Boggart Shenanigans");
@@ -92,13 +92,64 @@ class AustereCommandTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AustereCommand()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castSorceryWithModes(player1, 0, 2, 2, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeModeSelection(2, 2, 1));
 
         harness.assertNotOnBattlefield(player2, "Boggart Shenanigans");
         harness.assertNotOnBattlefield(player2, "Boggart Forager");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Artifacts and high mana value creatures modes spare low mana value creatures")
+    void destroysArtifactsAndHighManaValueCreatures() {
+        harness.addToBattlefield(player1, new SpringleafDrum());
+        harness.addToBattlefield(player1, new BlindSpotGiant());
+        harness.addToBattlefield(player1, new HillcomberGiant());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+        harness.addToBattlefield(player2, new BoggartShenanigans());
+        harness.setHand(player1, List.of(new AustereCommand()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeModeSelection(2, 0, 3));
+
+        harness.assertNotOnBattlefield(player1, "Springleaf Drum");
+        harness.assertOnBattlefield(player1, "Blind-Spot Giant");
+        harness.assertNotOnBattlefield(player1, "Hillcomber Giant");
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
+        harness.assertOnBattlefield(player2, "Boggart Shenanigans");
+    }
+
+    @Test
+    @DisplayName("Enchantments and high mana value creatures modes spare artifacts and low mana value creatures")
+    void destroysEnchantmentsAndHighManaValueCreatures() {
+        harness.addToBattlefield(player1, new SpringleafDrum());
+        harness.addToBattlefield(player1, new BoggartShenanigans());
+        harness.addToBattlefield(player2, new BlindSpotGiant());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+        harness.setHand(player1, List.of(new AustereCommand()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeModeSelection(2, 1, 3));
+
+        harness.assertOnBattlefield(player1, "Springleaf Drum");
+        harness.assertNotOnBattlefield(player1, "Boggart Shenanigans");
+        harness.assertOnBattlefield(player2, "Blind-Spot Giant");
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
+    }
+
+    @Test
+    @DisplayName("Modes with no matching permanents can be chosen and resolve")
+    void resolvesOnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new AustereCommand()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeModeSelection(2, 0, 1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Austere Command");
     }
 
     @Test

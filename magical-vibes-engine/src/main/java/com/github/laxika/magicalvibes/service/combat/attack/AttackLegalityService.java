@@ -110,6 +110,7 @@ public class AttackLegalityService {
         }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
+        if (!gameData.permanentsCantAttackUntilNextTurn.getOrDefault(creature.getId(), java.util.Set.of()).isEmpty()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
@@ -559,7 +560,9 @@ public class AttackLegalityService {
 
     private boolean cantAttackCardOwner(GameData gameData, Permanent attacker, Permanent targetPermanent,
                                         boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
-        boolean restrictionPresent = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean restrictionPresent = !attacker.isFaceDown()
+                && !gameQueryService.computeStaticBonus(gameData, attacker).losesAllAbilities()
+                && attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackCardOwnerEffect.class::isInstance)
                 || gameQueryService.getGrantedEffects(gameData, attacker).stream()
                 .anyMatch(CantAttackCardOwnerEffect.class::isInstance);

@@ -116,7 +116,6 @@ class CircleOfDespairTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, attacker.getId());
 
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
         resolveCombat(player2);
 
@@ -181,6 +180,84 @@ class CircleOfDespairTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A sacrificed creature remains a legal source choice while its damage ability is on the stack")
+    void canChooseSacrificedSourceOfPendingAbility() {
+        addReadyCircle(player1);
+        Permanent hunter = addCreatureReady(player1, new AbyssalHunter());
+        Permanent victim = addCreatureReady(player2, new GiantMantis());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, indexOf(player1, hunter), null, victim.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Abyssal Hunter");
+        harness.handlePermanentChosen(player1, hunter.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevents a chosen spell's damage to the opponent")
+    void preventsDamageToOpponent() {
+        addReadyCircle(player1);
+        addCreatureReady(player1, new GiantMantis());
+        Incinerate incinerate = new Incinerate();
+        harness.setHand(player1, List.of(incinerate));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, incinerate.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Only the first damage event from the chosen source is prevented")
+    void doesNotPreventLaterDamageFromSameSource() {
+        addReadyCircle(player1);
+        Permanent fodder = addCreatureReady(player1, new GiantMantis());
+        Permanent hunter = addCreatureReady(player1, new AbyssalHunter());
+        Permanent victim = addCreatureReady(player2, new GiantMantis());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hunter.getId());
+        harness.activateAbility(player1, indexOf(player1, hunter), null, victim.getId());
+        harness.passBothPriorities();
+        assertThat(victim.getMarkedDamage()).isZero();
+
+        hunter.setTapped(false);
+        harness.activateAbility(player1, indexOf(player1, hunter), null, victim.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ability cannot be activated without mana even with a creature to sacrifice")
+    void cannotActivateWithoutMana() {
+        addReadyCircle(player1);
+        addCreatureReady(player1, new GiantMantis());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Giant Mantis");
+        harness.assertNotInGraveyard(player1, "Giant Mantis");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyCircle(Player player) {

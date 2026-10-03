@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -17,9 +17,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AstralArena.class, GrizzlyBears.class})
+@CardUsed({AstralArena.class, GrizzlyBears.class, HillGiant.class})
 class AstralArenaTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -47,10 +48,10 @@ class AstralArenaTest extends BaseCardTest {
 
     @Test
     void allowsNoMoreThanOneBlocker() {
-        addReadyAttacker(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -73,9 +74,57 @@ class AstralArenaTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
-    private Permanent addReadyAttacker(Player player) {
-        Permanent attacker = addCreatureReady(player, new GrizzlyBears());
-        attacker.setAttacking(true);
-        return attacker;
+    @Test
+    void allowsOneAttackerAndOneBlocker() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatCode(() -> declareAttackersAndPrepareBlockers(List.of(0)))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void limitsAttackersForTheOtherPlayer() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No more than 1 creature can attack");
+    }
+
+    @Test
+    void chaosMarksExactlyTwoDamageWithoutDamagingPlayers() {
+        Permanent ownCreature = addCreatureReady(player1, new HillGiant());
+        Permanent opposingCreature = addCreatureReady(player2, new HillGiant());
+        harness.setLife(player1, 17);
+        harness.setLife(player2, 13);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, this::resolveAllTriggers);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void chaosStillResolvesAfterThePlaneLeaves() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        gd.planechase.faceUp.clear();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

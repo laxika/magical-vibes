@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,7 +51,6 @@ class ButchersGleeTest extends BaseCardTest {
         castResolve(bear);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isZero();
@@ -70,6 +68,74 @@ class ButchersGleeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void lifelinkGainsLifeForOpposingCreaturesController() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castResolve(bear);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        bear.setSummoningSick(false);
+        bear.setAttacking(true);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 25);
+    }
+
+    @Test
+    void regenerationOnlyTapsAndRemovesDamageWhenShieldIsConsumed() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.setMarkedDamage(1);
+        castResolve(bear);
+
+        assertThat(bear.isTapped()).isFalse();
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotResolveIfTargetDiesInResponse() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ButchersGlee()));
+        addMana();
+        harness.castInstant(player1, 0, bear.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Butcher's Glee");
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(bear.getRegenerationShield()).isZero();
     }
 
     private void castResolve(Permanent target) {

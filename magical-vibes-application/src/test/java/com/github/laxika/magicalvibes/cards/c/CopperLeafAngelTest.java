@@ -66,4 +66,68 @@ class CopperLeafAngelTest extends BaseCardTest {
         assertThat(angel.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentForest);
     }
+
+    @Test
+    @DisplayName("The controller chooses which lands to sacrifice, including tapped lands")
+    void choosesTappedLandAndPaysBeforeResolution() {
+        Permanent angel = addCreatureReady(player1, new CopperLeafAngel());
+        Permanent otherAngel = addCreatureReady(player1, new CopperLeafAngel());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        forest.setTapped(true);
+
+        harness.activateAbility(player1, 0, 1, null);
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        assertThat(angel.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(angel, otherAngel, mountain);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest.getCard());
+        assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherAngel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activation even when X is zero")
+    void cannotActivateWhileSummoningSick() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new CopperLeafAngel());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(angel.isTapped()).isFalse();
+        assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Copper-Leaf Angel cannot activate")
+    void cannotActivateWhileTapped() {
+        Permanent angel = addCreatureReady(player1, new CopperLeafAngel());
+        angel.setTapped(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(angel, forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Nonland permanents cannot pay the sacrifice cost")
+    void cannotSacrificeNonlandPermanent() {
+        Permanent angel = addCreatureReady(player1, new CopperLeafAngel());
+        Permanent otherAngel = addCreatureReady(player1, new CopperLeafAngel());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(angel.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(angel, otherAngel);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
 }

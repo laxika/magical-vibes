@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.e.EvilPresence;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,10 +13,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AngryMob.class, Swamp.class})
+@CardUsed({AngryMob.class, Swamp.class, EvilPresence.class, Forest.class})
 class AngryMobTest extends BaseCardTest {
 
     @Test
@@ -81,6 +85,54 @@ class AngryMobTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player2, new Swamp());
+
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(3);
+    }
+
+    @Test
+    void updatesWhenActivePlayerChanges() {
+        Permanent mob = addCreatureReady(player1, new AngryMob());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(3);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(2);
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(3);
+    }
+
+    @Test
+    void updatesWhenOpponentSwampChangesController() {
+        Permanent mob = addCreatureReady(player1, new AngryMob());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player2.getId()).remove(swamp);
+        gd.playerBattlefields.get(player1.getId()).add(swamp);
+
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(2);
+    }
+
+    @Test
+    void countsLandMadeIntoSwampByEvilPresence() {
+        Permanent mob = addCreatureReady(player1, new AngryMob());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(2);
+        harness.setHand(player1, List.of(new EvilPresence()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(3);

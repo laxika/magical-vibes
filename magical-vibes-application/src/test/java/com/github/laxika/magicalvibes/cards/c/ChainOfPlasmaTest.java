@@ -132,6 +132,69 @@ class ChainOfPlasmaTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Declining new targets preserves the original permanent target")
+    void copyKeepsPermanentTargetWhenRetargetingIsDeclined() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.setHand(player2, List.of(new ElvishWarrior()));
+        castAt(target.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(target.getId());
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining to discard for a copy finishes resolution without another copy choice")
+    void copyCannotBeCopiedWithoutAnotherDiscard() {
+        harness.setHand(player2, List.of(new ElvishWarrior(), new ElvishWarrior()));
+        castAt(player2.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+        assertThat(mayChoicePlayer()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal original target prevents both damage and the discard choice")
+    void illegalTargetPreventsDiscardChoice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.setHand(player2, List.of(new ElvishWarrior()));
+        harness.setHand(player1, List.of(new ChainOfPlasma()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
     private void castAt(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new ChainOfPlasma()));
         harness.addMana(player1, ManaColor.RED, 2);

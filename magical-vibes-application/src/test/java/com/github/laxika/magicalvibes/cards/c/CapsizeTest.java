@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Capsize.class, DarkBanishing.class, Forest.class, TrainedArmodon.class})
+@CardUsed({Capsize.class, Counterspell.class, DarkBanishing.class, Forest.class, TrainedArmodon.class})
 class CapsizeTest extends BaseCardTest {
 
     @Test
@@ -100,8 +100,7 @@ class CapsizeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DarkBanishing()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
         harness.passBothPriorities();
 
         assertThat(handNames(player1)).isEmpty();
@@ -133,6 +132,28 @@ class CapsizeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Countering Capsize prevents buyback from returning it to hand")
+    void counteredBuybackGoesToGraveyard() {
+        harness.addToBattlefield(player2, new TrainedArmodon());
+        Capsize capsize = new Capsize();
+        harness.setHand(player1, List.of(capsize));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Trained Armodon");
+        harness.castInstantWithBuyback(player1, 0, targetId);
+        harness.castAndResolveInstant(player2, 0, capsize.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(handNames(player1)).isEmpty();
+        assertThat(graveyardNames(player1)).containsExactly("Capsize");
+        harness.assertOnBattlefield(player2, "Trained Armodon");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     private List<String> handNames(Player player) {

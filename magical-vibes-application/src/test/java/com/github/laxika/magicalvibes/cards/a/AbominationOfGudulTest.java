@@ -97,7 +97,7 @@ class AbominationOfGudulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

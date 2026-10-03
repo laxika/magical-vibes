@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.ThrivingTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +13,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AerialResponder.class, ThrivingTurtle.class})
 class AerialResponderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a ground creature from blocking Aerial Responder")
     void flyingPreventsGroundCreatureFromBlocking() {
         addCreatureReady(player1, new AerialResponder());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new ThrivingTurtle());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
 
@@ -40,5 +42,21 @@ class AerialResponderTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Flying creatures can block Aerial Responder and both players gain life from lifelink")
+    void flyingBlockerAndDefendingLifelinkWorkInCombat() {
+        addCreatureReady(player1, new AerialResponder());
+        addCreatureReady(player2, new AerialResponder());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 22);
+        harness.assertOnBattlefield(player1, "Aerial Responder");
+        harness.assertOnBattlefield(player2, "Aerial Responder");
     }
 }

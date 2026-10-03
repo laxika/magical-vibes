@@ -5,75 +5,68 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlindZealot.class, PhyrexianHulk.class})
 class BlindZealotTest extends BaseCardTest {
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")
     void combatDamageTriggerPresentsMayChoice() {
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
-        addReadyCreature(player2, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new PhyrexianHulk());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
-    @DisplayName("Accepting may and choosing a creature sacrifices Blind Zealot and destroys the target")
+    @DisplayName("Accepting sacrifice destroys the previously chosen target")
     void sacrificeSelfAndDestroyTarget() {
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new PhyrexianHulk());
 
         resolveCombat();
 
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);
-        // Resolve the inner effect from the stack
         harness.passBothPriorities();
-        // Choose the target creature
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         // Blind Zealot should be sacrificed (removed from battlefield, in graveyard)
         harness.assertNotOnBattlefield(player1, "Blind Zealot");
         harness.assertInGraveyard(player1, "Blind Zealot");
 
         // Target creature should be destroyed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Phyrexian Hulk");
+        harness.assertInGraveyard(player2, "Phyrexian Hulk");
     }
 
     @Test
     @DisplayName("Declining the may ability means no sacrifice - nothing happens")
     void declineSacrifice() {
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new PhyrexianHulk());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         harness.handleMayAbilityChosen(player1, false);
@@ -82,15 +75,15 @@ class BlindZealotTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Blind Zealot");
 
         // Target creature should still be on the battlefield
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Phyrexian Hulk");
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 
     @Test
-    @DisplayName("No trigger when defender has no creatures")
+    @DisplayName("No ability remains on the stack when defender has no legal creature targets")
     void noTriggerWhenNoPermanents() {
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
         // player2 has no creatures
 
@@ -103,9 +96,9 @@ class BlindZealotTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when Blind Zealot is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new PhyrexianHulk());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -119,58 +112,77 @@ class BlindZealotTest extends BaseCardTest {
     @DisplayName("Defender takes combat damage even if sacrifice is declined")
     void defenderTakesCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
-        addReadyCreature(player2, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new PhyrexianHulk());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.handleMayAbilityChosen(player1, false);
 
         // Blind Zealot is 2/2, should deal 2 damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
-    @DisplayName("Accepting may presents multi-permanent choice with defender's creatures only")
+    @DisplayName("The target is chosen before resolution from the damaged player's creatures")
     void onlyDamagedPlayerCreatures() {
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
-        Permanent ownBears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent enemyBears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent ownHulk = addCreatureReady(player1, new PhyrexianHulk());
+        Permanent enemyBears = addCreatureReady(player2, new PhyrexianHulk());
 
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        // Accept may ability
-        harness.handleMayAbilityChosen(player1, true);
-        // Resolve inner effect
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-
-        // The valid IDs should only contain the enemy creature, not our own
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
                 .contains(enemyBears.getId())
-                .doesNotContain(ownBears.getId());
+                .doesNotContain(ownHulk.getId(), zealot.getId());
+        harness.handlePermanentChosen(player1, enemyBears.getId());
+        harness.assertOnBattlefield(player1, "Blind Zealot");
+        harness.assertOnBattlefield(player1, "Phyrexian Hulk");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
     @DisplayName("Game advances after sacrifice choice is made")
     void gameAdvancesAfterChoice() {
-        Permanent zealot = addReadyCreature(player1, new BlindZealot());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new PhyrexianHulk());
 
         resolveCombat();
 
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         GameData gd = harness.getGameData();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+    }
+    @Test
+    @DisplayName("The target can regenerate while Blind Zealot is still sacrificed")
+    void targetCanRegenerate() {
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
+        zealot.setAttacking(true);
+        Permanent victim = addCreatureReady(player2, new PhyrexianHulk());
+        victim.setRegenerationShield(1);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Blind Zealot");
+        harness.assertOnBattlefield(player2, "Phyrexian Hulk");
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(victim.getRegenerationShield()).isZero();
     }
 }

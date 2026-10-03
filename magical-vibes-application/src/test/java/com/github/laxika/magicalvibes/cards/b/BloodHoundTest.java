@@ -88,4 +88,50 @@ class BloodHoundTest extends BaseCardTest {
 
         assertThat(hound.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Separate damage events add their own amounts to existing counters")
+    void separateDamageEventsAccumulateCounters() {
+        Permanent hound = harness.addToBattlefieldAndReturn(player2, new BloodHound());
+        hound.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, new ShockTroops());
+
+        harness.castFromHand(player1, new Sizzle(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(hound.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(hound.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Damage after the end-step trigger resolves can add counters again")
+    void damageAfterEndStepRemovalAddsCounters() {
+        Permanent hound = harness.addToBattlefieldAndReturn(player1, new BloodHound());
+        hound.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefield(player1, new ShockTroops());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(hound.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(hound.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertLife(player1, 18);
+    }
 }

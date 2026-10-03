@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CentaurPeacemaker.class})
 class CentaurPeacemakerTest extends BaseCardTest {
 
     @Test
@@ -17,7 +16,7 @@ class CentaurPeacemakerTest extends BaseCardTest {
         harness.setLife(player1, 7);
         harness.setLife(player2, 13);
 
-        castCentaurPeacemaker();
+        harness.castFromHand(player1, new CentaurPeacemaker(), "{1}{G}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -26,11 +25,46 @@ class CentaurPeacemakerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private void castCentaurPeacemaker() {
-        harness.setHand(player1, List.of(new CentaurPeacemaker()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+    @Test
+    @DisplayName("Life gain waits until the enters trigger resolves")
+    void lifeGainWaitsForTriggerResolution() {
+        harness.setLife(player1, 7);
+        harness.setLife(player2, 13);
+
+        harness.castFromHand(player1, new CentaurPeacemaker(), "{1}{G}{W}");
+        harness.assertLife(player1, 7);
+        harness.assertLife(player2, 13);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 7);
+        harness.assertLife(player2, 13);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast triggers life gain even if the creature dies before resolution")
+    void noncastEntryTriggerSurvivesSourceDeath() {
+        harness.setLife(player1, 7);
+        harness.setLife(player2, 13);
+
+        var centaur = harness.enterBattlefieldAndReturn(player2, new CentaurPeacemaker());
+        assertThat(gd.stack).hasSize(1);
+        centaur.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(centaur);
+        harness.assertLife(player1, 7);
+        harness.assertLife(player2, 13);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
+import com.github.laxika.magicalvibes.cards.s.ShiftingWall;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CorruptingLicid.class, YouthfulKnight.class, VolrathsStronghold.class})
+@CardUsed({CorruptingLicid.class, YouthfulKnight.class, VolrathsStronghold.class, ShiftingWall.class})
 class CorruptingLicidTest extends BaseCardTest {
 
     @Test
@@ -134,6 +136,131 @@ class CorruptingLicidTest extends BaseCardTest {
         assertThat(licid.getAttachedTo()).isNull();
         assertThat(licid.getCard().isAura()).isFalse();
         assertThat(gqs.isCreature(gd, licid)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Licid can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(licid);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(host);
+        assertThat(gqs.hasKeyword(gd, host, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A black creature can block the enchanted creature")
+    void blackCreatureCanBlock() {
+        addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        Permanent blocker = addReadyLicid(player2);
+        host.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A nonblack artifact creature can block the enchanted creature")
+    void artifactCreatureCanBlock() {
+        addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        Permanent blocker = addCreatureReady(player2, new ShiftingWall());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        host.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Licid targeting itself becomes an unattached Aura and goes to the graveyard")
+    void targetingItselfPutsLicidInGraveyard() {
+        Permanent licid = addReadyLicid(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, licid.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Corrupting Licid");
+        harness.assertInGraveyard(player1, "Corrupting Licid");
+    }
+
+    @Test
+    @DisplayName("The Aura goes to the graveyard when its enchanted creature leaves")
+    void hostLeavingPutsLicidInGraveyard() {
+        addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(host);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Corrupting Licid");
+        harness.assertInGraveyard(player1, "Corrupting Licid");
+    }
+
+    @Test
+    @DisplayName("Ending the effect requires another black mana payment")
+    void cannotEndEffectWithoutMana() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.isCreature(gd, licid)).isFalse();
+        assertThat(gqs.hasKeyword(gd, host, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ending the effect preserves the tap cost and restores the original ability")
+    void canAttachAgainAfterEndingEffectAndUntapping() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent firstHost = addCreatureReady(player1, new YouthfulKnight());
+        Permanent secondHost = addCreatureReady(player2, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, firstHost.getId());
+        harness.passBothPriorities();
+
+        assertThat(licid.isTapped()).isTrue();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(licid.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstHost, Keyword.FEAR)).isFalse();
+        licid.setTapped(false);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, secondHost.getId());
+        harness.passBothPriorities();
+
+        assertThat(licid.getAttachedTo()).isEqualTo(secondHost.getId());
+        assertThat(gqs.hasKeyword(gd, secondHost, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstHost, Keyword.FEAR)).isFalse();
     }
 
     private Permanent addReadyLand(Player player) {
