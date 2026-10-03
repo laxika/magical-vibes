@@ -100,12 +100,58 @@ class DirtwaterWraithTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new DirtwaterWraith());
         Permanent attacker = addCreatureReady(player1, new DirtwaterWraith());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
 
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wraith = harness.addToBattlefieldAndReturn(player1, new DirtwaterWraith());
+        wraith.setSummoningSick(true);
+        wraith.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wraith.getEffectivePower()).isEqualTo(2);
+        assertThat(wraith.getEffectiveToughness()).isEqualTo(3);
+        assertThat(wraith.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability boosts only its source among multiple Wraiths")
+    void boostsOnlyItsSource() {
+        Permanent first = addCreatureReady(player1, new DirtwaterWraith());
+        Permanent second = addCreatureReady(player1, new DirtwaterWraith());
+        Permanent opposing = addCreatureReady(player2, new DirtwaterWraith());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(1);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(opposing.getEffectivePower()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attacker's Swamp does not prevent blocking")
+    void attackersSwampDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent attacker = addCreatureReady(player1, new DirtwaterWraith());
+        Permanent blocker = addCreatureReady(player2, new DirtwaterWraith());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
