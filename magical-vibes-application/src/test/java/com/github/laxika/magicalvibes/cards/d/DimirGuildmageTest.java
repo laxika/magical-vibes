@@ -121,6 +121,91 @@ class DimirGuildmageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void bothAbilitiesAreUnavailableDuringOpponentsMainPhase() {
+        prepareGuildmage();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void neitherAbilityCanBeActivatedWithAnAbilityOnTheStack() {
+        harness.setLibrary(player2, List.of(new ZephyrSpirit()));
+        prepareGuildmage();
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Zephyr Spirit");
+    }
+
+    @Test
+    void bothAbilitiesWorkWhileTappedAndSummoningSickInPostcombatMainPhase() {
+        harness.setLibrary(player2, List.of(new ZephyrSpirit()));
+        harness.setHand(player2, List.of());
+        Permanent guildmage = prepareGuildmage();
+        guildmage.setTapped(true);
+        guildmage.setSummoningSick(true);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Zephyr Spirit");
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(guildmage.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Zephyr Spirit");
+    }
+
+    @Test
+    void discardAgainstAnEmptyHandResolvesWithoutAChoice() {
+        harness.setHand(player2, List.of());
+        prepareGuildmage(ManaColor.BLACK);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetedPlayerChoosesExactlyOneCardToDiscard() {
+        ZephyrSpirit kept = new ZephyrSpirit();
+        ZephyrSpirit discarded = new ZephyrSpirit();
+        harness.setHand(player2, List.of(kept, discarded));
+        prepareGuildmage(ManaColor.BLACK);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+    }
+
     private Permanent prepareGuildmage(ManaColor coloredMana) {
         Permanent guildmage = prepareGuildmage();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
