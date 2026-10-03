@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.t.TibaltRakishInstigator;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreadhordeButcher.class, Murder.class})
+@CardUsed({DreadhordeButcher.class, Murder.class, DomriAnarchOfBolas.class, TibaltRakishInstigator.class})
 class DreadhordeButcherTest extends BaseCardTest {
 
     @Test
@@ -46,8 +47,7 @@ class DreadhordeButcherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, butcher.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, butcher.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -56,10 +56,80 @@ class DreadhordeButcherTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Dreadhorde Butcher");
     }
 
+    @Test
+    void getsCounterWhenDealingCombatDamageToPlaneswalker() {
+        Permanent tibalt = harness.addToBattlefieldAndReturn(player2, new TibaltRakishInstigator());
+        tibalt.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent butcher = addReadyButcher();
+        butcher.setAttacking(true);
+        butcher.setAttackTarget(tibalt.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        assertThat(tibalt.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        harness.passBothPriorities();
+        assertThat(butcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void deathTriggerCanDamageCreature() {
+        Permanent butcher = addReadyButcher();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DreadhordeButcher());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, butcher.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Dreadhorde Butcher");
+    }
+
+    @Test
+    void deathTriggerUsesPowerIncludingDomrisStaticBonus() {
+        Permanent domri = harness.addToBattlefieldAndReturn(player1, new DomriAnarchOfBolas());
+        domri.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent butcher = addReadyButcher();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, butcher.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Dreadhorde Butcher");
+    }
+
+    @Test
+    void deathTriggerCanDamagePlaneswalker() {
+        Permanent tibalt = harness.addToBattlefieldAndReturn(player2, new TibaltRakishInstigator());
+        tibalt.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent butcher = addReadyButcher();
+        butcher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, butcher.getId());
+        harness.handlePermanentChosen(player1, tibalt.getId());
+        harness.passBothPriorities();
+
+        assertThat(tibalt.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent addReadyButcher() {
-        Permanent butcher = new Permanent(new DreadhordeButcher());
+        Permanent butcher = harness.addToBattlefieldAndReturn(player1, new DreadhordeButcher());
         butcher.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(butcher);
         return butcher;
     }
 }
