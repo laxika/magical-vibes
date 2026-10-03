@@ -147,6 +147,49 @@ class CoalitionFlagTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).doesNotContain(CardSubtype.FLAGBEARER);
     }
 
+    @Test
+    void enchantedCreatureHasOnlyFlagbearerCreatureType() {
+        Permanent creature = addCreatureReady(player1, new AngelfireCrusader());
+        attachFlag(creature);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .containsExactly(CardSubtype.FLAGBEARER);
+    }
+
+    @Test
+    void opponentMayChooseEitherOfMultipleFlagbearers() {
+        Permanent firstFlagbearer = addCreatureReady(player1, new AngelfireCrusader());
+        attachFlag(firstFlagbearer);
+        Permanent secondFlagbearer = addCreatureReady(player1, new DegaDisciple());
+        attachFlag(secondFlagbearer);
+
+        harness.setHand(player2, List.of(new Jilt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, secondFlagbearer.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dega Disciple");
+        harness.assertOnBattlefield(player1, "Angelfire Crusader");
+    }
+
+    @Test
+    void flagEnteringAfterTargetsAreChosenDoesNotInvalidateSpell() {
+        Permanent target = addCreatureReady(player1, new DegaDisciple());
+        Permanent otherCreature = addCreatureReady(player1, new AngelfireCrusader());
+        harness.setHand(player2, List.of(new Jilt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, target.getId());
+
+        attachFlag(otherCreature);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dega Disciple");
+        harness.assertOnBattlefield(player1, "Angelfire Crusader");
+    }
+
     private Permanent attachFlag(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new CoalitionFlag());
         aura.setAttachedTo(creature.getId());
