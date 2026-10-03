@@ -75,8 +75,7 @@ class DoormanTest extends BaseCardTest {
         target.setAttacking(true);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         prepareDeclareBlockers();
@@ -94,6 +93,70 @@ class DoormanTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, doorman), null, target.getId());
 
         assertThat(doorman.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Wall with power 3 or greater still cannot block")
+    void highPowerWallCannotBlock() {
+        Permanent doorman = addCreatureReady(player1, new Doorman());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new WallOfKelp());
+        blocker.setPowerModifier(3);
+
+        activate(doorman, target);
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature whose power increases to 3 after resolution can block")
+    void powerIncreaseBeforeBlockingAllowsBlock() {
+        Permanent doorman = addCreatureReady(player1, new Doorman());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        activate(doorman, target);
+        blocker.setPowerModifier(1);
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        declareBlock(blocker, target);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature whose power decreases to 2 after resolution cannot block")
+    void powerDecreaseBeforeBlockingPreventsBlock() {
+        Permanent doorman = addCreatureReady(player1, new Doorman());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+
+        activate(doorman, target);
+        blocker.setPowerModifier(-1);
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The restriction applies to an opponent's creature when targeted")
+    void opponentsCreatureReceivesRestriction() {
+        Permanent doorman = addCreatureReady(player1, new Doorman());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
+
+        activate(doorman, target);
+        target.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, blocker), indexOf(player2, target)))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void activate(Permanent doorman, Permanent target) {
