@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({DayOfBlackSun.class, DarksteelMyr.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DayOfBlackSun.class, DarksteelMyr.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class})
 class DayOfBlackSunTest extends BaseCardTest {
 
     @Test
@@ -45,10 +46,33 @@ class DayOfBlackSunTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("X equals zero destroys zero-mana-value creatures on both sides")
+    void xZeroDestroysZeroManaValueCreatures() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        castDayOfBlackSun(0);
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Creatures above X are unaffected even if indestructible")
+    void largerIndestructibleCreatureSurvives() {
+        harness.addToBattlefield(player2, new DarksteelMyr());
+
+        castDayOfBlackSun(2);
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        castDayOfBlackSun(3);
+
+        harness.assertInGraveyard(player2, "Darksteel Myr");
+    }
+
     private void castDayOfBlackSun(int xValue) {
         harness.setHand(player1, List.of(new DayOfBlackSun()));
         harness.addMana(player1, ManaColor.BLACK, xValue + 2);
-        harness.castSorcery(player1, 0, xValue);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, xValue);
     }
 }
