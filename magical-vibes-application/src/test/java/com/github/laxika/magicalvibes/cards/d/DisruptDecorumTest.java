@@ -56,13 +56,78 @@ class DisruptDecorumTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player2, List.of());
+        declareAttackers(player2, List.of());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Every opposing creature that can attack must attack")
+    void allOpposingCreaturesMustAttack() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        castAndResolve();
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("A goaded creature can attack the caster when no other opponent exists")
+    void canAttackCasterInTwoPlayerGame() {
+        addCreatureReady(player2, new GrizzlyBears());
+        castAndResolve();
+
+        assertThatCode(() -> declareAttackers(player2, List.of(0))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick creatures are not required to attack")
+    void creaturesUnableToAttackMayStayBack() {
+        addCreatureReady(player2, new GrizzlyBears()).setTapped(true);
+        addCreatureReady(player2, new GrizzlyBears()).setSummoningSick(true);
+        castAndResolve();
+
+        assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A creature goaded while tapped must attack once it becomes able")
+    void tappedCreatureIsStillGoaded() {
+        var creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.setTapped(true);
+        castAndResolve();
+        creature.setTapped(false);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("Goad requires attacking again in an additional combat when able")
+    void mustAttackInEachCombat() {
+        var creature = addCreatureReady(player2, new GrizzlyBears());
+        castAndResolve();
+        declareAttackers(player2, List.of(0));
+        creature.setTapped(false);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("A goaded creature remains goaded after changing controllers")
+    void goadSurvivesControlChange() {
+        var creature = addCreatureReady(player2, new GrizzlyBears());
+        castAndResolve();
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
     }
 
     private void castAndResolve() {
@@ -72,7 +137,6 @@ class DisruptDecorumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DisruptDecorum()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
