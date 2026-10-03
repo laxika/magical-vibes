@@ -81,6 +81,54 @@ class DeathCharmerTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("The damaged creature's controller can pay even after that creature dies")
+    void canPayAfterDamagedCreatureDies() {
+        Permanent deathCharmer = addCreatureReady(player1, new DeathCharmer());
+        deathCharmer.setAttacking(true);
+        addCreatureReady(player2, new MarshBoa());
+
+        resolveCombatToPaymentChoice();
+
+        harness.assertInGraveyard(player2, "Marsh Boa");
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Death Charmer triggers when blocking and dying in combat")
+    void triggersAsBlockerEvenWhenItDies() {
+        Permanent attacker = addCreatureReady(player1, new DeathCharmer());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new DeathCharmer());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Death Charmer");
+        harness.assertInGraveyard(player2, "Death Charmer");
+        PendingInteraction.MayAbilityChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(firstChoice).isNotNull();
+        harness.handleMayAbilityChosen(
+                firstChoice.playerId().equals(player1.getId()) ? player1 : player2, false);
+        harness.passBothPriorities();
+        PendingInteraction.MayAbilityChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.playerId()).isNotEqualTo(firstChoice.playerId());
+        harness.handleMayAbilityChosen(
+                secondChoice.playerId().equals(player1.getId()) ? player1 : player2, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
     private void resolveCombatToPaymentChoice() {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
