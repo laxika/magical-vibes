@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DwarvenSeaClanTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Damage is dealt as end of combat begins, killing a 2/2 attacker")
+    @DisplayName("End-of-combat damage uses the stack before killing a 2/2 attacker")
     void dealsTwoDamageAtEndOfCombat() {
         Permanent clan = addCreatureReady(player1, new DwarvenSeaClan());
         Permanent attacker = addCreatureReady(player2, new HeartWolf());
@@ -34,6 +34,10 @@ class DwarvenSeaClanTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, clan), 0, null, attacker.getId());
         harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Heart Wolf");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Heart Wolf");
     }
@@ -50,11 +54,10 @@ class DwarvenSeaClanTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         harness.activateAbility(player1, indexOf(player1, clan), 0, null, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Leaping Lizard");
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
@@ -73,7 +76,8 @@ class DwarvenSeaClanTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, clan), 0, null, attacker.getId());
         attacker.setAttacking(false);
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Dwarven Trader");
         assertThat(attacker.getMarkedDamage()).isZero();
@@ -119,18 +123,16 @@ class DwarvenSeaClanTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player1, new HeartWolf());
         harness.addToBattlefield(player1, new Island());
 
-        declareAttackers(player2, List.of(indexOf(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, blocker), indexOf(player2, attacker))));
 
         harness.activateAbility(player1, indexOf(player1, clan), 0, null, blocker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
         harness.assertOnBattlefield(player1, "Heart Wolf");
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passPriority(player2);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Heart Wolf");
     }
@@ -151,6 +153,72 @@ class DwarvenSeaClanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("before the end of combat step");
+    }
+
+    @Test
+    @DisplayName("Losing the last Island before resolution makes the target illegal")
+    void losingIslandBeforeResolutionPreventsDelayedDamage() {
+        Permanent clan = addCreatureReady(player1, new DwarvenSeaClan());
+        Permanent attacker = addCreatureReady(player2, new LeapingLizard());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        attacker.setAttacking(true);
+
+        harness.activateAbility(player1, indexOf(player1, clan), 0, null, attacker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(island);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Leaping Lizard");
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("After resolution, delayed damage does not require an Island or a combatant")
+    void losingIslandAndLeavingCombatAfterResolutionDoesNotPreventDamage() {
+        Permanent clan = addCreatureReady(player1, new DwarvenSeaClan());
+        Permanent attacker = addCreatureReady(player2, new LeapingLizard());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        attacker.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.activateAbility(player1, indexOf(player1, clan), 0, null, attacker.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
+        assertThat(attacker.getMarkedDamage()).isZero();
+
+        gd.playerBattlefields.get(player2.getId()).remove(island);
+        attacker.setAttacking(false);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Leaping Lizard");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Delayed damage still happens if Dwarven Sea Clan leaves after activation")
+    void sourceLeavingBeforeResolutionDoesNotPreventDamage() {
+        Permanent clan = addCreatureReady(player1, new DwarvenSeaClan());
+        Permanent attacker = addCreatureReady(player2, new LeapingLizard());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        attacker.setAttacking(true);
+
+        harness.activateAbility(player1, indexOf(player1, clan), 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(clan);
+        gd.playerGraveyards.get(player1.getId()).add(clan.getCard());
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Leaping Lizard");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }
 
     private int indexOf(Player player, Permanent permanent) {
