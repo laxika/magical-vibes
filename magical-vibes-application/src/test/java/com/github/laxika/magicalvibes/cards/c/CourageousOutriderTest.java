@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CourageousOutrider.class, EliteVanguard.class, GrizzlyBears.class, Shock.class, Forest.class})
 class CourageousOutriderTest extends BaseCardTest {
 
     @Test
@@ -91,9 +92,95 @@ class CourageousOutriderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Only one Human is revealed and the rest go below the untouched library")
+    void selectsOneOfMultipleHumansAndBottomsOnlyTopFour() {
+        CourageousOutrider firstHuman = new CourageousOutrider();
+        CourageousOutrider secondHuman = new CourageousOutrider();
+        Forest firstForest = new Forest();
+        Forest secondForest = new Forest();
+        Forest untouched = new Forest();
+        harness.setLibrary(player1, List.of(firstHuman, firstForest, secondHuman, secondForest, untouched));
+        castAndResolve();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(firstHuman, secondHuman);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondHuman);
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText()
+                .contains("reveals Courageous Outrider and puts it into their hand"));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(firstHuman, firstForest, secondForest);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(untouched, secondForest, firstHuman, firstForest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A Human below the top four cannot be chosen")
+    void humanBelowTopFourIsNotOffered() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Forest fourth = new Forest();
+        CourageousOutrider fifth = new CourageousOutrider();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
+        castAndResolve();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth, fourth, third, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A short library still allows choosing a Human and bottoms the remaining card")
+    void choosesHumanFromShortLibrary() {
+        Forest forest = new Forest();
+        CourageousOutrider human = new CourageousOutrider();
+        harness.setLibrary(player1, List.of(forest, human));
+        castAndResolve();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(human);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only card in the library can be declined even when it is Human")
+    void declinesOnlyHumanInLibrary() {
+        CourageousOutrider human = new CourageousOutrider();
+        harness.setLibrary(player1, List.of(human));
+        castAndResolve();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(human);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library finishes without offering a choice")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+        castAndResolve();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Courageous Outrider");
+    }
+
     private void setupTopFour(List<Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     private Card humanCard() {

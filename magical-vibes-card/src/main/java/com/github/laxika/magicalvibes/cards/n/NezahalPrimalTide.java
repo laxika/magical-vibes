@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "RIX", collectorNumber = "45")
 @CardRegistration(set = "SLD", collectorNumber = "1268")
 @CardRegistration(set = "SLD", collectorNumber = "2236")
+@CardRegistration(set = "HBG", collectorNumber = "907")
 public class NezahalPrimalTide extends Card {
 
     public NezahalPrimalTide() {

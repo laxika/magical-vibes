@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.v.VexingShusher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Counterbore.class, BriarberryCohort.class, Plains.class})
+@CardUsed({Counterbore.class, BriarberryCohort.class, Plains.class, VexingShusher.class})
 class CounterboreTest extends BaseCardTest {
 
     @Test
@@ -118,5 +119,62 @@ class CounterboreTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Counterbore");
+    }
+
+    @Test
+    @DisplayName("May leave matching cards in hidden zones while exiling every graveyard match")
+    void mayFailToFindHiddenZoneCopies() {
+        Card castCopy = new BriarberryCohort();
+        Card handCopy = new BriarberryCohort();
+        Card graveyardCopy = new BriarberryCohort();
+        Card libraryCopy = new BriarberryCohort();
+        harness.setHand(player1, List.of(castCopy, handCopy));
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new Counterbore()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMultipleCardsChosen(player2, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .contains(castCopy, graveyardCopy)
+                .doesNotContain(handCopy, libraryCopy);
+        assertThat(gd.playerHands.get(player1.getId())).contains(handCopy);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(libraryCopy);
+        harness.assertNotInGraveyard(player1, "Briarberry Cohort");
+        harness.assertNotOnBattlefield(player1, "Briarberry Cohort");
+    }
+
+    @Test
+    @DisplayName("Searches an uncounterable spell's controller's zones without countering the spell")
+    void searchesEvenWhenSpellCannotBeCountered() {
+        Card castCopy = new VexingShusher();
+        Card graveyardCopy = new VexingShusher();
+        harness.setHand(player1, List.of(castCopy));
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player2, List.of(new Counterbore()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == castCopy);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .contains(graveyardCopy).doesNotContain(castCopy);
+        harness.assertNotInGraveyard(player1, "Vexing Shusher");
+        harness.assertInGraveyard(player2, "Counterbore");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vexing Shusher");
     }
 }

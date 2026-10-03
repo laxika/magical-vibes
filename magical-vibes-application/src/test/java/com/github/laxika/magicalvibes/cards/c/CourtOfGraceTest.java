@@ -57,4 +57,68 @@ class CourtOfGraceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
         assertThat(findPermanents(player1, "Angel")).isEmpty();
     }
+
+    @Test
+    void createsASpiritWhenThereIsNoMonarch() {
+        harness.addToBattlefield(player1, new CourtOfGrace());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+        assertThat(gd.monarchPlayerId).isNull();
+    }
+
+    @Test
+    void doesNotCreateTokensDuringAnOpponentsUpkeep() {
+        harness.enterBattlefieldAndReturn(player1, new CourtOfGrace());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Angel")).isEmpty();
+    }
+
+    @Test
+    void createsASpiritIfItsControllerLosesTheMonarchyBeforeResolution() {
+        harness.enterBattlefieldAndReturn(player1, new CourtOfGrace());
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.enterBattlefieldAndReturn(player2, new CourtOfGrace());
+        harness.passBothPriorities();
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Angel")).isEmpty();
+    }
+
+    @Test
+    void createsAnAngelIfItsControllerBecomesMonarchBeforeResolution() {
+        harness.enterBattlefieldAndReturn(player1, new CourtOfGrace());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player2, new CourtOfGrace());
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.enterBattlefieldAndReturn(player1, new QueenMarchesa());
+        harness.passBothPriorities();
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Angel")).hasSize(1);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Angel")).isEmpty();
+    }
 }

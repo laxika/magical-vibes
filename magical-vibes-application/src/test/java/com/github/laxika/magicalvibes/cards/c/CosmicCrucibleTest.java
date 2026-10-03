@@ -96,13 +96,66 @@ class CosmicCrucibleTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Cosmic Crucible")).hasSize(3);
         assertThat(findPermanents(player1, "Cosmic Crucible")).filteredOn(
                 permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The copy decision waits until the triggered ability resolves")
+    void copyDecisionWaitsForResolution() {
+        harness.addToBattlefield(player1, new CosmicCrucible());
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Declining a copy leaves the once-per-turn option available")
+    void decliningCopyAllowsCopyingLaterSpell() {
+        harness.addToBattlefield(player1, new CosmicCrucible());
+        harness.setLibrary(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new Divination(), new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("Does not add mana during the opponent's first main phase")
+    void doesNotAddManaDuringOpponentsMainPhase() {
+        harness.addToBattlefield(player1, new CosmicCrucible());
+        advanceToPrecombatMain(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     private void advanceToPrecombatMain(com.github.laxika.magicalvibes.model.Player activePlayer) {

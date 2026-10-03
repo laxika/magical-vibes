@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CostlyPlunder.class, LlanowarElves.class, Spellbook.class, com.github.laxika.magicalvibes.cards.p.Pacifism.class})
 class CostlyPlunderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting with creature sacrifice puts spell on stack")
     void castWithCreatureSacrifice() {
-        Permanent creature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -44,8 +45,7 @@ class CostlyPlunderTest extends BaseCardTest {
         tokenCard.setPower(1);
         tokenCard.setToughness(1);
         tokenCard.setToken(true);
-        Permanent token = new Permanent(tokenCard);
-        gd.playerBattlefields.get(player1.getId()).add(token);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
 
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -59,8 +59,7 @@ class CostlyPlunderTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving draws two cards for controller")
     void resolvingDrawsTwoCards() {
-        Permanent creature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -77,8 +76,7 @@ class CostlyPlunderTest extends BaseCardTest {
     @Test
     @DisplayName("Can sacrifice an artifact instead of a creature")
     void canSacrificeArtifact() {
-        Permanent artifact = new Permanent(new Spellbook());
-        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -106,8 +104,7 @@ class CostlyPlunderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a non-artifact non-creature permanent")
     void cannotSacrificeNonArtifactNonCreature() {
-        Permanent enchantment = new Permanent(new com.github.laxika.magicalvibes.cards.p.Pacifism());
-        gd.playerBattlefields.get(player1.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.p.Pacifism());
 
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -120,8 +117,7 @@ class CostlyPlunderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice an opponent's permanent")
     void cannotSacrificeOpponentsPermanent() {
-        Permanent opponentCreature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -134,8 +130,7 @@ class CostlyPlunderTest extends BaseCardTest {
     @Test
     @DisplayName("Spell goes to graveyard after resolution")
     void spellGoesToGraveyardAfterResolution() {
-        Permanent creature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -144,6 +139,29 @@ class CostlyPlunderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Costly Plunder");
+    }
+
+    @Test
+    @DisplayName("A tapped creature can pay the cost and cards are drawn only on resolution")
+    void tappedCreaturePaysCostBeforeCardsAreDrawn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        creature.setTapped(true);
+        harness.setHand(player1, List.of(new CostlyPlunder()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.castInstantWithSacrifice(player1, 0, null, creature.getId());
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
         harness.assertInGraveyard(player1, "Costly Plunder");
     }
 }

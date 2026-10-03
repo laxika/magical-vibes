@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlmsCollector;
+import com.github.laxika.magicalvibes.cards.d.DruidOfTheAnima;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CovenantOfMinds.class, DruidOfTheAnima.class, AlmsCollector.class})
 class CovenantOfMindsTest extends BaseCardTest {
 
     @Test
@@ -46,7 +49,7 @@ class CovenantOfMindsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsAll(revealedIds);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);
-        // The revealed cards were put into hand, not drawn — nothing extra was drawn.
+        // The revealed cards were put into hand, not drawn â€” nothing extra was drawn.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
@@ -73,7 +76,68 @@ class CovenantOfMindsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 8);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    void acceptsAllAvailableCardsFromShortLibrary() {
+        setupAndCast();
+        setupLibrary(2);
+        List<Card> available = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(available);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void acceptsEmptyLibraryWithoutDrawing() {
+        setupAndCast();
+        setupLibrary(0);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void secondPlayerCasterReceivesCardsChosenByFirstPlayer() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new CovenantOfMinds()));
+        List<Card> available = List.of(new DruidOfTheAnima(), new DruidOfTheAnima());
+        harness.setLibrary(player2, available);
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(available);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void declineDrawFiveIsReplacedByAlmsCollector() {
+        setupAndCast();
+        setupLibrary(10);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new DruidOfTheAnima()));
+        harness.addToBattlefield(player2, new AlmsCollector());
+        List<UUID> revealedIds = topThreeIds(gd);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId).containsAll(revealedIds);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+    }
 
     private void setupAndCast() {
         harness.setHand(player1, List.of(new CovenantOfMinds()));
@@ -84,10 +148,9 @@ class CovenantOfMindsTest extends BaseCardTest {
     private void setupLibrary(int count) {
         List<Card> deck = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            deck.add(new GrizzlyBears());
+            deck.add(new DruidOfTheAnima());
         }
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
-        harness.getGameData().playerDecks.get(player1.getId()).addAll(deck);
+        harness.setLibrary(player1, deck);
     }
 
     private List<UUID> topThreeIds(GameData gd) {

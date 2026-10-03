@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "THB", collectorNumber = "61")
+@CardRegistration(set = "HBG", collectorNumber = "910")
 public class RiptideTurtle extends Card {
 }
