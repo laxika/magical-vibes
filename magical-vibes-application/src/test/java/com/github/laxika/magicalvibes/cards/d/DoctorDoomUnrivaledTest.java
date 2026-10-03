@@ -65,15 +65,65 @@ class DoctorDoomUnrivaledTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("Wins at zero life after drawing the last card")
+    void winsAtZeroLife() {
+        addReadyDoom(player1);
+        Card lastCard = new DoctorDoomUnrivaled();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(lastCard));
+        harness.setLife(player1, 1);
+
+        activateDoom();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Wins at zero life even when no card could be drawn")
+    void winsAtZeroLifeWithEmptyLibrary() {
+        addReadyDoom(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player1, 1);
+
+        activateDoom();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Ability still wins after Doom leaves the battlefield")
+    void winsAfterSourceLeavesBattlefield() {
+        Permanent doom = addReadyDoom(player1);
+        Card lastCard = new DoctorDoomUnrivaled();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(lastCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(doom);
+        gd.playerGraveyards.get(player1.getId()).add(doom.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
     private void activateDoom() {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
     }
 
     private Permanent addReadyDoom(Player player) {
-        Permanent doom = new Permanent(new DoctorDoomUnrivaled());
-        doom.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(doom);
+        Permanent doom = addCreatureReady(player, new DoctorDoomUnrivaled());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return doom;
