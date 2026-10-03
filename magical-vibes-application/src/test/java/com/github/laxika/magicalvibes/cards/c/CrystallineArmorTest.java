@@ -75,6 +75,41 @@ class CrystallineArmorTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("With no lands, only the enchanted creature gains trample and neither creature is boosted")
+    void zeroLandsStillGrantsTrampleOnlyToEnchantedCreature() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+
+        castArmor(player1, enchanted);
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple copies each boost the enchanted creature by the current land count")
+    void multipleCopiesStackTheirBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+
+        castArmor(player1, creature);
+        castArmor(player1, creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        harness.addToBattlefield(player1, new Forest());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+
     private void castArmor(Player caster, Permanent target) {
         harness.setHand(caster, List.of(new CrystallineArmor()));
         harness.addMana(caster, ManaColor.GREEN, 1);
