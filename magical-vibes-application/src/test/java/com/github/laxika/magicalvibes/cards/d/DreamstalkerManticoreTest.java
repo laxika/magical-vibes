@@ -69,6 +69,94 @@ class DreamstalkerManticoreTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    @DisplayName("An opponent's spell does not trigger or consume your first spell")
+    void opponentsSpellDoesNotConsumeFirstSpell() {
+        harness.addToBattlefield(player1, new DreamstalkerManticore());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        enterOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A spell cast before Manticore enters still counts as your first spell")
+    void earlierSpellBeforeEnteringStillCounts() {
+        harness.setLife(player2, 20);
+        enterOpponentTurn();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.addToBattlefield(player1, new DreamstalkerManticore());
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("The trigger can damage a creature independently of the spell's target")
+    void triggerCanTargetCreature() {
+        harness.addToBattlefield(player1, new DreamstalkerManticore());
+        harness.addToBattlefield(player2, new DreamstalkerManticore());
+        var target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        harness.setLife(player2, 20);
+        enterOpponentTurn();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Dreamstalker Manticore");
+    }
+
+    @Test
+    @DisplayName("Removing Manticore does not remove its already triggered damage")
+    void triggerResolvesAfterSourceDies() {
+        harness.addToBattlefield(player1, new DreamstalkerManticore());
+        var sourceId = harness.getPermanentId(player1, "Dreamstalker Manticore");
+        harness.setLife(player2, 20);
+        enterOpponentTurn();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.castAndResolveInstant(player2, 0, sourceId);
+        harness.assertNotOnBattlefield(player1, "Dreamstalker Manticore");
+        harness.assertInGraveyard(player1, "Dreamstalker Manticore");
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+    }
+
     private void enterOpponentTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
