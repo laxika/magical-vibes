@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChaosMutation.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({ChaosMutation.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class, SoulWarden.class})
 class ChaosMutationTest extends BaseCardTest {
 
     @Test
@@ -64,11 +65,91 @@ class ChaosMutationTest extends BaseCardTest {
     void mayBeCastWithNoTargets() {
         prepareCard();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void replacesCreaturesInActivePlayerOrderRegardlessOfTargetOrder() {
+        harness.forceActivePlayer(player1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setLibrary(player1, List.of(new SoulWarden()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLife(player1, 20);
+
+        castChaosMutation(List.of(elves.getId(), bear.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Soul Warden");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void putsOnlyRevealedNoncreaturesBelowTheUnrevealedLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FountainOfYouth first = new FountainOfYouth();
+        FountainOfYouth second = new FountainOfYouth();
+        GrizzlyBears unrevealed = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(first, second, new LlanowarElves(), unrevealed));
+
+        castChaosMutation(List.of(target.getId()));
+
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(unrevealed);
+        assertThat(gd.playerDecks.get(player2.getId()).subList(1, 3))
+                .containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    void exilesCreatureEvenWhenItsControllersLibraryIsEmpty() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of());
+
+        castChaosMutation(List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void returnsEntireLibraryWhenNoCreatureIsFound() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FountainOfYouth first = new FountainOfYouth();
+        FountainOfYouth second = new FountainOfYouth();
+        harness.setLibrary(player2, List.of(first, second));
+
+        castChaosMutation(List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    void replacesOnlyTheTargetStillLegalOnResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        LlanowarElves untouchedLibraryCard = new LlanowarElves();
+        harness.setLibrary(player1, List.of(untouchedLibraryCard));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        prepareCard();
+        harness.castInstant(player1, 0, List.of(bear.getId(), elves.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bear));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouchedLibraryCard);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(elves.getCard());
     }
 
     private void castChaosMutation(List<UUID> targetIds) {
