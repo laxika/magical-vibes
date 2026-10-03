@@ -16,6 +16,52 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CosmicLarva.class, CacklingImp.class, Forest.class, Mountain.class})
 class CosmicLarvaTest extends BaseCardTest {
+    @Test
+    @DisplayName("Cosmic Larva does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new CosmicLarva());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cosmic Larva");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Each Cosmic Larva is sacrificed independently when no lands are available")
+    void eachLarvaRequiresItsOwnPayment() {
+        harness.addToBattlefield(player1, new CosmicLarva());
+        harness.addToBattlefield(player1, new CosmicLarva());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Cosmic Larva");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Cosmic Larva"))
+                .hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Tapped lands can be sacrificed to keep Cosmic Larva")
+    void tappedLandsCanPayUpkeepCost() {
+        harness.addToBattlefield(player1, new CosmicLarva());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        advanceToUpkeep(player1);
+        forest.setTapped(true);
+        mountain.setTapped(true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Cosmic Larva");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(landCount(player1)).isZero();
+    }
 
     private long landCount(Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()
