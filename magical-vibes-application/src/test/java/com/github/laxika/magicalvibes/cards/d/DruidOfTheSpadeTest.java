@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.CarrotCake;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(DruidOfTheSpade.class)
+@CardUsed({DruidOfTheSpade.class, CarrotCake.class})
 class DruidOfTheSpadeTest extends BaseCardTest {
 
     @Test
@@ -55,15 +56,54 @@ class DruidOfTheSpadeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    void noncreatureTokenEnablesBonus() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new DruidOfTheSpade());
+        CarrotCake foodCopy = new CarrotCake();
+        foodCopy.setToken(true);
+        harness.addToBattlefield(player1, foodCopy);
+
+        assertThat(gqs.getEffectivePower(gd, druid)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, druid)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void tokenCopyCountsItselfForItsBonus() {
+        DruidOfTheSpade copy = new DruidOfTheSpade();
+        copy.setToken(true);
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, copy);
+
+        assertThat(gqs.getEffectivePower(gd, druid)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, druid)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void multipleTokensGiveOnlyOneBonusAndLosingOneKeepsIt() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new DruidOfTheSpade());
+        Permanent first = addToken(player1);
+        Permanent second = addToken(player1);
+
+        assertThat(gqs.getEffectivePower(gd, druid)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, druid)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, druid)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
+    }
+
     private Permanent addToken(Player player) {
         Card tokenCard = new Card() {};
         tokenCard.setName("Soldier Token");
         tokenCard.setType(CardType.CREATURE);
         tokenCard.setToken(true);
 
-        Permanent token = new Permanent(tokenCard);
+        Permanent token = harness.addToBattlefieldAndReturn(player, tokenCard);
         token.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(token);
         return token;
     }
 }
