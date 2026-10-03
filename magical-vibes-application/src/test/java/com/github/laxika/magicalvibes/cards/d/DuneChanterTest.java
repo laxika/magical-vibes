@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DuneChanter.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DuneChanter.class, Forest.class, GrizzlyBears.class, RestInPeace.class})
 class DuneChanterTest extends BaseCardTest {
 
     @Test
@@ -68,5 +69,91 @@ class DuneChanterTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    @Test
+    void gainsTwoLifeWhenBothMilledCardsAreLands() {
+        Permanent chanter = addCreatureReady(player1, new DuneChanter());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(chanter.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void gainsNoLifeWhenNeitherMilledCardIsALand() {
+        addCreatureReady(player1, new DuneChanter());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void millsTheOnlyRemainingCardAndGainsLifeForIt() {
+        addCreatureReady(player1, new DuneChanter());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void gainsLifeForMilledLandsExiledByAReplacementEffect() {
+        addCreatureReady(player1, new DuneChanter());
+        harness.addToBattlefield(player2, new RestInPeace());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventTheAbilityFromResolving() {
+        addCreatureReady(player1, new DuneChanter());
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void staticSubtypeGrantEndsWhenChanterLeavesTheBattlefield() {
+        addCreatureReady(player1, new DuneChanter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Forest handForest = new Forest();
+        harness.setHand(player1, List.of(handForest));
+        assertThat(gqs.effectiveLandTypes(gd, forest)).contains(CardSubtype.DESERT);
+        assertThat(gqs.cardHasSubtype(handForest, CardSubtype.DESERT, gd, player1.getId())).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+        assertThat(gqs.cardHasSubtype(handForest, CardSubtype.DESERT, gd, player1.getId())).isFalse();
     }
 }
