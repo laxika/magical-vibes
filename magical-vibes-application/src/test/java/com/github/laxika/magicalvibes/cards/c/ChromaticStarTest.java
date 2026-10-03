@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,10 +17,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChromaticStar.class, Naturalize.class, Boomerang.class, Plains.class})
 class ChromaticStarTest extends BaseCardTest {
-
-    // ===== Mana ability resolves immediately (CR 605.3a) =====
 
     @Test
     @DisplayName("Activating Chromatic Star sacrifices it and immediately prompts for mana color (mana ability)")
@@ -32,9 +36,7 @@ class ChromaticStarTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Chromatic Star");
         harness.assertInGraveyard(player1, "Chromatic Star");
 
-        // CR 603.3: the death trigger from the sacrifice-as-cost waits in
-        // pendingManaAbilityTriggers — not on the stack — so it doesn't block
-        // sorcery-speed casting in the same priority window.
+        // The draw trigger waits until the mana ability has finished resolving.
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
         assertThat(gd.pendingManaAbilityTriggers.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -91,8 +93,6 @@ class ChromaticStarTest extends BaseCardTest {
         }
     }
 
-    // ===== Death trigger: draw a card =====
-
     @Test
     @DisplayName("Full sequence: mana added immediately, then draw trigger resolves via stack")
     void fullActivationSequenceDrawsCard() {
@@ -131,6 +131,91 @@ class ChromaticStarTest extends BaseCardTest {
 
         // Chromatic Star should still be on the battlefield
         harness.assertOnBattlefield(player1, "Chromatic Star");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Star adds mana before its separate draw trigger resolves")
+    void sacrificeDoesNotDrawUntilTriggerResolves() {
+        harness.addToBattlefield(player1, new ChromaticStar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Plains");
+        harness.assertInGraveyard(player1, "Chromatic Star");
+    }
+
+    @Test
+    @DisplayName("Destroying a tapped Star draws for its controller without adding mana")
+    void destructionDrawsForController() {
+        var star = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
+        star.setTapped(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains()));
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player2, 0, star.getId());
+
+        harness.assertInGraveyard(player1, "Chromatic Star");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore - 1);
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("Returning Star to hand does not trigger a draw")
+    void returningToHandDoesNotDraw() {
+        var star = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player2, 0, star.getId());
+
+        harness.assertInHand(player1, "Chromatic Star");
+        harness.assertNotInGraveyard(player1, "Chromatic Star");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Star cannot pay its tap cost or be sacrificed for mana")
+    void cannotActivateWhileTapped() {
+        var star = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
+        star.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Chromatic Star");
+        harness.assertNotInGraveyard(player1, "Chromatic Star");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
 
