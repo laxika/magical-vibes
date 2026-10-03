@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.v.VampireInterloper;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
+import com.github.laxika.magicalvibes.cards.s.SkymarchBloodletter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -10,15 +9,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DuskborneSkymarcher.class, SkymarchBloodletter.class, RaptorCompanion.class})
 class DuskborneSkymarcharTest extends BaseCardTest {
-
-    // ===== Activation on attacking Vampire =====
 
     @Test
     @DisplayName("Activating ability on attacking Vampire puts it on the stack")
@@ -29,11 +28,10 @@ class DuskborneSkymarcharTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, attacker.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Duskborne Skymarcher");
+        assertThat(entry.getCard()).isInstanceOf(DuskborneSkymarcher.class);
         assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
@@ -47,13 +45,10 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(attacker.getPowerModifier()).isEqualTo(1);
         assertThat(attacker.getToughnessModifier()).isEqualTo(1);
     }
-
-    // ===== Tap cost =====
 
     @Test
     @DisplayName("Activating ability taps Duskborne Skymarcher")
@@ -67,8 +62,6 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         assertThat(skymarcher.isTapped()).isTrue();
     }
 
-    // ===== Mana cost =====
-
     @Test
     @DisplayName("Cannot activate without paying {W}")
     void cannotActivateWithoutMana() {
@@ -78,8 +71,6 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Target restriction: must be attacking Vampire =====
 
     @Test
     @DisplayName("Cannot target a non-attacking Vampire")
@@ -105,8 +96,6 @@ class DuskborneSkymarcharTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an attacking Vampire");
     }
 
-    // ===== Can target opponent's attacking Vampire =====
-
     @Test
     @DisplayName("Can target opponent's attacking Vampire")
     void canTargetOpponentAttackingVampire() {
@@ -120,8 +109,6 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         assertThat(opponentAttacker.getPowerModifier()).isEqualTo(1);
         assertThat(opponentAttacker.getToughnessModifier()).isEqualTo(1);
     }
-
-    // ===== End of turn cleanup =====
 
     @Test
     @DisplayName("Boost resets at end of turn")
@@ -144,8 +131,6 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         assertThat(attacker.getToughnessModifier()).isEqualTo(0);
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void abilityFizzlesIfTargetRemoved() {
@@ -162,35 +147,81 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Ability does not boost a Vampire that stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        addReadySkymarcher(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        Permanent attacker = addAttackingVampire(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent skymarcher = addReadySkymarcher(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        Permanent attacker = addAttackingVampire(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(skymarcher);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent skymarcher = addReadySkymarcher(player1);
+        skymarcher.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        Permanent attacker = addAttackingVampire(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent skymarcher = addReadySkymarcher(player1);
+        skymarcher.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        Permanent attacker = addAttackingVampire(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadySkymarcher(Player player) {
-        Permanent perm = new Permanent(new DuskborneSkymarcher());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new DuskborneSkymarcher());
     }
 
     private Permanent addAttackingVampire(Player player) {
-        Permanent perm = new Permanent(new VampireInterloper());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new SkymarchBloodletter());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyVampire(Player player) {
-        Permanent perm = new Permanent(new VampireInterloper());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SkymarchBloodletter());
     }
 
     private Permanent addAttackingNonVampire(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new RaptorCompanion());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
