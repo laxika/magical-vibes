@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PatagiaGolem;
 import com.github.laxika.magicalvibes.cards.s.SoltariMonk;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,6 +23,38 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DarkBanishing.class, CanopySpider.class, Forest.class, SoltariMonk.class, DarksteelMyr.class, BogImp.class, PatagiaGolem.class})
 class DarkBanishingTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cannot target a creature that is black in addition to another color")
+    void cannotTargetMulticoloredBlackCreature() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new CanopySpider());
+        spider.getGrantedColors().add(CardColor.BLACK);
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, spider.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblack creature");
+    }
+
+    @Test
+    @DisplayName("Target becoming black before resolution makes Dark Banishing fail to resolve")
+    void targetBecomingBlackBeforeResolutionSurvives() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new CanopySpider());
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castInstant(player1, 0, spider.getId());
+
+        spider.getGrantedColors().add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Canopy Spider");
+        harness.assertNotInGraveyard(player2, "Canopy Spider");
+        harness.assertInGraveyard(player1, "Dark Banishing");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Casting Dark Banishing targeting a nonblack creature puts it on stack")
