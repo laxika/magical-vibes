@@ -9,14 +9,15 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoursersAccord.class, GrizzlyBears.class})
 class CoursersAccordTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class CoursersAccordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         List<Permanent> centaurs = centaursOf(player1);
@@ -47,8 +47,7 @@ class CoursersAccordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(centaursOf(player1)).hasSize(2);
@@ -63,8 +62,7 @@ class CoursersAccordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
@@ -75,6 +73,41 @@ class CoursersAccordTest extends BaseCardTest {
 
         assertThat(countOf(player1, "Soldier Token")).isEqualTo(2);
         assertThat(centaursOf(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Populate does not offer an opponent's creature token")
+    void opponentTokenIsNotPopulated() {
+        harness.addToBattlefield(player2, soldierToken());
+        harness.setHand(player1, List.of(new CoursersAccord()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(centaursOf(player1)).hasSize(2);
+        assertThat(countOf(player1, "Soldier Token")).isZero();
+        assertThat(countOf(player2, "Soldier Token")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The new Centaur can be populated even when another token already exists")
+    void canChooseNewCentaurWhenAnotherTokenExists() {
+        harness.addToBattlefield(player1, soldierToken());
+        harness.setHand(player1, List.of(new CoursersAccord()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(centaursOf(player1)).hasSize(1);
+        harness.handlePermanentChosen(player1, centaursOf(player1).getFirst().getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(centaursOf(player1)).hasSize(2);
+        assertThat(countOf(player1, "Soldier Token")).isEqualTo(1);
     }
 
     private List<Permanent> centaursOf(Player player) {
