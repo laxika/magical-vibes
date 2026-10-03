@@ -118,7 +118,7 @@ class DAvenantHealerTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 
@@ -145,6 +145,58 @@ class DAvenantHealerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature shield prevents one damage and is consumed before the next damage event")
+    void creatureShieldIsConsumedByFirstDamageEvent() {
+        addCreatureReady(player1, new DAvenantHealer());
+        addCreatureReady(player1, new DAvenantHealer());
+        addCreatureReady(player1, new DAvenantHealer());
+        Permanent attacker = addCreatureReady(player2, new AshcoatBear());
+        attacker.setAttacking(true);
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        activatePrevention(attacker.getId());
+
+        harness.activateAbility(player1, 1, null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(attacker.getDamagePreventionShield()).isZero();
+
+        harness.activateAbility(player1, 2, null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activating prevention pays the tap cost and prevents using the damage ability")
+    void preventionTapsHealerAndPrecludesDamageAbility() {
+        Permanent healer = addCreatureReady(player1, new DAvenantHealer());
+        Permanent attacker = addCreatureReady(player2, new AshcoatBear());
+        attacker.setAttacking(true);
+
+        activatePrevention(player1.getId());
+
+        assertThat(healer.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Neither tap ability can be activated while the healer has summoning sickness")
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player1, new DAvenantHealer());
+        healer.setSummoningSick(true);
+        Permanent attacker = addCreatureReady(player2, new AshcoatBear());
+        attacker.setAttacking(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(healer.isTapped()).isFalse();
     }
 
     private void activatePrevention(UUID targetId) {
