@@ -57,6 +57,37 @@ class DireWolvesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gains banding immediately when a Plains enters")
+    void gainsBandingWhenPlainsEnters() {
+        Permanent wolves = harness.addToBattlefieldAndReturn(player1, new DireWolves());
+
+        assertThat(gqs.hasKeyword(gd, wolves, Keyword.BANDING)).isFalse();
+
+        harness.enterBattlefieldAndReturn(player1, new SnowCoveredPlains());
+
+        assertThat(gqs.hasKeyword(gd, wolves, Keyword.BANDING)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Keeps banding until the last controlled Plains leaves")
+    void keepsBandingWhileAnotherPlainsRemains() {
+        Permanent wolves = harness.addToBattlefieldAndReturn(player1, new DireWolves());
+        Permanent firstPlains = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        Permanent secondPlains = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstPlains));
+
+        assertThat(gqs.hasKeyword(gd, wolves, Keyword.BANDING)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondPlains));
+
+        assertThat(gqs.hasKeyword(gd, wolves, Keyword.BANDING)).isFalse();
+    }
+    @Test
     @DisplayName("Granted banding can be used to form a band")
     void grantedBandingCanFormBand() {
         Permanent firstWolves = addCreatureReady(player1, new DireWolves());
