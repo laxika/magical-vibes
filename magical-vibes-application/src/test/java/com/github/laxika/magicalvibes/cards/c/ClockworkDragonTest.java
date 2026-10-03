@@ -77,8 +77,7 @@ class ClockworkDragonTest extends BaseCardTest {
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent dragon = addReadyDragon(player2);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
@@ -98,6 +97,58 @@ class ClockworkDragonTest extends BaseCardTest {
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Can add a counter in response to the end-of-combat removal trigger")
+    void canRespondToEndOfCombatRemoval() {
+        Permanent dragon = addReadyDragon(player1);
+        dragon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(List.of(0));
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        });
+
+        harness.assertOnBattlefield(player1, "Clockwork Dragon");
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Clockwork Dragon");
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Losing its last counter at end of combat puts it in the graveyard")
+    void lastCounterRemovalKillsDragon() {
+        Permanent dragon = addReadyDragon(player1);
+        dragon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
+            declareAttackers(List.of(0));
+            harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        });
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dragon);
+        harness.assertInGraveyard(player1, "Clockwork Dragon");
+    }
+
+    @Test
+    @DisplayName("Its counter ability can be activated while tapped and summoning sick")
+    void activatedAbilityDoesNotRequireTapOrHaste() {
+        Permanent dragon = castDragon();
+        dragon.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+        assertThat(dragon.isTapped()).isTrue();
     }
 
     private Permanent addReadyDragon(Player player) {
