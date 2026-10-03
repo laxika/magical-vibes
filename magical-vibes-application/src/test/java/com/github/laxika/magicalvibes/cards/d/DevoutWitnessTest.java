@@ -106,6 +106,92 @@ class DevoutWitnessTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void paysCostsBeforeDestroyingTargetAndCanDiscardNoncreatureCard() {
+        Permanent witness = addReadyWitness(player1);
+        Permanent target = addReadyArtifact(player2);
+        prepareMana();
+        harness.setHand(player1, List.of(new NoblePurpose(), new FreshVolunteers()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(witness.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Noble Purpose");
+        harness.assertNotInHand(player1, "Noble Purpose");
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertOnBattlefield(player2, "Iron Lance");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Iron Lance");
+        harness.assertNotOnBattlefield(player2, "Iron Lance");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent witness = harness.addToBattlefieldAndReturn(player1, new DevoutWitness());
+        witness.setSummoningSick(true);
+        Permanent target = addReadyArtifact(player2);
+        prepareActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(witness.isTapped()).isFalse();
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertOnBattlefield(player2, "Iron Lance");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent witness = addReadyWitness(player1);
+        witness.setTapped(true);
+        Permanent target = addReadyArtifact(player2);
+        prepareActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertOnBattlefield(player2, "Iron Lance");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutWhiteMana() {
+        Permanent witness = addReadyWitness(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(witness.isTapped()).isFalse();
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertOnBattlefield(player2, "Iron Lance");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneMana() {
+        Permanent witness = addReadyWitness(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(witness.isTapped()).isFalse();
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertOnBattlefield(player2, "Iron Lance");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void prepareActivation() {
         prepareMana();
         harness.setHand(player1, List.of(new FreshVolunteers()));
