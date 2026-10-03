@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
 import com.github.laxika.magicalvibes.cards.e.ExplosiveVegetation;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Ponder;
@@ -14,13 +15,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DreadReturn;
-import com.github.laxika.magicalvibes.model.ManaColor;
 
 
 
 
 @CardUsed({CollectedConjuring.class, Divination.class, ExplosiveVegetation.class,
-        Forest.class, Ponder.class, Shock.class})
+        Forest.class, Ponder.class, Shock.class, BoneSplinters.class, GrizzlyBears.class})
 class CollectedConjuringTest extends BaseCardTest {
 
     @Test
@@ -84,13 +84,23 @@ class CollectedConjuringTest extends BaseCardTest {
                         thirdForest, fourthForest, leftover);
     }
 
+    @Test
+    void permitsCastingSorceryWithPayableMandatoryAdditionalCost() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        BoneSplinters splinters = new BoneSplinters();
+        cast(List.of(splinters, new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+
+        harness.handleMultipleCardsChosen(player1, List.of(splinters.getId()));
+
+        // Casting must continue with the target and sacrifice choices instead of skipping the spell.
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(splinters);
+    }
+
     private void cast(List<Card> library) {
         harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new CollectedConjuring()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLUE, 1);
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new CollectedConjuring(), "{2}{U}{R}");
         harness.passBothPriorities();
     }
 }
@@ -139,13 +149,45 @@ class Mh1CollectedConjuringTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
     }
 
+    @Test
+    void mayDeclineAllEligibleSpellsAndPreservesUnexiledTopCards() {
+        CrashingFootfalls first = new CrashingFootfalls();
+        CrashingFootfalls second = new CrashingFootfalls();
+        Forest top = new Forest();
+        Forest next = new Forest();
+        List<Card> library = List.of(first, second, new Forest(), new Forest(), new Forest(),
+                new Forest(), top, next);
+        cast(library);
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2)).containsExactly(top, next);
+    }
+
+    @Test
+    void mayCastOnlyOneSpellFromAShortLibrary() {
+        CrashingFootfalls chosen = new CrashingFootfalls();
+        CrashingFootfalls declined = new CrashingFootfalls();
+        Forest forest = new Forest();
+        cast(List.of(chosen, declined, forest));
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(chosen.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(declined, forest);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Crashing Footfalls");
+    }
+
     private void cast(List<Card> library) {
         harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of(new CollectedConjuring()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new CollectedConjuring(), "{2}{U}{R}");
         harness.passBothPriorities();
     }
 }
