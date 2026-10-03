@@ -94,7 +94,63 @@ class DranasSilencerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DranasSilencer()));
         harness.addMana(player1, ManaColor.BLACK, 6);
         harness.castCreature(player1, 0, targetId);
-        harness.passBothPriorities();
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Multiple Rogues and opposing party members do not increase X")
+    void duplicateRolesAndOpponentPartyDoNotIncreaseX() {
+        harness.addToBattlefield(player1, new DranasSilencer());
+        harness.addToBattlefield(player2, new SoulWarden());
+        harness.addToBattlefield(player2, new BoggartBrute());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAndResolve(target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X is zero if the only party member leaves before the trigger resolves")
+    void partySizeIsEvaluatedWhenTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DranasSilencer()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent silencer = findPermanent(player1, "Drana's Silencer");
+        gd.playerBattlefields.get(player1.getId()).remove(silencer);
+        gd.playerGraveyards.get(player1.getId()).add(silencer.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The resolved debuff does not change when another party role enters")
+    void resolvedDebuffDoesNotRecalculatePartySize() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castAndResolve(target.getId());
+
+        harness.addToBattlefield(player1, new FugitiveWizard());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature reduced to zero toughness is put into the graveyard")
+    void zeroToughnessTargetDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+
+        castAndResolve(target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
     }
 }
