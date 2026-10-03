@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,14 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathreapRitual.class, Forest.class})
+@CardUsed({DeathreapRitual.class, Forest.class, SakuraTribeElder.class})
 class DeathreapRitualTest extends BaseCardTest {
 
     @Test
     @DisplayName("At each end step, accepting the morbid trigger draws a card")
     void drawsAtEachEndStepWhenMorbidIsMet() {
         harness.addToBattlefield(player1, new DeathreapRitual());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         gd.creatureDeathCountThisTurn.put(player2.getId(), 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -40,7 +41,7 @@ class DeathreapRitualTest extends BaseCardTest {
     void decliningTriggerDoesNotDraw() {
         harness.addToBattlefield(player1, new DeathreapRitual());
         Card topCard = new Forest();
-        setDeck(player1, List.of(topCard));
+        harness.setLibrary(player1, List.of(topCard));
         gd.creatureDeathCountThisTurn.put(player2.getId(), 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -56,12 +57,79 @@ class DeathreapRitualTest extends BaseCardTest {
     @DisplayName("Does not trigger when no creature died this turn")
     void doesNotTriggerWithoutMorbid() {
         harness.addToBattlefield(player1, new DeathreapRitual());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToEndStep(player2);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A creature dying before Ritual enters still enables the opponent's end step draw")
+    void deathBeforeRitualEntersCounts() {
+        SakuraTribeElder creature = new SakuraTribeElder();
+        harness.addToBattlefieldAndReturn(player2, creature).setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature);
+
+        harness.addToBattlefield(player1, new DeathreapRitual());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("Multiple creatures dying still offer only one draw at the controller's end step")
+    void multipleDeathsDrawOnlyOneCard() {
+        harness.addToBattlefield(player1, new DeathreapRitual());
+        SakuraTribeElder ownCreature = new SakuraTribeElder();
+        SakuraTribeElder opponentCreature = new SakuraTribeElder();
+        harness.addToBattlefieldAndReturn(player1, ownCreature).setMarkedDamage(1);
+        harness.addToBattlefieldAndReturn(player2, opponentCreature).setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCreature);
+        Forest topCard = new Forest();
+        Forest secondCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A creature dying after the end step begins does not trigger Ritual retroactively")
+    void deathDuringEndStepIsTooLate() {
+        harness.addToBattlefield(player1, new DeathreapRitual());
+        var creature = harness.addToBattlefieldAndReturn(player2, new SakuraTribeElder());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player2);
+        assertThat(gd.stack).isEmpty();
+        creature.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature.getCard());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     private void advanceToEndStep(Player activePlayer) {
@@ -71,8 +139,4 @@ class DeathreapRitualTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }
