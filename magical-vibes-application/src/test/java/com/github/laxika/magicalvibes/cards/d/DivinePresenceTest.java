@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GhituFire;
 import com.github.laxika.magicalvibes.cards.m.MeteorStorm;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.s.SamiteMinistration;
+import com.github.laxika.magicalvibes.cards.u.UrzasRage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DivinePresence.class, GhituFire.class, DevouringStrossus.class, MeteorStorm.class,
-        ChandraNalaar.class})
+        ChandraNalaar.class, Humility.class, Opalescence.class, SamiteMinistration.class,
+        UrzasRage.class})
 class DivinePresenceTest extends BaseCardTest {
 
     @Test
@@ -104,5 +109,97 @@ class DivinePresenceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player2, 0, 4, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Leaves two damage unchanged")
+    void leavesTwoDamageUnchanged() {
+        harness.addToBattlefield(player1, new DivinePresence());
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Replaces separate damage events independently")
+    void replacesSeparateDamageEventsIndependently() {
+        harness.addToBattlefield(player1, new DivinePresence());
+        harness.setHand(player1, List.of(new GhituFire(), new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 10);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
+        harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Multiple copies do not reduce the same damage below three")
+    void multipleCopiesReplaceDamageOnlyWhileThresholdIsMet() {
+        harness.addToBattlefield(player1, new DivinePresence());
+        harness.addToBattlefield(player2, new DivinePresence());
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 10);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 9, player2.getId());
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Replacement still applies to damage that cannot be prevented")
+    void replacesUnpreventableDamage() {
+        harness.addToBattlefield(player1, new DivinePresence());
+        harness.setHand(player1, List.of(new UrzasRage()));
+        harness.addMana(player1, ManaColor.RED, 12);
+        harness.setLife(player2, 20);
+
+        harness.castKickedInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("An animated Divine Presence loses its replacement ability to Humility")
+    void doesNotReplaceDamageAfterLosingItsAbility() {
+        harness.addToBattlefield(player1, new DivinePresence());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new Humility());
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("The affected player chooses between damage replacement and prevention")
+    void offersChoiceWhenPreventionOrderChangesLifeGain() {
+        harness.addToBattlefield(player2, new DivinePresence());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MeteorStorm());
+        harness.setLife(player2, 20);
+        harness.castFromHand(player2, new SamiteMinistration(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, source.getId());
+        harness.setHand(player1, List.of(new GhituFire(), new GhituFire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player2, 20);
     }
 }
