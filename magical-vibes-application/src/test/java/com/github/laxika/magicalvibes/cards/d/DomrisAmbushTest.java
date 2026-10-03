@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.j.JayaVeneratedFiremage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DomrisAmbush.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({DomrisAmbush.class, AirElemental.class, GrizzlyBears.class, JayaVeneratedFiremage.class})
 class DomrisAmbushTest extends BaseCardTest {
 
     @Test
@@ -32,8 +30,7 @@ class DomrisAmbushTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID sourceId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(sourceId, target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(sourceId, target.getId()));
 
         Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -44,14 +41,13 @@ class DomrisAmbushTest extends BaseCardTest {
     @DisplayName("Can target an opposing planeswalker")
     void canTargetOpposingPlaneswalker() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent planeswalker = addPlaneswalker(player2, 5);
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player2, new JayaVeneratedFiremage());
         harness.setHand(player1, List.of(new DomrisAmbush()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID sourceId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(sourceId, planeswalker.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(sourceId, planeswalker.getId()));
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
@@ -86,14 +82,37 @@ class DomrisAmbushTest extends BaseCardTest {
                 .hasMessageContaining("don't control");
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Still puts the counter on its creature when the opposing target leaves")
+    void opposingTargetLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new DomrisAmbush()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Deals no damage when its creature leaves before resolution")
+    void sourceLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new DomrisAmbush()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
