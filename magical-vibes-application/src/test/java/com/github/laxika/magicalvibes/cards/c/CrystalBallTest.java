@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,9 +21,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrystalBall.class})
 class CrystalBallTest extends BaseCardTest {
 
-    // ===== Activating ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -63,7 +63,6 @@ class CrystalBallTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
-    // ===== Scry resolution =====
 
     @Test
     @DisplayName("Resolving ability enters scry state with 2 cards")
@@ -159,7 +158,6 @@ class CrystalBallTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
-    // ===== Edge cases =====
 
     @Test
     @DisplayName("Library with 1 card scries only that card")
@@ -170,7 +168,7 @@ class CrystalBallTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
-        Card singleCard = new GrizzlyBears();
+        Card singleCard = new CrystalBall();
         deck.add(singleCard);
 
         harness.activateAbility(player1, 0, null, null);
@@ -196,7 +194,6 @@ class CrystalBallTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate ability without enough mana")
@@ -220,15 +217,12 @@ class CrystalBallTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== No summoning sickness for artifacts =====
 
     @Test
     @DisplayName("Can activate ability the turn it enters (no summoning sickness for artifacts)")
     void noSummoningSicknessForArtifact() {
-        CrystalBall card = new CrystalBall();
-        Permanent crystalBall = new Permanent(card);
+        Permanent crystalBall = harness.addToBattlefieldAndReturn(player1, new CrystalBall());
         crystalBall.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(crystalBall);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -236,13 +230,62 @@ class CrystalBallTest extends BaseCardTest {
         assertThat(crystalBall.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Scry allows reversing both cards on top")
+    void reversesCardsOnTop() {
+        assertReorderedScry(List.of(1, 0), List.of(), false);
+    }
+
+    @Test
+    @DisplayName("Scry allows reversing both cards on bottom")
+    void reversesCardsOnBottom() {
+        assertReorderedScry(List.of(), List.of(1, 0), true);
+    }
+
+    private void assertReorderedScry(List<Integer> top, List<Integer> bottom, boolean putOnBottom) {
+        addReadyCrystalBall(player1);
+        Card first = new CrystalBall();
+        Card second = new CrystalBall();
+        Card third = new CrystalBall();
+        harness.setLibrary(player1, List.of(first, second, third));
+        List<Card> opponentLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(top, bottom));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(
+                putOnBottom ? List.of(third, second, first) : List.of(second, first, third));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Activated scry resolves after Crystal Ball leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addReadyCrystalBall(player1);
+        Card first = new CrystalBall();
+        Card second = new CrystalBall();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private Permanent addReadyCrystalBall(Player player) {
-        CrystalBall card = new CrystalBall();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CrystalBall());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
