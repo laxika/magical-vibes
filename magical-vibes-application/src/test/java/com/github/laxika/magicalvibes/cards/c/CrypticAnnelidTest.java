@@ -67,4 +67,38 @@ class CrypticAnnelidTest extends BaseCardTest {
         assertThat(gameLogContains("scries 2")).isTrue();
         assertThat(gameLogContains("scries 3")).isTrue();
     }
+
+    @Test
+    @DisplayName("Later scries revisit bottomed cards when the library has only two cards")
+    void laterScriesRevisitBottomedCardsInShortLibrary() {
+        Card first = new CrypticAnnelid();
+        Card second = new CrypticAnnelid();
+        Card opponentCard = new CrypticAnnelid();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setLibrary(player1, List.of(opponentCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new CrypticAnnelid(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scryOne = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scryOne.playerId()).isEqualTo(player2.getId());
+        assertThat(scryOne.cards()).containsExactly(first);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        PendingInteraction.Scry scryTwo = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scryTwo.playerId()).isEqualTo(player2.getId());
+        assertThat(scryTwo.cards()).containsExactly(second, first);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        PendingInteraction.Scry scryThree = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scryThree.playerId()).isEqualTo(player2.getId());
+        assertThat(scryThree.cards()).containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentCard);
+    }
 }
