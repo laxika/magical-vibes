@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.Carapace;
 import com.github.laxika.magicalvibes.cards.g.GrandmotherSengir;
 import com.github.laxika.magicalvibes.cards.s.Shrink;
 import com.github.laxika.magicalvibes.cards.t.Torture;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -20,17 +21,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DeathSpeakers.class, AysenBureaucrats.class, BrokenVisage.class, Carapace.class,
-        DrySpell.class, DwarvenTrader.class, GrandmotherSengir.class, Shrink.class, Torture.class})
+        DrySpell.class, DwarvenTrader.class, GrandmotherSengir.class, Shrink.class, Torture.class,
+        WrathOfGod.class})
 class DeathSpeakersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Black creature cannot block Death Speakers")
     void blackCreatureCannotBlock() {
-        Permanent attacker = addCreatureReady(player1, new DeathSpeakers());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new DeathSpeakers());
         addCreatureReady(player2, new GrandmotherSengir());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,11 +41,10 @@ class DeathSpeakersTest extends BaseCardTest {
     @Test
     @DisplayName("Nonblack creature can block Death Speakers")
     void nonBlackCreatureCanBlock() {
-        Permanent attacker = addCreatureReady(player1, new DeathSpeakers());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new DeathSpeakers());
         Permanent blocker = addCreatureReady(player2, new DwarvenTrader());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -55,11 +55,10 @@ class DeathSpeakersTest extends BaseCardTest {
     @DisplayName("Takes no combat damage from black creature")
     void takesNoDamageFromBlackCreature() {
         Permanent attacker = addCreatureReady(player1, new GrandmotherSengir());
-        attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new DeathSpeakers());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
 
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
@@ -167,5 +166,49 @@ class DeathSpeakersTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Death Speakers");
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Protection does not prevent combat damage from a nonblack creature")
+    void takesCombatDamageFromNonBlackCreature() {
+        addCreatureReady(player1, new DwarvenTrader());
+        addCreatureReady(player2, new DeathSpeakers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Dwarven Trader");
+        harness.assertInGraveyard(player2, "Death Speakers");
+        harness.assertNotOnBattlefield(player2, "Death Speakers");
+    }
+
+    @Test
+    @DisplayName("An attached black Aura is put into the graveyard by state-based actions")
+    void attachedBlackAuraIsRemoved() {
+        Permanent speakers = addCreatureReady(player1, new DeathSpeakers());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Torture());
+        aura.setAttachedTo(speakers.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Death Speakers");
+        harness.assertNotOnBattlefield(player2, "Torture");
+        harness.assertInGraveyard(player2, "Torture");
+    }
+
+    @Test
+    @DisplayName("Protection does not prevent untargeted destruction")
+    void untargetedDestructionStillDestroysCreature() {
+        harness.addToBattlefield(player2, new DeathSpeakers());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Death Speakers");
+        harness.assertInGraveyard(player2, "Death Speakers");
     }
 }
