@@ -15,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Dermoplasm.class, ChromeshellCrab.class, AvenEnvoy.class})
+@CardUsed({Dermoplasm.class, ChromeshellCrab.class, AvenEnvoy.class,
+        ZoeticCavern.class, UndercoverCrocodelf.class})
 class DermoplasmTest extends BaseCardTest {
 
     @Test
@@ -139,5 +140,55 @@ class DermoplasmTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Dermoplasm");
         harness.assertInHand(player1, "Undercover Crocodelf");
+    }
+
+    @Test
+    void enteringFaceUpDoesNotTriggerTheInsertedCreaturesTurnFaceUpAbility() {
+        harness.addToBattlefield(player2, new AvenEnvoy());
+        harness.setHand(player1, List.of(new Dermoplasm(), new ChromeshellCrab()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent dermoplasm = findPermanent(player1, "Dermoplasm");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dermoplasm));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent crab = findPermanent(player1, "Chromeshell Crab");
+        assertThat(crab.isFaceDown()).isFalse();
+        assertThat(crab.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Aven Envoy");
+        harness.assertNotOnBattlefield(player1, "Dermoplasm");
+        harness.assertInHand(player1, "Dermoplasm");
+    }
+
+    @Test
+    void acceptingWithAnEmptyHandDoesNotReturnDermoplasm() {
+        harness.setHand(player1, List.of(new Dermoplasm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent dermoplasm = findPermanent(player1, "Dermoplasm");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dermoplasm));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(dermoplasm.isFaceDown()).isFalse();
+        harness.assertOnBattlefield(player1, "Dermoplasm");
     }
 }
