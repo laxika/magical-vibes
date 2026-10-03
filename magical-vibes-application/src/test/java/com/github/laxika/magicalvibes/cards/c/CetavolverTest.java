@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.v.VineGecko;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Cetavolver.class)
+@CardUsed({Cetavolver.class, VineGecko.class})
 class CetavolverTest extends BaseCardTest {
 
     @Test
@@ -34,9 +36,7 @@ class CetavolverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Cetavolver()));
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, true, null, null, null, null,
-                List.of(), false);
+        harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
         Permanent cetavolver = findCetavolver();
@@ -52,9 +52,7 @@ class CetavolverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setHand(player1, List.of(new Cetavolver()));
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{G}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{G}"));
         harness.passBothPriorities();
 
         Permanent cetavolver = findCetavolver();
@@ -81,6 +79,44 @@ class CetavolverTest extends BaseCardTest {
         assertThat(cetavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, cetavolver, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, cetavolver, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Green kicker counts as kicking the spell for Vine Gecko")
+    void greenKickerTriggersKickedSpellAbilities() {
+        Permanent gecko = harness.addToBattlefieldAndReturn(player1, new VineGecko());
+        addBaseMana();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new Cetavolver()));
+
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{G}"));
+        harness.passBothPriorities();
+
+        assertThat(gecko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Green kicker cannot be paid more than once")
+    void cannotPayGreenKickerTwice() {
+        addBaseMana();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new Cetavolver()));
+
+        assertThatThrownBy(() -> harness.castCreatureWithRepeatedCosts(
+                player1, 0, List.of("{G}", "{G}")))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Cetavolver");
+        harness.assertNotOnBattlefield(player1, "Cetavolver");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast grants neither kicker benefit")
+    void enteringWithoutCasting() {
+        Permanent cetavolver = harness.enterBattlefieldAndReturn(player1, new Cetavolver());
+
+        assertThat(cetavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, cetavolver, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cetavolver, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent castCetavolver() {
