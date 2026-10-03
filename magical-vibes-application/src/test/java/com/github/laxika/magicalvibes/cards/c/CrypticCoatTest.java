@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrypticCoat.class, GrizzlyBears.class, Shock.class})
+@CardUsed({CrypticCoat.class, GrizzlyBears.class, Shock.class, TurnToFrog.class})
 class CrypticCoatTest extends BaseCardTest {
 
     @Test
@@ -73,11 +75,96 @@ class CrypticCoatTest extends BaseCardTest {
         harness.assertInHand(player1, "Cryptic Coat");
     }
 
+    @Test
+    void canCloakAnInstantButCannotTurnItFaceUpForItsManaCost() {
+        Permanent cloaked = resolveCoat(new Shock());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(cloaked)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not a creature card");
+
+        assertThat(cloaked.isFaceDown()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, cloaked)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cloaked)).isEqualTo(2);
+        assertThat(findPermanent(player1, "Cryptic Coat").getAttachedTo()).isEqualTo(cloaked.getId());
+    }
+
+    @Test
+    void emptyLibraryLeavesEquipmentUnattached() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new CrypticCoat(), "{2}{U}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Cryptic Coat").getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void returningCoatLeavesCloakedCreatureWithoutEquipmentBonuses() {
+        Permanent cloaked = resolveCoat(new Shock());
+        int coatIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Cryptic Coat"));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, coatIndex, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Cryptic Coat");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(cloaked);
+        assertThat(cloaked.isCloaked()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, cloaked)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cloaked)).isEqualTo(2);
+        assertThat(gqs.hasCantBeBlocked(gd, cloaked)).isFalse();
+    }
+
+    @Test
+    void stillCloaksWhenEquipmentReturnsToHandBeforeItsTriggerResolves() {
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.castFromHand(player1, new CrypticCoat(), "{2}{U}");
+        harness.passBothPriorities();
+        int coatIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Cryptic Coat"));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, coatIndex, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Cryptic Coat");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent cloaked = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(cloaked.isCloaked()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, cloaked)).isEqualTo(2);
+        assertThat(gqs.hasCantBeBlocked(gd, cloaked)).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cloakedCreatureCanTurnFaceUpAfterLosingAllAbilities() {
+        Permanent cloaked = resolveCoat(new GrizzlyBears());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, cloaked.getId());
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cloaked));
+
+        assertThat(cloaked.isFaceDown()).isFalse();
+        assertThat(cloaked.isCloaked()).isFalse();
+        assertThat(findPermanent(player1, "Cryptic Coat").getAttachedTo()).isEqualTo(cloaked.getId());
+        assertThat(gqs.getEffectivePower(gd, cloaked)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cloaked)).isEqualTo(1);
+        assertThat(gqs.hasCantBeBlocked(gd, cloaked)).isTrue();
+    }
+
     private Permanent resolveCoat(Card topCard) {
         harness.setLibrary(player1, List.of(topCard));
         harness.castFromHand(player1, new CrypticCoat(), "{2}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.isCloaked())
                 .findFirst()
