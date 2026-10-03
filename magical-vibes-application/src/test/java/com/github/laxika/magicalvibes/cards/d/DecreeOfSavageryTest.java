@@ -96,6 +96,43 @@ class DecreeOfSavageryTest extends BaseCardTest {
         harness.assertInHand(player1, "Scornful Egotist");
     }
 
+    @Test
+    @DisplayName("The spell affects creatures present at resolution and adds to existing counters")
+    void spellUsesCreaturesAtResolution() {
+        harness.castFromHand(player1, new DecreeOfSavagery(), "{7}{G}{G}");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ScornfulEgotist());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        harness.assertInGraveyard(player1, "Decree of Savagery");
+    }
+
+    @Test
+    @DisplayName("A cycling trigger whose target leaves does not prevent the cycling draw")
+    void removedCyclingTargetStillAllowsDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ScornfulEgotist());
+        harness.setHand(player1, List.of(new DecreeOfSavagery()));
+        harness.setLibrary(player1, List.of(new ScornfulEgotist()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.assertNotInHand(player1, "Scornful Egotist");
+        harness.assertInGraveyard(player1, "Decree of Savagery");
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInHand(player1, "Scornful Egotist");
+    }
+
     private void addCyclingMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 2);
