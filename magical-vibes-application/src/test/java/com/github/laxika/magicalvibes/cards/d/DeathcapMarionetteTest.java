@@ -34,15 +34,58 @@ class DeathcapMarionetteTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void acceptingTriggerWithOneCardMillsTheRemainingCard() {
+        Forest remaining = new Forest();
+        castDeathcapMarionette(List.of(remaining));
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    void acceptingTriggerWithEmptyLibraryDoesNothing() {
+        castDeathcapMarionette(List.of());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void acceptingTriggerMillsOnlyTopTwoCardsOfControllersLibrary() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Forest opponentsCard = new Forest();
+        harness.setLibrary(player2, List.of(opponentsCard));
+        castDeathcapMarionette(List.of(first, second, third));
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void castDeathcapMarionette() {
-        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        castDeathcapMarionette(List.of(new Forest(), new Forest()));
+    }
+
+    private void castDeathcapMarionette(List<Forest> library) {
+        harness.setLibrary(player1, library);
         harness.setHand(player1, List.of(new DeathcapMarionette()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
