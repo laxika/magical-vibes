@@ -67,15 +67,121 @@ class DaringFiendbonderTest extends BaseCardTest {
     @DisplayName("Its graveyard ability can only be activated as a sorcery")
     void isSorcerySpeedOnly() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new DaringFiendbonder()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        readyGraveyardAbility();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mustAttackEvenWhenItEnteredThisTurn() {
+        harness.addToBattlefield(player1, new DaringFiendbonder());
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    void tappedFiendbonderDoesNotHaveToAttack() {
+        Permanent fiendbonder = addCreatureReady(player1, new DaringFiendbonder());
+        fiendbonder.setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(fiendbonder.isAttacking()).isFalse();
+    }
+
+    @Test
+    void canPutCounterOnOpponentsCreatureDuringPostcombatMainPhase() {
+        Permanent target = addCreatureReady(player2, new DaringFiendbonder());
+        readyGraveyardAbility();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    void exileCostIsPaidBeforeResolutionAndRemainsPaidWhenTargetDies() {
+        Permanent target = addCreatureReady(player2, new DaringFiendbonder());
+        readyGraveyardAbility();
+        DaringFiendbonder source = (DaringFiendbonder) gd.playerGraveyards.get(player1.getId()).getFirst();
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(source.getId()));
+        harness.assertNotInGraveyard(player1, "Daring Fiendbonder");
+        assertThat(target.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        target.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Daring Fiendbonder");
+        assertThat(target.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(source.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void indestructibleCounterProtectsCreatureFromLethalDamage() {
+        Permanent target = addCreatureReady(player2, new DaringFiendbonder());
+        readyGraveyardAbility();
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        target.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Daring Fiendbonder");
+        harness.assertNotInGraveyard(player2, "Daring Fiendbonder");
+    }
+
+    @Test
+    void cannotActivateDuringCombat() {
+        Permanent target = addCreatureReady(player2, new DaringFiendbonder());
+        readyGraveyardAbility();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertInGraveyard(player1, "Daring Fiendbonder");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotActivateWithNonemptyStack() {
+        Permanent target = addCreatureReady(player2, new DaringFiendbonder());
+        readyGraveyardAbility();
+        harness.castFromHand(player1, new DaringFiendbonder(), "{3}{B}");
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        harness.assertInGraveyard(player1, "Daring Fiendbonder");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void cannotPayActivationCostWithoutBlackMana() {
+        Permanent target = addCreatureReady(player2, new DaringFiendbonder());
+        readyGraveyardAbility();
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Daring Fiendbonder");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
     }
 
     private void readyGraveyardAbility() {
