@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreadhordeInvasion.class})
+@CardUsed({DreadhordeInvasion.class, DoublingSeason.class})
 class DreadhordeInvasionTest extends BaseCardTest {
 
     @Test
@@ -85,6 +85,85 @@ class DreadhordeInvasionTest extends BaseCardTest {
         army.setSummoningSick(false);
 
         declareAttackers(List.of(1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(army.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+    }
+
+    @Test
+    @DisplayName("Doubling token creation still requires choosing only one Army to amass")
+    void doubledTokenCreationRequiresChoosingOneArmy() {
+        harness.addToBattlefield(player1, new DreadhordeInvasion());
+        harness.addToBattlefield(player1, new DoublingSeason());
+
+        advanceAndResolveUpkeep();
+
+        assertThat(findPermanents(player1, "Zombie Army")).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(findPermanents(player1, "Zombie Army"))
+                .allSatisfy(army -> assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    @DisplayName("The attacking Army's combat damage gains life through granted lifelink")
+    void grantedLifelinkGainsLifeFromCombatDamage() {
+        harness.addToBattlefield(player1, new DreadhordeInvasion());
+        advanceAndResolveUpkeep();
+        Permanent army = findPermanent(player1, "Zombie Army");
+        army.setSummoningSick(false);
+        army.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("The opponent's upkeep does not trigger life loss or amass")
+    void opponentUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DreadhordeInvasion());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Invasions amass onto the same Army on the same upkeep")
+    void twoInvasionsAmassOntoSameArmy() {
+        harness.addToBattlefield(player1, new DreadhordeInvasion());
+        harness.addToBattlefield(player1, new DreadhordeInvasion());
+        harness.setLife(player1, 20);
+
+        advanceAndResolveUpkeep();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(findPermanents(player1, "Zombie Army")).hasSize(1);
+        assertThat(findPermanent(player1, "Zombie Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opposing Zombie Army does not receive lifelink from your Invasion")
+    void opposingZombieTokenDoesNotGainLifelink() {
+        harness.addToBattlefield(player2, new DreadhordeInvasion());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        Permanent army = findPermanent(player2, "Zombie Army");
+        army.setSummoningSick(false);
+        army.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getCard() instanceof DreadhordeInvasion);
+        harness.addToBattlefield(player1, new DreadhordeInvasion());
+
+        declareAttackers(player2, List.of(0));
 
         assertThat(gd.stack).isEmpty();
         assertThat(army.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
