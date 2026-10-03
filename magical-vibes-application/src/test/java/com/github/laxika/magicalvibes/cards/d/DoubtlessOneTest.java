@@ -93,6 +93,66 @@ class DoubtlessOneTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
 
+    @Test
+    @DisplayName("Power and toughness shrink when another Cleric dies")
+    void shrinksWhenAnotherClericDies() {
+        Permanent doubtlessOne = addCreatureReady(player1, new DoubtlessOne());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LavamancersSkill());
+        aura.setAttachedTo(doubtlessOne.getId());
+        Permanent medic = addCreatureReady(player2, new BattlefieldMedic());
+
+        assertThat(gqs.getEffectivePower(gd, doubtlessOne)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, doubtlessOne)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, medic.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Battlefield Medic");
+        assertThat(gqs.getEffectivePower(gd, doubtlessOne)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, doubtlessOne)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Prevented damage does not trigger life gain")
+    void preventedDamageDoesNotGainLife() {
+        Permanent doubtlessOne = addCreatureReady(player1, new DoubtlessOne());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LavamancersSkill());
+        aura.setAttachedTo(doubtlessOne.getId());
+        addCreatureReady(player2, new BattlefieldMedic());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Life gain uses damage dealt rather than the current Cleric count")
+    void lifeGainUsesDamageAmountAtTriggerTime() {
+        Permanent doubtlessOne = addAttacker(new DoubtlessOne());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        addCreatureReady(player2, new BattlefieldMedic());
+        assertThat(gqs.getEffectivePower(gd, doubtlessOne)).isEqualTo(2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+    }
+
     private Permanent addAttacker(DoubtlessOne card) {
         Permanent permanent = addCreatureReady(player1, card);
         permanent.setAttacking(true);
@@ -101,6 +161,6 @@ class DoubtlessOneTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
