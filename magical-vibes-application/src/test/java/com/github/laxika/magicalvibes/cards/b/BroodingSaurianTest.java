@@ -28,9 +28,9 @@ class BroodingSaurianTest extends BaseCardTest {
         Permanent player1Permanent = addStolenPermanent(player2, player1);
 
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(player1Permanent);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(player2Permanent);
@@ -55,12 +55,65 @@ class BroodingSaurianTest extends BaseCardTest {
                         null, "Test setup"));
 
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
+    }
+
+    @Test
+    @DisplayName("A stolen Saurian returns itself at its controller's end step and overrides earlier control effects")
+    void stolenSaurianReturnsItselfPermanently() {
+        BroodingSaurian card = new BroodingSaurian();
+        card.setOwnerId(player1.getId());
+        Permanent saurian = harness.addToBattlefieldAndReturn(player1, card);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), saurian,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(saurian);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saurian);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(saurian);
+
+        harness.passUntil(TurnStep.CLEANUP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saurian);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(saurian);
+    }
+
+    @Test
+    @DisplayName("The trigger survives source removal and uses ownership at resolution")
+    void resolvesWithoutSourceAndReturnsPermanentStolenAfterTriggering() {
+        Permanent saurian = harness.addToBattlefieldAndReturn(player1, new BroodingSaurian());
+        Forest landCard = new Forest();
+        landCard.setOwnerId(player1.getId());
+        Permanent stolenLand = harness.addToBattlefieldAndReturn(player1, landCard);
+        stolenLand.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, saurian));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), stolenLand,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(stolenLand);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolenLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(stolenLand);
+        assertThat(stolenLand.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Brooding Saurian");
     }
 
     private Permanent addStolenPermanent(Player controller, Player owner) {
