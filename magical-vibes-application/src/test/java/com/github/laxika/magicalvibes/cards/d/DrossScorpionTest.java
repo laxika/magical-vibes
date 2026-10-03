@@ -166,6 +166,67 @@ class DrossScorpionTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Dross Scorpion can untap itself when its controller's other artifact creature dies")
+    void canUntapItselfForOwnArtifactCreatureDeath() {
+        Permanent scorpion = harness.addToBattlefieldAndReturn(player1, new DrossScorpion());
+        scorpion.tap();
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
+        harness.setHand(player1, List.of(new ElectrostaticBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, soldier.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(scorpion.getId());
+        harness.handlePermanentChosen(player1, scorpion.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(scorpion.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An untapped artifact is a legal target and can become tapped before resolution")
+    void untappedArtifactCanBeTargetedAndUntappedAtResolution() {
+        harness.addToBattlefield(player1, new DrossScorpion());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+
+        killDrossScorpion();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(artifact.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        artifact.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ability does not resolve when its target is destroyed in response")
+    void destroyedTargetPreventsResolution() {
+        harness.addToBattlefield(player1, new DrossScorpion());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        artifact.tap();
+
+        killDrossScorpion();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void killDrossScorpion() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
