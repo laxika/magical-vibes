@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianVatmother;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BloodFeud.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class, PhyrexianVatmother.class})
 class BloodFeudTest extends BaseCardTest {
 
     @Test
@@ -29,8 +33,7 @@ class BloodFeudTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, elvesId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -47,8 +50,7 @@ class BloodFeudTest extends BaseCardTest {
 
         UUID myBearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID theirBearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(myBearId, theirBearId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(myBearId, theirBearId));
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -66,8 +68,7 @@ class BloodFeudTest extends BaseCardTest {
 
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(giantId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(giantId, elvesId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -147,5 +148,73 @@ class BloodFeudTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Fight damage uses both creatures' power before infect counters are placed")
+    void infectDoesNotReduceReturnDamage() {
+        Permanent vatmother = harness.addToBattlefieldAndReturn(player1, new PhyrexianVatmother());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new BloodFeud()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(vatmother.getId(), giant.getId()));
+
+        harness.assertOnBattlefield(player1, "Phyrexian Vatmother");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(vatmother.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can target two creatures controlled by the caster")
+    void canTargetTwoOwnCreatures() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new BloodFeud()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(giant.getId(), elves.getId()));
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(giant.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Neither creature fights when the first target gains hexproof")
+    void neitherFightsWhenFirstTargetGainsHexproof() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new BloodFeud()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId()));
+
+        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(elves.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Blood Feud");
+    }
+
+    @Test
+    @DisplayName("Neither creature fights when the second target gains hexproof")
+    void neitherFightsWhenSecondTargetGainsHexproof() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new BloodFeud()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId()));
+
+        elves.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(elves.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Blood Feud");
     }
 }

@@ -110,6 +110,104 @@ class AtlantisAttacksTest extends BaseCardTest {
         assertThat(secondTapper.isTapped()).isFalse();
     }
 
+    @Test
+    void returnsOneNonlandPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtlantisAttacks()));
+        addMana();
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1},
+                List.of(target.getId()), null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void teamworkResolvesTokenAndTwoBounceTargets() {
+        Permanent firstTapper = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondTapper = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtlantisAttacks()));
+        addMana();
+
+        harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(player1.getId(), firstTarget.getId(), secondTarget.getId()),
+                List.of(firstTapper.getId(), secondTapper.getId()));
+        harness.passBothPriorities();
+
+        assertThat(firstTapper.isTapped()).isTrue();
+        assertThat(secondTapper.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Leviathan");
+    }
+
+    @Test
+    void rejectsBothModesWithoutTeamwork() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtlantisAttacks()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(player1.getId(), target.getId()), null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Atlantis Attacks");
+    }
+
+    @Test
+    void rejectsTeamworkWithInsufficientPower() {
+        Permanent tapper = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtlantisAttacks()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(player1.getId(), target.getId()), List.of(tapper.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tapper.isTapped()).isFalse();
+        harness.assertInHand(player1, "Atlantis Attacks");
+    }
+
+    @Test
+    void rejectsOpponentCreatureForTeamwork() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtlantisAttacks()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(player1.getId(), opponentCreature.getId()),
+                List.of(ownCreature.getId(), opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ownCreature.isTapped()).isFalse();
+        assertThat(opponentCreature.isTapped()).isFalse();
+        harness.assertInHand(player1, "Atlantis Attacks");
+    }
+
+    @Test
+    void teamworkStillCreatesTokenWhenBounceTargetLeavesBattlefield() {
+        Permanent firstTapper = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondTapper = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtlantisAttacks()));
+        addMana();
+
+        harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(player1.getId(), target.getId()),
+                List.of(firstTapper.getId(), secondTapper.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Leviathan");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);

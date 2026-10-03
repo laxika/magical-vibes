@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ColossalGrowth;
+import com.github.laxika.magicalvibes.cards.e.ExtinguishTheLight;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BalduvianBerserker.class, GrizzlyBears.class, Murder.class})
+@CardUsed({BalduvianBerserker.class, GrizzlyBears.class, Murder.class,
+        ColossalGrowth.class, ExtinguishTheLight.class})
 class BalduvianBerserkerTest extends BaseCardTest {
 
     @Test
@@ -57,6 +60,81 @@ class BalduvianBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        harness.assertInGraveyard(player1, "Balduvian Berserker");
+    }
+    @Test
+    @DisplayName("Enlist uses the supporter's power when the trigger resolves")
+    void enlistUsesPowerAtResolution() {
+        Permanent berserker = addCreatureReady(player1, new BalduvianBerserker());
+        Permanent supporter = addCreatureReady(player1, new BalduvianBerserker());
+
+        declareAttackers(List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+        harness.setHand(player1, List.of(new ColossalGrowth()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, supporter.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(berserker.getPowerModifier()).isEqualTo(4);
+        assertThat(berserker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Enlist may be declined")
+    void canDeclineEnlist() {
+        Permanent berserker = addCreatureReady(player1, new BalduvianBerserker());
+        Permanent supporter = addCreatureReady(player1, new BalduvianBerserker());
+
+        declareAttackers(List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(supporter.isTapped()).isFalse();
+        assertThat(berserker.isAttacking()).isTrue();
+        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enlist excludes tapped, summoning sick, attacking, and opposing creatures")
+    void enlistExcludesIneligibleSupporters() {
+        addCreatureReady(player1, new BalduvianBerserker());
+        Permanent supporter = addCreatureReady(player1, new BalduvianBerserker());
+        Permanent tapped = addCreatureReady(player1, new BalduvianBerserker());
+        tapped.tap();
+        harness.addToBattlefield(player1, new BalduvianBerserker());
+        addCreatureReady(player2, new BalduvianBerserker());
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(supporter.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+    }
+
+    @Test
+    @DisplayName("Death damage includes the power gained from enlist")
+    void deathDamageIncludesEnlistBoost() {
+        Permanent berserker = addCreatureReady(player1, new BalduvianBerserker());
+        Permanent supporter = addCreatureReady(player1, new BalduvianBerserker());
+        supporter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new ExtinguishTheLight()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, berserker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
         harness.assertInGraveyard(player1, "Balduvian Berserker");
     }
 }

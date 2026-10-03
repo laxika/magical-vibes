@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DragonEngine;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionArtifacts.class, DragonEngine.class, GrizzlyBears.class, RodOfRuin.class})
+@CardUsed({CircleOfProtectionArtifacts.class, Disenchant.class, DragonEngine.class, GrizzlyBears.class, RodOfRuin.class})
 class CircleOfProtectionArtifactsTest extends BaseCardTest {
 
     @Test
@@ -232,6 +233,57 @@ class CircleOfProtectionArtifactsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact referred to by its pending ability remains a legal source after destruction")
+    void destroyedArtifactWithPendingDamageAbilityCanBeChosen() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.castAndResolveInstant(player1, 0, rod.getId());
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(rod.getId());
+
+        harness.handlePermanentChosen(player1, rod.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Damage to a creature does not consume the shield protecting its controller")
+    void damageToCreatureDoesNotConsumePlayerShield() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent bears = addReadyNonArtifactCreature(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, rod.getId());
+
+        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
     }
 
     private Permanent addReadyCircle(Player player) {

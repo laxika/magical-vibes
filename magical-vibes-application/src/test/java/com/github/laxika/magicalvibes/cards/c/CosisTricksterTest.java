@@ -19,7 +19,7 @@ class CosisTricksterTest extends BaseCardTest {
         Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
 
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
-        beginMayAbility();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -31,7 +31,7 @@ class CosisTricksterTest extends BaseCardTest {
         Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
 
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
-        beginMayAbility();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -48,7 +48,49 @@ class CosisTricksterTest extends BaseCardTest {
         assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private void beginMayAbility() {
+    @Test
+    @DisplayName("Each opponent shuffle can add another counter")
+    void repeatedShufflesAddCounters() {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
+
+        LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Tricksters make independent optional triggers")
+    void multipleTrickstersTriggerIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
+
+        LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+                + second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shuffling an empty opponent library still triggers")
+    void emptyLibraryShuffleTriggers() {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
+        gd.playerDecks.get(player2.getId()).clear();
+
+        LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

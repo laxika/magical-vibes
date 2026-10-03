@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.cards.i.Impulse;
+import com.github.laxika.magicalvibes.cards.i.Inspiration;
 import com.github.laxika.magicalvibes.cards.m.ManOWar;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,13 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreathstealersCrypt.class, Impulse.class, ManOWar.class})
+@CardUsed({BreathstealersCrypt.class, EverybodyLives.class, Impulse.class, Inspiration.class, ManOWar.class})
 class BreathstealersCryptTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         gd.turnNumber = 2;
         advanceToUpkeep(activePlayer);
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     @Test
@@ -130,5 +134,73 @@ class BreathstealersCryptTest extends BaseCardTest {
         harness.assertLife(player1, 14);
         harness.assertInHand(player1, "Man-o'-War");
         harness.assertNotInGraveyard(player1, "Man-o'-War");
+    }
+
+    @Test
+    @DisplayName("Finish the Crypt choice before drawing the next card of Inspiration")
+    void finishesReplacementBeforeNextDraw() {
+        harness.addToBattlefield(player1, new BreathstealersCrypt());
+        harness.setHand(player1, List.of(new Inspiration()));
+        harness.setLibrary(player1, List.of(new ManOWar(), new Impulse(), new Impulse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertInHand(player1, "Man-o'-War");
+        harness.assertNotInHand(player1, "Impulse");
+        assertThat(gameLogContains("reveals Impulse")).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Man-o'-War");
+        harness.assertNotInHand(player1, "Man-o'-War");
+        harness.assertInHand(player1, "Impulse");
+        assertThat(gameLogContains("reveals Impulse")).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Paying for one Crypt does not prevent another Crypt from discarding the creature")
+    void payFirstCryptAndDeclineSecond() {
+        harness.addToBattlefield(player1, new BreathstealersCrypt());
+        harness.addToBattlefield(player1, new BreathstealersCrypt());
+        harness.setLibrary(player1, List.of(new ManOWar(), new Impulse()));
+
+        advanceToDraw(player1);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, 17);
+        harness.assertInHand(player1, "Man-o'-War");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 17);
+        harness.assertNotInHand(player1, "Man-o'-War");
+        harness.assertInGraveyard(player1, "Man-o'-War");
+    }
+
+    @Test
+    @DisplayName("Everybody Lives prevents paying life, so drawn creatures must be discarded")
+    void cannotKeepCreatureWhenLifeLossIsForbidden() {
+        harness.addToBattlefield(player1, new BreathstealersCrypt());
+        harness.setHand(player1, List.of(new EverybodyLives(), new Inspiration()));
+        harness.setLibrary(player1, List.of(new ManOWar(), new Impulse(), new Impulse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertNotInHand(player1, "Man-o'-War");
+        harness.assertInGraveyard(player1, "Man-o'-War");
+        harness.assertInHand(player1, "Impulse");
     }
 }

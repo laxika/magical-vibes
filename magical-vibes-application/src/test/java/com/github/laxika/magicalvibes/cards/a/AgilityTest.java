@@ -92,6 +92,42 @@ class AgilityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Agility Auras each grant a separate flanking ability")
+    void multipleAurasEachShrinkBlocker() {
+        Permanent attacker = enchantedScouts();
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new Agility());
+        secondAura.setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FemerefScouts());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Flanking does not shrink a blocker that has flanking")
+    void flankingDoesNotShrinkFlankingBlocker() {
+        Permanent attacker = enchantedScouts();
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FemerefScouts());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Agility());
+        aura.setAttachedTo(blocker.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.forceActivePlayer(player1);

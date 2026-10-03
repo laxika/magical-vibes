@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SnarlingWolf;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -20,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BloodvialPurveyor.class, GrizzlyBears.class})
+@CardUsed({BloodvialPurveyor.class, SnarlingWolf.class})
 class BloodvialPurveyorTest extends BaseCardTest {
 
     @Test
@@ -30,10 +29,7 @@ class BloodvialPurveyorTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new SnarlingWolf(), "{G}");
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Blood")).isZero();
@@ -70,6 +66,68 @@ class BloodvialPurveyorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, purveyor)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The controller casting a spell creates no Blood token")
+    void controllerCastingSpellCreatesNoBlood() {
+        addCreatureReady(player1, new BloodvialPurveyor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new SnarlingWolf(), "{G}");
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Blood")).isZero();
+        assertThat(countPermanents(player2, "Blood")).isZero();
+    }
+
+    @Test
+    @DisplayName("The Blood trigger resolves even after Purveyor leaves the battlefield")
+    void bloodTriggerSurvivesSourceLeaving() {
+        addCreatureReady(player1, new BloodvialPurveyor());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new SnarlingWolf(), "{G}");
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Blood")).isZero();
+        assertThat(countPermanents(player2, "Blood")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attacking without defending player's Blood tokens gives no boost")
+    void attackWithoutDefendingBloodGivesNoBoost() {
+        Permanent purveyor = addCreatureReady(player1, new BloodvialPurveyor());
+        addBloodToken(player1);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, purveyor)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, purveyor)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Blood is counted at resolution and the resolved boost stays fixed")
+    void attackCountsBloodAtResolution() {
+        Permanent purveyor = addCreatureReady(player1, new BloodvialPurveyor());
+        addBloodToken(player2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+
+        addBloodToken(player2);
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, purveyor)).isEqualTo(7);
+
+        gd.playerBattlefields.get(player2.getId()).clear();
+        assertThat(gqs.getEffectivePower(gd, purveyor)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, purveyor)).isEqualTo(6);
     }
 
     private void addBloodToken(com.github.laxika.magicalvibes.model.Player player) {

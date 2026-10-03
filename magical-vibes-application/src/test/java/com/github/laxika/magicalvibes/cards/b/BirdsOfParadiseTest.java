@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -110,5 +111,31 @@ class BirdsOfParadiseTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Birds of Paradise can produce mana while blocking without leaving combat")
+    void canProduceManaWhileBlocking() {
+        addCreatureReady(player1, new BirdsOfParadise());
+        Permanent blocker = addCreatureReady(player2, new BirdsOfParadise());
+        var defendingManaPool = gd.playerManaPools.get(player2.getId());
+        int manaBefore = defendingManaPool.get(ManaColor.BLUE);
+        int attackingManaBefore = gd.playerManaPools.get(player1.getId()).getTotalAllMana();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.activateAbility(player2, 0, null, null);
+            harness.handleListChoice(player2, ManaColor.BLUE.name());
+
+            assertThat(blocker.isTapped()).isTrue();
+            assertThat(blocker.isBlocking()).isTrue();
+            assertThat(defendingManaPool.get(ManaColor.BLUE)).isEqualTo(manaBefore + 1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana())
+                    .isEqualTo(attackingManaBefore);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        });
     }
 }

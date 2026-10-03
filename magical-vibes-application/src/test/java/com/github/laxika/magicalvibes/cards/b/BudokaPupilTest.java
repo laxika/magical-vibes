@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BudokaPupil.class, IchigaWhoTopplesOaks.class, VitalSurge.class,
-        KamiOfFalseHope.class, GoblinCohort.class})
+        KamiOfFalseHope.class, GoblinCohort.class, BoundByMoonsilver.class})
 class BudokaPupilTest extends BaseCardTest {
 
     @Test
@@ -32,8 +32,7 @@ class BudokaPupilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(pupil.getCounterCount(CounterType.KI)).isEqualTo(1);
@@ -63,8 +62,7 @@ class BudokaPupilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(pupil.getCounterCount(CounterType.KI)).isZero();
@@ -214,6 +212,74 @@ class BudokaPupilTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, goblin.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A restriction on transforming does not prevent flipping")
+    void flipsWhileEnchantedByBoundByMoonsilver() {
+        Permanent pupil = addPupil(player1);
+        pupil.setCounterCount(CounterType.KI, 2);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new BoundByMoonsilver());
+        aura.setAttachedTo(pupil.getId());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(pupil.isTransformed()).isTrue();
+        assertThat(pupil.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(aura.getAttachedTo()).isEqualTo(pupil.getId());
+    }
+
+    @Test
+    @DisplayName("Flipping preserves counters and makes Ichiga's ability available")
+    void flippedPupilCanSpendRetainedCountersOnOpponentsCreature() {
+        Permanent pupil = addPupil(player1);
+        pupil.setCounterCount(CounterType.KI, 3);
+        Permanent goblin = addCreatureReady(player2, new GoblinCohort());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(pupil.getCounterCount(CounterType.KI)).isEqualTo(3);
+        harness.activateAbility(player1, 0, 0, null, goblin.getId());
+
+        assertThat(pupil.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(goblin.getEffectivePower()).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(goblin.getEffectivePower()).isEqualTo(4);
+        assertThat(goblin.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Reaching two counters after the end step begins does not create a flip trigger")
+    void gainingSecondCounterAfterEndStepBeginsDoesNotTrigger() {
+        Permanent pupil = addPupil(player1);
+        pupil.setCounterCount(CounterType.KI, 1);
+
+        advanceToEndStep(player1);
+        pupil.setCounterCount(CounterType.KI, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(pupil.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ichiga no longer accumulates ki counters when an Arcane spell is cast")
+    void flippedPupilDoesNotRetainSpellCastTrigger() {
+        Permanent pupil = addFlippedPupil();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new VitalSurge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(pupil.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent addPupil(Player player) {

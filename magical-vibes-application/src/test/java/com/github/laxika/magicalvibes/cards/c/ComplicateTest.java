@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Complicate.class, GlorySeeker.class, Shock.class})
+@CardUsed({Complicate.class, GlorySeeker.class, Island.class, Shock.class})
 class ComplicateTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class ComplicateTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         harness.assertInGraveyard(player1, "Glory Seeker");
         assertThat(gd.stack).isEmpty();
@@ -50,8 +50,7 @@ class ComplicateTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -189,6 +188,150 @@ class ComplicateTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Shock");
         harness.assertInGraveyard(player1, "Complicate");
         harness.assertInHand(player1, "Glory Seeker");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell is countered when its controller declines an affordable payment")
+    void countersSpellWhenControllerDeclinesPayment() {
+        GlorySeeker creature = new GlorySeeker();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new Complicate()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Glory Seeker");
+        harness.assertNotOnBattlefield(player1, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Complicate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The cycling trigger counters when the spell controller declines to pay one")
+    void cyclingCounterWhenControllerDeclinesPayment() {
+        Shock shock = new Shock();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new Complicate()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        addCyclingMana();
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInGraveyard(player1, "Complicate");
+        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The cycling counter choice happens before the cycling draw")
+    void cyclingTriggerResolvesBeforeDraw() {
+        Shock shock = new Shock();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new Complicate()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        addCyclingMana();
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Complicate");
+        harness.assertNotInHand(player1, "Glory Seeker");
+        harness.assertNotInGraveyard(player2, "Shock");
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInHand(player1, "Glory Seeker");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spell controller can tap lands to pay three during resolution")
+    void controllerCanGenerateManaToPayThreeDuringResolution() {
+        GlorySeeker creature = new GlorySeeker();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player2, List.of(new Complicate()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertNotInGraveyard(player1, "Glory Seeker");
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Glory Seeker");
+        harness.assertNotInGraveyard(player1, "Glory Seeker");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spell controller can tap a land to pay one for the cycling trigger")
+    void controllerCanGenerateManaToPayOneDuringCyclingTriggerResolution() {
+        Shock shock = new Shock();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addToBattlefield(player2, new Island());
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new Complicate()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        addCyclingMana();
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotInGraveyard(player2, "Shock");
+        harness.tapPermanent(player2, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Complicate");
+        harness.assertLife(player1, lifeBefore - 2);
         assertThat(gd.stack).isEmpty();
     }
 

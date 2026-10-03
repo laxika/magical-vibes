@@ -20,6 +20,56 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AuriokSalvagersTest extends BaseCardTest {
 
     @Test
+    void cannotChooseMultipleTargetsForOneActivation() {
+        harness.addToBattlefield(player1, new AuriokSalvagers());
+        Card firstArtifact = new ParadiseMantle();
+        Card secondArtifact = new WayfarersBauble();
+        harness.setGraveyard(player1, List.of(firstArtifact, secondArtifact));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(firstArtifact.getId(), secondArtifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstArtifact, secondArtifact);
+    }
+
+    @Test
+    void resolvesWhileSourceIsTappedAndSummoningSick() {
+        var salvagers = harness.addToBattlefieldAndReturn(player1, new AuriokSalvagers());
+        salvagers.setTapped(true);
+        salvagers.setSummoningSick(true);
+        Card artifact = new WayfarersBauble();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(salvagers.isTapped()).isTrue();
+    }
+
+    @Test
+    void doesNotReturnAnotherArtifactWhenTargetLeavesGraveyard() {
+        harness.addToBattlefield(player1, new AuriokSalvagers());
+        Card target = new WayfarersBauble();
+        Card otherArtifact = new ParadiseMantle();
+        harness.setGraveyard(player1, List.of(target, otherArtifact));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherArtifact));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target, otherArtifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherArtifact);
+    }
+
+    @Test
     void returnsTargetArtifactWithManaValueOneOrLess() {
         harness.addToBattlefield(player1, new AuriokSalvagers());
         Card zeroManaArtifact = new ParadiseMantle();

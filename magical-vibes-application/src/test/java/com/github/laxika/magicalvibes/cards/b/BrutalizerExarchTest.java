@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlistenerElf;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.ShrineOfBurningRage;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -21,10 +23,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BrutalizerExarch.class, GlistenerElf.class, Plains.class, Island.class, Forest.class, ShrineOfBurningRage.class})
 class BrutalizerExarchTest extends BaseCardTest {
 
     
 
+    @CardUsed({BrutalizerExarch.class, GlistenerElf.class, Plains.class, Island.class, Forest.class, ShrineOfBurningRage.class})
     @Nested
     @DisplayName("Mode 1: Search library for creature to top")
     class SearchMode {
@@ -87,9 +91,7 @@ class BrutalizerExarchTest extends BaseCardTest {
         @Test
         @DisplayName("Only creature cards are shown in library search")
         void onlyCreaturesShown() {
-            List<Card> deck = gd.playerDecks.get(player1.getId());
-            deck.clear();
-            deck.addAll(List.of(new Plains(), new Island(), new Forest()));
+            harness.setLibrary(player1, List.of(new Plains(), new Island(), new Forest()));
 
             castWithMode1();
             harness.passBothPriorities(); // resolve creature
@@ -101,6 +103,7 @@ class BrutalizerExarchTest extends BaseCardTest {
         }
     }
 
+    @CardUsed({BrutalizerExarch.class, GlistenerElf.class, Plains.class, Island.class, Forest.class, ShrineOfBurningRage.class})
     @Nested
     @DisplayName("Mode 2: Put noncreature permanent on bottom")
     class BottomMode {
@@ -108,9 +111,9 @@ class BrutalizerExarchTest extends BaseCardTest {
         @Test
         @DisplayName("Choosing mode 2 puts target noncreature permanent on bottom of owner's library")
         void mode2PutsNoncreaturePermanentOnBottom() {
-            // Put a noncreature permanent (enchantment or artifact) onto the battlefield
+            // Put a noncreature permanent onto the battlefield
             harness.addToBattlefield(player2, new Plains());
-            UUID targetId = gd.playerBattlefields.get(player2.getId()).getFirst().getId();
+            UUID targetId = harness.getPermanentId(player2, "Plains");
 
             castWithMode2(targetId);
             harness.passBothPriorities(); // resolve creature
@@ -127,27 +130,105 @@ class BrutalizerExarchTest extends BaseCardTest {
         @Test
         @DisplayName("Mode 2 works on artifacts")
         void mode2WorksOnArtifacts() {
-            harness.addToBattlefield(player2, new BarbedBattlegear());
-            UUID targetId = gd.playerBattlefields.get(player2.getId()).getFirst().getId();
+            harness.addToBattlefield(player2, new ShrineOfBurningRage());
+            UUID targetId = harness.getPermanentId(player2, "Shrine of Burning Rage");
 
             castWithMode2(targetId);
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            harness.assertNotOnBattlefield(player2, "Barbed Battlegear");
+            harness.assertNotOnBattlefield(player2, "Shrine of Burning Rage");
         }
 
         @Test
         @DisplayName("Brutalizer Exarch enters the battlefield with mode 2")
         void exarchEntersBattlefield() {
             harness.addToBattlefield(player2, new Plains());
-            UUID targetId = gd.playerBattlefields.get(player2.getId()).getFirst().getId();
+            UUID targetId = harness.getPermanentId(player2, "Plains");
 
             castWithMode2(targetId);
             harness.passBothPriorities(); // resolve creature
 
             harness.assertOnBattlefield(player1, "Brutalizer Exarch");
         }
+    }
+
+    @Test
+    @DisplayName("Mode is chosen when the ETB trigger is put on the stack")
+    void choosesModeAfterEnteringBattlefield() {
+        setupLibraryWithCreatures();
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new BrutalizerExarch()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Brutalizer Exarch");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes without a choice")
+    void emptyLibrarySearchCompletes() {
+        harness.setLibrary(player1, List.of());
+        castWithMode1();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Brutalizer Exarch");
+    }
+
+    @Test
+    @DisplayName("The bottom mode can target a permanent you control")
+    void canPutOwnPermanentOnBottom() {
+        Plains plains = new Plains();
+        harness.addToBattlefield(player1, plains);
+        castWithMode2(harness.getPermanentId(player1, "Plains"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId()).getLast()).isSameAs(plains);
+    }
+
+    @Test
+    @DisplayName("A creature found in a one-card library is revealed and remains on top")
+    void revealsCreatureFromSingleCardLibrary() {
+        GlistenerElf creature = new GlistenerElf();
+        harness.setLibrary(player1, List.of(creature));
+        castWithMode1();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.gameLog).anySatisfy(entry ->
+                assertThat(entry.plainText()).contains("reveals Glistener Elf"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution is not put into the library")
+    void missingTargetDoesNotMoveAnotherPermanent() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Island());
+        UUID targetId = harness.getPermanentId(player2, "Plains");
+        castWithMode2(targetId);
+        harness.passBothPriorities();
+        var target = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getId().equals(targetId)).findFirst().orElseThrow();
+        harness.getPermanentRemovalService().removePermanentToLibraryBottom(gd, target);
+        List<Card> libraryBefore = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(libraryBefore);
     }
 
     private void castWithMode1() {
@@ -163,8 +244,6 @@ class BrutalizerExarchTest extends BaseCardTest {
     }
 
     private void setupLibraryWithCreatures() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new Plains(), new Island(), new Forest()));
+        harness.setLibrary(player1, List.of(new GlistenerElf(), new Plains(), new Island(), new Forest()));
     }
 }

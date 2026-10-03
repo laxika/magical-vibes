@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarruksPackleader;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,16 +21,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AdditiveEvolution.class, GrizzlyBears.class, GarruksPackleader.class})
 class AdditiveEvolutionTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
-
-    
 
     @Test
     @DisplayName("ETB creates a 3/3 Fractal token with three +1/+1 counters")
@@ -133,5 +133,35 @@ class AdditiveEvolutionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Additive Evolution");
+    }
+
+    @Test
+    @DisplayName("Fractal enters with zero power before its counters are put on it")
+    void fractalEnteringDoesNotTriggerGarruksPackleader() {
+        harness.addToBattlefield(player1, new GarruksPackleader());
+        harness.setHand(player1, List.of(new AdditiveEvolution()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        Permanent fractal = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && "Fractal".equals(p.getCard().getName()))
+                .findFirst().orElseThrow();
+        assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Combat ability has no legal target when its controller has no creatures")
+    void noCreatureMeansNoCombatAbilityOnStack() {
+        harness.addToBattlefield(player1, new AdditiveEvolution());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

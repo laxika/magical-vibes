@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -96,8 +97,78 @@ class BronzehideLionTest extends BaseCardTest {
     private void destroyLion() {
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Bronzehide Lion"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Bronzehide Lion"));
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("The Lion's indestructible prevents destruction and expires at end of turn")
+    void indestructiblePreventsDestructionAndExpires() {
+        Permanent lion = addCreatureReady(player1, new BronzehideLion());
+        addManaForAbility();
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+
+        destroyLion();
+
+        assertThat(findPermanent(player1, "Bronzehide Lion")).isSameAs(lion);
+        harness.assertNotInGraveyard(player1, "Bronzehide Lion");
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, lion, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot receive the returning Aura")
+    void cannotEnchantOpponentsCreature() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new BronzehideLion());
+
+        destroyLion();
+
+        harness.assertInGraveyard(player1, "Bronzehide Lion");
+        harness.assertNotOnBattlefield(player1, "Bronzehide Lion");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Aura does not return again when its enchanted creature dies")
+    void auraDoesNotReturnWhenEnchantedCreatureDies() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BronzehideLion());
+        destroyLion();
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Bronzehide Lion");
+        harness.assertNotOnBattlefield(player1, "Bronzehide Lion");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherCreature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Aura protects only its enchanted creature until end of turn")
+    void auraIndestructibleExpiresAndDoesNotProtectItself() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BronzehideLion());
+        destroyLion();
+        Permanent aura = findPermanent(player1, "Bronzehide Lion");
+        addManaForAbility();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aura, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
     }
 }

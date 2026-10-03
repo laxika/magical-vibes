@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishHandservant;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
+import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CennsHeir.class, GoldmeadowStalwart.class, ElvishHandservant.class, RayOfCommand.class})
+@CardUsed({CennsHeir.class, GoldmeadowStalwart.class, ElvishHandservant.class, RayOfCommand.class,
+        NamelessInversion.class})
 class CennsHeirTest extends BaseCardTest {
 
     @Test
@@ -117,8 +119,8 @@ class CennsHeirTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Counts an attacking Kithkin after an opponent gains control of it")
-    void countsAttackingKithkinControlledByOpponent() {
+    @DisplayName("Does not count a Kithkin removed from combat by a control change")
+    void doesNotCountKithkinAfterOpponentGainsControl() {
         Permanent heir = addCreatureReady(player1, new CennsHeir());
         Permanent attackingKithkin = addCreatureReady(player1, new GoldmeadowStalwart());
 
@@ -127,13 +129,49 @@ class CennsHeirTest extends BaseCardTest {
         harness.setHand(player2, List.of(new RayOfCommand()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castInstant(player2, 0, attackingKithkin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attackingKithkin.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(attackingKithkin.getId()));
+        assertThat(attackingKithkin.isAttacking()).isFalse();
 
         resolveAllTriggers();
+
+        assertThat(heir.getPowerModifier()).isEqualTo(0);
+        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Counts other attacking Kithkin when the trigger resolves, not when it triggers")
+    void doesNotCountKithkinThatDiesBeforeResolution() {
+        Permanent heir = addCreatureReady(player1, new CennsHeir());
+        Permanent kithkin = addCreatureReady(player1, new GoldmeadowStalwart());
+        harness.setHand(player2, List.of(new NamelessInversion()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.castAndResolveInstant(player2, 0, kithkin.getId());
+        harness.assertInGraveyard(player1, "Goldmeadow Stalwart");
+        resolveAllTriggers();
+
+        assertThat(heir.getPowerModifier()).isEqualTo(0);
+        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Resolved boost remains after the other attacking Kithkin dies")
+    void boostDoesNotRecalculateAfterResolution() {
+        Permanent heir = addCreatureReady(player1, new CennsHeir());
+        Permanent kithkin = addCreatureReady(player1, new GoldmeadowStalwart());
+        harness.setHand(player2, List.of(new NamelessInversion()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player2, 0, kithkin.getId());
+        harness.assertInGraveyard(player1, "Goldmeadow Stalwart");
 
         assertThat(heir.getPowerModifier()).isEqualTo(1);
         assertThat(heir.getToughnessModifier()).isEqualTo(1);

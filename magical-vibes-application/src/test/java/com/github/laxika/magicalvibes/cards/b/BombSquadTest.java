@@ -116,8 +116,7 @@ class BombSquadTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, grunt.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, grunt.getId());
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
@@ -152,6 +151,57 @@ class BombSquadTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Opponent's upkeep does not add fuse counters")
+    void opponentsUpkeepDoesNotAddFuseCounters() {
+        addReadyBombSquad(player1);
+        Permanent grunt = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
+        grunt.setCounterCount(CounterType.FUSE, 1);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(grunt.getCounterCount(CounterType.FUSE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upkeep detonates fused creatures controlled by both players")
+    void upkeepDetonatesCreaturesControlledByBothPlayers() {
+        addReadyBombSquad(player1);
+        Permanent controllerGrunt = harness.addToBattlefieldAndReturn(player1, new DwarvenGrunt());
+        Permanent opponentGrunt = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
+        controllerGrunt.setCounterCount(CounterType.FUSE, 3);
+        opponentGrunt.setCounterCount(CounterType.FUSE, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dwarven Grunt");
+        harness.assertInGraveyard(player2, "Dwarven Grunt");
+        harness.assertNotOnBattlefield(player1, "Dwarven Grunt");
+        harness.assertNotOnBattlefield(player2, "Dwarven Grunt");
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Fuse counters on noncreatures neither grow nor detonate")
+    void fuseCountersOnNoncreaturesDoNotGrowOrDetonate() {
+        addReadyBombSquad(player1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setCounterCount(CounterType.FUSE, 4);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(forest.getCounterCount(CounterType.FUSE)).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addReadyBombSquad(Player player) {

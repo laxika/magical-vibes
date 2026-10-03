@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DoomedTraveler;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.b.BlazingTorch;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,15 +19,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AvacynianPriest.class, WalkingCorpse.class, DoomedTraveler.class, BlazingTorch.class})
 class AvacynianPriestTest extends BaseCardTest {
 
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Resolving ability taps target non-Human creature")
     void resolvingTapsNonHumanCreature() {
-        addReadyPriest(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -38,8 +39,8 @@ class AvacynianPriestTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
-        addReadyPriest(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -54,8 +55,8 @@ class AvacynianPriestTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability taps the priest")
     void activatingTapsPriest() {
-        Permanent priest = addReadyPriest(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent priest = addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -66,8 +67,8 @@ class AvacynianPriestTest extends BaseCardTest {
     @Test
     @DisplayName("Can tap own non-Human creature")
     void canTapOwnNonHumanCreature() {
-        addReadyPriest(player1);
-        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent ownBears = addCreatureReady(player1, new WalkingCorpse());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, ownBears.getId());
@@ -76,39 +77,36 @@ class AvacynianPriestTest extends BaseCardTest {
         assertThat(ownBears.isTapped()).isTrue();
     }
 
-    // ===== Target restriction =====
 
     @Test
     @DisplayName("Cannot target a Human creature")
     void cannotTargetHumanCreature() {
-        addReadyPriest(player1);
-        Permanent human = addReadyHuman(player2);
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent human = addCreatureReady(player2, new DoomedTraveler());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, human.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyPriest(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyPriest(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -123,21 +121,88 @@ class AvacynianPriestTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
 
-    private Permanent addReadyPriest(Player player) {
-        AvacynianPriest card = new AvacynianPriest();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot target a noncreature artifact")
+    void cannotTargetNoncreatureArtifact() {
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlazingTorch());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyHuman(Player player) {
-        EliteVanguard card = new EliteVanguard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot activate a tapped priest")
+    void cannotActivateTappedPriest() {
+        Permanent priest = addCreatureReady(player1, new AvacynianPriest());
+        priest.setTapped(true);
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate a priest with summoning sickness")
+    void cannotActivateSummoningSickPriest() {
+        Permanent priest = addCreatureReady(player1, new AvacynianPriest());
+        priest.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(priest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already tapped non-Human creature is a legal target")
+    void canTargetTappedCreature() {
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("The ability resolves after the priest leaves the battlefield")
+    void resolvesAfterPriestLeavesBattlefield() {
+        Permanent priest = addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(priest);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Generic activation mana may be paid with colored mana")
+    void canPayWithColoredMana() {
+        addCreatureReady(player1, new AvacynianPriest());
+        Permanent target = addCreatureReady(player2, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
     }
 }

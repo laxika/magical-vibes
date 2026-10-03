@@ -121,6 +121,69 @@ class AlabasterWallTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Two Walls can combine their shields on the same player")
+    void combinesShieldsOnSamePlayer() {
+        addReadyWall(player1);
+        addReadyWall(player1);
+        addCreatureReady(player2, new CinderElemental());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, 3, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Damage to another player does not consume the target's shield")
+    void shieldOnlyProtectsChosenPlayer() {
+        addReadyWall(player1);
+        addCreatureReady(player2, new CinderElemental());
+        addCreatureReady(player2, new CinderElemental());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player2, 0, 2, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, 2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Wall cannot activate its tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent wall = addReadyWall(player1);
+        wall.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wall.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Wall cannot activate its tap ability again")
+    void tappedWallCannotActivateAgain() {
+        addReadyWall(player1);
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyWall(Player player) {
         return addCreatureReady(player, new AlabasterWall());
     }

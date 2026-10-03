@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AzoriusArrester.class, GrizzlyBears.class, LlanowarElves.class})
 class AzoriusArresterTest extends BaseCardTest {
 
     @Test
@@ -84,6 +86,54 @@ class AzoriusArresterTest extends BaseCardTest {
     }
 
     @Test
+    void detainPersistsThroughCleanupAndOpponentsTurnStart() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = detain("Grizzly Bears");
+
+        gd.expireEndOfTurnFloatingEffects();
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+
+        assertThatThrownBy(() -> declareAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void detainPersistsAfterArresterLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = detain("Grizzly Bears");
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Azorius Arrester"));
+
+        assertThatThrownBy(() -> declareAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void triggerResolvesAfterArresterLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castArrester("Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Azorius Arrester"));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttack(findPermanent(player2, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void detainDoesNotTapCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThat(detain("Grizzly Bears").isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature you control")
     void cannotTargetOwnCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -107,10 +157,7 @@ class AzoriusArresterTest extends BaseCardTest {
         castArrester(targetName);
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
-        return gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(targetName))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player2, targetName);
     }
 
     /** Attempts to declare the given player2 creature as an attacker. */

@@ -36,6 +36,55 @@ class AugurIlVecTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped, summoning-sick Augur is sacrificed immediately but gains life only on resolution")
+    void sacrificeCostIsPaidBeforeLifeGainResolves() {
+        Permanent augur = harness.addToBattlefieldAndReturn(player2, new AugurIlVec());
+        augur.setSummoningSick(true);
+        augur.tap();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+
+        harness.assertNotOnBattlefield(player2, "Augur il-Vec");
+        harness.assertInGraveyard(player2, "Augur il-Vec");
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Another Augur can be sacrificed in response during the same upkeep")
+    void canActivateWithAnotherAbilityOnTheStack() {
+        addCreatureReady(player1, new AugurIlVec());
+        addCreatureReady(player1, new AugurIlVec());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Augur il-Vec");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 24);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 28);
+    }
+
+    @Test
     @DisplayName("Sacrifice ability cannot be activated outside its controller's upkeep")
     void sacrificeAbilityRequiresYourUpkeep() {
         addCreatureReady(player1, new AugurIlVec());

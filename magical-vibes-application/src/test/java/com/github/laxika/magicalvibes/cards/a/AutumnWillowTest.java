@@ -55,8 +55,7 @@ class AutumnWillowTest extends BaseCardTest {
 
         giveTowerTo(player2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, willow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, willow.getId());
 
         assertThat(willow.getPowerModifier()).isEqualTo(3);
         assertThat(willow.getToughnessModifier()).isEqualTo(1);
@@ -91,8 +90,7 @@ class AutumnWillowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         giveTowerTo(player1);
-        harness.castInstant(player1, 0, willow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, willow.getId());
         assertThat(willow.getPowerModifier()).isEqualTo(3);
         assertThat(willow.getToughnessModifier()).isEqualTo(1);
 
@@ -122,9 +120,51 @@ class AutumnWillowTest extends BaseCardTest {
                 .hasMessageContaining("shroud");
     }
 
+    @Test
+    @DisplayName("The targeted player cannot target Autumn Willow before the permission resolves")
+    void permissionRequiresResolution() {
+        Permanent willow = addBlockingWillow();
+        giveTowerTo(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, willow.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+
+        harness.passPriority(player2);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, willow.getId());
+
+        assertThat(willow.getPowerModifier()).isEqualTo(3);
+        assertThat(willow.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Separate activations can grant both players permission for the same turn")
+    void permissionsAccumulateForDifferentPlayers() {
+        Permanent willow = addBlockingWillow();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        giveTowerTo(player1);
+        harness.castAndResolveInstant(player1, 0, willow.getId());
+        giveTowerTo(player2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, willow.getId());
+
+        assertThat(willow.getPowerModifier()).isEqualTo(6);
+        assertThat(willow.getToughnessModifier()).isEqualTo(2);
+    }
+
     private Permanent addWillow() {
-        harness.addToBattlefield(player1, new AutumnWillow());
-        return findPermanent(player1, "Autumn Willow");
+        return harness.addToBattlefieldAndReturn(player1, new AutumnWillow());
     }
 
     private Permanent addBlockingWillow() {

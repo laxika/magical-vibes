@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AngelOfGrace.class, Shock.class, PlatinumAngel.class})
 class AngelOfGraceTest extends BaseCardTest {
 
     @Test
@@ -57,10 +60,96 @@ class AngelOfGraceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateGraveyardAbility(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(3);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(10);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void repeatedDamageAtOneLifeStillDealsDamage() {
+        harness.setLife(player1, 2);
+        castAngelOfGrace();
+
+        shockPlayer1();
+        shockPlayer1();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void protectionDoesNotApplyToOpponent() {
+        castAngelOfGrace();
+        harness.setLife(player2, 2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isZero();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void protectionPersistsAfterAngelDies() {
+        harness.setLife(player1, 2);
+        castAngelOfGrace();
+        var angelId = findPermanent(player1, "Angel of Grace").getId();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, angelId);
+        harness.castAndResolveInstant(player1, 0, angelId);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        shockPlayer1();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void damageAtZeroLifeDoesNotRaiseLifeToOne() {
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        castAngelOfGrace();
+        harness.setLife(player1, 0);
+
+        shockPlayer1();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(-2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void damageAtNegativeLifeContinuesReducingLife() {
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        castAngelOfGrace();
+        harness.setLife(player1, -3);
+
+        shockPlayer1();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(-5);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void graveyardAbilityCanReduceLifeAndActivateOnOpponentsTurn() {
+        harness.setGraveyard(player1, List.of(new AngelOfGrace()));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
     }
 
     private void castAngelOfGrace() {
@@ -83,7 +172,6 @@ class AngelOfGraceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
     }
 }

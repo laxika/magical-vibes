@@ -76,6 +76,83 @@ class AdunOakenshieldTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new AdunOakenshield());
+        Card creature = new BarbaryApes();
+        harness.setGraveyard(player1, List.of(creature));
+        addAbilityMana(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent adun = addCreatureReady(player1, new AdunOakenshield());
+        adun.tap();
+        Card creature = new BarbaryApes();
+        harness.setGraveyard(player1, List.of(creature));
+        addAbilityMana(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a target")
+    void cannotActivateWithoutTarget() {
+        addCreatureReady(player1, new AdunOakenshield());
+        harness.setGraveyard(player1, List.of(new BarbaryApes()));
+        addAbilityMana(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability still returns its target after Adun leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent adun = addCreatureReady(player1, new AdunOakenshield());
+        Card creature = new BarbaryApes();
+        harness.setGraveyard(player1, List.of(creature));
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, adun.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Adun Oakenshield");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Barbary Apes");
+        harness.assertNotInGraveyard(player1, "Barbary Apes");
+    }
+
+    @Test
+    @DisplayName("Does not return another creature when the target leaves the graveyard")
+    void doesNotChooseReplacementForMissingTarget() {
+        Permanent adun = addCreatureReady(player1, new AdunOakenshield());
+        Card target = new BarbaryApes();
+        Card other = new BarbaryApes();
+        harness.setGraveyard(player1, List.of(target, other));
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of(other));
+
+        harness.passBothPriorities();
+
+        assertThat(adun.isTapped()).isTrue();
+        harness.assertNotInHand(player1, "Barbary Apes");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
     private void addAbilityMana(com.github.laxika.magicalvibes.model.Player player) {
         harness.addMana(player, ManaColor.BLACK, 1);
         harness.addMana(player, ManaColor.RED, 1);

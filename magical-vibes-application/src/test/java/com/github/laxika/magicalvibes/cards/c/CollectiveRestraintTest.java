@@ -106,6 +106,56 @@ class CollectiveRestraintTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("Multiple copies each impose their own Domain tax")
+    void multipleCopiesStackTheirTaxes() {
+        harness.addToBattlefield(player1, new CollectiveRestraint());
+        harness.addToBattlefield(player1, new CollectiveRestraint());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        addCreatureReady(player2, new RazorfootGriffin());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A mixed declaration taxes only the creature attacking the player")
+    void mixedAttackTargetsTaxOnlyPlayerAttackers() {
+        harness.addToBattlefield(player1, new CollectiveRestraint());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        addCreatureReady(player2, new RazorfootGriffin());
+        addCreatureReady(player2, new RazorfootGriffin());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        declareAttackersAtTargets(player2, List.of(0, 1), Map.of(1, planeswalker.getId()));
+        resolveCombat(player2);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Collective Restraint does not tax its controller's attacks")
+    void controllerCanAttackWithoutPaying() {
+        harness.addToBattlefield(player1, new CollectiveRestraint());
+        harness.addToBattlefield(player1, new Plains());
+        addCreatureReady(player1, new RazorfootGriffin());
+
+        declareAttackers(player1, List.of(2));
+        resolveCombat(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
     private void declareAttackersAtTargets(Player player, List<Integer> attackerIndices,
                                            Map<Integer, UUID> attackTargets) {
         harness.forceActivePlayer(player);

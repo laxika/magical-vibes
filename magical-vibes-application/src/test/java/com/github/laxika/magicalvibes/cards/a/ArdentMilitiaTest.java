@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArdentMilitia.class})
 class ArdentMilitiaTest extends BaseCardTest {
@@ -19,5 +20,31 @@ class ArdentMilitiaTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(militia.isTapped()).isFalse();
+    }
+
+    @Test
+    void vigilanceDoesNotAllowAttackingWhileTapped() {
+        Permanent militia = addCreatureReady(player1, new ArdentMilitia());
+        militia.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(militia.isTapped()).isTrue();
+        assertThat(militia.isAttacking()).isFalse();
+    }
+
+    @Test
+    void vigilanceDoesNotAllowAttackingWithSummoningSickness() {
+        Permanent militia = addCreatureReady(player1, new ArdentMilitia());
+        militia.setSummoningSick(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(militia.isTapped()).isFalse();
+        assertThat(militia.isAttacking()).isFalse();
     }
 }

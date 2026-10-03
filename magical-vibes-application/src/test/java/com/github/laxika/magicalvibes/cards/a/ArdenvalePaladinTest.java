@@ -42,4 +42,46 @@ class ArdenvalePaladinTest extends BaseCardTest {
         Permanent paladin = findPermanent(player1, "Ardenvale Paladin");
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+    @Test
+    @DisplayName("Two white mana is below the adamant threshold")
+    void doesNotEnterWithCounterWhenTwoWhiteManaIsSpent() {
+        harness.setHand(player1, List.of(new ArdenvalePaladin()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent paladin = findPermanent(player1, "Ardenvale Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Four white mana still gives exactly one counter without a triggered ability")
+    void entersWithOneCounterWhenFourWhiteManaIsSpent() {
+        harness.setHand(player1, List.of(new ArdenvalePaladin()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent paladin = findPermanent(player1, "Ardenvale Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("White mana added after casting does not satisfy adamant")
+    void whiteManaInPoolDoesNotCountAsManaSpent() {
+        harness.setHand(player1, List.of(new ArdenvalePaladin()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.passBothPriorities();
+
+        Permanent paladin = findPermanent(player1, "Ardenvale Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }

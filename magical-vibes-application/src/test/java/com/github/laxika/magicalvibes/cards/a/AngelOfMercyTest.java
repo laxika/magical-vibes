@@ -33,4 +33,35 @@ class AngelOfMercyTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 11);
     }
+
+    @Test
+    @DisplayName("Entering does not gain life until the triggered ability resolves")
+    void lifeGainWaitsForTriggerResolution() {
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+
+        harness.enterBattlefieldAndReturn(player1, new AngelOfMercy());
+
+        harness.assertLife(player1, 8);
+        harness.assertLife(player2, 17);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Each Angel entering grants life only to its own controller")
+    void multipleAngelsHaveIndependentTriggers() {
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+
+        harness.enterBattlefieldAndReturn(player1, new AngelOfMercy());
+        harness.enterBattlefieldAndReturn(player2, new AngelOfMercy());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 20);
+    }
 }

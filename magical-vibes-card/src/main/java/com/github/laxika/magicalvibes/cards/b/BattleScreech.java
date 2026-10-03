@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "DMR", collectorNumber = "2")
 @CardRegistration(set = "CMM", collectorNumber = "17")
 @CardRegistration(set = "MOC", collectorNumber = "174")
+@CardRegistration(set = "ONC", collectorNumber = "59")
 public class BattleScreech extends Card {
 
     public BattleScreech() {

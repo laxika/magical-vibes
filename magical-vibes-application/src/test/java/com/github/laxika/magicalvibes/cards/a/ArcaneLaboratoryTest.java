@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,7 +17,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArcaneLaboratory.class, GrizzlyBears.class, MinimusContainment.class})
+@CardUsed({ArcaneLaboratory.class, GrizzlyBears.class, MinimusContainment.class,
+        Counterspell.class, Disenchant.class, Unsummon.class})
 class ArcaneLaboratoryTest extends BaseCardTest {
 
     @Test
@@ -94,9 +98,8 @@ class ArcaneLaboratoryTest extends BaseCardTest {
     @DisplayName("The limit stops applying when Arcane Laboratory loses all abilities")
     void losesLimitWhenAbilitiesAreRemoved() {
         Permanent arcaneLaboratory = harness.addToBattlefieldAndReturn(player1, new ArcaneLaboratory());
-        Permanent containment = new Permanent(new MinimusContainment());
+        Permanent containment = harness.addToBattlefieldAndReturn(player1, new MinimusContainment());
         containment.setAttachedTo(arcaneLaboratory.getId());
-        gd.playerBattlefields.get(player1.getId()).add(containment);
 
         assertThat(gqs.hasLostAllAbilities(gd, arcaneLaboratory)).isTrue();
 
@@ -126,12 +129,13 @@ class ArcaneLaboratoryTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
-        harness.clearPriorityPassed();
-        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
     }
 
     @Test
@@ -184,6 +188,86 @@ class ArcaneLaboratoryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Spells cast before Arcane Laboratory enters count toward its limit")
+    void countsSpellsCastBeforeEntering() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new ArcaneLaboratory(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A countered spell still uses the player's spell allowance")
+    void counteredSpellStillCounts() {
+        harness.addToBattlefield(player1, new ArcaneLaboratory());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, gd.stack.getFirst().getCard().getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Destroying Arcane Laboratory allows further spells in the same turn")
+    void destroyingLaboratoryRemovesLimit() {
+        Permanent laboratory = harness.addToBattlefieldAndReturn(player1, new ArcaneLaboratory());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, laboratory.getId());
+
+        harness.assertInGraveyard(player1, "Arcane Laboratory");
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Each player gets a fresh spell allowance on the opponent's turn")
+    void resetsAllowanceOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new ArcaneLaboratory());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new Unsummon(), new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+
+        harness.ensurePriority(player1);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player1, "Grizzly Bears")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

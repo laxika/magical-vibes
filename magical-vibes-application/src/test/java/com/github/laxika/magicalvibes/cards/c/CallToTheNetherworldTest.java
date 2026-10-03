@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
-import com.github.laxika.magicalvibes.cards.c.CorpulentCorpse;
 import com.github.laxika.magicalvibes.cards.s.Smallpox;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -82,8 +81,7 @@ class CallToTheNetherworldTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
 
-        harness.castSorcery(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -107,8 +105,7 @@ class CallToTheNetherworldTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
 
-        harness.castSorcery(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -119,5 +116,50 @@ class CallToTheNetherworldTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(call.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(call.getId()));
+    }
+
+    @Test
+    @DisplayName("Does not return another card when its target leaves the graveyard")
+    void doesNotRetargetWhenTargetLeavesGraveyard() {
+        Card target = new CorpulentCorpse();
+        Card other = new CorpulentCorpse();
+        CallToTheNetherworld call = new CallToTheNetherworld();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(call));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactlyInAnyOrder(other.getId(), call.getId());
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Madness puts the card into the graveyard when no legal target exists")
+    void madnessCannotCastWithoutLegalTarget() {
+        CallToTheNetherworld call = new CallToTheNetherworld();
+        harness.setHand(player1, List.of(call));
+        harness.setHand(player2, List.of(new Smallpox()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.findExiledCard(call.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(call.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(call.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

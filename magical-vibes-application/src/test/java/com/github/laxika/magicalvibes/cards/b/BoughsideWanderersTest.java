@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -29,11 +28,7 @@ class BoughsideWanderersTest extends BaseCardTest {
         Card forest = new Forest();
         Card island = new Island();
         harness.setLibrary(player1, List.of(permanent, instant, forest, island));
-        harness.setHand(player1, List.of(new BoughsideWanderers()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BoughsideWanderers(), "{4}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -77,6 +72,96 @@ class BoughsideWanderersTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.playLand(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(wanderers.getEffectivePower()).isEqualTo(4);
+        assertThat(wanderers.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    void mayDeclinePermanentAndOnlyBottomTheTopFour() {
+        Card permanent = new BoughsideWanderers();
+        Card forest = new Forest();
+        Card island = new Island();
+        Card instant = new Shock();
+        Card untouched = new Forest();
+        harness.setLibrary(player1, List.of(permanent, forest, island, instant, untouched));
+        harness.castFromHand(player1, new BoughsideWanderers(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 5))
+                .containsExactlyInAnyOrder(permanent, forest, island, instant);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void mayTakeLandFromLibraryWithFewerThanFourCards() {
+        Card forest = new Forest();
+        Card instant = new Shock();
+        harness.setLibrary(player1, List.of(forest, instant));
+        harness.castFromHand(player1, new BoughsideWanderers(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(instant);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void noPermanentCardsReturnsAllLookedAtCardsToBottom() {
+        Card first = new Shock();
+        Card second = new Shock();
+        Card third = new Shock();
+        Card fourth = new Shock();
+        Card untouched = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, untouched));
+        harness.castFromHand(player1, new BoughsideWanderers(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 5))
+                .containsExactlyInAnyOrder(first, second, third, fourth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryDoesNotRequireAChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new BoughsideWanderers(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof BoughsideWanderers);
+    }
+
+    @Test
+    void multipleLandsEnteringWithoutBeingPlayedGiveCumulativeBoosts() {
+        Permanent wanderers = harness.addToBattlefieldAndReturn(player1, new BoughsideWanderers());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new Island());
+        harness.passBothPriorities();
+
+        assertThat(wanderers.getEffectivePower()).isEqualTo(8);
+        assertThat(wanderers.getEffectiveToughness()).isEqualTo(8);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(wanderers.getEffectivePower()).isEqualTo(4);

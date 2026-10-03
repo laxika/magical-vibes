@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeroInTraining;
 import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
+import com.github.laxika.magicalvibes.cards.v.VeteransArmaments;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,11 +12,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CaptainAmericaUnbowed.class, HeroInTraining.class, GrizzlyBears.class, MetathranSoldier.class})
+@CardUsed({CaptainAmericaUnbowed.class, HeroInTraining.class, GrizzlyBears.class,
+        MetathranSoldier.class, VeteransArmaments.class})
 class CaptainAmericaUnbowedTest extends BaseCardTest {
 
     @Test
@@ -28,8 +27,7 @@ class CaptainAmericaUnbowedTest extends BaseCardTest {
         Permanent opposingSoldier = harness.addToBattlefieldAndReturn(player2, new MetathranSoldier());
 
         castCaptain();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent captain = findPermanent(player1, "Captain America, Unbowed");
         assertThat(gqs.hasKeyword(gd, captain, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -45,8 +43,7 @@ class CaptainAmericaUnbowedTest extends BaseCardTest {
         Permanent soldier = harness.addToBattlefieldAndReturn(player1, new MetathranSoldier());
 
         castCaptain();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -57,9 +54,50 @@ class CaptainAmericaUnbowedTest extends BaseCardTest {
     }
 
     private void castCaptain() {
-        harness.setHand(player1, List.of(new CaptainAmericaUnbowed()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CaptainAmericaUnbowed(), "{3}{W}");
+    }
+
+    @Test
+    @CardUsed({CaptainAmericaUnbowed.class, VeteransArmaments.class})
+    @DisplayName("Noncreature Soldiers also gain indestructible")
+    void protectsNoncreatureSoldiers() {
+        castCaptain();
+        harness.passBothPriorities();
+        Permanent armaments = harness.addToBattlefieldAndReturn(player1, new VeteransArmaments());
+        Permanent opposingArmaments = harness.addToBattlefieldAndReturn(player2, new VeteransArmaments());
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, armaments, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingArmaments, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger selects Heroes when it resolves and does not protect later arrivals")
+    void selectsHeroesAtResolution() {
+        castCaptain();
+        harness.passBothPriorities();
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new HeroInTraining());
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        resolveAllTriggers();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new HeroInTraining());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        castCaptain();
+        resolveAllTriggers();
+
+        Permanent captain = findPermanent(player1, "Captain America, Unbowed");
+        assertThat(gqs.hasKeyword(gd, captain, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 }

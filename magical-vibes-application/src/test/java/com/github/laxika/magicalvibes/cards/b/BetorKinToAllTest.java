@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Set;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,10 +19,7 @@ class BetorKinToAllTest extends BaseCardTest {
     @Test
     @DisplayName("Does nothing when controlled creatures have total toughness below 10")
     void doesNothingBelowTenToughness() {
-        harness.setHand(player1, List.of(new BetorKinToAll()));
-        addBetorMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BetorKinToAll(), "{2}{W}{B}{G}");
         advanceToEndStepTrigger();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -38,10 +34,7 @@ class BetorKinToAllTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         ownCreature.tap();
         opponentCreature.tap();
-        harness.setHand(player1, List.of(new BetorKinToAll()));
-        addBetorMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BetorKinToAll(), "{2}{W}{B}{G}");
         advanceToEndStepTrigger();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -59,10 +52,7 @@ class BetorKinToAllTest extends BaseCardTest {
         }
         ownCreature.tap();
         harness.setLife(player2, 9);
-        harness.setHand(player1, List.of(new BetorKinToAll()));
-        addBetorMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BetorKinToAll(), "{2}{W}{B}{G}");
         advanceToEndStepTrigger();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -71,20 +61,96 @@ class BetorKinToAllTest extends BaseCardTest {
         harness.assertLife(player2, 4);
     }
 
-    private void addBetorMana() {
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @ParameterizedTest
+    @CsvSource({"10, true, 20", "19, true, 20", "20, false, 20", "39, false, 20", "40, false, 10"})
+    void checksExactToughnessThresholds(int toughness, boolean remainsTapped, int opponentLife) {
+        Permanent betor = harness.addToBattlefieldAndReturn(player1, new BetorKinToAll());
+        betor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, toughness - 7);
+        betor.tap();
+
+        advanceToEndStepTrigger();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(betor.isTapped()).isEqualTo(remainsTapped);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, opponentLife);
+    }
+
+    @Test
+    void doesNotTriggerBelowTenEvenWithOpposingCreatures() {
+        harness.addToBattlefield(player1, new BetorKinToAll());
+        harness.addToBattlefield(player2, new AvatarOfMight());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNothingIfToughnessFallsBelowTenBeforeResolution() {
+        Permanent betor = harness.addToBattlefieldAndReturn(player1, new BetorKinToAll());
+        betor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            assertThat(gd.stack).hasSize(1);
+            betor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void higherThresholdsUseToughnessAtResolution() {
+        Permanent betor = harness.addToBattlefieldAndReturn(player1, new BetorKinToAll());
+        betor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        betor.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            assertThat(gd.stack).hasSize(1);
+            betor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 33);
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(betor.isTapped()).isFalse();
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent betor = harness.addToBattlefieldAndReturn(player1, new BetorKinToAll());
+        betor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 33);
+        betor.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(betor.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
     }
 
     private void advanceToEndStepTrigger() {
-        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.END_STEP));
-        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.END_STEP));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            if (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            }
+        });
     }
 }

@@ -673,7 +673,7 @@ public class GraveyardTargetValidators {
         if (effect.requireManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
-        if (effect.maxManaValue() != null) {
+        if (effect.maxManaValue() != null && !effect.checkManaValueOnlyOnResolution()) {
             UUID controllerId = ctx.sourceControllerId() != null
                     ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
             int maxManaValue = amountEvaluationService.evaluate(

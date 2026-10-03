@@ -31,11 +31,9 @@ class BloodForTheBloodGodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(12);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
@@ -56,6 +54,110 @@ class BloodForTheBloodGodTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An empty hand still draws eight cards, damages only the opponent, and exiles the spell")
+    void resolvesWithEmptyHandAtFullCost() {
+        prepareMainPhase(player1);
+        harness.setHand(player1, List.of(new BloodForTheBloodGod()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 12);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof BloodForTheBloodGod);
+    }
+
+    @Test
+    @DisplayName("Deaths of creatures controlled by either player each reduce the cost")
+    void countsDeathsOnBothSides() {
+        prepareMainPhase(player1);
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new BloodForTheBloodGod()));
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveInstant(player1, 0, ownBears.getId());
+        harness.castAndResolveInstant(player1, 0, opposingBears.getId());
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player2, 12);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof BloodForTheBloodGod);
+    }
+
+    @Test
+    @DisplayName("More than eight deaths remove all generic mana but do not reduce colored requirements")
+    void excessDeathsDoNotReduceColoredMana() {
+        prepareMainPhase(player1);
+        harness.addMana(player1, ManaColor.RED, 10);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        for (int i = 0; i < 9; i++) {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new Shock()));
+            harness.castAndResolveInstant(player1, 0, bears.getId());
+        }
+        harness.setHand(player1, List.of(new BloodForTheBloodGod()));
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player2, 12);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof BloodForTheBloodGod);
+    }
+
+    @Test
+    @DisplayName("Discards every remaining card before drawing, without discarding the opponent's hand")
+    void discardsEntireOwnHandBeforeDrawing() {
+        prepareMainPhase(player1);
+        Shock discardedShock = new Shock();
+        GrizzlyBears discardedBears = new GrizzlyBears();
+        Shock opposingCard = new Shock();
+        harness.setHand(player1, List.of(new BloodForTheBloodGod(), discardedShock, discardedBears));
+        harness.setHand(player2, List.of(opposingCard));
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(discardedShock, discardedBears);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8)
+                .doesNotContain(discardedShock, discardedBears);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opposingCard);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 12);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof BloodForTheBloodGod);
     }
 
     private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player player) {

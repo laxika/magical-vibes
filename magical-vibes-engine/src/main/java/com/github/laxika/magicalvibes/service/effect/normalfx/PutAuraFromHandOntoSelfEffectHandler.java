@@ -25,6 +25,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final AuraAttachmentService auraAttachmentService;
+    private final com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,16 +36,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
 
-        Permanent self = null;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (p.getCard().getId().equals(entry.getCard().getId())) {
-                    self = p;
-                    break;
-                }
-            }
-        }
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
         if (self == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no longer on the battlefield)."));

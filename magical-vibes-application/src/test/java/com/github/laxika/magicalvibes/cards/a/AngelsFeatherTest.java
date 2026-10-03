@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({AngelsFeather.class, GrizzlyBears.class, SuntailHawk.class})
 class AngelsFeatherTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Angel's Feather puts it on the stack as an artifact spell")
     void castingPutsItOnStack() {
@@ -31,7 +29,7 @@ class AngelsFeatherTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Angel's Feather");
+        assertThat(entry.getCard()).isInstanceOf(AngelsFeather.class);
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -47,8 +45,6 @@ class AngelsFeatherTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Angel's Feather");
     }
 
-    // ===== Triggered ability: controller casts white spell =====
-
     @Test
     @DisplayName("Controller casts white spell, accepts may ability, gains 1 life")
     void controllerCastsWhiteSpellAndAccepts() {
@@ -56,18 +52,12 @@ class AngelsFeatherTest extends BaseCardTest {
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
         harness.castFromHand(player1, new SuntailHawk(), "{W}");
 
-        // Player1 should be prompted for may ability
+        harness.passBothPriorities();
+
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Angel's Feather"));
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -78,6 +68,7 @@ class AngelsFeatherTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelsFeather());
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
         harness.castFromHand(player1, new SuntailHawk(), "{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -92,8 +83,6 @@ class AngelsFeatherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Triggered ability: opponent casts white spell =====
-
     @Test
     @DisplayName("Opponent casts white spell, controller accepts may ability, gains 1 life")
     void opponentCastsWhiteSpellControllerAccepts() {
@@ -107,7 +96,8 @@ class AngelsFeatherTest extends BaseCardTest {
         int opponentLifeBefore = harness.getGameData().playerLifeTotals.get(player2.getId());
         harness.castFromHand(player2, new SuntailHawk(), "{W}");
 
-        // Player1 (controller of Angel's Feather) should be prompted
+        harness.passBothPriorities();
+
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
@@ -119,8 +109,6 @@ class AngelsFeatherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
-
-    // ===== Non-white spell does NOT trigger =====
 
     @Test
     @DisplayName("Non-white spell does not trigger Angel's Feather")
@@ -136,8 +124,6 @@ class AngelsFeatherTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Multiple feathers =====
-
     @Test
     @DisplayName("Multiple Angel's Feathers each trigger independently")
     void multipleFeathersTriggerIndependently() {
@@ -146,11 +132,6 @@ class AngelsFeatherTest extends BaseCardTest {
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
         harness.castFromHand(player1, new SuntailHawk(), "{W}");
 
-        // First feather prompt
-        harness.handleMayAbilityChosen(player1, true);
-        // Second feather prompt
-        harness.handleMayAbilityChosen(player1, true);
-
         GameData gd = harness.getGameData();
         // Two triggered abilities on the stack (plus the creature spell)
         long triggeredCount = gd.stack.stream()
@@ -158,13 +139,14 @@ class AngelsFeatherTest extends BaseCardTest {
                 .count();
         assertThat(triggeredCount).isEqualTo(2);
 
-        // Resolve all
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
-
-    // ===== No trigger when not on battlefield =====
 
     @Test
     @DisplayName("Angel's Feather does not trigger when not on the battlefield")
@@ -172,7 +154,6 @@ class AngelsFeatherTest extends BaseCardTest {
         // Angel's Feather is in the hand, not on the battlefield
         harness.setHand(player1, List.of(new AngelsFeather(), new SuntailHawk()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-
         harness.castCreature(player1, 1);
 
         GameData gd = harness.getGameData();
@@ -180,5 +161,51 @@ class AngelsFeatherTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
+
+    @Test
+    @DisplayName("White spell trigger goes on the stack before the life-gain choice")
+    void lifeGainChoiceWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new AngelsFeather());
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new SuntailHawk(), "{W}");
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, 21);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("A white creature entering without being cast does not trigger")
+    void enteringWithoutCastingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AngelsFeather());
+        harness.setLife(player1, 20);
+        harness.enterBattlefieldAndReturn(player1, new SuntailHawk());
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Casting a colorless artifact does not trigger an existing Feather")
+    void colorlessSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AngelsFeather());
+        harness.castFromHand(player1, new AngelsFeather(), "{2}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+    }
+
 }
 

@@ -103,4 +103,66 @@ class CephalidInkshrouderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Discard is paid before resolution and the ability needs neither tapping nor mana")
+    void discardIsPaidBeforeResolution() {
+        Permanent inkshrouder = harness.addToBattlefieldAndReturn(player1, new CephalidInkshrouder());
+        inkshrouder.setSummoningSick(true);
+        inkshrouder.setTapped(true);
+        harness.setHand(player1, List.of(new GuidedStrike()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Guided Strike");
+        harness.assertNotInHand(player1, "Guided Strike");
+        assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isFalse();
+        assertThat(inkshrouder.isCantBeBlocked()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isTrue();
+        assertThat(inkshrouder.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated again while this creature has shroud")
+    void canActivateAgainWithShroud() {
+        Permanent inkshrouder = harness.addToBattlefieldAndReturn(player1, new CephalidInkshrouder());
+        harness.setHand(player1, List.of(new SuntailHawk(), new GuidedStrike()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Guided Strike");
+        assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isTrue();
+        assertThat(inkshrouder.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gaining shroud in response makes an opponent's targeted spell fail to resolve")
+    void shroudInvalidatesSpellAlreadyOnStack() {
+        Permanent inkshrouder = harness.addToBattlefieldAndReturn(player1, new CephalidInkshrouder());
+        harness.setHand(player1, List.of(new SuntailHawk()));
+        harness.setHand(player2, List.of(new GuidedStrike()));
+        harness.setLibrary(player2, List.of(new SuntailHawk()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castInstant(player2, 0, inkshrouder.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, inkshrouder, Keyword.FIRST_STRIKE)).isFalse();
+        harness.assertInGraveyard(player2, "Guided Strike");
+        harness.assertNotInHand(player2, "Suntail Hawk");
+    }
 }

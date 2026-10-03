@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BreathOfFire;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,8 +28,7 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
 
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(6);
@@ -43,8 +43,7 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -65,5 +64,49 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature without affecting another creature")
+    void canTargetOpponentsCreature() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ConfidenceFromStrength()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, opposingBear.getId());
+
+        assertThat(opposingBear.getEffectivePower()).isEqualTo(6);
+        assertThat(opposingBear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(opposingBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
+        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @CardUsed(BreathOfFire.class)
+    @DisplayName("Does not apply either effect when its target dies before resolution")
+    void targetDiesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ConfidenceFromStrength()));
+        harness.setHand(player2, List.of(new BreathOfFire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Confidence from Strength");
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 }

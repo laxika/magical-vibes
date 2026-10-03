@@ -13,12 +13,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AetherHelix extends Card {
 
     public AetherHelix() {
+        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
                 .build());
 
-        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 }

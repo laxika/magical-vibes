@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Avizoa.class)
+@CardUsed({Avizoa.class})
 class AvizoaTest extends BaseCardTest {
 
     @Test
@@ -92,13 +92,8 @@ class AvizoaTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        advanceTurn();
-        advanceTurn();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
         harness.passBothPriorities();
@@ -106,6 +101,76 @@ class AvizoaTest extends BaseCardTest {
         assertThat(avizoa.getEffectivePower()).isEqualTo(4);
         assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapped creatures with summoning sickness can activate the free ability")
+    void canActivateWhileTappedWithSummoningSickness() {
+        harness.addToBattlefield(player1, new Avizoa());
+        Permanent avizoa = findPermanent(player1, "Avizoa");
+        avizoa.setSummoningSick(true);
+        avizoa.tap();
+
+        harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
+        harness.passBothPriorities();
+
+        assertThat(avizoa.isTapped()).isTrue();
+        assertThat(avizoa.getEffectivePower()).isEqualTo(4);
+        assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The activation limit applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent avizoa = addCreatureReady(player1, new Avizoa());
+
+        harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(avizoa), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(avizoa.getEffectivePower()).isEqualTo(4);
+        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Separate copies can each activate and skip two successive untap steps")
+    void separateCopiesQueueSeparateUntapSkips() {
+        Permanent first = addCreatureReady(player1, new Avizoa());
+        Permanent second = addCreatureReady(player1, new Avizoa());
+        Permanent opponent = addCreatureReady(player2, new Avizoa());
+        first.tap();
+        second.tap();
+        opponent.tap();
+
+        harness.activateAbility(player1, battlefieldIndex(first), null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(second), null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(opponent.isTapped()).isFalse();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
     }
 
     private int battlefieldIndex(Permanent permanent) {

@@ -72,4 +72,48 @@ class AgentsOfSHIELDTest extends BaseCardTest {
         assertThat(agents.getPowerModifier()).isEqualTo(0);
         assertThat(agents.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Each copy boosts the lone attacker")
+    void multipleCopiesBoostTheLoneAttacker() {
+        Permanent attacker = addCreatureReady(player1, new AgentsOfSHIELD());
+        Permanent otherAgents = addCreatureReady(player1, new AgentsOfSHIELD());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+        assertThat(otherAgents.getPowerModifier()).isZero();
+        assertThat(otherAgents.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's lone attacker does not receive the boost")
+    void opponentAttackingAloneDoesNotTrigger() {
+        addCreatureReady(player1, new AgentsOfSHIELD());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The boost resolves even after Agents leaves the battlefield")
+    void removingSourceDoesNotStopTheBoost() {
+        Permanent agents = addCreatureReady(player1, new AgentsOfSHIELD());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, agents));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
 }

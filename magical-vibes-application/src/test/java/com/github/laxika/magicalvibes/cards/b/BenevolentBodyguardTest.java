@@ -8,12 +8,40 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BenevolentBodyguard.class, BorderPatrol.class, KrosanVerge.class})
 class BenevolentBodyguardTest extends BaseCardTest {
+
+    @ParameterizedTest
+    @EnumSource(value = CardColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("A tapped, summoning-sick bodyguard can sacrifice itself to grant any of the five colors")
+    void tappedSummoningSickBodyguardCanGrantEachColor(CardColor color) {
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player1, new BenevolentBodyguard());
+        bodyguard.setSummoningSick(true);
+        bodyguard.tap();
+        Permanent target = addCreatureReady(player1, new BorderPatrol());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Benevolent Bodyguard");
+        harness.assertInGraveyard(player1, "Benevolent Bodyguard");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, target, color)).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, color.name());
+
+        for (CardColor candidate : new CardColor[]{CardColor.WHITE, CardColor.BLUE,
+                CardColor.BLACK, CardColor.RED, CardColor.GREEN}) {
+            assertThat(gqs.hasProtectionFrom(gd, target, candidate)).isEqualTo(candidate == color);
+        }
+    }
 
     @Test
     @DisplayName("Sacrificing this creature grants chosen-color protection to a creature you control")

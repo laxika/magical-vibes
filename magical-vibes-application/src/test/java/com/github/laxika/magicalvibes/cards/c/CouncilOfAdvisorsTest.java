@@ -30,4 +30,27 @@ class CouncilOfAdvisorsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore);
         harness.assertInHand(player1, "Forest");
     }
+
+    @Test
+    @DisplayName("ETB draws exactly one card for its controller, not the other player")
+    void opponentControllerDrawsExactlyOneCard() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new CouncilOfAdvisors()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        Forest firstCard = new Forest();
+        Forest secondCard = new Forest();
+        Forest otherPlayersCard = new Forest();
+        harness.setLibrary(player2, List.of(firstCard, secondCard));
+        harness.setLibrary(player1, List.of(otherPlayersCard));
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherPlayersCard);
+        assertThat(gd.stack).isEmpty();
+    }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -78,11 +77,95 @@ class CloakAndDaggerEntwinedTest extends BaseCardTest {
     }
 
     private void castCloakAndDagger() {
-        harness.setHand(player1, List.of(new CloakAndDaggerEntwined()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CloakAndDaggerEntwined(), "{1}{W}{B}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    void handCardReturnsToHandWhenSourceLeaves() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        castCloakAndDagger();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Exile a nonland card from their hand.");
+        harness.handleCardChosen(player1, 0);
+
+        Permanent source = findPermanent(player1, "Cloak and Dagger, Entwined");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(shock);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(shock);
+    }
+
+    @Test
+    void mayDeclineExileEvenWhenBothChoicesAreAvailable() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castCloakAndDagger();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Exile a nonland card from their hand.");
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(shock);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void landsCannotBeChosenForHandExile() {
+        harness.setHand(player2, List.of(new Forest(), new Shock()));
+        castCloakAndDagger();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Exile a nonland card from their hand.");
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(RuntimeException.class);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInHand(player2, "Shock");
+    }
+
+    @Test
+    void noHandCardIsExiledIfSourceLeavesBeforeTriggerResolves() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        castCloakAndDagger();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent source = findPermanent(player1, "Cloak and Dagger, Entwined");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            harness.handleListChoice(player1, "Exile a nonland card from their hand.");
+        }
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.RevealedHandChoice) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(shock);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(shock);
+    }
+
+    @Test
+    void noCreatureIsExiledIfSourceLeavesBeforeTriggerResolves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castCloakAndDagger();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, bear.getId());
+        Permanent source = findPermanent(player1, "Cloak and Dagger, Entwined");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            harness.handleListChoice(player1, "Exile the chosen creature.");
+        }
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }

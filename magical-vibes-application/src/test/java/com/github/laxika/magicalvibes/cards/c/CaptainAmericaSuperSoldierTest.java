@@ -17,12 +17,12 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CaptainAmericaSuperSoldier.class, AgentMariaHill.class, GoblinHero.class, Shock.class, Murder.class})
+@CardUsed({CaptainAmericaSuperSoldier.class, AgentMariaHill.class, GoblinHero.class, Shock.class, Murder.class, Banefire.class})
 class CaptainAmericaSuperSoldierTest extends BaseCardTest {
 
     @Test
-    @CardUsed(Banefire.class)
     void unpreventableDamageRemovesOnlyOneShieldCounter() {
         Permanent captain = harness.enterBattlefieldAndReturn(player2, new CaptainAmericaSuperSoldier());
         captain.setCounterCount(CounterType.SHIELD, 2);
@@ -30,8 +30,7 @@ class CaptainAmericaSuperSoldierTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Banefire()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castSorcery(player1, 0, 5, captain.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5, captain.getId());
 
         assertThat(captain.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
         assertThat(captain.getMarkedDamage()).isEqualTo(5);
@@ -61,8 +60,7 @@ class CaptainAmericaSuperSoldierTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, captain.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, captain.getId());
 
         assertThat(captain.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(captain.getMarkedDamage()).isZero();
@@ -79,10 +77,82 @@ class CaptainAmericaSuperSoldierTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
-        harness.castInstant(player2, 0, captain.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, captain.getId());
 
         assertThat(captain.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(captain);
+    }
+
+    @Test
+    void opponentsCannotTargetControllerOrOtherHeroes() {
+        harness.enterBattlefieldAndReturn(player1, new CaptainAmericaSuperSoldier());
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new AgentMariaHill());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, hero.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
+    }
+
+    @Test
+    void controllerCanTargetTheirOwnProtectedHero() {
+        harness.enterBattlefieldAndReturn(player1, new CaptainAmericaSuperSoldier());
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new AgentMariaHill());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, hero.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hero);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(hero.getCard());
+    }
+
+    @Test
+    void opponentHeroesDoNotGainHexproof() {
+        harness.enterBattlefieldAndReturn(player1, new CaptainAmericaSuperSoldier());
+        Permanent hero = harness.addToBattlefieldAndReturn(player2, new AgentMariaHill());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, hero.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(hero);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(hero.getCard());
+        assertThat(gqs.playerHasHexproof(gd, player2.getId())).isFalse();
+    }
+
+    @Test
+    void anotherShieldKeepsHexproofActiveAfterDamage() {
+        Permanent captain = harness.enterBattlefieldAndReturn(player1, new CaptainAmericaSuperSoldier());
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new AgentMariaHill());
+        captain.setCounterCount(CounterType.SHIELD, 2);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, captain.getId());
+
+        assertThat(captain.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(captain.getMarkedDamage()).isZero();
+        assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
+        assertThat(gqs.hasKeyword(gd, hero, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    void lethalUnpreventableDamageKillsDespiteRemainingShield() {
+        Permanent captain = harness.enterBattlefieldAndReturn(player2, new CaptainAmericaSuperSoldier());
+        captain.setCounterCount(CounterType.SHIELD, 2);
+        harness.setHand(player1, List.of(new Banefire()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 5, captain.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(captain);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(captain.getCard());
     }
 }

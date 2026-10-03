@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "266")
 @CardRegistration(set = "TDC", collectorNumber = "327")
 @CardRegistration(set = "MKC", collectorNumber = "239")
+@CardRegistration(set = "BRC", collectorNumber = "163")
 @CardRegistration(set = "C18", collectorNumber = "224")
 public class SteelHellkite extends Card {
 

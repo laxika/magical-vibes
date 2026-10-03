@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +21,7 @@ class AnnoyedAltisaurTest extends BaseCardTest {
     void cascadeCastsLowerManaValueCardForFree() {
         harness.setHand(player1, List.of(new AnnoyedAltisaur()));
         GrizzlyBears hit = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(hit);
+        harness.setLibrary(player1, List.of(hit));
         harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castCreature(player1, 0);
@@ -32,9 +30,87 @@ class AnnoyedAltisaurTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Grizzly Bears");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
+    }
+
+    @Test
+    void cascadeSkipsEqualManaValueAndStopsAtFirstHit() {
+        AnnoyedAltisaur skipped = new AnnoyedAltisaur();
+        GrizzlyBears hit = new GrizzlyBears();
+        GrizzlyBears untouched = new GrizzlyBears();
+        harness.setHand(player1, List.of(new AnnoyedAltisaur()));
+        harness.setLibrary(player1, List.of(skipped, hit, untouched));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(hit);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, skipped);
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
+        assertThat(findPermanent(player1, "Annoyed Altisaur")).isNotNull();
+    }
+
+    @Test
+    void decliningCascadeBottomsAllExiledCardsAfterUntouchedCards() {
+        AnnoyedAltisaur skipped = new AnnoyedAltisaur();
+        GrizzlyBears hit = new GrizzlyBears();
+        GrizzlyBears untouched = new GrizzlyBears();
+        harness.setHand(player1, List.of(new AnnoyedAltisaur()));
+        harness.setLibrary(player1, List.of(skipped, hit, untouched));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 3))
+                .containsExactlyInAnyOrder(skipped, hit);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Grizzly Bears")).isNull();
+        assertThat(findPermanent(player1, "Annoyed Altisaur")).isNotNull();
+    }
+
+    @Test
+    void cascadeCardsAreInExileWhileChoosingWhetherToCast() {
+        AnnoyedAltisaur skipped = new AnnoyedAltisaur();
+        GrizzlyBears hit = new GrizzlyBears();
+        harness.setHand(player1, List.of(new AnnoyedAltisaur()));
+        harness.setLibrary(player1, List.of(skipped, hit));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(skipped, hit);
+    }
+
+    @Test
+    void cascadeWithoutQualifyingCardReturnsEntireLibrary() {
+        AnnoyedAltisaur first = new AnnoyedAltisaur();
+        AnnoyedAltisaur second = new AnnoyedAltisaur();
+        harness.setHand(player1, List.of(new AnnoyedAltisaur()));
+        harness.setLibrary(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Annoyed Altisaur")).isNotNull();
     }
 }

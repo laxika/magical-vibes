@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Banshee.class, Squire.class})
 class BansheeTest extends BaseCardTest {
@@ -69,5 +70,80 @@ class BansheeTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    void zeroXDealsNoDamageButStillTapsSource() {
+        var banshee = addCreatureReady(player1, new Banshee());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 0, player2.getId());
+
+        assertThat(banshee.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void evenXDealsEqualHalves() {
+        addCreatureReady(player1, new Banshee());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 4, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void targetingControllerDealsBothHalvesToThatPlayer() {
+        addCreatureReady(player1, new Banshee());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.activateAbility(player1, 0, 5, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    void abilityStillResolvesAfterSourceLeavesBattlefield() {
+        addCreatureReady(player1, new Banshee());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.activateAbility(player1, 0, 5, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new Banshee());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new Banshee());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

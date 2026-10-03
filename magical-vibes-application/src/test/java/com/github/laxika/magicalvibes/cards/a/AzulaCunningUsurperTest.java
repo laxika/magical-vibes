@@ -44,7 +44,7 @@ class AzulaCunningUsurperTest extends BaseCardTest {
     @Test
     @DisplayName("Firebending adds red mana through combat and empties it afterward")
     void firebendingAddsManaUntilEndOfCombat() {
-        Permanent azula = addReadyAzula();
+        Permanent azula = addCreatureReady(player1, new AzulaCunningUsurper());
 
         declareAttackers(List.of(0));
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -97,10 +97,78 @@ class AzulaCunningUsurperTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castFromExile(player2, exiledCard.getId()))
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledCard.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentChoosesBothCardsAndResolutionContinuesInOrder() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Card bears = new GrizzlyBears();
+        Permanent bearPermanent = harness.addToBattlefieldAndReturn(player2, bears);
+        Card graveyardSpider = new GiantSpider();
+        Card graveyardBears = new GrizzlyBears();
+        Card land = new Island();
+        harness.setGraveyard(player2, List.of(land, graveyardSpider, graveyardBears));
+
+        Permanent azula = castAzula(player2.getId());
+        harness.handlePermanentChosen(player2, bearPermanent.getId());
+        harness.handleGraveyardCardChosen(player2, 2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(spider);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land, graveyardSpider);
+        assertThat(gd.getCardsExiledByPermanent(azula.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(bears.getId(), graveyardBears.getId());
+    }
+
+    @Test
+    void exilesGraveyardCardEvenWithoutCreature() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+
+        Permanent azula = castAzula(player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(azula.getId()))
+                .extracting(Card::getId).containsExactly(bears.getId());
+    }
+
+    @Test
+    void exilesCreatureWhenGraveyardContainsOnlyLands() {
+        Card spider = new GiantSpider();
+        Card land = new Island();
+        harness.addToBattlefield(player2, spider);
+        harness.setGraveyard(player2, List.of(land));
+
+        Permanent azula = castAzula(player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land);
+        assertThat(gd.getCardsExiledByPermanent(azula.getId()))
+                .extracting(Card::getId).containsExactly(spider.getId());
+    }
+
+    @Test
+    void mayCastBothTrackedCardsDuringSameTurn() {
+        Card spider = new GiantSpider();
+        Card bears = new GrizzlyBears();
+        harness.addToBattlefield(player2, spider);
+        harness.setGraveyard(player2, List.of(bears));
+        castAzula(player2.getId());
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castFromExile(player1, spider.getId());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(spider.getId(), bears.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private Permanent castAzula(java.util.UUID targetPlayerId) {
@@ -118,11 +186,5 @@ class AzulaCunningUsurperTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(azulaCard.getId()))
                 .findFirst()
                 .orElseThrow();
-    }
-
-    private Permanent addReadyAzula() {
-        Permanent azula = harness.addToBattlefieldAndReturn(player1, new AzulaCunningUsurper());
-        azula.setSummoningSick(false);
-        return azula;
     }
 }

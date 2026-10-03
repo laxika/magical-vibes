@@ -92,4 +92,50 @@ class CharRumblerTest extends BaseCardTest {
     private Permanent addReadyCharRumbler(Player player) {
         return addCreatureReady(player, new CharRumbler());
     }
+
+    @Test
+    @DisplayName("Negative power deals no combat damage in either damage step")
+    void negativePowerDealsNoCombatDamage() {
+        addReadyCharRumbler(player1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("One activation raises negative power to zero and still deals no damage")
+    void singleBoostDealsNoCombatDamage() {
+        addReadyCharRumbler(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick creatures can activate the ability, boosting only its source")
+    void abilityDoesNotRequireTappingOrHaste() {
+        Permanent source = addReadyCharRumbler(player1);
+        Permanent other = addReadyCharRumbler(player1);
+        source.setTapped(true);
+        source.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(source.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
 }

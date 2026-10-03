@@ -28,8 +28,7 @@ class ComeuppanceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
@@ -64,8 +63,7 @@ class ComeuppanceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         harness.assertLife(player1, 20);
@@ -78,7 +76,6 @@ class ComeuppanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Comeuppance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }

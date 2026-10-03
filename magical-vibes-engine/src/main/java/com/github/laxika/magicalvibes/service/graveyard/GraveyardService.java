@@ -134,7 +134,7 @@ public class GraveyardService {
      * returned list; everyone else ignores it.
      */
     public List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
-        return resolveMillPlayer(gameData, targetPlayerId, count, false);
+        return resolveMillPlayer(gameData, targetPlayerId, count, false, false);
     }
 
     /**
@@ -143,11 +143,16 @@ public class GraveyardService {
      * replacement effect.
      */
     public List<Card> resolveMillPlayerIncludingExiled(GameData gameData, UUID targetPlayerId, int count) {
-        return resolveMillPlayer(gameData, targetPlayerId, count, true);
+        return resolveMillPlayer(gameData, targetPlayerId, count, true, false);
+    }
+
+    /** Returns every card in the mill event, including cards moved elsewhere by replacement effects. */
+    public List<Card> resolveMillPlayerAndReturnAllMilledCards(GameData gameData, UUID targetPlayerId, int count) {
+        return resolveMillPlayer(gameData, targetPlayerId, count, true, true);
     }
 
     private List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count,
-                                         boolean includeCardsDivertedToExile) {
+                                         boolean includeCardsDivertedToExile, boolean includeAllMilledCards) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         gameData.lastMilledCardColorSymbols.clear();
         int additionalCards = 0;
@@ -241,6 +246,9 @@ public class GraveyardService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} triggers on being milled", gameData.id, card.getName());
             }
+        }
+        if (includeAllMilledCards) {
+            return milledCards;
         }
         if (!includeCardsDivertedToExile) {
             return cardsEnteredGraveyard;
@@ -1764,7 +1772,8 @@ public class GraveyardService {
                 }
                 effect = conditional.wrapped();
             }
-            CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard);
+            CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard,
+                    dyingPermanent);
             if (materializedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || materializedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || materializedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -1803,9 +1812,14 @@ public class GraveyardService {
      * that card" ability (Unscythe) loses the stack entry's triggering-card id once wrapped as a may
      * ability, so the dying card id is bound onto the wrapped effect here instead.
      */
-    private CardEffect materializeDamagedCreatureDiesEffect(CardEffect effect, Card dyingCreatureCard) {
+    private CardEffect materializeDamagedCreatureDiesEffect(CardEffect effect, Card dyingCreatureCard,
+                                                            Permanent dyingPermanent) {
         if (effect instanceof GainLifeEqualToToughnessEffect) {
-            return new GainLifeEffect(dyingCreatureCard.getToughness());
+            int toughness = dyingPermanent != null && dyingPermanent.getLastKnownToughness() != null
+                    ? dyingPermanent.getLastKnownToughness()
+                    : dyingPermanent != null ? dyingPermanent.getEffectiveToughness()
+                    : dyingCreatureCard.getToughness() != null ? dyingCreatureCard.getToughness() : 0;
+            return new GainLifeEffect(Math.max(0, toughness));
         }
         if (effect instanceof MayEffect may && may.wrapped() instanceof DyingCreatureCardAwareEffect aware) {
             return new MayEffect(aware.boundToDyingCard(dyingCreatureCard.getId()), may.prompt());

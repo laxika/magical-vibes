@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,32 +21,27 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AscendantDustspeaker.class, GrizzlyBears.class, Shock.class})
 class AscendantDustspeakerTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
-
-    // ===== ETB +1/+1 counter =====
 
     @Test
     @DisplayName("ETB puts a +1/+1 counter on another creature you control")
     void etbPutsCounterOnAnotherCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new AscendantDustspeaker()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, bearsId, null);
+        harness.castCreature(player1, 0, bears.getId());
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(bearsId))
-                .findFirst().orElseThrow();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -76,8 +72,6 @@ class AscendantDustspeakerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ascendant Dustspeaker");
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Beginning of combat graveyard exile =====
 
     @Test
     @DisplayName("Beginning of combat exiles chosen card from opponent's graveyard")
@@ -156,5 +150,77 @@ class AscendantDustspeakerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Combat trigger can select own graveyard when both graveyards have cards")
+    void selectsOwnGraveyardWhenBothHaveCards() {
+        Card ownCard = new AscendantDustspeaker();
+        Card opponentCard = new AscendantDustspeaker();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.addToBattlefield(player1, new AscendantDustspeaker());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    @DisplayName("Combat trigger does not exile a target that has left the graveyard")
+    void targetLeavesGraveyardBeforeResolution() {
+        Card target = new AscendantDustspeaker();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player1, new AscendantDustspeaker());
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Ascendant Dustspeaker");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB cannot put a counter on an opponent's creature or itself")
+    void opponentCreatureIsNotAnEtbTarget() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AscendantDustspeaker());
+        harness.setHand(player1, List.of(new AscendantDustspeaker()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ascendant Dustspeaker");
+        assertThat(gd.stack).isEmpty();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat trigger still exiles its target after the source leaves the battlefield")
+    void combatTriggerResolvesWithoutSource() {
+        Card target = new AscendantDustspeaker();
+        Card source = new AscendantDustspeaker();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player1, source);
+
+        advanceToCombat(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(source));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
     }
 }

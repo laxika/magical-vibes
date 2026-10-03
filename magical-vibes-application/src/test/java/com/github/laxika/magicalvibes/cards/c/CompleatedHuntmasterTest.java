@@ -19,7 +19,7 @@ class CompleatedHuntmasterTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another creature incubates three")
     void sacrificesCreatureAndIncubatesThree() {
-        Permanent huntmaster = addReadyHuntmaster();
+        Permanent huntmaster = addCreatureReady(player1, new CompleatedHuntmaster());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -35,7 +35,7 @@ class CompleatedHuntmasterTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another artifact incubates three")
     void sacrificesArtifactAndIncubatesThree() {
-        Permanent huntmaster = addReadyHuntmaster();
+        Permanent huntmaster = addCreatureReady(player1, new CompleatedHuntmaster());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -51,7 +51,7 @@ class CompleatedHuntmasterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice the Huntmaster itself")
     void requiresAnotherCreatureOrArtifact() {
-        Permanent huntmaster = addReadyHuntmaster();
+        Permanent huntmaster = addCreatureReady(player1, new CompleatedHuntmaster());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(huntmaster), null, null))
@@ -59,10 +59,70 @@ class CompleatedHuntmasterTest extends BaseCardTest {
                 .hasMessageContaining("sacrifice");
     }
 
-    private Permanent addReadyHuntmaster() {
-        Permanent huntmaster = harness.addToBattlefieldAndReturn(player1, new CompleatedHuntmaster());
-        huntmaster.setSummoningSick(false);
-        return huntmaster;
+    @Test
+    void incubatorHasCorrectFrontFace() {
+        Permanent huntmaster = addCreatureReady(player1, new CompleatedHuntmaster());
+        harness.addToBattlefield(player1, new CompleatedHuntmaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(huntmaster), null, null);
+        harness.passBothPriorities();
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        assertThat(countPermanents(player1, "Incubator")).isEqualTo(1);
+        assertThat(gqs.isArtifact(gd, incubator)).isTrue();
+        assertThat(gqs.isCreature(gd, incubator)).isFalse();
+        assertThat(incubator.isTapped()).isFalse();
+        assertThat(incubator.getCard().getSubtypes()).extracting(Enum::name).contains("INCUBATOR");
+    }
+
+    @Test
+    void incubatorTransformsImmediatelyForTwoManaAndKeepsCounters() {
+        Permanent huntmaster = addCreatureReady(player1, new CompleatedHuntmaster());
+        harness.addToBattlefield(player1, new CompleatedHuntmaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(huntmaster), null, null);
+        harness.passBothPriorities();
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, battlefieldIndex(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.isArtifact(gd, incubator)).isTrue();
+        assertThat(gqs.isCreature(gd, incubator)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, incubator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(3);
+        assertThat(incubator.getCard().getSubtypes()).extracting(Enum::name).contains("PHYREXIAN");
+        assertThat(incubator.isTapped()).isFalse();
+    }
+
+    @Test
+    void transformedIncubatorHasItsRequiredName() {
+        Permanent huntmaster = addCreatureReady(player1, new CompleatedHuntmaster());
+        harness.addToBattlefield(player1, new CompleatedHuntmaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(huntmaster), null, null);
+        harness.passBothPriorities();
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, battlefieldIndex(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.getCard().getName()).isEqualTo("Phyrexian Token");
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsPermanent() {
+        Permanent huntmaster = addCreatureReady(player1, new CompleatedHuntmaster());
+        harness.addToBattlefield(player2, new CompleatedHuntmaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(huntmaster), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sacrifice");
     }
 
     private int battlefieldIndex(Permanent permanent) {

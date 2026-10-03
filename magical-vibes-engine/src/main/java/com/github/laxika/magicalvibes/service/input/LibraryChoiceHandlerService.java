@@ -104,8 +104,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Service
 @RequiredArgsConstructor
 public class LibraryChoiceHandlerService {
+    private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -377,6 +379,20 @@ public class LibraryChoiceHandlerService {
                     throw new IllegalStateException("Invalid card index: " + cardIndex);
                 }
                 chosenCard = searchCards.get(cardIndex);
+                if (destination == LibrarySearchDestination.BATTLEFIELD && chosenCard.isAura()
+                        && !placeBattlefieldCardsSimultaneously && remainingCount == 1
+                        && !reorderRemainingToBottom && !restToGraveyard && !restToExile) {
+                    battlefieldEntryBatchSupport.begin(gameData, List.of(
+                            new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                                    battlefieldControllerId, deckOwnerId, chosenCard, Zone.LIBRARY, null)));
+                    if (shuffleAfterSelection) {
+                        LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                    }
+                    if (!gameData.interaction.isAwaitingInput()) {
+                        finishSearchAndResume(gameData);
+                    }
+                    return;
+                }
                 if (destination == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
                     gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
@@ -430,10 +446,15 @@ public class LibraryChoiceHandlerService {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
                     }
                     if (returnToHandAtEndStep) {
-                        gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                        if (librarySearch.returnToHandAtControllerEndStepId() != null) {
+                            perm.addPersistentTriggeredEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                                    com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self());
+                        } else {
+                            gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
                                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
                                 false, null, librarySearch.returnToHandAtControllerEndStepId(), null,
                                 librarySearch.returnToHandAtControllerEndStepId() != null));
+                        }
                     } else if (exileAtEndStep) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
                     }
@@ -843,6 +864,15 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
             finishSearchAndResume(gameData);
+            return;
+        }
+        if (destination == LibrarySearchDestination.BATTLEFIELD && chosenCard.isAura()
+                && !placeBattlefieldCardsSimultaneously && remainingCount == 1) {
+            battlefieldEntryBatchSupport.begin(gameData, List.of(
+                    new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                            battlefieldControllerId, deckOwnerId, chosenCard, Zone.LIBRARY, null)));
+            if (shuffleAfterSelection) LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            if (!gameData.interaction.isAwaitingInput()) finishSearchAndResume(gameData);
             return;
         }
         boolean removed = false;
@@ -2483,7 +2513,8 @@ public class LibraryChoiceHandlerService {
                                 card, pick.filter(), null, gameData, playerId)
                         : !pick.basicOnly()
                                 || (card.hasType(CardType.LAND)
-                                && card.getSupertypes().contains(CardSupertype.BASIC)))
+                                && gameQueryService.cardHasSupertype(
+                                card, CardSupertype.BASIC, gameData, playerId)))
                 .filter(card -> pick.subtype() == null || card.getSubtypes().contains(pick.subtype()))
                 .toList();
 
@@ -2755,7 +2786,9 @@ public class LibraryChoiceHandlerService {
             }
 
             List<Card> basicLands = deck.stream()
-                    .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                    .filter(card -> card.hasType(CardType.LAND)
+                            && gameQueryService.cardHasSupertype(
+                            card, CardSupertype.BASIC, gameData, nextPlayerId))
                     .toList();
 
             if (basicLands.isEmpty()) {
@@ -4538,6 +4571,9 @@ public class LibraryChoiceHandlerService {
      * {@link #castCardWithoutPaying}.
      */
     private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card) {
+        if (!castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, card)) {
+            return false;
+        }
         if (spellModal(card) != null) {
             return legalModalOptions(gameData, card, controllerId) != null;
         }

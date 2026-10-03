@@ -3,13 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.e.EarthSurge;
 import com.github.laxika.magicalvibes.cards.g.GruulSignet;
 import com.github.laxika.magicalvibes.cards.g.GruulTurf;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,36 +53,81 @@ class AngelOfDespairTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GruulSignet());
         castAngel(harness.getPermanentId(player2, "Gruul Signet"));
 
-        harness.passBothPriorities();
-        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertOnBattlefield(player1, "Angel of Despair");
     }
 
     @Test
-    void canEnterWithoutTargetWhenNoPermanentsAreOnBattlefield() {
-        harness.setHand(player1, List.of(new AngelOfDespair()));
-        addAngelMana();
+    void mustTargetItselfWhenEnteringAnEmptyBattlefield() {
+        harness.castFromHand(player1, new AngelOfDespair(), "{3}{W}{W}{B}{B}");
+        harness.passBothPriorities();
 
-        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Angel of Despair"));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Angel of Despair");
+        harness.assertInGraveyard(player1, "Angel of Despair");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entersAndDestroysTargetCreature() {
+        harness.addToBattlefield(player2, new AngelOfDespair());
+        castAngel(harness.getPermanentId(player2, "Angel of Despair"));
+
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Angel of Despair");
-        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Angel of Despair");
+        harness.assertInGraveyard(player2, "Angel of Despair");
+    }
+
+    @Test
+    void canTargetItselfEvenWhenAnotherPermanentIsAvailable() {
+        harness.addToBattlefield(player2, new GruulSignet());
+        harness.castFromHand(player1, new AngelOfDespair(), "{3}{W}{W}{B}{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Angel of Despair"));
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Angel of Despair");
+        harness.assertNotOnBattlefield(player1, "Angel of Despair");
+        harness.assertOnBattlefield(player2, "Gruul Signet");
+    }
+
+    @Test
+    void triggersWhenEnteringWithoutBeingCast() {
+        harness.addToBattlefield(player2, new GruulSignet());
+        harness.enterBattlefieldAndReturn(player1, new AngelOfDespair());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Gruul Signet"));
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Angel of Despair");
+        harness.assertNotOnBattlefield(player2, "Gruul Signet");
+        harness.assertInGraveyard(player2, "Gruul Signet");
+    }
+
+    @Test
+    void destructionTriggerResolvesAfterAngelLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GruulSignet());
+        castAngel(harness.getPermanentId(player2, "Gruul Signet"));
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Gruul Signet");
+        harness.assertInGraveyard(player2, "Gruul Signet");
     }
 
     private void castAngel(UUID targetId) {
-        harness.setHand(player1, List.of(new AngelOfDespair()));
-        addAngelMana();
-        harness.castCreature(player1, 0, targetId);
+        harness.castFromHand(player1, new AngelOfDespair(), "{3}{W}{W}{B}{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
     }
-
-    private void addAngelMana() {
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-    }
-
 }

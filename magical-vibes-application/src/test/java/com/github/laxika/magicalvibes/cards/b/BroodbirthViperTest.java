@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,11 +17,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BroodbirthViper.class, Forest.class})
+@CardUsed({BroodbirthViper.class, Forest.class, JaceBeleren.class})
 class BroodbirthViperTest extends BaseCardTest {
 
     private Player player3;
@@ -88,11 +90,90 @@ class BroodbirthViperTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
-    private Permanent addCreatureReady(Player player, BroodbirthViper card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Myriad may be declined without creating a token")
+    void mayDeclineMyriad() {
+        addThirdPlayer();
+        Permanent viper = addCreatureReady(player1, new BroodbirthViper());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Broodbirth Viper")).containsExactly(viper);
+    }
+
+    @Test
+    @DisplayName("Myriad creates no tokens in a two-player game")
+    void noMyriadTokensWithoutAnotherOpponent() {
+        Permanent viper = addCreatureReady(player1, new BroodbirthViper());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        });
+
+        assertThat(findPermanents(player1, "Broodbirth Viper")).containsExactly(viper);
+    }
+
+    @Test
+    @DisplayName("Attacking a planeswalker creates a myriad copy for the other opponent")
+    void attackingPlaneswalkerStillCreatesMyriadCopy() {
+        addThirdPlayer();
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        addCreatureReady(player1, new BroodbirthViper());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
+            resolveAllTriggers();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Broodbirth Viper"))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(copy -> {
+                    assertThat(copy.isTapped()).isTrue();
+                    assertThat(copy.isAttacking()).isTrue();
+                    assertThat(copy.getAttackTarget()).isEqualTo(player3.getId());
+                });
+    }
+
+    @Test
+    @DisplayName("A myriad token may attack the other opponent's planeswalker")
+    void myriadCopyMayAttackPlaneswalker() {
+        addThirdPlayer();
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player3, new JaceBeleren());
+        addCreatureReady(player1, new BroodbirthViper());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            PendingInteraction.PermanentChoice choice =
+                    (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+            assertThat(choice.validIds()).containsExactlyInAnyOrder(player3.getId(), planeswalker.getId());
+            harness.handlePermanentChosen(player1, planeswalker.getId());
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Broodbirth Viper"))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(copy -> {
+                    assertThat(copy.isTapped()).isTrue();
+                    assertThat(copy.isAttacking()).isTrue();
+                    assertThat(copy.getAttackTarget()).isEqualTo(planeswalker.getId());
+                });
     }
 
     private void addThirdPlayer() {

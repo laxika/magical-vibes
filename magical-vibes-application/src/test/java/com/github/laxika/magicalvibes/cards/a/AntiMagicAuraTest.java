@@ -95,4 +95,57 @@ class AntiMagicAuraTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Incinerate"));
     }
+
+    @Test
+    @DisplayName("Anti-Magic Aura resolves and remains attached to its target")
+    void resolvesAndRemainsAttached() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new AntiMagicAura()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        assertThat(findPermanent(player1, "Anti-Magic Aura").getAttachedTo()).isEqualTo(bears.getId());
+        harness.assertNotInGraveyard(player1, "Anti-Magic Aura");
+    }
+
+    @Test
+    @DisplayName("Other Auras already enchanting the creature go to their owners' graveyards")
+    void removesExistingAurasFromBothPlayers() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent friendlyAura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        friendlyAura.setAttachedTo(bears.getId());
+        Permanent opposingAura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        opposingAura.setAttachedTo(bears.getId());
+
+        harness.setHand(player1, List.of(new AntiMagicAura()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+        harness.assertNotOnBattlefield(player2, "Holy Strength");
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertInGraveyard(player2, "Holy Strength");
+        assertThat(findPermanent(player1, "Anti-Magic Aura").getAttachedTo()).isEqualTo(bears.getId());
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Targeted abilities resolve normally on the enchanted creature")
+    void targetedAbilityDealsDamage() {
+        addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent bears = enchantedBears();
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Anti-Magic Aura");
+    }
 }

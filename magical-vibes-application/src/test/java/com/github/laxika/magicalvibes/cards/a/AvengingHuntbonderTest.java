@@ -54,7 +54,7 @@ class AvengingHuntbonderTest extends BaseCardTest {
     }
 
     @Test
-    void doesNotTriggerWhenAttackingAlone() {
+    void hasNoTargetChoiceWhenAttackingAlone() {
         addReadyCreature(new AvengingHuntbonder());
 
         declareAttackers(player1, List.of(0));
@@ -62,10 +62,53 @@ class AvengingHuntbonderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void doesNotPutCounterOnCreatureThatStopsAttackingBeforeResolution() {
+        addReadyCreature(new AvengingHuntbonder());
+        Permanent attacker = addReadyCreature(new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.DOUBLE_STRIKE)).isZero();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void resolvesAfterHuntbonderLeavesBattlefield() {
+        Permanent huntbonder = addReadyCreature(new AvengingHuntbonder());
+        Permanent attacker = addReadyCreature(new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(huntbonder);
+        gd.playerGraveyards.get(player1.getId()).add(huntbonder.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.DOUBLE_STRIKE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void counterMakesUnblockedAttackerDealDamageTwice() {
+        addReadyCreature(new AvengingHuntbonder());
+        Permanent attacker = addReadyCreature(new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
+        assertThat(attacker.getCounterCount(CounterType.DOUBLE_STRIKE)).isEqualTo(1);
+    }
+
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 }

@@ -59,4 +59,48 @@ class CephalidBrokerTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player1.getId());
     }
+
+    @Test
+    @DisplayName("An empty-handed target can discard the two newly drawn cards")
+    void emptyHandDiscardsNewlyDrawnCards() {
+        addCreatureReady(player1, new CephalidBroker());
+        harness.setHand(player2, List.of());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player2, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A tapped Broker cannot activate its ability")
+    void tappedBrokerCannotActivate() {
+        Permanent broker = addCreatureReady(player1, new CephalidBroker());
+        broker.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Broker cannot activate its ability")
+    void summoningSickBrokerCannotActivate() {
+        Permanent broker = harness.addToBattlefieldAndReturn(player1, new CephalidBroker());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(broker.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

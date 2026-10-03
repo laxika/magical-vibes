@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.c.CorruptedConviction;
+import com.github.laxika.magicalvibes.cards.e.EssenceScatter;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
+import com.github.laxika.magicalvibes.cards.s.StokeTheFlames;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BaralAndKariZev.class, DarkRitual.class, LightningStrike.class})
+@CardUsed({BaralAndKariZev.class, DarkRitual.class, LightningStrike.class,
+        CorruptedConviction.class, EssenceScatter.class, StokeTheFlames.class})
 class BaralAndKariZevTest extends BaseCardTest {
 
     @Test
@@ -33,7 +37,7 @@ class BaralAndKariZevTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getId().equals(darkRitual.getId()));
     }
@@ -49,7 +53,7 @@ class BaralAndKariZevTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        resolveStack();
+        resolveAllTriggers();
 
         Permanent ragavan = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("First Mate Ragavan"))
@@ -82,7 +86,7 @@ class BaralAndKariZevTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningStrike()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, player2.getId());
-        resolveStack();
+        resolveAllTriggers();
 
         harness.setHand(player1, List.of(new LightningStrike()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -97,9 +101,72 @@ class BaralAndKariZevTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BaralAndKariZev());
     }
 
-    private void resolveStack() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
+    @Test
+    void spellCastBeforeBaralEnteredStillCountsAsFirstSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        harness.addToBattlefield(player1, new BaralAndKariZev());
+        harness.setHand(player1, List.of(new LightningStrike(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "First Mate Ragavan");
+    }
+
+    @Test
+    void decliningOneCandidateAndCastingAnotherDoesNotCreateToken() {
+        setupBaral();
+        harness.setHand(player1, List.of(new LightningStrike(), new DarkRitual(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(card -> card instanceof DarkRitual)
+                .hasSize(1);
+        harness.assertNotOnBattlefield(player1, "First Mate Ragavan");
+    }
+
+    @Test
+    void freeSpellStillRequiresCreatureSacrificeAdditionalCost() {
+        setupBaral();
+        harness.setHand(player1, List.of(new LightningStrike(), new CorruptedConviction()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Baral and Kari Zev"));
         }
+        harness.assertNotOnBattlefield(player1, "Baral and Kari Zev");
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof CorruptedConviction);
+    }
+
+    @Test
+    void spellWithNoLegalTargetsStaysInHandAndCreatesToken() {
+        setupBaral();
+        EssenceScatter essenceScatter = new EssenceScatter();
+        harness.setHand(player1, List.of(new StokeTheFlames(), essenceScatter));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(essenceScatter);
+        harness.assertOnBattlefield(player1, "First Mate Ragavan");
     }
 }

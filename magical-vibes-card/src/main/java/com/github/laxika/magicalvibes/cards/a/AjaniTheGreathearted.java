@@ -23,7 +23,7 @@ import java.util.List;
 public class AjaniTheGreathearted extends Card {
 
     public AjaniTheGreathearted() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

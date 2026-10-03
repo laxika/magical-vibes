@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -51,5 +52,70 @@ class BullAurochsTest extends BaseCardTest {
 
         assertThat(bullAurochs.getPowerModifier()).isZero();
         assertThat(bullAurochs.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attacking alone does not count the source itself")
+    void attackingAloneDoesNotBoostItself() {
+        Permanent bullAurochs = addCreatureReady(player1, new BullAurochs());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(bullAurochs.getPowerModifier()).isZero();
+        assertThat(bullAurochs.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Non-attacking Aurochs on either battlefield do not count or receive a boost")
+    void ignoresNonAttackingAurochs() {
+        Permanent attacker = addCreatureReady(player1, new BullAurochs());
+        Permanent ally = addCreatureReady(player1, new BullAurochs());
+        Permanent defender = addCreatureReady(player2, new BullAurochs());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(defender.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An attacking Aurochs that leaves before resolution is not counted")
+    void countsOtherAurochsAtResolution() {
+        Permanent attacker = addCreatureReady(player1, new BullAurochs());
+        Permanent other = addCreatureReady(player1, new BullAurochs());
+
+        declareAttackers(List.of(0, 1));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacker gets its own fixed boost until end of turn")
+    void resolvedBoostRemainsFixedAndExpiresAtCleanup() {
+        Permanent attacker = addCreatureReady(player1, new BullAurochs());
+        Permanent other = addCreatureReady(player1, new BullAurochs());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(other.getPowerModifier()).isEqualTo(1);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
     }
 }

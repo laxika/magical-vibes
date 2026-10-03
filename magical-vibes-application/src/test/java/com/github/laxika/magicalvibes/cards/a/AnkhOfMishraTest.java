@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.w.WordOfSeizing;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AnkhOfMishra.class, Forest.class, Mountain.class, GrizzlyBears.class, WordOfSeizing.class})
+@CardUsed({AnkhOfMishra.class, Forest.class, Mountain.class, GrizzlyBears.class, WordOfSeizing.class,
+        Boomerang.class, Disenchant.class})
 class AnkhOfMishraTest extends BaseCardTest {
 
     @Test
@@ -107,9 +110,7 @@ class AnkhOfMishraTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WordOfSeizing()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, land.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, land.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getId().equals(land.getId()));
 
@@ -135,15 +136,63 @@ class AnkhOfMishraTest extends BaseCardTest {
         harness.setHand(player2, List.of(new WordOfSeizing()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castInstant(player2, 0, land.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, land.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(
                 permanent -> permanent.getId().equals(land.getId()));
 
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A land that leaves after changing control damages its last controller")
+    void departedLandUsesLastController() {
+        harness.addToBattlefield(player1, new AnkhOfMishra());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        Permanent land = harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new WordOfSeizing(), new Boomerang()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player1, 0, land.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, land.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card instanceof Forest);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Ankh's trigger deals damage even after Ankh is destroyed")
+    void triggerSurvivesSourceRemoval() {
+        harness.addToBattlefield(player1, new AnkhOfMishra());
+        Permanent ankh = findPermanent(player1, "Ankh of Mishra");
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, ankh.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ankh);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 

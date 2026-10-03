@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +52,9 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
                     entry.getCard(),
                     destroyEffect.cannotBeRegenerated()));
         } else {
-            gameData.queueDelayedAction(new DelayedPermanentAction(targetId,
-                    DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroyEffect.cannotBeRegenerated()));
+            gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(),
+                    entry.getCard(), entry.getSourcePermanentId(), targetId,
+                    new DestroyTargetPermanentEffect(destroyEffect.cannotBeRegenerated())));
         }
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }

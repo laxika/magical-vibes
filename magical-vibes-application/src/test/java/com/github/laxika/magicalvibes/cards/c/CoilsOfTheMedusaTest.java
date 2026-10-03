@@ -79,6 +79,47 @@ class CoilsOfTheMedusaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The Aura can be sacrificed without blockers and its boost ends immediately")
+    void sacrificeWithoutBlockersRemovesBoost() {
+        Permanent host = addCreatureReady(player1, new BenalishInfantry());
+        Permanent otherCreature = addCreatureReady(player2, new BenalishInfantry());
+        attachCoilsTo(host);
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Coils of the Medusa");
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(host);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(otherCreature);
+    }
+
+    @Test
+    @DisplayName("The Aura's controller can destroy their own creatures blocking an opponent's enchanted creature")
+    void destroysBlockersOfOpponentsEnchantedCreature() {
+        Permanent attacker = addCreatureReady(player2, new BenalishInfantry());
+        addCreatureReady(player1, new BenalishInfantry());
+        attachCoilsTo(attacker);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Coils of the Medusa");
+        harness.assertInGraveyard(player1, "Benalish Infantry");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(attacker);
+    }
+
     private void attachCoilsTo(Permanent host) {
         Permanent aura = new Permanent(new CoilsOfTheMedusa());
         aura.setAttachedTo(host.getId());

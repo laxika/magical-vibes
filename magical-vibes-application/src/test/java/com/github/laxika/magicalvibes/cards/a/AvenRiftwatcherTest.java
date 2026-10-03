@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.DeadGone;
+import com.github.laxika.magicalvibes.cards.t.Timecrafting;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,20 +15,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AvenRiftwatcher.class)
+@CardUsed({AvenRiftwatcher.class, Timecrafting.class, DeadGone.class})
 class AvenRiftwatcherTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with three time counters and gains 2 life")
     void entersWithCountersAndGainsLife() {
-        harness.setHand(player1, List.of(new AvenRiftwatcher()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AvenRiftwatcher(), "{2}{W}");
         resolveAllTriggers();
 
         Permanent riftwatcher = findPermanent(player1, "Aven Riftwatcher");
@@ -73,5 +73,52 @@ class AvenRiftwatcherTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Aven Riftwatcher");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void removingLastTimeCounterWithTimecraftingSacrificesAndGainsLife() {
+        harness.castFromHand(player1, new AvenRiftwatcher(), "{2}{W}");
+        resolveAllTriggers();
+        Permanent riftwatcher = findPermanent(player1, "Aven Riftwatcher");
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.setHand(player1, List.of(new Timecrafting()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castModalInstantForX(player1, 0, 0, 3, riftwatcher.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Aven Riftwatcher");
+        harness.assertInGraveyard(player1, "Aven Riftwatcher");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveTimeCounters() {
+        Permanent riftwatcher = addCreatureReady(player1, new AvenRiftwatcher());
+        riftwatcher.setCounterCount(CounterType.TIME, 3);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(riftwatcher.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Aven Riftwatcher");
+    }
+
+    @Test
+    void returningToHandGainsLifeForTheCreaturesController() {
+        Permanent riftwatcher = addCreatureReady(player2, new AvenRiftwatcher());
+        riftwatcher.setCounterCount(CounterType.TIME, 3);
+        int controllerLife = gd.playerLifeTotals.get(player2.getId());
+        int casterLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.setHand(player1, List.of(new DeadGone()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castModalInstant(player1, 0, 1, List.of(riftwatcher.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Aven Riftwatcher");
+        harness.assertInHand(player2, "Aven Riftwatcher");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLife + 2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(casterLife);
     }
 }

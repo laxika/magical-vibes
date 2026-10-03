@@ -180,6 +180,7 @@ public final class BlockLegalityContext {
                         boolean horsemanship,
                         boolean shadow,
                         boolean blocksShadowAsThoughShadow,
+                        boolean blocksShadowAsThoughNoShadow,
                         boolean blocksLandwalkAsThoughNoLandwalk,
                         List<PermanentPredicate> blocksAsThoughReachForAttackers,
                         boolean artifact,

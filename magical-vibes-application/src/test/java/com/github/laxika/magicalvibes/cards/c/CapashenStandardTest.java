@@ -66,6 +66,38 @@ class CapashenStandardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifice removes the bonus immediately and draws for the Aura's controller on resolution")
+    void sacrificeOnOpponentsCreaturePaysCostBeforeDrawing() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CapashenStandard()));
+        CapashenStandard drawnCard = new CapashenStandard();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        int opponentsHandSize = gd.playerHands.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Capashen Standard");
+        harness.assertInGraveyard(player1, "Capashen Standard");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentsHandSize);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Cannot activate the sacrifice ability without two mana")
     void cannotActivateWithoutTwoMana() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.k.KingCrab;
+import com.github.laxika.magicalvibes.cards.r.Rancor;
+import com.github.laxika.magicalvibes.cards.s.SlowMotion;
+import com.github.laxika.magicalvibes.cards.s.Snap;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BloatedToad.class, BouncingBeebles.class, KingCrab.class})
+@CardUsed({BloatedToad.class, BouncingBeebles.class, KingCrab.class, Rancor.class,
+        SlowMotion.class, Snap.class})
 class BloatedToadTest extends BaseCardTest {
 
     @Test
@@ -69,10 +73,7 @@ class BloatedToadTest extends BaseCardTest {
         toad.setBlocking(true);
         toad.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(toad.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(toad);
@@ -106,5 +107,91 @@ class BloatedToadTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(toad);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection rejects a blue spell even when cast by the Toad's controller")
+    void blueSpellCannotTargetOwnToad() {
+        Permanent toad = addCreatureReady(player1, new BloatedToad());
+        harness.setHand(player1, List.of(new Snap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, toad.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        harness.assertOnBattlefield(player1, "Bloated Toad");
+        harness.assertInHand(player1, "Snap");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A blue Aura cannot target Bloated Toad")
+    void blueAuraCannotEnchantToad() {
+        Permanent toad = addCreatureReady(player1, new BloatedToad());
+        harness.setHand(player1, List.of(new SlowMotion()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, toad.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        harness.assertInHand(player1, "Slow Motion");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection from blue permits a green Aura")
+    void greenAuraCanEnchantToad() {
+        Permanent toad = addCreatureReady(player1, new BloatedToad());
+        harness.setHand(player1, List.of(new Rancor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, toad.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Rancor").getAttachedTo()).isEqualTo(toad.getId());
+        assertThat(gqs.getEffectivePower(gd, toad)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A green creature can block Bloated Toad")
+    void greenCreatureCanBlock() {
+        Permanent toad = addCreatureReady(player1, new BloatedToad());
+        toad.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BloatedToad());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Bloated Toad");
+        harness.assertInGraveyard(player2, "Bloated Toad");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Cycling on the opponent's turn accepts colored mana and discards before drawing")
+    void cyclingDiscardsAsCostAndDrawsOnResolution() {
+        BloatedToad toad = new BloatedToad();
+        BouncingBeebles drawnCard = new BouncingBeebles();
+        harness.setHand(player1, List.of(toad));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(toad);
+        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

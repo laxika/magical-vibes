@@ -102,4 +102,55 @@ class CabalSlaverTest extends BaseCardTest {
         harness.assertInHand(player2, "Cabal Slaver");
     }
 
+    @Test
+    @DisplayName("Cabal Slaver controls and is the source of the trigger from an opposing Goblin")
+    void slaverIsSourceAndControllerOfOpposingGoblinTrigger() {
+        harness.setHand(player1, List.of(new CabalSlaver()));
+        Permanent slaver = harness.addToBattlefieldAndReturn(player1, new CabalSlaver());
+        Permanent goblin = addCreatureReady(player2, new SkirkProspector());
+        goblin.setAttacking(true);
+
+        resolveCombat(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(slaver.getId());
+    }
+
+    @Test
+    @DisplayName("Two Cabal Slavers each trigger from a single Goblin")
+    void twoSlaversCauseTwoDiscards() {
+        harness.setHand(player2, List.of(new CabalSlaver(), new CabalSlaver()));
+        harness.addToBattlefield(player1, new CabalSlaver());
+        harness.addToBattlefield(player1, new CabalSlaver());
+        Permanent goblin = addCreatureReady(player1, new SkirkProspector());
+        goblin.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The discard trigger resolves harmlessly when the damaged player has no cards")
+    void emptyHandDoesNotRequireDiscardChoice() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new CabalSlaver());
+        Permanent goblin = addCreatureReady(player1, new SkirkProspector());
+        goblin.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 19);
+    }
+
 }

@@ -39,12 +39,60 @@ class AtlasSizableStoogeTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 2);
+    }
+
+    @Test
+    @DisplayName("Blocking multiple creatures triggers the life gain only once")
+    void blockingMultipleCreaturesGainsLifeOnce() {
+        Permanent atlas = addCreatureReady(player1, new AtlasSizableStooge());
+        atlas.setAdditionalBlocksUntilEndOfTurn(1);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, startingLife + 1);
+    }
+
+    @Test
+    @DisplayName("Life gain counts current power at resolution and ignores opposing creatures")
+    void countsCurrentPowerAtResolution() {
+        addCreatureReady(player1, new AtlasSizableStooge());
+        Permanent angel = addCreatureReady(player1, new SerraAngel());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new SerraAngel());
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(player1, List.of(0));
+        angel.setPowerModifier(-1);
+        bears.setPowerModifier(2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, startingLife + 2);
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after Atlas leaves and does not count its last known power")
+    void resolvesAfterAtlasLeavesBattlefield() {
+        Permanent atlas = addCreatureReady(player1, new AtlasSizableStooge());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new SerraAngel());
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(player1, List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(atlas);
+        gd.playerGraveyards.get(player1.getId()).add(atlas.getCard());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, startingLife);
     }
 }

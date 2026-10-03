@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AltarOfShadows.class, AlphaMyr.class})
+@CardUsed({AltarOfShadows.class, AlphaMyr.class, Shatter.class})
 class AltarOfShadowsTest extends BaseCardTest {
 
     @Test
@@ -103,6 +106,101 @@ class AltarOfShadowsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    void firstMainPhaseWithoutChargeCountersAddsNoMana() {
+        addAltar(player1);
+
+        advanceToFirstMainPhase(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    void counterAddedInResponseIsCountedWhenMainPhaseTriggerResolves() {
+        Permanent altar = addAltar(player1);
+        altar.setCounterCount(CounterType.CHARGE, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+
+        advanceToFirstMainPhase(player1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(altar.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+    }
+
+    @Test
+    void illegalTargetPreventsAddingChargeCounter() {
+        Permanent altar = addAltar(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        assertThat(altar.isTapped()).isTrue();
+        assertThat(altar.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void mainPhaseTriggerUsesLastKnownCountersWhenAltarIsDestroyed() {
+        Permanent altar = addAltar(player1);
+        altar.setCounterCount(CounterType.CHARGE, 3);
+        advanceToFirstMainPhase(player1);
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, altar.getId());
+        harness.assertInGraveyard(player1, "Altar of Shadows");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+    }
+
+    @Test
+    void destroyingAltarInResponseDoesNotPreventCreatureDestruction() {
+        Permanent altar = addAltar(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, altar.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Altar of Shadows");
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        assertThat(altar.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void secondMainPhaseDoesNotAddMana() {
+        Permanent altar = addAltar(player1);
+        altar.setCounterCount(CounterType.CHARGE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
     private Permanent addAltar(Player owner) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -71,18 +72,26 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
         List<Card> offeredCards = castEffect.random()
                 ? List.of(exiled.get(ThreadLocalRandom.current().nextInt(exiled.size())))
                 : exiled;
+        UUID offerGroupId = UUID.randomUUID();
         for (int i = offeredCards.size() - 1; i >= 0; i--) {
             Card card = offeredCards.get(i);
+            CardEffect offer = castEffect.withoutPayingManaCost()
+                    ? new MayPlayExiledCardWithoutPayingManaCostEffect(true)
+                    : new MayCastExiledCardWithNormalCostEffect(
+                            offerGroupId, false, false, castEffect.genericCostReduction());
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card, controllerId,
-                    List.of(new MayPlayExiledCardWithoutPayingManaCostEffect(true)),
-                    "Cast " + card.getName() + " without paying its mana cost?",
-                    card.getId()
+                    List.of(offer),
+                    castEffect.withoutPayingManaCost()
+                            ? "Cast " + card.getName() + " without paying its mana cost?"
+                            : "Cast " + card.getName() + "?",
+                    card.getId(), null, sourcePermanentId
             ));
         }
 
-        log.info("Game {} - {} offers a free cast of {} card(s) exiled with it",
-                gameData.id, entry.getCard().getName(), offeredCards.size());
+        log.info("Game {} - {} offers a {} cast of {} card(s) exiled with it",
+                gameData.id, entry.getCard().getName(),
+                castEffect.withoutPayingManaCost() ? "free" : "normal-cost", offeredCards.size());
     }
 
     /**

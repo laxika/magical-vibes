@@ -26,8 +26,7 @@ class CaptivatingGlanceTest extends BaseCardTest {
     /** Runs player1 through their end step so the controller-end-step clash trigger resolves. */
     private void runPlayer1EndStep() {
         advancePlayer1ToEndStep();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // resolve clash + control change
+        resolveAllTriggers();
     }
 
     /** Advances player1 to the end step without resolving the triggered ability. */
@@ -139,11 +138,55 @@ class CaptivatingGlanceTest extends BaseCardTest {
         advancePlayer1ToEndStep();
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, glance));
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gameLogContains("clashes")).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Still clashes when the enchanted creature leaves before resolution")
+    void stillClashesWhenCreatureLeavesBeforeResolution() {
+        Permanent creature = addCreature(player2);
+        attachGlance(player1, creature);
+        harness.setLibrary(player1, java.util.List.of(new DeeptreadMerrow()));
+        harness.setLibrary(player2, java.util.List.of(new Forest()));
+
+        advancePlayer1ToEndStep();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("clashes")).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Clashing players may choose whether to put their revealed card on the bottom")
+    void clashOffersLibraryPlacementChoice() {
+        Permanent creature = addCreature(player2);
+        attachGlance(player1, creature);
+        harness.setLibrary(player1, java.util.List.of(new DeeptreadMerrow(), new Forest()));
+        harness.setLibrary(player2, java.util.List.of(new Forest(), new DeeptreadMerrow()));
+
+        runPlayer1EndStep();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("With both libraries empty, neither player wins and the opponent gains control")
+    void bothLibrariesEmptyOpponentGainsControl() {
+        Permanent creature = addCreature(player1);
+        attachGlance(player1, creature);
+        harness.setLibrary(player1, java.util.List.of());
+        harness.setLibrary(player2, java.util.List.of());
+
+        runPlayer1EndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
     }
 }

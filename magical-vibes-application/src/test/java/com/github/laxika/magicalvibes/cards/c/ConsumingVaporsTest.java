@@ -2,17 +2,20 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ConsumingVapors.class, GrizzlyBears.class, GiantSpider.class})
 class ConsumingVaporsTest extends BaseCardTest {
 
     @Test
@@ -22,8 +25,7 @@ class ConsumingVaporsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new ConsumingVapors()));
         addMana();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
@@ -37,8 +39,7 @@ class ConsumingVaporsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new ConsumingVapors()));
         addMana();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, spider.getId());
@@ -54,8 +55,7 @@ class ConsumingVaporsTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.addToBattlefield(player2, new GiantSpider());
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
@@ -73,6 +73,65 @@ class ConsumingVaporsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Consuming Vapors");
         assertThat(gd.findExiledCard(card.getId())).isNull();
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void canTargetControllerAndSacrificeTheirCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ConsumingVapors()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void noCreatureMeansNoLifeGainButSpellStillRebounds() {
+        ConsumingVapors card = new ConsumingVapors();
+        harness.setHand(player1, List.of(card));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void lifeGainUsesModifiedToughnessBeforeSacrifice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new ConsumingVapors()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void decliningReboundLeavesCardExiledWithoutAnotherDelayedCast() {
+        ConsumingVapors card = new ConsumingVapors();
+        harness.setHand(player1, List.of(card));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        harness.assertLife(player1, 20);
     }
 
     private void addMana() {

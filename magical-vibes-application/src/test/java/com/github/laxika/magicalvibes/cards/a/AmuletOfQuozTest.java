@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.t.TheWarDoctor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AmuletOfQuoz.class})
+@CardUsed({AmuletOfQuoz.class, TheWarDoctor.class})
 class AmuletOfQuozTest extends BaseCardTest {
 
     /** Puts the Amulet onto player1's battlefield and moves the game to player1's upkeep. */
@@ -26,8 +28,8 @@ class AmuletOfQuozTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Anteing the top card of the library removes it from the game and no coin is flipped")
-    void anteingExilesTopCardAndSkipsFlip() {
+    @DisplayName("Anteing the top card moves it to the ante zone and no coin is flipped")
+    void anteingMovesTopCardToAnteAndSkipsFlip() {
         Permanent amulet = amuletInUpkeep();
         AmuletOfQuoz topCard = new AmuletOfQuoz();
         harness.setLibrary(player2, List.of(topCard));
@@ -42,7 +44,7 @@ class AmuletOfQuozTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(topCard);
         assertThat(gd.antedCardIds).contains(topCard.getId());
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(l -> l.contains("coin flip"));
+        assertThat(gameLogContains("coin flip")).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(amulet);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(amulet.getCard());
     }
@@ -84,8 +86,7 @@ class AmuletOfQuozTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(l -> l.contains("coin flip for Amulet of Quoz"));
+        assertThat(gameLogContains("coin flip for Amulet of Quoz")).isTrue();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
@@ -132,5 +133,80 @@ class AmuletOfQuozTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeOpponentDecides() {
+        Permanent amulet = amuletInUpkeep();
+        AmuletOfQuoz topCard = new AmuletOfQuoz();
+        harness.setLibrary(player2, List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(amulet);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(amulet.getCard());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.antedCardIds).doesNotContain(topCard.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.antedCardIds).contains(topCard.getId());
+    }
+
+    @Test
+    void anteRemovesOnlyTopCardAndPreservesLibraryOrder() {
+        amuletInUpkeep();
+        AmuletOfQuoz topCard = new AmuletOfQuoz();
+        AmuletOfQuoz secondCard = new AmuletOfQuoz();
+        AmuletOfQuoz thirdCard = new AmuletOfQuoz();
+        harness.setLibrary(player2, List.of(topCard, secondCard, thirdCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCard, thirdCard);
+        assertThat(gd.antedCardIds).contains(topCard.getId())
+                .doesNotContain(secondCard.getId(), thirdCard.getId());
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gameLogContains("coin flip")).isFalse();
+    }
+
+    @Test
+    void otherPlayerCanActivateDuringTheirOwnUpkeep() {
+        Permanent amulet = harness.addToBattlefieldAndReturn(player2, new AmuletOfQuoz());
+        advanceToUpkeep(player2);
+        AmuletOfQuoz topCard = new AmuletOfQuoz();
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.antedCardIds).contains(topCard.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(amulet.getCard());
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gameLogContains("coin flip")).isFalse();
+    }
+
+    @Test
+    void anteDoesNotTriggerAbilitiesForCardsBeingExiled() {
+        amuletInUpkeep();
+        Permanent doctor = harness.addToBattlefieldAndReturn(player1, new TheWarDoctor());
+        AmuletOfQuoz topCard = new AmuletOfQuoz();
+        harness.setLibrary(player2, List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.antedCardIds).contains(topCard.getId());
+        assertThat(doctor.getCounterCount(CounterType.TIME)).isZero();
     }
 }

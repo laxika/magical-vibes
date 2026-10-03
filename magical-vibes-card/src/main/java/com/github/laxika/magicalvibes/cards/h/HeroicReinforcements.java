@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "2X2", collectorNumber = "226")
 @CardRegistration(set = "PIP", collectorNumber = "218")
 @CardRegistration(set = "PIP", collectorNumber = "746")
+@CardRegistration(set = "ONC", collectorNumber = "118")
 public class HeroicReinforcements extends Card {
 
     public HeroicReinforcements() {

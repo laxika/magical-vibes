@@ -79,6 +79,93 @@ class ConcordWithTheKamiTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Spirit")).isZero();
     }
 
+    @Test
+    void modesMustBeChosenBeforePlayersCanRespond() {
+        harness.addToBattlefield(player1, new ConcordWithTheKami());
+
+        advanceToEndStep();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.ColorChoice.class);
+        chooseModes(DRAW_MODE);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void counterModeCanTargetOpponentsCreatureWithAnyKindOfCounter() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.CHARGE, 1);
+        harness.addToBattlefield(player1, new ConcordWithTheKami());
+
+        advanceToEndStep();
+        chooseModes(COUNTER_MODE);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void losingLastCounterMakesTargetIllegalAndStopsAllModes() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.CHARGE, 1);
+        attach(new Pacifism(), creature);
+        attach(new Bonesplitter(), creature);
+        harness.addToBattlefield(player1, new ConcordWithTheKami());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(card));
+
+        advanceToEndStep();
+        chooseModes(COUNTER_MODE, DRAW_MODE, SPIRIT_MODE);
+        harness.handlePermanentChosen(player1, creature.getId());
+        creature.setCounterCount(CounterType.CHARGE, 0);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+    }
+
+    @Test
+    void conditionalModesCheckAttachmentsAtResolution() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ConcordWithTheKami());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(card));
+
+        advanceToEndStep();
+        chooseModes(DRAW_MODE, SPIRIT_MODE);
+        attach(new Pacifism(), creature);
+        attach(new Bonesplitter(), creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsAttachmentsCountButOpponentsCreaturesDoNot() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(ownCreature.getId());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+        equipment.setAttachedTo(opposingCreature.getId());
+        harness.addToBattlefield(player1, new ConcordWithTheKami());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(card));
+
+        advanceToEndStep();
+        chooseModes(DRAW_MODE, SPIRIT_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+    }
+
     private void chooseModes(String... modes) {
         for (String mode : modes) {
             harness.handleListChoice(player1, mode);
@@ -97,7 +184,6 @@ class ConcordWithTheKamiTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }

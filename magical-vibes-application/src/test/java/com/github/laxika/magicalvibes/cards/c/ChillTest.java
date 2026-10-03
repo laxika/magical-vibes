@@ -53,12 +53,64 @@ class ChillTest extends BaseCardTest {
         @DisplayName("Red creature spell also costs {2} more")
         void redCreatureSpellCostsMore() {
             harness.addToBattlefield(player1, new Chill());
-            harness.setHand(player1, List.of(new RagingGoblin()));
-            harness.addMana(player1, ManaColor.RED, 1);
 
-            assertThatThrownBy(() -> harness.castCreature(player1, 0))
+            assertThatThrownBy(() -> harness.castFromHand(player1, new RagingGoblin(), "{R}"))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("not playable");
+        }
+
+        @Test
+        @DisplayName("The increase is generic and can be paid with colorless mana")
+        void increaseCanBePaidWithColorlessMana() {
+            harness.addToBattlefield(player1, new Chill());
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+
+            harness.assertLife(player2, 18);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Paying the generic increase does not replace the spell's red mana requirement")
+        void redManaIsStillRequired() {
+            harness.addToBattlefield(player1, new Chill());
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not playable");
+        }
+
+        @Test
+        @DisplayName("Chills controlled by different players both increase the cost")
+        void chillsAcrossControllersStack() {
+            harness.addToBattlefield(player1, new Chill());
+            harness.addToBattlefield(player2, new Chill());
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+
+            harness.assertLife(player2, 18);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Chill in hand does not increase spell costs")
+        void chillInHandDoesNotTaxSpells() {
+            harness.setHand(player1, List.of(new Shock(), new Chill()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+
+            harness.assertLife(player2, 18);
+            harness.assertInHand(player1, "Chill");
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         }
 
         @Test

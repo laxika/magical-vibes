@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.cards.n.NomadDecoy;
 import com.github.laxika.magicalvibes.cards.s.SecondThoughts;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BelovedChaplain.class, DwarvenGrunt.class, NomadDecoy.class, SecondThoughts.class})
+@CardUsed({BelovedChaplain.class, DwarvenGrunt.class, Firebolt.class, NomadDecoy.class, SecondThoughts.class})
 class BelovedChaplainTest extends BaseCardTest {
 
     @Test
@@ -77,9 +78,35 @@ class BelovedChaplainTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, chaplain.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, chaplain.getId());
 
         harness.assertNotOnBattlefield(player1, "Beloved Chaplain");
+    }
+
+    @Test
+    @DisplayName("Protection from creatures also prevents friendly creature abilities from targeting it")
+    void protectionPreventsFriendlyCreatureAbilityTargeting() {
+        addCreatureReady(player1, new NomadDecoy());
+        Permanent chaplain = harness.addToBattlefieldAndReturn(player1, new BelovedChaplain());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, chaplain.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+
+        assertThat(chaplain.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Protection from creatures does not prevent damage from a noncreature spell")
+    void protectionDoesNotPreventNoncreatureSpellDamage() {
+        Permanent chaplain = harness.addToBattlefieldAndReturn(player2, new BelovedChaplain());
+        harness.setHand(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, chaplain.getId());
+
+        harness.assertNotOnBattlefield(player2, "Beloved Chaplain");
+        harness.assertInGraveyard(player2, "Beloved Chaplain");
     }
 }

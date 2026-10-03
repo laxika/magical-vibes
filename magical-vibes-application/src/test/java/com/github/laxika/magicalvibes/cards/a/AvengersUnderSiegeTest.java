@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -55,8 +54,7 @@ class AvengersUnderSiegeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent villain = harness.addToBattlefieldAndReturn(player2, new DocOckSinisterScientist());
-        harness.addToBattlefield(player1, new AvengersUnderSiege());
-        Permanent saga = findPermanent(player1, "Avengers: Under Siege");
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new AvengersUnderSiege());
         saga.setCounterCount(CounterType.LORE, 1);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
@@ -67,12 +65,11 @@ class AvengersUnderSiegeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
-        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(villain);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).contains(villain);
     }
 
     @Test
@@ -80,8 +77,7 @@ class AvengersUnderSiegeTest extends BaseCardTest {
     void chapterIIICreatesTreasureForEachVillain() {
         harness.addToBattlefield(player1, new DocOckSinisterScientist());
         harness.addToBattlefield(player1, new BaronStruckerHYDRAOverlord());
-        harness.addToBattlefield(player1, new AvengersUnderSiege());
-        Permanent saga = findPermanent(player1, "Avengers: Under Siege");
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new AvengersUnderSiege());
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
@@ -92,5 +88,67 @@ class AvengersUnderSiegeTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
         assertThat(findPermanents(player1, "Avengers: Under Siege")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter II leaves low-toughness Villains on both sides undamaged")
+    void chapterIISparesVillainsOnBothSides() {
+        Permanent ownVillain = harness.addToBattlefieldAndReturn(player1, new BaronStruckerHYDRAOverlord());
+        Permanent opposingVillain = harness.addToBattlefieldAndReturn(player2, new BaronStruckerHYDRAOverlord());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new AvengersUnderSiege());
+        saga.setCounterCount(CounterType.LORE, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).contains(ownVillain);
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).contains(opposingVillain);
+        assertThat(ownVillain.getMarkedDamage()).isZero();
+        assertThat(opposingVillain.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Chapter III creates no Treasure for opposing Villains")
+    void chapterIIIDoesNotCountOpposingVillains() {
+        harness.addToBattlefield(player2, new BaronStruckerHYDRAOverlord());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new AvengersUnderSiege());
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        harness.assertInGraveyard(player1, "Avengers: Under Siege");
+    }
+
+    @Test
+    @DisplayName("Chapter III counts Villains at resolution and keeps the Saga until then")
+    void chapterIIICountsVillainsAtResolution() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new AvengersUnderSiege());
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Avengers: Under Siege");
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.addToBattlefield(player1, new BaronStruckerHYDRAOverlord());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).allSatisfy(treasure ->
+                assertThat(treasure.isTapped()).isFalse());
+        harness.assertInGraveyard(player1, "Avengers: Under Siege");
     }
 }

@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +64,161 @@ class BeltOfGiantStrengthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
         assertThat(belt.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void zeroPowerCreatureRequiresFullEquipCost() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player1, new Ornithopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+    }
+
+    @Test
+    void negativePowerDoesNotIncreaseEquipCost() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player1, new Ornithopter());
+        creature.setPowerModifier(-2);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+    }
+
+    @Test
+    void countersReduceEquipCostAndRemainAboveTheNewBaseStats() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(13);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(13);
+    }
+
+    @Test
+    void powerAboveTenMakesEquipFreeWithoutAddingMana() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(19);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(19);
+    }
+
+    @Test
+    void alreadyEquippedCreatureCanBeTargetedForFree() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        belt.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void movingBeltUsesNewTargetsPowerAndRestoresOldCreaturesStats() {
+        Permanent belt = addBeltReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent newCreature = addCreatureReady(player1, new Ornithopter());
+        belt.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, 0, null, newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newCreature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, newCreature)).isEqualTo(10);
+    }
+
+    @Test
+    void powerChangeAfterActivationDoesNotChangePaidCost() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        creature.setPowerModifier(-2);
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+    }
+
+    @Test
+    void vanishedTargetLeavesBeltOnOriginalCreatureWithoutRefund() {
+        Permanent belt = addBeltReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent newCreature = addCreatureReady(player1, new GrizzlyBears());
+        belt.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, newCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(newCreature);
+        gd.playerGraveyards.get(player1.getId()).add(newCreature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(belt.getAttachedTo()).isEqualTo(oldCreature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, oldCreature)).isEqualTo(10);
+    }
+
+    @Test
+    void equipCannotTargetAnOpponentsCreature() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(belt.getAttachedTo()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(10);
+    }
+
+    @Test
+    void equipCannotBeActivatedDuringCombat() {
+        Permanent belt = addBeltReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(belt.getAttachedTo()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(8);
     }
 
     private Permanent addBeltReady(Player player) {

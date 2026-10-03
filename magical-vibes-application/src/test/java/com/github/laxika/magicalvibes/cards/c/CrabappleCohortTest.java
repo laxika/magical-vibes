@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AshenmoorCohort;
+import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.cards.s.ShieldOfTheOversoul;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrabappleCohort.class, AshenmoorCohort.class, ShieldOfTheOversoul.class})
+@CardUsed({CrabappleCohort.class, AshenmoorCohort.class, SafeholdElite.class, ShieldOfTheOversoul.class})
 class CrabappleCohortTest extends BaseCardTest {
 
     @Test
@@ -69,7 +70,9 @@ class CrabappleCohortTest extends BaseCardTest {
     @DisplayName("A green noncreature permanent does not grant the boost")
     void noBoostWithGreenNonCreaturePermanent() {
         Permanent cohort = addCreatureReady(player1, new CrabappleCohort());
-        harness.addToBattlefield(player1, new ShieldOfTheOversoul());
+        Permanent nonGreenCreature = addCreatureReady(player1, new AshenmoorCohort());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheOversoul());
+        shield.setAttachedTo(nonGreenCreature.getId());
 
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);
@@ -83,6 +86,18 @@ class CrabappleCohortTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A multicolored green creature grants the boost only to the Cohort")
+    void boostWithMulticoloredGreenCreature() {
+        Permanent cohort = addCreatureReady(player1, new CrabappleCohort());
+        Permanent elite = addCreatureReady(player1, new SafeholdElite());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(2);
     }
 
     @Test

@@ -83,6 +83,22 @@ class ColosYearlingTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("The pump ability works while tapped and summoning sick")
+    void pumpWorksWhileTappedAndSummoningSick() {
+        Permanent yearling = harness.addToBattlefieldAndReturn(player1, new ColosYearling());
+        yearling.setSummoningSick(true);
+        yearling.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, yearling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, yearling)).isEqualTo(1);
+        assertThat(yearling.isTapped()).isTrue();
+    }
+
     private Permanent addAttackingYearling() {
         Permanent yearling = addCreatureReady(player1, new ColosYearling());
         yearling.setAttacking(true);

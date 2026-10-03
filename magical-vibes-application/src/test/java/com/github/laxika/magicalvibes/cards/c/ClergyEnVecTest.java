@@ -29,8 +29,7 @@ class ClergyEnVecTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         resolveCombat(player2);
 
@@ -98,6 +97,82 @@ class ClergyEnVecTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A consumed shield does not prevent a later damage event")
+    void shieldIsConsumedByFirstDamage() {
+        addCreatureReady(player1, new ClergyEnVec());
+        addCreatureReady(player2, new MoggFanatic());
+        addCreatureReady(player2, new MoggFanatic());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Two Clergy shields prevent two damage from one event")
+    void multipleShieldsAccumulate() {
+        addCreatureReady(player1, new ClergyEnVec());
+        addCreatureReady(player1, new ClergyEnVec());
+        addCreatureReady(player2, new LowlandGiant());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("The resolved shield remains after Clergy leaves the battlefield")
+    void shieldRemainsAfterSourceDies() {
+        Permanent clergy = addCreatureReady(player1, new ClergyEnVec());
+        addCreatureReady(player2, new MoggFanatic());
+        addCreatureReady(player2, new MoggFanatic());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, clergy.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(clergy);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Paying the tap cost prevents another activation")
+    void cannotActivateTwiceWithoutUntapping() {
+        Permanent clergy = addCreatureReady(player1, new ClergyEnVec());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        assertThat(clergy.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning sick Clergy cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ClergyEnVec());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

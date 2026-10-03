@@ -33,9 +33,7 @@ class ConclaveEquenautTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard() instanceof ConclaveEquenaut)
-                .hasSize(1);
+        assertThat(countPermanents(player1, "Conclave Equenaut")).isEqualTo(1);
     }
 
     @Test
@@ -52,9 +50,75 @@ class ConclaveEquenautTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard() instanceof ConclaveEquenaut)
-                .hasSize(1);
+        assertThat(countPermanents(player1, "Conclave Equenaut")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning-sick creatures can convoke the entire cost without mana")
+    void castsEntirelyWithSummoningSickCreatures() {
+        List<Permanent> convokers = java.util.stream.IntStream.range(0, 6)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new BorosSwiftblade()))
+                .toList();
+        convokers.forEach(permanent -> permanent.setSummoningSick(true));
+        harness.setHand(player1, List.of(new ConclaveEquenaut()));
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                convokers.stream().map(Permanent::getId).toList());
+
+        assertThat(convokers).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Conclave Equenaut")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An already tapped creature cannot convoke")
+    void cannotConvokeWithTappedCreature() {
+        Permanent convoker = harness.addToBattlefieldAndReturn(player1, new BorosSwiftblade());
+        convoker.tap();
+        harness.setHand(player1, List.of(new ConclaveEquenaut()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(), List.of(convoker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Conclave Equenaut");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot convoke")
+    void cannotConvokeWithOpponentsCreature() {
+        Permanent convoker = harness.addToBattlefieldAndReturn(player2, new BorosSwiftblade());
+        harness.setHand(player1, List.of(new ConclaveEquenaut()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(), List.of(convoker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(convoker.isTapped()).isFalse();
+        harness.assertInHand(player1, "Conclave Equenaut");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature cannot convoke twice for the same spell")
+    void cannotConvokeWithDuplicateCreature() {
+        Permanent convoker = harness.addToBattlefieldAndReturn(player1, new BorosSwiftblade());
+        harness.setHand(player1, List.of(new ConclaveEquenaut()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(), List.of(convoker.getId(), convoker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(convoker.isTapped()).isFalse();
+        harness.assertInHand(player1, "Conclave Equenaut");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

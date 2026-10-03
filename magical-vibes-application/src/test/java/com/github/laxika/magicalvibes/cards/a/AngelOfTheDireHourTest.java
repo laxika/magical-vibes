@@ -27,12 +27,8 @@ class AngelOfTheDireHourTest extends BaseCardTest {
                 () -> declareAttackers(player2, List.of(0)));
         assertThat(attacker.isAttacking()).isTrue();
 
-        harness.setHand(player1, List.of(new AngelOfTheDireHour()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new AngelOfTheDireHour(), "{5}{W}{W}");
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(nonattacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
@@ -52,11 +48,61 @@ class AngelOfTheDireHourTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castSorcery(player1, 0, 0, angel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, angel.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         harness.assertOnBattlefield(player1, "Angel of the Dire Hour");
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(attacker.getCard());
+    }
+    @Test
+    @DisplayName("Exiles every attacker when multiple creatures attack")
+    void exilesMultipleAttackers() {
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(0, 1)));
+
+        harness.castFromHand(player1, new AngelOfTheDireHour(), "{5}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(nonattacker)
+                .doesNotContain(first, second);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(first.getCard(), second.getCard());
+        harness.assertOnBattlefield(player1, "Angel of the Dire Hour");
+    }
+
+    @Test
+    @DisplayName("Also exiles its controller's attacking creatures")
+    void exilesControllersOwnAttackers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        harness.castFromHand(player1, new AngelOfTheDireHour(), "{5}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonattacker).doesNotContain(attacker);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(attacker.getCard());
+        harness.assertOnBattlefield(player1, "Angel of the Dire Hour");
+    }
+
+    @Test
+    @DisplayName("Entering with no attackers leaves all creatures on the battlefield")
+    void noAttackersLeavesCreaturesUntouched() {
+        Permanent friendly = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposing = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new AngelOfTheDireHour(), "{5}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(friendly);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposing);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Angel of the Dire Hour");
     }
 }

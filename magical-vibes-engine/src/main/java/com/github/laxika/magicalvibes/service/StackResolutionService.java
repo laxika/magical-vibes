@@ -1323,6 +1323,7 @@ public class StackResolutionService {
                 && targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
 
         if (targetFizzled) {
+            triggerCollectionService.completeDungeonRoomIfReady(gameData, entry);
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
                     .text(" fizzles (illegal target).")

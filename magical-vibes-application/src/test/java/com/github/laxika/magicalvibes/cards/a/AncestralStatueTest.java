@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DragonScarredBear;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,15 +15,15 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AncestralStatue.class, GrizzlyBears.class, Island.class})
+@CardUsed({AncestralStatue.class, DragonScarredBear.class, Island.class})
 class AncestralStatueTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB offers only nonland permanents you control, including itself")
     void etbOffersControlledNonlandPermanents() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DragonScarredBear());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new DragonScarredBear());
 
         castAncestralStatue();
 
@@ -39,12 +39,12 @@ class AncestralStatueTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen nonland permanent returns to its owner's hand")
     void chosenPermanentReturnsToHand() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DragonScarredBear());
 
         castAncestralStatue();
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Dragon-Scarred Bear"));
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Dragon-Scarred Bear");
         harness.assertOnBattlefield(player1, "Ancestral Statue");
     }
 
@@ -63,11 +63,42 @@ class AncestralStatueTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Ancestral Statue");
     }
 
+    @Test
+    @DisplayName("A controlled permanent owned by the opponent returns to the opponent's hand")
+    void returnsControlledPermanentToItsOwner() {
+        DragonScarredBear bear = new DragonScarredBear();
+        bear.setOwnerId(player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, bear);
+        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+
+        castAncestralStatue();
+        harness.handlePermanentChosen(player1, stolen.getId());
+
+        harness.assertInHand(player2, "Dragon-Scarred Bear");
+        harness.assertNotInHand(player1, "Dragon-Scarred Bear");
+        harness.assertNotOnBattlefield(player1, "Dragon-Scarred Bear");
+        harness.assertOnBattlefield(player1, "Ancestral Statue");
+    }
+
+    @Test
+    @DisplayName("An existing artifact can be returned while the entering Statue remains")
+    void canReturnAnotherArtifact() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new AncestralStatue());
+
+        castAncestralStatue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(existing.getId()).hasSize(2);
+        harness.handlePermanentChosen(player1, existing.getId());
+
+        harness.assertInHand(player1, "Ancestral Statue");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(1).noneMatch(permanent -> permanent.getId().equals(existing.getId()));
+    }
+
     private void castAncestralStatue() {
         harness.setHand(player1, List.of(new AncestralStatue()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

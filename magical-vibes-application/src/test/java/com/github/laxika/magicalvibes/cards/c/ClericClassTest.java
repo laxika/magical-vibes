@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ClericClass.class, GrizzlyBears.class})
 class ClericClassTest extends BaseCardTest {
@@ -25,7 +26,7 @@ class ClericClassTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        harness.assertLife(player1, 24);
     }
 
     @Test
@@ -48,7 +49,7 @@ class ClericClassTest extends BaseCardTest {
 
         assertThat(clericClass.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player1, 23);
     }
 
     @Test
@@ -75,7 +76,81 @@ class ClericClassTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void levelOneDoesNotHaveTheCounterTrigger() {
+        harness.addToBattlefield(player1, new ClericClass());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareForAbility(player1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentLifeGainIsNeitherIncreasedNorTriggered() {
+        harness.addToBattlefield(player1, new ClericClass());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareForAbility(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 23);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void gainingZeroLifeDoesNotBecomePositiveLifeGain() {
+        harness.addToBattlefield(player1, new ClericClass());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        prepareForAbility(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotSkipLevelTwoOrActivateItAgain() {
+        harness.addToBattlefield(player1, new ClericClass());
+        prepareForAbility(player1);
+        harness.addMana(player1, ManaColor.WHITE, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotGainALevelDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new ClericClass());
+        prepareForAbility(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void prepareForAbility(Player player) {

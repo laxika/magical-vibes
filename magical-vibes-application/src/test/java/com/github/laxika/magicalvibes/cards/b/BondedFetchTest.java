@@ -75,4 +75,73 @@ class BondedFetchTest extends BaseCardTest {
     private Permanent addReadyFetch() {
         return addCreatureReady(player1, new BondedFetch());
     }
+
+    @Test
+    @DisplayName("Haste allows Bonded Fetch to tap the turn it enters")
+    void canActivateWhileSummoningSick() {
+        Permanent fetch = harness.addToBattlefieldAndReturn(player1, new BondedFetch());
+        fetch.setSummoningSick(true);
+        Card drawn = new BlindPhantasm();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(fetch.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Defender prevents Bonded Fetch from attacking despite haste")
+    void cannotAttack() {
+        addReadyFetch();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Bonded Fetch's controller draws and discards during an opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        addReadyFetch();
+        Card drawn = new BlindPhantasm();
+        Card opponentCard = new BondedFetch();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after Bonded Fetch leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent fetch = addReadyFetch();
+        Card drawn = new BlindPhantasm();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(fetch);
+        gd.playerGraveyards.get(player1.getId()).add(fetch.getCard());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(fetch.getCard(), drawn);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

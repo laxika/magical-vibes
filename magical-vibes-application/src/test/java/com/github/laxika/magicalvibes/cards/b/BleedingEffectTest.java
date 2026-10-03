@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.g.GladecoverScout;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HuntedNightmare;
+import com.github.laxika.magicalvibes.cards.k.KnightOfGrace;
 import com.github.laxika.magicalvibes.cards.b.BaneslayerAngel;
 import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.cards.z.ZetalpaPrimalDawn;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,7 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         VampireNighthawk.class,
         GladecoverScout.class,
         HuntedNightmare.class,
-        GiantSpider.class
+        GiantSpider.class,
+        KnightOfGrace.class
 })
 class BleedingEffectTest extends BaseCardTest {
 
@@ -76,7 +79,7 @@ class BleedingEffectTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
         harness.setGraveyard(player1, List.of(new ZetalpaPrimalDawn()));
         harness.passBothPriorities();
@@ -102,11 +105,83 @@ class BleedingEffectTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("Does not share keywords during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BleedingEffect());
+        harness.setGraveyard(player1, List.of(new ZetalpaPrimalDawn()));
+
+        advanceToCombatAndResolve(player2);
+
+        assertThat(gqs.computeStaticBonus(gd, bears).keywords()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not use keywords from the opponent's graveyard")
+    void ignoresOpponentsGraveyard() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BleedingEffect());
+        harness.setGraveyard(player2, List.of(new ZetalpaPrimalDawn()));
+
+        advanceToCombatAndResolve(player1);
+
+        assertThat(gqs.computeStaticBonus(gd, bears).keywords()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not grant keywords when their source leaves the graveyard before resolution")
+    void rechecksGraveyardBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BleedingEffect());
+        harness.setGraveyard(player1, List.of(new ZetalpaPrimalDawn()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gqs.computeStaticBonus(gd, bears).keywords()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Recipients and shared keywords are fixed when the ability resolves")
+    void recipientsAndKeywordsAreFixedAtResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BleedingEffect());
+        harness.setGraveyard(player1, List.of(new ZetalpaPrimalDawn()));
+
+        advanceToCombatAndResolve(player1);
+        harness.setGraveyard(player1, List.of(new GladecoverScout()));
+        Permanent laterBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.computeStaticBonus(gd, laterBears).keywords()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shares hexproof from black without granting unrestricted hexproof")
+    void sharesSpecificHexproofVariant() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BleedingEffect());
+        harness.setGraveyard(player1, List.of(new KnightOfGrace()));
+
+        advanceToCombatAndResolve(player1);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasHexproofFromColor(gd, bears, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasHexproofFromColor(gd, bears, CardColor.WHITE)).isFalse();
+    }
+
     private void advanceToCombatAndResolve(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,8 +12,31 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CollectiveUnconscious.class, GrizzlyBears.class, Forest.class})
+@CardUsed({CollectiveUnconscious.class, GrizzlyBears.class, Forest.class, Unsummon.class})
 class CollectiveUnconsciousTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Counts creatures at resolution after a creature is returned in response")
+    void countsCreaturesAtResolution() {
+        var returnedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, returnedCreature.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+        harness.assertInGraveyard(player1, "Collective Unconscious");
+    }
 
     @Test
     @DisplayName("Draws a card for each creature the controller controls")
@@ -22,10 +46,8 @@ class CollectiveUnconsciousTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new CollectiveUnconscious()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
@@ -39,10 +61,8 @@ class CollectiveUnconsciousTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new CollectiveUnconscious()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -53,10 +73,8 @@ class CollectiveUnconsciousTest extends BaseCardTest {
     void drawsNoCardsWithoutCreatures() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new CollectiveUnconscious()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
@@ -69,10 +87,8 @@ class CollectiveUnconsciousTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new CollectiveUnconscious()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new CollectiveUnconscious(), "{4}{G}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);

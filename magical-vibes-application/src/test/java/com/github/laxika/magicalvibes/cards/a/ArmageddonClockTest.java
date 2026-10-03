@@ -71,8 +71,7 @@ class ArmageddonClockTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shatter()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, clock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, clock.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(clock);
@@ -130,10 +129,77 @@ class ArmageddonClockTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
+    @Test
+    void opponentsUpkeepDoesNotAddDoomCounter() {
+        Permanent clock = addClock(player1);
+        clock.setCounterCount(CounterType.DOOM, 2);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(clock.getCounterCount(CounterType.DOOM)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsDrawStepDoesNotDealDamage() {
+        Permanent clock = addClock(player1);
+        clock.setCounterCount(CounterType.DOOM, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void controllerCanRemoveCounterDuringOpponentsUpkeep() {
+        Permanent clock = addClock(player1);
+        clock.setCounterCount(CounterType.DOOM, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(clock.getCounterCount(CounterType.DOOM)).isEqualTo(1);
+    }
+
+    @Test
+    void removalCanBeActivatedWithoutDoomCounters() {
+        Permanent clock = addClock(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(clock.getCounterCount(CounterType.DOOM)).isZero();
+    }
+
+    @Test
+    void removalInResponseToUpkeepTriggerDoesNotPreventNewCounter() {
+        Permanent clock = addClock(player1);
+        clock.setCounterCount(CounterType.DOOM, 1);
+        advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(clock.getCounterCount(CounterType.DOOM)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(clock.getCounterCount(CounterType.DOOM)).isEqualTo(1);
+    }
+
     private Permanent addClock(Player owner) {
-        Permanent perm = new Permanent(new ArmageddonClock());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(owner, new ArmageddonClock());
     }
 
     private void advanceToDraw(Player activePlayer) {

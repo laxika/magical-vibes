@@ -72,6 +72,83 @@ class CommandBridgeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Declining with an eligible permanent still sacrifices Command Bridge")
+    void decliningWithEligiblePermanentSacrificesIt() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        playCommandBridge();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(forest.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Command Bridge");
+        harness.assertInGraveyard(player1, "Command Bridge");
+    }
+
+    @Test
+    @DisplayName("An already tapped permanent cannot pay the enter trigger cost")
+    void tappedPermanentCannotPay() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        playCommandBridge();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(forest.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Command Bridge");
+        harness.assertInGraveyard(player1, "Command Bridge");
+    }
+
+    @Test
+    @DisplayName("An opponent's untapped permanent cannot pay the enter trigger cost")
+    void opponentsPermanentCannotPay() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        playCommandBridge();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(forest.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Command Bridge");
+        harness.assertInGraveyard(player1, "Command Bridge");
+    }
+
+    @Test
+    @DisplayName("The controller chooses exactly one of multiple eligible permanents to tap")
+    void choosesOnePermanentToTap() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        playCommandBridge();
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Command Bridge");
+        harness.assertNotInGraveyard(player1, "Command Bridge");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Command Bridge can pay its own enter trigger cost if untapped before resolution")
+    void untappedBridgeCanPayForItself() {
+        playCommandBridge();
+        Permanent bridge = findCommandBridge(player1);
+        bridge.untap();
+
+        resolveEnterTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bridge.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Command Bridge");
+        harness.assertNotInGraveyard(player1, "Command Bridge");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void playCommandBridge() {
         harness.setHand(player1, List.of(new CommandBridge()));
         harness.forceActivePlayer(player1);
@@ -85,9 +162,8 @@ class CommandBridgeTest extends BaseCardTest {
     }
 
     private Permanent addCommandBridgeReady(Player player) {
-        Permanent bridge = new Permanent(new CommandBridge());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player, new CommandBridge());
         bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(bridge);
         return bridge;
     }
 

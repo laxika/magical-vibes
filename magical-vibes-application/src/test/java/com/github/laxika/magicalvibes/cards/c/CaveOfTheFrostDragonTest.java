@@ -21,23 +21,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CaveOfTheFrostDragonTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Cave of the Frost Dragon enters tapped with fewer than two other lands")
-    void entersTappedWithFewerThanTwoOtherLands() {
-        harness.setHand(player1, List.of(new CaveOfTheFrostDragon()));
-        playLand();
-
-        assertThat(findCave().isTapped()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Cave of the Frost Dragon enters untapped with two other lands")
-    void entersUntappedWithTwoOtherLands() {
-        harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player1, new Plains());
+    @DisplayName("Cave of the Frost Dragon enters untapped with no other lands")
+    void entersUntappedWithNoOtherLands() {
         harness.setHand(player1, List.of(new CaveOfTheFrostDragon()));
         playLand();
 
         assertThat(findCave().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cave of the Frost Dragon enters tapped with two other lands")
+    void entersTappedWithTwoOtherLands() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new CaveOfTheFrostDragon()));
+        playLand();
+
+        assertThat(findCave().isTapped()).isTrue();
     }
 
     @Test
@@ -90,6 +90,48 @@ class CaveOfTheFrostDragonTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, cave)).isTrue();
     }
 
+    @Test
+    @DisplayName("Cave of the Frost Dragon enters untapped with one other land")
+    void entersUntappedWithOneOtherLand() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new CaveOfTheFrostDragon()));
+        playLand();
+
+        assertThat(findCave().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponents' lands do not make Cave of the Frost Dragon enter tapped")
+    void opponentsLandsDoNotCount() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new CaveOfTheFrostDragon()));
+        playLand();
+
+        assertThat(findCave().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Cave can animate and retains its mana ability")
+    void tappedCaveCanAnimateAndRetainsManaAbility() {
+        Permanent cave = addCaveReady(player1);
+        cave.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gqs.isCreature(gd, cave)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, cave)).isTrue();
+        assertThat(cave.isTapped()).isTrue();
+        cave.untap();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(cave.isTapped()).isTrue();
+    }
+
     private void playLand() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -97,9 +139,8 @@ class CaveOfTheFrostDragonTest extends BaseCardTest {
     }
 
     private Permanent addCaveReady(Player player) {
-        Permanent cave = new Permanent(new CaveOfTheFrostDragon());
+        Permanent cave = harness.addToBattlefieldAndReturn(player, new CaveOfTheFrostDragon());
         cave.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(cave);
         return cave;
     }
 

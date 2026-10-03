@@ -3,12 +3,9 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,7 +18,7 @@ class AutomatedAssemblyLineTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AutomatedAssemblyLine());
         addAttacker(new Memnite());
 
-        runCombatDamage();
+        resolveCombat();
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
@@ -33,7 +30,7 @@ class AutomatedAssemblyLineTest extends BaseCardTest {
         addAttacker(new Memnite());
         addAttacker(new Memnite());
 
-        runCombatDamage();
+        resolveCombat();
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
@@ -44,7 +41,7 @@ class AutomatedAssemblyLineTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AutomatedAssemblyLine());
         addAttacker(new GrizzlyBears());
 
-        runCombatDamage();
+        resolveCombat();
 
         assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
@@ -79,24 +76,81 @@ class AutomatedAssemblyLineTest extends BaseCardTest {
                 .hasMessageContaining("three energy counters");
     }
 
+    @Test
+    void opponentArtifactCreatureDoesNotGiveControllerEnergy() {
+        harness.addToBattlefield(player1, new AutomatedAssemblyLine());
+        Permanent attacker = addCreatureReady(player2, new Memnite());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerEnergyCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void eachAssemblyLineTriggersIndependently() {
+        harness.addToBattlefield(player1, new AutomatedAssemblyLine());
+        harness.addToBattlefield(player1, new AutomatedAssemblyLine());
+        addAttacker(new Memnite());
+        addAttacker(new Memnite());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+    }
+
+    @Test
+    void paysEnergyImmediatelyAndCanActivateTwiceWithoutTapping() {
+        Permanent assemblyLine = addAssemblyLine();
+        assemblyLine.setTapped(true);
+        gd.playerEnergyCounters.put(player1.getId(), 6);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(assemblyLine);
+
+        harness.activateAbility(player1, index, null, null);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+
+        harness.activateAbility(player1, index, null, null);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList())
+                .hasSize(2).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    void createdRobotCanGenerateEnergyThroughCombat() {
+        Permanent assemblyLine = addAssemblyLine();
+        gd.playerEnergyCounters.put(player1.getId(), 3);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(assemblyLine);
+        harness.activateAbility(player1, index, null, null);
+        resolveAllTriggers();
+        Permanent robot = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+        robot.setTapped(false);
+        robot.setSummoningSick(false);
+        robot.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+    }
+
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player1, card);
         permanent.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addAssemblyLine() {
-        Permanent permanent = new Permanent(new AutomatedAssemblyLine());
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player1, new AutomatedAssemblyLine());
     }
 
-    private void runCombatDamage() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

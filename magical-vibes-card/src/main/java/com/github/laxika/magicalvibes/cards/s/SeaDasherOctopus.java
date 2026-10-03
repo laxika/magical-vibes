@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "IKO", collectorNumber = "66")
+@CardRegistration(set = "HBG", collectorNumber = "912")
 public class SeaDasherOctopus extends Card {
 
     public SeaDasherOctopus() {

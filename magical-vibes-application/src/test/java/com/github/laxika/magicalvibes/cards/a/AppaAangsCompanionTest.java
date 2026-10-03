@@ -67,4 +67,53 @@ class AppaAangsCompanionTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
+
+    @Test
+    @DisplayName("Nonattacking creatures are excluded from the attack trigger")
+    void excludesNonattackingCreatures() {
+        addCreatureReady(player1, new AppaAangsCompanion());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(attacker.getId())
+                .doesNotContain(nonattacker.getId(), opponentCreature.getId());
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking alone leaves no legal target and does not prompt")
+    void attackingAloneHasNoLegalTarget() {
+        addCreatureReady(player1, new AppaAangsCompanion());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A target removed from combat before resolution does not gain flying")
+    void targetMustStillBeAttackingAtResolution() {
+        addCreatureReady(player1, new AppaAangsCompanion());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, bears.getId());
+        bears.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
 }

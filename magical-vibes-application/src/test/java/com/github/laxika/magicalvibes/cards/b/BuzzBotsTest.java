@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -27,8 +28,7 @@ class BuzzBotsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Buzz Bots");
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         harness.assertInGraveyard(player1, "Buzz Bots");
         assertThat(gd.stack).hasSize(1);
@@ -36,5 +36,32 @@ class BuzzBotsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void zeroToughnessDeathDrawsExactlyOneCardForControllerRatherThanOwner() {
+        Forest drawnCard = new Forest();
+        Forest remainingCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawnCard, remainingCard));
+
+        BuzzBots bots = new BuzzBots();
+        bots.setOwnerId(player1.getId());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, bots);
+        permanent.setToughnessModifier(-1);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Buzz Bots");
+        harness.assertNotOnBattlefield(player2, "Buzz Bots");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

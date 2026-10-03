@@ -1,35 +1,33 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
+import com.github.laxika.magicalvibes.cards.p.PlagueMyr;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ChokingFumes.class, LeoninSkyhunter.class, PlagueMyr.class})
 class ChokingFumesTest extends BaseCardTest {
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Puts a -1/-1 counter on each attacking creature")
     void putsCounterOnEachAttackingCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
         bears.setSummoningSick(false);
         bears.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        Permanent bears2 = new Permanent(new GrizzlyBears());
+        Permanent bears2 = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
         bears2.setSummoningSick(false);
         bears2.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(bears2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -38,8 +36,7 @@ class ChokingFumesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
@@ -48,14 +45,12 @@ class ChokingFumesTest extends BaseCardTest {
     @Test
     @DisplayName("Does not affect non-attacking creatures")
     void doesNotAffectNonAttackingCreatures() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        Permanent nonAttacker = new Permanent(new GrizzlyBears());
+        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
         nonAttacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(nonAttacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -64,8 +59,7 @@ class ChokingFumesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(nonAttacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
@@ -74,10 +68,9 @@ class ChokingFumesTest extends BaseCardTest {
     @Test
     @DisplayName("Kills a 1/1 attacking creature with the -1/-1 counter")
     void killsOneOneAttacker() {
-        Permanent elf = new Permanent(new LlanowarElves());
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new PlagueMyr());
         elf.setSummoningSick(false);
         elf.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(elf);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -86,47 +79,36 @@ class ChokingFumesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Plague Myr");
+        harness.assertInGraveyard(player2, "Plague Myr");
     }
 
     @Test
-    @DisplayName("Affects attacking creatures from both players")
-    void affectsAttackersFromBothPlayers() {
-        // Player 2's attacker
-        Permanent p2Attacker = new Permanent(new GrizzlyBears());
-        p2Attacker.setSummoningSick(false);
-        p2Attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(p2Attacker);
+    @DisplayName("Also affects the caster's own attacking creatures")
+    void affectsCastersOwnAttackers() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent defender = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
 
-        // Player 1's creature that is also attacking (e.g. from a previous combat or extra combat)
-        Permanent p1Attacker = new Permanent(new GrizzlyBears());
-        p1Attacker.setSummoningSick(false);
-        p1Attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(p1Attacker);
-
-        harness.forceActivePlayer(player2);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new ChokingFumes()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.passPriority(player2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        // Both attacking creatures get counters
-        assertThat(p2Attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(p1Attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(defender.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test
     @DisplayName("Does nothing when no creatures are attacking")
     void doesNothingWithNoAttackers() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -135,11 +117,53 @@ class ChokingFumesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.passPriority(player2);
 
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Does not put counters on blocking creatures")
+    void doesNotAffectBlockers() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        blocker.setBlocking(true);
+        blocker.addBlockingTargetId(attacker.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ChokingFumes()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.passPriority(player2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Checks attacking status when the spell resolves")
+    void checksAttackingStatusAtResolution() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ChokingFumes()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.passPriority(player2);
         harness.castInstant(player1, 0);
+
+        attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        // Non-attacking creature is unaffected
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Choking Fumes");
     }
 }

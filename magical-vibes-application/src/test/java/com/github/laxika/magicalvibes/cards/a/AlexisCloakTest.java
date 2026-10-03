@@ -115,6 +115,60 @@ class AlexisCloakTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void canEnchantOpponentsCreatureWithoutGrantingShroudToOtherCreatures() {
+        Permanent creature = addCreatureReady(player2, new DivingGriffin());
+        Permanent otherCreature = addCreatureReady(player1, new DivingGriffin());
+        harness.setHand(player1, List.of(new AlexisCloak()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Alexi's Cloak").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.SHROUD)).isFalse();
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Alexi's Cloak");
+    }
+
+    @Test
+    void flashProtectsCreatureFromAbilityAlreadyOnStack() {
+        Permanent creature = addCreatureReady(player1, new DivingGriffin());
+        Permanent deluge = harness.addToBattlefieldAndReturn(player2, new RhysticDeluge());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new AlexisCloak()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(deluge),
+                0, null, creature.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void auraDoesNotResolveIfTargetGainsShroudInResponse() {
+        Permanent creature = addCreatureReady(player1, new DivingGriffin());
+        harness.setHand(player1, List.of(new AlexisCloak(), new AlexisCloak()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Alexi's Cloak")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Alexi's Cloak");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+    }
+
     private Permanent attachAura(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new AlexisCloak());
         aura.setAttachedTo(creature.getId());

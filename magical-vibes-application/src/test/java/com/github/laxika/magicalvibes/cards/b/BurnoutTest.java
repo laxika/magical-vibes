@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Burnout.class, GrizzlyBears.class, Unsummon.class, LightningBolt.class, LlanowarElves.class})
+@CardUsed({Burnout.class, GrizzlyBears.class, Unsummon.class, LightningBolt.class, LlanowarElves.class, Counterspell.class})
 class BurnoutTest extends BaseCardTest {
 
     @Test
@@ -34,8 +35,7 @@ class BurnoutTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, unsummon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, unsummon.getId());
 
         harness.assertInGraveyard(player1, "Unsummon");
         // Unsummon never resolved, so the creature is still on the battlefield.
@@ -127,5 +127,51 @@ class BurnoutTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, elves.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void drawsOnOpponentsNextUpkeepAfterCounteringBlueInstantOnlyOnce() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Unsummon unsummon = new Unsummon();
+        harness.setHand(player1, List.of(unsummon, new Burnout()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.castAndResolveInstant(player1, 0, unsummon.getId());
+
+        harness.assertInGraveyard(player1, "Unsummon");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotScheduleDrawWhenTargetWasCounteredBeforeResolution() {
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player1, List.of(bolt, new Counterspell()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new Burnout()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bolt.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, bolt.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player2, "Burnout");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }

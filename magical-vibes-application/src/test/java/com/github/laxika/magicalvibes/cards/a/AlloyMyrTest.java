@@ -2,28 +2,25 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlloyMyr.class})
 class AlloyMyrTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating Alloy Myr prompts for mana color")
     void activateAbilityPromptsManaColor() {
-        harness.addToBattlefield(player1, new AlloyMyr());
-        GameData gd = harness.getGameData();
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).getFirst();
-        myr.setSummoningSick(false);
+        Permanent myr = addCreatureReady(player1, new AlloyMyr());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -31,30 +28,26 @@ class AlloyMyrTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED", "GREEN");
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = "COLORLESS", mode = EnumSource.Mode.EXCLUDE)
     @DisplayName("Choosing a color adds exactly one mana of that color")
-    void choosingColorAddsMana() {
-        for (String color : List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN")) {
-            harness = new GameTestHarness();
-            player1 = harness.getPlayer1();
-            harness.skipMulligan();
+    void choosingColorAddsMana(ManaColor manaColor) {
+        addCreatureReady(player1, new AlloyMyr());
 
-            harness.addToBattlefield(player1, new AlloyMyr());
-            GameData gd = harness.getGameData();
-            Permanent myr = gd.playerBattlefields.get(player1.getId()).getFirst();
-            myr.setSummoningSick(false);
-            ManaColor manaColor = ManaColor.valueOf(color);
+        harness.activateAbility(player1, 0, null, null);
+        int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
 
-            harness.activateAbility(player1, 0, null, null);
-            int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
+        harness.handleListChoice(player1, manaColor.name());
 
-            harness.handleListChoice(player1, color);
-
-            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
-            assertThat(gd.interaction.activeInteraction()).isNull();
-        }
+        assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -70,12 +63,10 @@ class AlloyMyrTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Alloy Myr when already tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new AlloyMyr());
-        GameData gd = harness.getGameData();
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).getFirst();
-        myr.setSummoningSick(false);
+        addCreatureReady(player1, new AlloyMyr());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

@@ -17,7 +17,7 @@ class CephalidRetainerTest extends BaseCardTest {
     @Test
     @DisplayName("Taps target creature without flying")
     void tapsTargetCreatureWithoutFlying() {
-        Permanent retainer = addCreatureReady(player1, new CephalidRetainer());
+        addCreatureReady(player1, new CephalidRetainer());
         Permanent target = addCreatureReady(player2, new CephalidLooter());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -64,5 +64,52 @@ class CephalidRetainerTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
         assertThat(retainer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can tap itself")
+    void canTapItself() {
+        Permanent retainer = addCreatureReady(player1, new CephalidRetainer());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, retainer.getId());
+        harness.passBothPriorities();
+
+        assertThat(retainer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly while tapped and summoning sick")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent retainer = harness.addToBattlefieldAndReturn(player1, new CephalidRetainer());
+        retainer.setSummoningSick(true);
+        retainer.tap();
+        Permanent firstTarget = addCreatureReady(player2, new CephalidLooter());
+        Permanent secondTarget = addCreatureReady(player2, new CephalidLooter());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        harness.activateAbility(player1, 0, null, secondTarget.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.isTapped()).isTrue();
+        assertThat(secondTarget.isTapped()).isTrue();
+        assertThat(retainer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot substitute colorless mana for the second blue mana")
+    void requiresTwoBlueMana() {
+        addCreatureReady(player1, new CephalidRetainer());
+        Permanent target = addCreatureReady(player2, new CephalidLooter());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

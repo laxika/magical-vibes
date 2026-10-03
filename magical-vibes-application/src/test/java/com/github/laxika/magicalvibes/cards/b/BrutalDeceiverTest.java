@@ -172,4 +172,90 @@ class BrutalDeceiverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, deceiver, Keyword.FIRST_STRIKE)).isTrue();
     }
+
+    @Test
+    @DisplayName("The reveal limit applies before the first activation resolves")
+    void revealLimitAppliesWhileOnStack() {
+        Permanent deceiver = addCreatureReady(player1, new BrutalDeceiver());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Brutal Deceiver has its own reveal activation limit")
+    void revealLimitIsIndependentForEachPermanent() {
+        Permanent first = addCreatureReady(player1, new BrutalDeceiver());
+        Permanent second = addCreatureReady(player1, new BrutalDeceiver());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A nonland reveal consumes the reveal activation but does not restrict looking")
+    void nonlandRevealConsumesLimitAndStillAllowsLooking() {
+        addCreatureReady(player1, new BrutalDeceiver());
+        Card topCard = new BrutalDeceiver();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(topCard);
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("The reveal ability checks the top card at resolution rather than activation")
+    void revealChecksTopCardAtResolution() {
+        Permanent deceiver = addCreatureReady(player1, new BrutalDeceiver());
+        Card nonland = new BrutalDeceiver();
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(nonland, land));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.FIRST_STRIKE)).isTrue();
+    }
 }

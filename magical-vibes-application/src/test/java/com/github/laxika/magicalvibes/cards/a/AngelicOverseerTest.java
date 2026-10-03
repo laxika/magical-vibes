@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AngelicOverseer.class, EliteVanguard.class, GrizzlyBears.class, Shock.class, WrathOfGod.class})
 class AngelicOverseerTest extends BaseCardTest {
 
     // ===== Conditional hexproof and indestructible with Human =====
@@ -109,9 +111,8 @@ class AngelicOverseerTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.passPriority(player1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, overseer.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, overseer.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
     }
@@ -129,10 +130,9 @@ class AngelicOverseerTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.passPriority(player1);
 
         // Should not throw — targeting is allowed without hexproof
-        gs.playCard(gd, player2, 0, 0, overseer.getId(), null);
+        harness.castInstant(player2, 0, overseer.getId());
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -155,8 +155,7 @@ class AngelicOverseerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         // Angelic Overseer should survive (indestructible at time of Wrath resolving)
         // Note: The Human (Elite Vanguard) dies to Wrath, but the Overseer was indestructible
@@ -214,4 +213,59 @@ class AngelicOverseerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, overseer, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Controller can target its protected Overseer and lethal damage kills it after its last Human dies")
+    void lethalDamageKillsOverseerAfterLastHumanDies() {
+        harness.addToBattlefield(player1, new AngelicOverseer());
+        harness.addToBattlefield(player1, new EliteVanguard());
+        Permanent overseer = findPermanent(player1, "Angelic Overseer");
+        Permanent human = findPermanent(player1, "Elite Vanguard");
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, overseer.getId());
+        harness.castAndResolveInstant(player1, 0, overseer.getId());
+        harness.assertOnBattlefield(player1, "Angelic Overseer");
+
+        harness.castAndResolveInstant(player1, 0, human.getId());
+
+        harness.assertInGraveyard(player1, "Elite Vanguard");
+        harness.assertInGraveyard(player1, "Angelic Overseer");
+        harness.assertNotOnBattlefield(player1, "Angelic Overseer");
+    }
+
+    @Test
+    @DisplayName("Gaining a Human before an opponent's spell resolves makes Overseer an illegal target")
+    void gainingHumanInvalidatesOpponentSpellTarget() {
+        harness.addToBattlefield(player1, new AngelicOverseer());
+        Permanent overseer = findPermanent(player1, "Angelic Overseer");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, overseer.getId());
+
+        harness.addToBattlefield(player1, new EliteVanguard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Angelic Overseer");
+        assertThat(overseer.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Simultaneous destruction preserves Overseer even when its Human precedes it on the battlefield")
+    void simultaneousDestructionDoesNotDependOnBattlefieldOrder() {
+        harness.addToBattlefield(player1, new EliteVanguard());
+        harness.addToBattlefield(player1, new AngelicOverseer());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Elite Vanguard");
+        harness.assertOnBattlefield(player1, "Angelic Overseer");
+        Permanent overseer = findPermanent(player1, "Angelic Overseer");
+        assertThat(gqs.hasKeyword(gd, overseer, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, overseer, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
 }

@@ -17,6 +17,62 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChompingMastasaurTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering still seeks when there is no card to discard")
+    void enteringWithEmptyHandStillSeeks() {
+        harness.setHand(player1, List.of(new ChompingMastasaur()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking still seeks when there is no card to discard")
+    void attackingWithEmptyHandStillSeeks() {
+        addCreatureReady(player1, new ChompingMastasaur());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Seeking completes before choosing the reflexive damage trigger's target")
+    void seeksBeforeChoosingDamageTarget() {
+        harness.setHand(player1, List.of(new ChompingMastasaur(), new HillGiant()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
     @DisplayName("Entering discards, seeks a nonland card, and deals damage equal to the discarded card's mana value")
     void enteringTriggersDiscardSeekAndDamage() {
         harness.setHand(player1, List.of(new ChompingMastasaur(), new HillGiant()));

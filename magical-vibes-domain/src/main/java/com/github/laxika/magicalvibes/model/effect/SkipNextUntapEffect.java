@@ -27,10 +27,17 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param matchAtUntap whether the target player's matching permanents are determined at untap
  * @param allPlayersAtUntap whether matching permanents controlled by any player are affected
  *                          during the target player's untap step
+ * @param controllerStepOnly whether the restriction expires during the resolving controller's
+ *                           next untap step, even if the permanent changes controllers (exert)
  */
 public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
-                                  boolean matchAtUntap, boolean allPlayersAtUntap)
+                                  boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly)
         implements CardEffect, CombatOpponentReferencingEffect {
+
+    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
+                               boolean matchAtUntap, boolean allPlayersAtUntap) {
+        this(scope, filter, untapSteps, matchAtUntap, allPlayersAtUntap, false);
+    }
 
     public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
                                boolean matchAtUntap) {

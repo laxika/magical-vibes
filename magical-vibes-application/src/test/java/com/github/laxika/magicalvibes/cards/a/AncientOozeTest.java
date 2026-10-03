@@ -57,6 +57,39 @@ class AncientOozeTest extends BaseCardTest {
         assertStats(ooze, 0, 0);
     }
 
+    @Test
+    @DisplayName("Each Ancient Ooze counts the other Ooze but excludes itself")
+    void countsOtherAncientOoze() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AncientOoze());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AncientOoze());
+
+        assertStats(first, 7, 7);
+        assertStats(second, 7, 7);
+    }
+
+    @Test
+    @DisplayName("Counts the printed mana value of a face-up Scornful Egotist")
+    void faceUpEgotistContributesEight() {
+        harness.addToBattlefield(player1, new ScornfulEgotist());
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new AncientOoze());
+
+        assertStats(ooze, 8, 8);
+    }
+
+    @Test
+    @DisplayName("Dies with no other creatures even when the opponent controls creatures")
+    void diesWithoutOtherControlledCreatures() {
+        harness.addToBattlefield(player2, new ScornfulEgotist());
+        harness.addToBattlefield(player1, new ArkOfBlight());
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new AncientOoze());
+
+        assertStats(ooze, 0, 0);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Ancient Ooze");
+        harness.assertInGraveyard(player1, "Ancient Ooze");
+    }
+
     private void assertStats(Permanent ooze, int power, int toughness) {
         assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(power);
         assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(toughness);

@@ -190,4 +190,38 @@ class BeaconOfUnrestTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Beacon of Unrest");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }
+
+    @Test
+    @DisplayName("Cannot target an instant even when a legal creature target exists")
+    void rejectsInstantWhenLegalTargetExists() {
+        HolyDay invalidTarget = new HolyDay();
+        GrizzlyBears validTarget = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(invalidTarget));
+        harness.setGraveyard(player2, List.of(validTarget));
+        harness.setHand(player1, List.of(new BeaconOfUnrest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, invalidTarget.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Beacon of Unrest");
+        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast without choosing the mandatory graveyard target")
+    void rejectsMissingTarget() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new BeaconOfUnrest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Beacon of Unrest");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
 }

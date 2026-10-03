@@ -123,4 +123,57 @@ class BlowflyInfestationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("A creature killed by the counter triggers another counter placement")
+    void counterCausedDeathContinuesTheChain() {
+        Permanent infestation = harness.addToBattlefieldAndReturn(player1, new BlowflyInfestation());
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent next = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        next.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, dying.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).contains(next.getId(), survivor.getId())
+                .doesNotContain(infestation.getId(), dying.getId());
+        harness.handlePermanentChosen(player1, next.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2)).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, survivor.getId());
+        harness.passBothPriorities();
+
+        assertThat(survivor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ability does not affect another creature when its target dies in response")
+    void doesNotRetargetWhenTargetDiesBeforeResolution() {
+        harness.addToBattlefield(player1, new BlowflyInfestation());
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        harness.setHand(player1, List.of(new FlameJavelin(), new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, dying.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2)).isEmpty();
+        assertThat(survivor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

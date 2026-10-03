@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BasicConjuration.class, GrizzlyBears.class, HillGiant.class, Shock.class, Forest.class})
 class BasicConjurationTest extends BaseCardTest {
 
     @Test
@@ -67,17 +69,70 @@ class BasicConjurationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A single creature in a short library may still be declined")
+    void singleCreatureMayBeDeclined() {
+        GrizzlyBears bears = new GrizzlyBears();
+        setupTopSix(bears);
+
+        castBasicConjuration();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library still allows the three life gain")
+    void emptyLibraryStillGainsLife() {
+        setupTopSix();
+
+        castBasicConjuration();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Only the top six are eligible and the rest are bottomed below untouched cards")
+    void preservesUntouchedLibraryCards() {
+        GrizzlyBears bears = new GrizzlyBears();
+        List<Card> lookedAt = List.of(bears, new Shock(), new Forest(),
+                new Shock(), new Forest(), new Shock());
+        HillGiant seventh = new HillGiant();
+        Forest eighth = new Forest();
+        harness.setLibrary(player1, List.of(lookedAt.get(0), lookedAt.get(1), lookedAt.get(2),
+                lookedAt.get(3), lookedAt.get(4), lookedAt.get(5), seventh, eighth));
+
+        castBasicConjuration();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactlyElementsOf(lookedAt);
+        assertThat(choice.validCardIds()).containsExactly(bears.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(7);
+        assertThat(library.subList(0, 2)).containsExactly(seventh, eighth);
+        assertThat(library.subList(2, 7)).containsExactlyInAnyOrderElementsOf(lookedAt.subList(1, 6));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castBasicConjuration() {
         harness.setHand(player1, List.of(new BasicConjuration()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void setupTopSix(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }

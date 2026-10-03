@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BurnBurnTreeAndFern.class, FireDiamond.class, WallOfStone.class})
@@ -85,11 +83,57 @@ class BurnBurnTreeAndFernTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
 
+    @Test
+    @DisplayName("Chapter I cannot damage a target that is no longer opponent-controlled")
+    void chapterIRechecksTargetController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WallOfStone());
+        castSaga();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Chapter II cannot destroy a target that is no longer opponent-controlled")
+    void chapterIIRechecksTargetController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FireDiamond());
+        addSagaWithLore(1);
+        advanceToChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        harness.assertNotInGraveyard(player2, "Fire Diamond");
+    }
+
+    @Test
+    @DisplayName("The final chapter uses the stack and the Saga remains until it resolves")
+    void finalChapterWaitsForResolution() {
+        Permanent saga = addSagaWithLore(3);
+        advanceToChapter();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        harness.assertInGraveyard(player1, "Burn, Burn, Tree and Fern");
+    }
+
     private void castSaga() {
-        harness.setHand(player1, List.of(new BurnBurnTreeAndFern()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new BurnBurnTreeAndFern(), "{3}{R}");
         harness.passBothPriorities();
     }
 

@@ -30,8 +30,7 @@ class CatharticPyreTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CatharticPyre()));
         addMana();
 
-        harness.castInstant(player1, 0, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -39,14 +38,12 @@ class CatharticPyreTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 3 damage to a target planeswalker")
     void damagesTargetPlaneswalker() {
-        Permanent planeswalker = new Permanent(new ChandraNalaar());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.setHand(player1, List.of(new CatharticPyre()));
         addMana();
 
-        harness.castInstant(player1, 0, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
@@ -101,6 +98,82 @@ class CatharticPyreTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can discard one card while keeping another, then draw exactly one")
+    void discardsOneThenDrawsOne() {
+        harness.setHand(player1, List.of(new CatharticPyre(), new Island(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Mountain", "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Island");
+        harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("The discard mode resolves with an empty hand without drawing")
+    void emptyHandDrawsNothing() {
+        harness.setHand(player1, List.of(new CatharticPyre()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Cathartic Pyre");
+    }
+
+    @Test
+    @DisplayName("Cannot discard more than two even with a larger hand")
+    void cannotDiscardMoreThanTwo() {
+        harness.setHand(player1, List.of(new CatharticPyre(), new Island(), new Mountain(), new Forest()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleXValueChosen(player1, 3))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleXValueChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Cannot target a land with the damage mode")
+    void damageModeCannotTargetLand() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new CatharticPyre()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 0,
+                harness.getPermanentId(player2, "Forest")))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target the controller's own creature")
+    void damagesOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CatharticPyre()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     private void addMana() {

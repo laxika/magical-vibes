@@ -72,6 +72,79 @@ class AnjesRavagerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    void tappedRavagerIsNotRequiredToAttack() {
+        addCreatureReady(player1, new AnjesRavager()).tap();
+
+        declareAttackers(List.of());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void summoningSickRavagerIsNotRequiredToAttack() {
+        harness.addToBattlefield(player1, new AnjesRavager());
+
+        declareAttackers(List.of());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void attackingWithEmptyHandStillDrawsThree() {
+        addCreatureReady(player1, new AnjesRavager());
+        AnjesRavager firstDraw = new AnjesRavager();
+        AnjesRavager secondDraw = new AnjesRavager();
+        AnjesRavager thirdDraw = new AnjesRavager();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void decliningMadnessPutsRavagerIntoGraveyard() {
+        AnjesRavager ravager = discardViaRavensCrime();
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(ravager);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ravager);
+        harness.assertNotOnBattlefield(player1, "Anje's Ravager");
+    }
+
+    @Test
+    void attackDrawsBeforeDiscardedRavagersMadnessChoice() {
+        addCreatureReady(player1, new AnjesRavager());
+        AnjesRavager discarded = new AnjesRavager();
+        AnjesRavager firstDraw = new AnjesRavager();
+        AnjesRavager secondDraw = new AnjesRavager();
+        AnjesRavager thirdDraw = new AnjesRavager();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(discarded);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(firstDraw, secondDraw, thirdDraw);
+    }
+
     private AnjesRavager discardViaRavensCrime() {
         AnjesRavager ravager = new AnjesRavager();
         harness.setHand(player1, List.of(ravager));

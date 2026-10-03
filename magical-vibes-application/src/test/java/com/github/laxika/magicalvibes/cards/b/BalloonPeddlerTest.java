@@ -78,4 +78,60 @@ class BalloonPeddlerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    void canTargetItselfAndDiscardALandAsAnActivationCost() {
+        Permanent peddler = addCreatureReady(player1, new BalloonPeddler());
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, peddler.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(peddler.isTapped()).isTrue();
+        assertThat(peddler.hasKeyword(Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(peddler.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void cannotActivateWithoutBlueMana() {
+        Permanent peddler = addCreatureReady(player1, new BalloonPeddler());
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, peddler.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertInHand(player1, "Island");
+        assertThat(peddler.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent peddler = addCreatureReady(player1, new BalloonPeddler());
+        peddler.setTapped(true);
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, peddler.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent peddler = addCreatureReady(player1, new BalloonPeddler());
+        peddler.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, peddler.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
 }

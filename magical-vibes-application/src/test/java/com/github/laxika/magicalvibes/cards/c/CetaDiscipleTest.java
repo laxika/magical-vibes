@@ -111,4 +111,69 @@ class CetaDiscipleTest extends BaseCardTest {
     private Permanent addReadyDisciple(Player player) {
         return addCreatureReady(player, new CetaDisciple());
     }
+
+    @Test
+    @DisplayName("The red ability can target the disciple itself")
+    void redAbilityCanTargetItself() {
+        Permanent disciple = addReadyDisciple(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, disciple.getId());
+        assertThat(disciple.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(disciple.getPowerModifier()).isEqualTo(2);
+        assertThat(disciple.getToughnessModifier()).isZero();
+        assertThat(disciple.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new CetaDisciple());
+        disciple.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(disciple.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Green ability consumes green mana and produces mana without using the stack")
+    void greenAbilityPaysCostAndResolvesImmediately() {
+        Permanent disciple = addReadyDisciple(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(disciple.isTapped()).isTrue();
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Neither ability can be activated without its colored mana cost")
+    void abilitiesRequireTheirColoredManaCosts() {
+        Permanent disciple = addReadyDisciple(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(disciple.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

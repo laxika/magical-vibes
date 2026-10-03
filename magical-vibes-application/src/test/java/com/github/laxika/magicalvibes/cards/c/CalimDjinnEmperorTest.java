@@ -29,8 +29,7 @@ class CalimDjinnEmperorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateHandAbility(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -57,10 +56,14 @@ class CalimDjinnEmperorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateHandAbility(player1, 0, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.assertNotOnBattlefield(player1, "Calim, Djinn Emperor");
+        harness.assertInGraveyard(player1, "Calim, Djinn Emperor");
+        assertThat(gd.exiledCards)
+                .extracting(exiled -> exiled.card().getId())
+                .containsExactlyInAnyOrder(otherOne.getId(), otherTwo.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -70,5 +73,79 @@ class CalimDjinnEmperorTest extends BaseCardTest {
                 .extracting(exiled -> exiled.card().getId())
                 .containsExactlyInAnyOrder(otherOne.getId(), otherTwo.getId());
         harness.assertNotInGraveyard(player1, "Calim, Djinn Emperor");
+    }
+
+    @Test
+    @DisplayName("The discarded source cannot count as one of the two other Calims")
+    void breathCannotExileSourceToMakeUpTwoCopies() {
+        Card source = new CalimDjinnEmperor();
+        Card other = new CalimDjinnEmperor();
+        harness.setHand(player1, List.of(source));
+        harness.setGraveyard(player1, List.of(other));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other, source);
+        assertThat(gd.exiledCards).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Calim, Djinn Emperor");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An illegal sole target stops the draw but not the independent discard trigger")
+    void illegalTargetStopsBreathButStillConjures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card source = new CalimDjinnEmperor();
+        Card libraryCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(source));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(libraryCard);
+        assertThat(gd.playerDecks.get(player1.getId()).getLast().getName())
+                .isEqualTo("Calim, Djinn Emperor");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+    }
+
+    @Test
+    @DisplayName("Discarding Calim into an empty library conjures a new copy before the draw")
+    @CardUsed(CalimDjinnEmperor.class)
+    void breathDrawsConjuredCopyFromInitiallyEmptyLibrary() {
+        Card source = new CalimDjinnEmperor();
+        harness.setHand(player1, List.of(source));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertNotInHand(player1, "Calim, Djinn Emperor");
+        harness.assertInGraveyard(player1, "Calim, Djinn Emperor");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        Card conjured = gd.playerDecks.get(player1.getId()).getFirst();
+        assertThat(conjured.getName()).isEqualTo("Calim, Djinn Emperor");
+        assertThat(conjured.getId()).isNotEqualTo(source.getId());
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(conjured);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
     }
 }

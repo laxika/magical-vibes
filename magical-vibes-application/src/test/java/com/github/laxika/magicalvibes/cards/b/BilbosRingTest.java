@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BilbosRing.class, DelightedHalfling.class, GrizzlyBears.class})
@@ -24,10 +24,10 @@ class BilbosRingTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has hexproof and can't be blocked")
     void equippedCreatureHasHexproofAndCantBeBlocked() {
-        Permanent creature = addReady(player1, new GrizzlyBears());
-        Permanent ring = addReady(player1, new BilbosRing());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
         ring.setAttachedTo(creature.getId());
-        addReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
 
@@ -45,8 +45,8 @@ class BilbosRingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
         harness.setLife(player1, 20);
 
-        Permanent creature = addReady(player1, new GrizzlyBears());
-        Permanent ring = addReady(player1, new BilbosRing());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
         ring.setAttachedTo(creature.getId());
 
         declareAttackers(List.of(0));
@@ -64,10 +64,10 @@ class BilbosRingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
         harness.setLife(player1, 20);
 
-        Permanent creature = addReady(player1, new GrizzlyBears());
-        Permanent ring = addReady(player1, new BilbosRing());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
         ring.setAttachedTo(creature.getId());
-        addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 2));
         harness.passBothPriorities();
@@ -79,8 +79,8 @@ class BilbosRingTest extends BaseCardTest {
     @Test
     @DisplayName("Equip Halfling attaches the Ring to a Halfling")
     void equipHalflingAttachesToHalfling() {
-        Permanent ring = addReady(player1, new BilbosRing());
-        Permanent halfling = addReady(player1, new DelightedHalfling());
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
+        Permanent halfling = addCreatureReady(player1, new DelightedHalfling());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, halfling.getId());
@@ -92,8 +92,8 @@ class BilbosRingTest extends BaseCardTest {
     @Test
     @DisplayName("Equip Halfling rejects a non-Halfling")
     void equipHalflingRejectsNonHalfling() {
-        addReady(player1, new BilbosRing());
-        Permanent creature = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BilbosRing());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -104,8 +104,8 @@ class BilbosRingTest extends BaseCardTest {
     @Test
     @DisplayName("Equip {4} attaches the Ring to any creature")
     void genericEquipAttachesToAnyCreature() {
-        Permanent ring = addReady(player1, new BilbosRing());
-        Permanent creature = addReady(player1, new GrizzlyBears());
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
@@ -114,10 +114,28 @@ class BilbosRingTest extends BaseCardTest {
         assertThat(ring.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Equipped creature does not have hexproof during the opponent's turn")
+    void equippedCreatureDoesNotHaveHexproofDuringOpponentsTurn() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
+        ring.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player2);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's equipped creature can be blocked during that opponent's turn")
+    void opponentsEquippedCreatureCanBeBlocked() {
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        ring.setAttachedTo(attacker.getId());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        assertThatCode(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0))))
+                .doesNotThrowAnyException();
     }
 }

@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(CogworkersPuzzleknot.class)
 class CogworkersPuzzleknotTest extends BaseCardTest {
 
     @Test
@@ -44,6 +47,48 @@ class CogworkersPuzzleknotTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(puzzleknot.getCard());
         assertThat(findPermanents(player1, "Servo")).hasSize(1);
         assertServo(findPermanent(player1, "Servo"));
+    }
+
+    @Test
+    @DisplayName("Sacrificing in response to the enter trigger still creates both Servos")
+    void sacrificeWhileEnterTriggerIsPending() {
+        harness.setHand(player1, List.of(new CogworkersPuzzleknot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent puzzleknot = findPermanent(player1, "Cogworker's Puzzleknot");
+        assertThat(findPermanents(player1, "Servo")).isEmpty();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(puzzleknot);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(puzzleknot.getCard());
+        assertThat(findPermanents(player1, "Servo")).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Servo")).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Servo")).hasSize(2);
+        findPermanents(player1, "Servo").forEach(this::assertServo);
+        assertThat(findPermanents(player2, "Servo")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the white activation cost")
+    void activationRequiresWhiteMana() {
+        Permanent puzzleknot = harness.addToBattlefieldAndReturn(player1, new CogworkersPuzzleknot());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(puzzleknot);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(puzzleknot.getCard());
+        assertThat(findPermanents(player1, "Servo")).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void assertServo(Permanent token) {

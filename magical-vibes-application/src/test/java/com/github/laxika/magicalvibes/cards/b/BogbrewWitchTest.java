@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FesteringNewt;
+import com.github.laxika.magicalvibes.cards.p.PredatorySliver;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BogbrewWitch.class, FesteringNewt.class, BubblingCauldron.class, PredatorySliver.class})
 class BogbrewWitchTest extends BaseCardTest {
 
     private void setUpWitch() {
@@ -23,22 +24,14 @@ class BogbrewWitchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
     }
 
-    private Card namedCard(String name, CardType type) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setType(type);
-        return card;
-    }
-
     @Test
     @DisplayName("Search offers only Festering Newt and Bubbling Cauldron")
     void searchOffersOnlyTheTwoNamedCards() {
         setUpWitch();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
-                namedCard("Festering Newt", CardType.CREATURE),
-                namedCard("Bubbling Cauldron", CardType.ARTIFACT),
-                new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(
+                new FesteringNewt(),
+                new BubblingCauldron(),
+                new PredatorySliver()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -55,17 +48,64 @@ class BogbrewWitchTest extends BaseCardTest {
     @DisplayName("Chosen card enters the battlefield tapped")
     void chosenCardEntersTapped() {
         setUpWitch();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
-                namedCard("Bubbling Cauldron", CardType.ARTIFACT),
-                new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(
+                new BubblingCauldron(),
+                new PredatorySliver()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Bubbling Cauldron");
         Permanent cauldron = findPermanent(player1, "Bubbling Cauldron");
         assertThat(cauldron.isTapped()).isTrue();
+    }
+
+    @Test
+    void newtEntersTappedAndOnlyOneCardIsFound() {
+        setUpWitch();
+        FesteringNewt newt = new FesteringNewt();
+        BubblingCauldron cauldron = new BubblingCauldron();
+        harness.setLibrary(player1, List.of(newt, cauldron));
+        harness.setLibrary(player2, List.of(new BubblingCauldron()));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(findPermanent(player1, "Bogbrew Witch").isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Festering Newt").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cauldron);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void mayFailToFindEvenWithAMatchingCard() {
+        setUpWitch();
+        FesteringNewt newt = new FesteringNewt();
+        harness.setLibrary(player1, List.of(newt));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(newt);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void noMatchingCardCompletesWithoutAChoice() {
+        setUpWitch();
+        PredatorySliver sliver = new PredatorySliver();
+        harness.setLibrary(player1, List.of(sliver));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sliver);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

@@ -7,17 +7,15 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AppleOfEdenIsuRelic.class, Forest.class, GrizzlyBears.class, Island.class})
 class AppleOfEdenIsuRelicTest extends BaseCardTest {
@@ -29,7 +27,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         GrizzlyBears spell = new GrizzlyBears();
         Forest land = new Forest();
         Island drawn = new Island();
-        harness.setHand(player2, new ArrayList<>(List.of(spell, land)));
+        harness.setHand(player2, List.of(spell, land));
         harness.setLibrary(player2, List.of(drawn));
 
         activateApple(apple);
@@ -44,8 +42,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castFromExile(player1, spell.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
         assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(land);
@@ -79,20 +76,146 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         activateApple(apple);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
 
-        harness.forceStep(TurnStep.END_STEP);
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).contains(exiled);
     }
 
+    @Test
+    @DisplayName("All unplayed cards return through one delayed triggered ability")
+    void returnsAllCardsWithOneEndStepTrigger() {
+        Permanent apple = addApple();
+        GrizzlyBears spell = new GrizzlyBears();
+        Forest land = new Forest();
+        harness.setHand(player2, List.of(spell, land));
+
+        activateApple(apple);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(spell, land);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty opposing hand does not prevent paying the activation costs")
+    void canActivateAgainstEmptyHand() {
+        Permanent apple = addApple();
+        harness.setHand(player2, List.of());
+
+        activateApple(apple);
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(apple);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability cannot target its controller")
+    void cannotTargetController() {
+        Permanent apple = addApple();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(apple), null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(apple);
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated outside a main phase")
+    void cannotActivateDuringCombat() {
+        Permanent apple = addApple();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(apple), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(apple);
+    }
+
+    @Test
+    @DisplayName("Activation requires four life")
+    void cannotActivateWithoutEnoughLife() {
+        Permanent apple = addApple();
+        harness.setLife(player1, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(apple), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(apple);
+    }
+
+    @Test
+    @DisplayName("A tapped Apple cannot pay its tap cost")
+    void cannotActivateWhenTapped() {
+        Permanent apple = addApple();
+        apple.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(apple), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(apple);
+    }
+
+    @Test
+    @DisplayName("Playing an exiled land still consumes the normal land play")
+    void cannotPlaySecondExiledLand() {
+        Permanent apple = addApple();
+        Forest first = new Forest();
+        Island second = new Island();
+        harness.setHand(player2, List.of(first, second));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        activateApple(apple);
+        harness.castFromExile(player1, first.getId());
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(second);
+    }
+
+    @Test
+    @DisplayName("Casting from hand does not cause Apple's delayed draw trigger")
+    void castingFromHandDoesNotMakeOpponentDraw() {
+        Permanent apple = addApple();
+        GrizzlyBears ownSpell = new GrizzlyBears();
+        Forest exiled = new Forest();
+        Island topCard = new Island();
+        harness.setHand(player1, List.of(ownSpell));
+        harness.setHand(player2, List.of(exiled));
+        harness.setLibrary(player2, List.of(topCard));
+
+        activateApple(apple);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
+    }
+
     private Permanent addApple() {
-        Permanent apple = new Permanent(new AppleOfEdenIsuRelic());
-        apple.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(apple);
-        return apple;
+        return harness.addToBattlefieldAndReturn(player1, new AppleOfEdenIsuRelic());
     }
 
     private void activateApple(Permanent apple) {

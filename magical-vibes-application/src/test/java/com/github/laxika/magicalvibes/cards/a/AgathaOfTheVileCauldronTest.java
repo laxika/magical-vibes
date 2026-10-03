@@ -38,8 +38,7 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         Permanent agatha = harness.addToBattlefieldAndReturn(player1, new AgathaOfTheVileCauldron());
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, agatha.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, agatha.getId());
 
         harness.addToBattlefield(player1, new JoustingDummy());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -91,5 +90,70 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void cannotMakeGenericManaAbilityFree() {
+        Permanent agatha = harness.addToBattlefieldAndReturn(player1, new AgathaOfTheVileCauldron());
+        harness.addToBattlefield(player1, new JoustingDummy());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, agatha.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(1).getPowerModifier()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void reducesOwnAbilityToItsColoredManaCost() {
+        Permanent agatha = harness.addToBattlefieldAndReturn(player1, new AgathaOfTheVileCauldron());
+        Permanent dummy = harness.addToBattlefieldAndReturn(player1, new JoustingDummy());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, agatha.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(agatha.getPowerModifier()).isEqualTo(3);
+        assertThat(agatha.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(agatha.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(dummy.getPowerModifier()).isEqualTo(1);
+        assertThat(dummy.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(dummy.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void affectsCreaturesPresentAtResolutionButNotLaterArrivals() {
+        harness.addToBattlefield(player1, new AgathaOfTheVileCauldron());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new JoustingDummy());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new JoustingDummy());
+
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
+        assertThat(beforeResolution.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(beforeResolution.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(afterResolution.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(afterResolution.hasKeyword(Keyword.HASTE)).isFalse();
     }
 }

@@ -63,6 +63,87 @@ class BeholdTheSinisterSixTest extends BaseCardTest {
                 .hasMessageContaining("different names");
     }
 
+    @Test
+    @DisplayName("Can choose zero targets even when creatures are available")
+    void canChooseZeroTargets() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new BeholdTheSinisterSix()));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Behold the Sinister Six!");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can resolve with an empty graveyard")
+    void canCastWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new BeholdTheSinisterSix()));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Behold the Sinister Six!");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only selected creatures return, excluding noncreatures and opposing graveyards")
+    void returnsOnlySelectedLegalCards() {
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        Card noncreature = new BeholdTheSinisterSix();
+        Card opposingCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(bears, elves, noncreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player1, List.of(new BeholdTheSinisterSix()));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(bears.getId(), elves.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(noncreature);
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Remaining legal targets return when another target leaves the graveyard")
+    void returnsRemainingLegalTargets() {
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(bears, elves));
+        harness.setHand(player1, List.of(new BeholdTheSinisterSix()));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId(), elves.getId()));
+        harness.setGraveyard(player1, List.of(elves));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Behold the Sinister Six!");
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);

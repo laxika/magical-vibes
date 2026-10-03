@@ -61,6 +61,7 @@ class BrokersCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({BrokersCharm.class, GloriousAnthem.class, GrizzlyBears.class})
     @DisplayName("Mode 1: Destroy target enchantment")
     class DestroyEnchantmentMode {
 
@@ -95,8 +96,7 @@ class BrokersCharmTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 2 draws two cards")
     void modeTwoDrawsTwoCards() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of(new BrokersCharm()));
         addGWU();
 
@@ -105,5 +105,92 @@ class BrokersCharmTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void modeZeroDoesNotBoostOrFightTheVictim() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        victim.setToughnessModifier(3);
+        harness.setHand(player1, List.of(new BrokersCharm()));
+        addGWU();
+
+        harness.castModalInstant(player1, 0, 0, List.of(source.getId(), victim.getId()));
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getMarkedDamage()).isZero();
+        assertThat(victim.getPowerModifier()).isZero();
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void modeZeroStillBoostsWhenVictimLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new BrokersCharm()));
+        addGWU();
+        harness.castModalInstant(player1, 0, 0, List.of(source.getId(), victim.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void modeZeroDealsNoDamageWhenSourceLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new BrokersCharm()));
+        addGWU();
+        harness.castModalInstant(player1, 0, 0, List.of(source.getId(), victim.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(victim.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void modeZeroCannotUseOpponentsCreatureAsSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new BrokersCharm()));
+        addGWU();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 0,
+                List.of(source.getId(), victim.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void modeZeroCannotDamageOwnCreature() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new BrokersCharm()));
+        addGWU();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 0,
+                List.of(source.getId(), victim.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void modeOneCanDestroyOwnEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        harness.setHand(player1, List.of(new BrokersCharm()));
+        addGWU();
+
+        harness.castInstant(player1, 0, 1, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertInGraveyard(player1, "Glorious Anthem");
     }
 }

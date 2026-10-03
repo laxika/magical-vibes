@@ -47,12 +47,27 @@ class ArgothianTreefolkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents damage from a controlled artifact without stopping its other effects")
+    void preventsOwnArtifactDamageWithoutStoppingOtherEffects() {
+        harness.addToBattlefield(player1, new Bullwhip());
+        Permanent treefolk = addCreatureReady(player1, new ArgothianTreefolk());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, treefolk.getId());
+        harness.passBothPriorities();
+
+        assertThat(treefolk.getMarkedDamage()).isZero();
+        assertThat(treefolk.isMustAttackThisTurn()).isTrue();
+        harness.assertOnBattlefield(player1, "Argothian Treefolk");
+    }
+
+    @Test
     @DisplayName("Prevents combat damage from an artifact source")
     void preventsArtifactCombatDamage() {
         Permanent treefolk = addCreatureReady(player2, new ArgothianTreefolk());
         Permanent attacker = addCreatureReady(player1, new SoldeviGolem());
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(treefolk),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -66,8 +81,8 @@ class ArgothianTreefolkTest extends BaseCardTest {
     void allowsNonartifactCombatDamage() {
         Permanent treefolk = addCreatureReady(player2, new ArgothianTreefolk());
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(treefolk),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +18,6 @@ class ConduitPylonsTest extends BaseCardTest {
 
     @Test
     void entersAndSurveilsOne() {
-        GameData gd = harness.getGameData();
         Card topCard = new ConduitPylons();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new ConduitPylons()));
@@ -68,10 +66,58 @@ class ConduitPylonsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canKeepSurveilledCardOnTop() {
+        Card topCard = new ConduitPylons();
+        Card nextCard = new ConduitPylons();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of(new ConduitPylons()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void surveilsEmptyLibraryWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ConduitPylons()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTapForManaBeforeEntryTriggerResolves() {
+        Card topCard = new ConduitPylons();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ConduitPylons()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+    }
+
     private Permanent addReadyPylons() {
-        Permanent pylons = new Permanent(new ConduitPylons());
+        Permanent pylons = harness.addToBattlefieldAndReturn(player1, new ConduitPylons());
         pylons.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pylons);
         return pylons;
     }
 }

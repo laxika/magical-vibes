@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(BileUrchin.class)
 class BileUrchinTest extends BaseCardTest {
@@ -62,5 +63,34 @@ class BileUrchinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, STARTING_LIFE - 1);
+    }
+
+    @Test
+    @DisplayName("A tapped Bile Urchin can be sacrificed")
+    void worksWhileTapped() {
+        addCreatureReady(player1, new BileUrchin()).tap();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, STARTING_LIFE - 1);
+        harness.assertInGraveyard(player1, "Bile Urchin");
+        harness.assertNotOnBattlefield(player1, "Bile Urchin");
+    }
+
+    @Test
+    @DisplayName("A creature is not a legal target and an invalid activation does not sacrifice the source")
+    void rejectsCreatureTargetWithoutPayingCost() {
+        addReadyBileUrchin();
+        var creature = harness.addToBattlefieldAndReturn(player2, new BileUrchin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Bile Urchin");
+        harness.assertNotInGraveyard(player1, "Bile Urchin");
+        harness.assertLife(player1, STARTING_LIFE);
+        harness.assertLife(player2, STARTING_LIFE);
+        assertThat(gd.stack).isEmpty();
     }
 }

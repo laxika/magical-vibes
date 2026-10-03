@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "12")
+@CardRegistration(set = "ONC", collectorNumber = "67")
 public class FinaleOfGlory extends Card {
 
     public FinaleOfGlory() {

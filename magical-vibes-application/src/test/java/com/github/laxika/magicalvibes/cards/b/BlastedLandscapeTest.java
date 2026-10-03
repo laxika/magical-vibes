@@ -55,4 +55,40 @@ class BlastedLandscapeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(landscape);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Cycling pays colored mana and discards before the draw resolves")
+    void cyclingPaysCostsBeforeResolution() {
+        BlastedLandscape landscape = new BlastedLandscape();
+        CoralMerfolk drawnCard = new CoralMerfolk();
+        harness.setHand(player1, List.of(landscape));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(landscape);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Landscape cannot produce mana again")
+    void tappedLandscapeCannotProduceManaAgain() {
+        harness.addToBattlefield(player1, new BlastedLandscape());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 }

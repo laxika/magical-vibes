@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.ArcticMerfolk;
 import com.github.laxika.magicalvibes.cards.d.DaringLeap;
 import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
 import com.github.laxika.magicalvibes.cards.i.Implode;
+import com.github.laxika.magicalvibes.cards.r.RushingRiver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Confound.class, ArcticMerfolk.class, DaringLeap.class, Implode.class,
-        ForsakenCity.class, AlphaKavu.class})
+        ForsakenCity.class, AlphaKavu.class, RushingRiver.class})
 class ConfoundTest extends BaseCardTest {
 
     @Test
@@ -45,9 +46,7 @@ class ConfoundTest extends BaseCardTest {
     @Test
     void cannotTargetACreatureSpell() {
         ArcticMerfolk merfolk = new ArcticMerfolk();
-        harness.setHand(player1, List.of(merfolk));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, merfolk, "{1}{U}");
         harness.passPriority(player1);
 
         harness.setHand(player2, List.of(new Confound()));
@@ -119,5 +118,59 @@ class ConfoundTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Confound");
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handSizeBeforeCasting);
         harness.assertInHand(player2, "Arctic Merfolk");
+    }
+
+    @Test
+    void doesNotDrawWhenTargetSpellLeavesTheStack() {
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new ArcticMerfolk());
+        DaringLeap daringLeap = new DaringLeap();
+        harness.setHand(player1, List.of(daringLeap, new Confound()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, merfolk.getId());
+
+        harness.setHand(player2, List.of(new Confound()));
+        harness.setLibrary(player2, List.of(new ArcticMerfolk()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, daringLeap.getId());
+
+        harness.setLibrary(player1, List.of(new AlphaKavu()));
+        harness.castInstant(player1, 0, daringLeap.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Daring Leap");
+        harness.assertInHand(player1, "Alpha Kavu");
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Confound");
+        harness.assertNotInHand(player2, "Arctic Merfolk");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotCounterOrDrawWhenTargetSpellNoLongerTargetsACreatureOnBattlefield() {
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new ArcticMerfolk());
+        DaringLeap daringLeap = new DaringLeap();
+        harness.setHand(player1, List.of(daringLeap, new RushingRiver()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, merfolk.getId());
+
+        harness.setHand(player2, List.of(new Confound()));
+        harness.setLibrary(player2, List.of(new AlphaKavu()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, daringLeap.getId());
+
+        harness.castInstant(player1, 0, merfolk.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Arctic Merfolk");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Confound");
+        harness.assertNotInHand(player2, "Alpha Kavu");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(daringLeap.getId());
     }
 }

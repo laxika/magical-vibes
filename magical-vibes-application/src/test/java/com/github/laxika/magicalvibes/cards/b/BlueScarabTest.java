@@ -166,4 +166,48 @@ class BlueScarabTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, iceberg.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void resolvedAuraAttachesAndBoostsCreature() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addToBattlefield(player2, new Iceberg());
+        harness.setHand(player1, List.of(new BlueScarab()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Blue Scarab");
+        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    void boostUsesAuraControllersOpponentWhenEnchantingOpposingCreature() {
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlueScarab());
+        aura.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player1, new Iceberg());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.addToBattlefield(player2, new Iceberg());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    void multipleOpponentBluePermanentsGrantOnlyOneBoost() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlueScarab());
+        aura.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player2, new Iceberg());
+        harness.addToBattlefield(player2, new IllusionaryForces());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
 }

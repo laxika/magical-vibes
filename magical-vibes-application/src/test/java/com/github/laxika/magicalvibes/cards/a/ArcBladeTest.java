@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.c.Clockspinning;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArcBlade.class, BlindPhantasm.class})
+@CardUsed({ArcBlade.class, BlindPhantasm.class, Clockspinning.class})
 class ArcBladeTest extends BaseCardTest {
 
     @Test
@@ -24,8 +25,7 @@ class ArcBladeTest extends BaseCardTest {
         harness.setHand(player1, List.of(blade));
         addCastMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
@@ -41,8 +41,7 @@ class ArcBladeTest extends BaseCardTest {
         harness.setHand(player1, List.of(blade));
         addCastMana();
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
@@ -95,6 +94,72 @@ class ArcBladeTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(blade);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(blade.getId());
+        assertThat(gd.suspendedSpellExiles).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Clockspinning can remove a time counter from Arc Blade after it resolves")
+    void canRemoveTimeCounterAfterResolution() {
+        ArcBlade blade = new ArcBlade();
+        harness.setHand(player1, List.of(blade));
+        addCastMana();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.setHand(player1, List.of(new Clockspinning()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, blade.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "time counters");
+        harness.handleListChoice(player1, "REMOVE");
+
+        for (int i = 0; i < 2; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
+    }
+
+    @Test
+    @DisplayName("Arc Blade can be cast again three upkeeps after resolving")
+    void repeatsAfterResolving() {
+        ArcBlade blade = new ArcBlade();
+        harness.setHand(player1, List.of(blade));
+        addCastMana();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(blade);
+        assertThat(gd.suspendedSpellExiles)
+                .containsExactly(new GameData.SuspendedSpellExile(blade.getId(), player1.getId(), 3));
+    }
+
+    @Test
+    @DisplayName("Arc Blade is put into the graveyard if its only target becomes illegal")
+    void illegalTargetPreventsSelfExile() {
+        Permanent creature = addCreatureReady(player2, new BlindPhantasm());
+        ArcBlade blade = new ArcBlade();
+        harness.setHand(player1, List.of(blade));
+        addCastMana();
+        harness.castSorcery(player1, 0, creature.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(blade);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(blade);
         assertThat(gd.suspendedSpellExiles).isEmpty();
     }
 

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AshenmoorCohort.class, BoggartRamGang.class, WoundReflection.class})
+@CardUsed({AshenmoorCohort.class, AshenmoorGouger.class, BoggartRamGang.class, WoundReflection.class})
 class AshenmoorCohortTest extends BaseCardTest {
 
     @Test
@@ -46,6 +46,30 @@ class AshenmoorCohortTest extends BaseCardTest {
     void boostWithAnotherBlackCreature() {
         Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
         harness.addToBattlefield(player1, new AshenmoorCohort());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A tapped multicolored black creature grants the boost")
+    void boostWithTappedMulticoloredBlackCreature() {
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
+        Permanent gouger = harness.addToBattlefieldAndReturn(player1, new AshenmoorGouger());
+        gouger.tap();
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, gouger)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gouger)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple other black creatures grant only one +1/+1 bonus")
+    void multipleBlackCreaturesDoNotStackBoost() {
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
+        harness.addToBattlefield(player1, new AshenmoorCohort());
+        harness.addToBattlefield(player1, new AshenmoorGouger());
 
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);

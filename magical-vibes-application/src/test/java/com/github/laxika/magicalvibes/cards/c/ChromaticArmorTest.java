@@ -162,8 +162,8 @@ class ChromaticArmorTest extends BaseCardTest {
         Permanent armored = addArmoredCreature(CardColor.RED, 1);
         Permanent attacker = addCreatureReady(player2, new BalduvianBarbarians());
 
-        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(armored),
                 gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
@@ -185,5 +185,88 @@ class ChromaticArmorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("With no sleight counters the ability is free and can choose the same color")
+    void abilityIsFreeWithNoCounters() {
+        addArmoredCreature(CardColor.RED, 0);
+        Permanent armor = findPermanent(player1, "Chromatic Armor");
+        readyMainPhase();
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(armor.getCounterCount(CounterType.SLEIGHT)).isZero();
+        assertThat(armor.getChosenColor()).isEqualTo(CardColor.RED);
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(armor.getCounterCount(CounterType.SLEIGHT)).isEqualTo(1);
+        assertThat(armor.getChosenColor()).isEqualTo(CardColor.RED);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Activations in response use the current counter count and the last resolution chooses the color")
+    void stackedActivationsUseCounterCountAtActivation() {
+        addArmoredCreature(CardColor.RED, 1);
+        Permanent armor = findPermanent(player1, "Chromatic Armor");
+        readyMainPhase();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(armor.getCounterCount(CounterType.SLEIGHT)).isEqualTo(1);
+        assertThat(armor.getChosenColor()).isEqualTo(CardColor.RED);
+
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(armor.getCounterCount(CounterType.SLEIGHT)).isEqualTo(2);
+        assertThat(armor.getChosenColor()).isEqualTo(CardColor.BLUE);
+
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(armor.getCounterCount(CounterType.SLEIGHT)).isEqualTo(3);
+        assertThat(armor.getChosenColor()).isEqualTo(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's creature and prevent damage from the Aura controller's spell")
+    void protectsOpponentsCreatureFromControllersSpell() {
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new ChromaticArmor(), new Incinerate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Chromatic Armor");
+    }
+
+    @Test
+    @DisplayName("Prevention only protects the enchanted creature")
+    void doesNotProtectOtherCreatures() {
+        Permanent armored = addArmoredCreature(CardColor.RED, 1);
+        Permanent other = addCreatureReady(player1, new BalduvianBears());
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, other.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(armored).doesNotContain(other);
+        harness.assertInGraveyard(player1, "Balduvian Bears");
     }
 }

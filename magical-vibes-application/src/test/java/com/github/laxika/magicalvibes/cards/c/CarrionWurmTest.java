@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed(CarrionWurm.class)
+@CardUsed({CarrionWurm.class, FlaringPain.class})
 class CarrionWurmTest extends BaseCardTest {
 
     @Test
@@ -142,5 +143,63 @@ class CarrionWurmTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_OF_COMBAT);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wurm);
+    }
+
+    @Test
+    @DisplayName("Carrion Wurm's controller may exile three cards to suppress its combat damage")
+    void controllerMayAcceptChoice() {
+        addCreatureReady(player1, new CarrionWurm());
+        List<Card> cards = List.of(new CarrionWurm(), new CarrionWurm(), new CarrionWurm());
+        harness.setGraveyard(player1, cards);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(cards);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Both players may decline without exiling cards or suppressing combat damage")
+    void bothPlayersMayDecline() {
+        addCreatureReady(player1, new CarrionWurm());
+        List<Card> ownCards = List.of(new CarrionWurm(), new CarrionWurm(), new CarrionWurm());
+        List<Card> opponentCards = List.of(new CarrionWurm(), new CarrionWurm(), new CarrionWurm());
+        harness.setGraveyard(player1, ownCards);
+        harness.setGraveyard(player2, opponentCards);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(ownCards);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(opponentCards);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Unpreventable damage does not override Carrion Wurm assigning no combat damage")
+    void unpreventableDamageDoesNotOverrideNoCombatDamageAssignment() {
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        addCreatureReady(player1, new CarrionWurm());
+        List<Card> cards = List.of(new CarrionWurm(), new CarrionWurm(), new CarrionWurm());
+        harness.setGraveyard(player2, cards);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyElementsOf(cards);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertLife(player2, 20);
     }
 }

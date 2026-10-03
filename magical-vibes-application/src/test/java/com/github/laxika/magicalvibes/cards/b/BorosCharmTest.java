@@ -44,9 +44,8 @@ class BorosCharmTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 0 deals 4 damage to target planeswalker")
     void modeZeroBurnsPlaneswalker() {
-        Permanent chandra = new Permanent(new ChandraNalaar());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, 6);
-        gd.playerBattlefields.get(player2.getId()).add(chandra);
 
         harness.setHand(player1, List.of(new BorosCharm()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -74,8 +73,7 @@ class BorosCharmTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -95,8 +93,7 @@ class BorosCharmTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castInstant(player2, 0, spellbookId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spellbookId);
 
         harness.assertOnBattlefield(player1, "Spellbook");
     }
@@ -150,5 +147,69 @@ class BorosCharmTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, spellbookId))
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Damage mode can target its controller")
+    void modeZeroCanBurnController() {
+        harness.setHand(player1, List.of(new BorosCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Damage mode cannot target a creature")
+    void modeZeroRejectsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BorosCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Indestructible affects only controlled permanents present at resolution")
+    void modeOneDoesNotProtectOpponentsOrLaterArrivals() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.setHand(player1, List.of(new BorosCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+        Permanent later = harness.enterBattlefieldAndReturn(player1, new Spellbook());
+
+        assertThat(own.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(opponent.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(later.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Double strike can target an opposing creature and lasts until cleanup")
+    void modeTwoTargetsOpponentAndWearsOff() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BorosCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, 2, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

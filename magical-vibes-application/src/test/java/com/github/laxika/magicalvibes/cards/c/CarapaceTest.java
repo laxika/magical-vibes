@@ -130,4 +130,74 @@ class CarapaceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately but regeneration waits for resolution")
+    void sacrificeIsImmediateAndShieldWaitsForResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Carapace());
+        aura.setAttachedTo(creature.getId());
+        creature.setMarkedDamage(1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Carapace");
+        harness.assertInGraveyard(player1, "Carapace");
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing the toughness bonus can kill the creature before regeneration resolves")
+    void lethalDamageAfterSacrificeKillsBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Carapace());
+        aura.setAttachedTo(creature.getId());
+        creature.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Anaba Bodyguard");
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Carapace");
+        harness.assertNotOnBattlefield(player1, "Anaba Bodyguard");
+        harness.assertInGraveyard(player1, "Anaba Bodyguard");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Anaba Bodyguard");
+    }
+
+    @Test
+    @DisplayName("Carapace's shield replaces only one destruction")
+    void regenerationShieldIsConsumedByFirstDestruction() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Carapace());
+        aura.setAttachedTo(creature.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        creature.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Anaba Bodyguard");
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.isTapped()).isTrue();
+
+        creature.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Anaba Bodyguard");
+        harness.assertInGraveyard(player1, "Anaba Bodyguard");
+    }
 }

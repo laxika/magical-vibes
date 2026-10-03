@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
+import com.github.laxika.magicalvibes.cards.n.Necromancy;
 import com.github.laxika.magicalvibes.cards.t.Tremor;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
@@ -14,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BroodOfCockroaches.class, Tremor.class})
+@CardUsed({BroodOfCockroaches.class, Tremor.class, Necromancy.class, FuneralCharm.class})
 class BroodOfCockroachesTest extends BaseCardTest {
 
     private void castTremorFromPlayer2() {
@@ -32,8 +35,7 @@ class BroodOfCockroachesTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castTremorFromPlayer2();
-        harness.passBothPriorities(); // Tremor resolves — Brood dies
-        harness.passBothPriorities(); // death trigger registers delayed effect
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Brood of Cockroaches");
         assertThat(gd.getDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class)).hasSize(1);
@@ -50,8 +52,7 @@ class BroodOfCockroachesTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castTremorFromPlayer2();
-        harness.passBothPriorities(); // Tremor resolves
-        harness.passBothPriorities(); // register delayed
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
@@ -74,8 +75,7 @@ class BroodOfCockroachesTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castTremorFromPlayer2();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.setGraveyard(player1, List.of());
         harness.setHand(player1, List.of(brood.getCard()));
@@ -111,5 +111,62 @@ class BroodOfCockroachesTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Brood of Cockroaches");
         assertThat(gd.getDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class)).isEmpty();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    private void reanimateWithPlayer2(UUID broodId) {
+        harness.castFromHand(player2, new Necromancy(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(broodId));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Brood of Cockroaches");
+    }
+
+    @Test
+    @DisplayName("Leaving the graveyard before the death trigger resolves does not prevent later life loss")
+    void losesLifeWhenReanimatedBeforeDeathTriggerResolves() {
+        Permanent brood = harness.addToBattlefieldAndReturn(player1, new BroodOfCockroaches());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        castTremorFromPlayer2();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Brood of Cockroaches");
+        assertThat(gd.stack).hasSize(1);
+
+        reanimateWithPlayer2(brood.getCard().getId());
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore - 1);
+        harness.assertOnBattlefield(player2, "Brood of Cockroaches");
+        harness.assertNotInHand(player1, "Brood of Cockroaches");
+    }
+
+    @Test
+    @DisplayName("A delayed return does not return Brood after it leaves and reenters the graveyard")
+    void doesNotReturnNewGraveyardObject() {
+        Permanent brood = harness.addToBattlefieldAndReturn(player1, new BroodOfCockroaches());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        castTremorFromPlayer2();
+        resolveAllTriggers();
+        reanimateWithPlayer2(brood.getCard().getId());
+
+        Permanent reanimated = findPermanent(player2, "Brood of Cockroaches");
+        harness.setHand(player2, List.of(new FuneralCharm()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0, 1, reanimated.getId());
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Brood of Cockroaches");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore - 1);
+        harness.assertInGraveyard(player1, "Brood of Cockroaches");
+        harness.assertNotInHand(player1, "Brood of Cockroaches");
     }
 }

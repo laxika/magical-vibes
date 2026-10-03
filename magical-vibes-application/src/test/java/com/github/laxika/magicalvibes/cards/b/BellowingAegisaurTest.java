@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({BellowingAegisaur.class, FugitiveWizard.class, GrizzlyBears.class, Shock.class})
 class BellowingAegisaurTest extends BaseCardTest {
 
-    // ===== Non-combat damage trigger =====
 
     @Test
     @DisplayName("When dealt non-lethal spell damage, puts +1/+1 counter on each other own creature")
@@ -63,8 +64,7 @@ class BellowingAegisaurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID aegisaurId = harness.getPermanentId(player2, "Bellowing Aegisaur");
-        harness.castInstant(player1, 0, aegisaurId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, aegisaurId);
         harness.passBothPriorities(); // Resolve trigger
 
         // Opponent's creature should NOT get a counter
@@ -72,7 +72,6 @@ class BellowingAegisaurTest extends BaseCardTest {
         assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("When dealt non-lethal combat damage, puts +1/+1 counters on other own creatures")
@@ -92,12 +91,8 @@ class BellowingAegisaurTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        // Resolve combat damage and trigger
-        harness.passBothPriorities(); // combat damage
-        harness.passBothPriorities(); // trigger on stack
-        harness.passBothPriorities(); // resolve trigger
+        harness.resolveCombatDamage();
+        harness.passBothPriorities(); // Resolve the damage trigger
 
         // Aegisaur should survive (3/5 takes 1 damage from 1/1)
         harness.assertOnBattlefield(player2, "Bellowing Aegisaur");
@@ -119,13 +114,65 @@ class BellowingAegisaurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID aegisaurId = harness.getPermanentId(player2, "Bellowing Aegisaur");
-        harness.castInstant(player1, 0, aegisaurId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, aegisaurId);
         harness.passBothPriorities(); // Resolve trigger
 
         // Aegisaur survives with no counter on itself
         harness.assertOnBattlefield(player2, "Bellowing Aegisaur");
         Permanent aegisaur = findPermanent(player2, "Bellowing Aegisaur");
         assertThat(aegisaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Lethal damage still triggers counters for surviving creatures")
+    void lethalDamageStillTriggers() {
+        harness.addToBattlefield(player2, new BellowingAegisaur());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        UUID aegisaurId = harness.getPermanentId(player2, "Bellowing Aegisaur");
+
+        for (int i = 0; i < 3; i++) {
+            harness.castAndResolveInstant(player1, 0, aegisaurId);
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
+            assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(i + 1);
+        }
+
+        harness.assertInGraveyard(player2, "Bellowing Aegisaur");
+        harness.assertNotOnBattlefield(player2, "Bellowing Aegisaur");
+    }
+
+    @Test
+    @DisplayName("The trigger includes creatures entering before it resolves")
+    void creaturesAreDeterminedAtResolution() {
+        Permanent aegisaur = harness.addToBattlefieldAndReturn(player2, new BellowingAegisaur());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, aegisaur.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(aegisaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Another Bellowing Aegisaur gets a counter without triggering itself")
+    void anotherAegisaurGetsCounter() {
+        Permanent damaged = harness.addToBattlefieldAndReturn(player2, new BellowingAegisaur());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new BellowingAegisaur());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, damaged.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(damaged.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

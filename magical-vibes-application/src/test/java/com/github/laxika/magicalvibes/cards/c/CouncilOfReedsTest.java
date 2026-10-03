@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.k.KingSolomonsFrogs;
+import com.github.laxika.magicalvibes.cards.q.QuantumReduction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,11 +12,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CouncilOfReeds.class, BurstOfStrength.class, GrizzlyBears.class})
+@CardUsed({CouncilOfReeds.class, KingSolomonsFrogs.class, QuantumReduction.class})
 class CouncilOfReedsTest extends BaseCardTest {
 
     @Test
@@ -37,8 +34,8 @@ class CouncilOfReedsTest extends BaseCardTest {
     @DisplayName("Does not exempt duplicate legendary noncreature permanents")
     void doesNotExemptNoncreatures() {
         harness.addToBattlefield(player1, new CouncilOfReeds());
-        Permanent first = addLegendaryArtifact(player1);
-        Permanent second = addLegendaryArtifact(player1);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KingSolomonsFrogs());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new KingSolomonsFrogs());
 
         harness.runStateBasedActions();
 
@@ -56,16 +53,15 @@ class CouncilOfReedsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new BurstOfStrength()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, council.getId());
-        harness.passBothPriorities();
+        Permanent opponentCouncil = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        castReduction(opponentCouncil);
 
         advanceToBeginningOfCombat();
         harness.passBothPriorities();
 
-        assertThat(findCouncils()).hasSize(2);
-        assertThat(findCouncils()).filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        assertThat(findPermanents(player1, "Council of Reeds")).contains(council).hasSize(2);
+        assertThat(findPermanents(player1, "Council of Reeds"))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
     }
 
     @Test
@@ -76,35 +72,177 @@ class CouncilOfReedsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new CouncilOfReeds()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         advanceToBeginningOfCombat();
         harness.passBothPriorities();
 
-        assertThat(findCouncils()).hasSize(1);
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(2);
+        assertThat(findPermanents(player1, "Council of Reeds"))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
-    private Permanent addLegendaryArtifact(com.github.laxika.magicalvibes.model.Player player) {
-        GrizzlyBears artifact = new GrizzlyBears();
-        artifact.setType(CardType.ARTIFACT);
-        artifact.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        return harness.addToBattlefieldAndReturn(player, artifact);
+    @Test
+    void doesNotTriggerWithoutCastingASpell() {
+        harness.addToBattlefield(player1, new CouncilOfReeds());
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(1);
     }
 
-    private List<Permanent> findCouncils() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Council of Reeds"))
-                .toList();
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new CouncilOfReeds());
+        Permanent opponentCouncil = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castReduction(opponentCouncil);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(1);
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotQualify() {
+        harness.addToBattlefield(player1, new CouncilOfReeds());
+        Permanent opponentCouncil = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new QuantumReduction()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.clearPriorityPassed();
+        harness.castInstantWithSacrifices(player2, 0, opponentCouncil.getId(),
+                List.of(opponentCouncil.getId()));
+        harness.passBothPriorities();
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(1);
+    }
+
+    @Test
+    void lostAbilitiesStopCombatTrigger() {
+        Permanent council = harness.addToBattlefieldAndReturn(player1, new CouncilOfReeds());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castReduction(council);
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(1);
+    }
+
+    @Test
+    void lostAbilitiesRestoreLegendRule() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CouncilOfReeds());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CouncilOfReeds());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castReduction(first);
+        castReduction(second);
+
+        harness.runStateBasedActions();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(first.getId(), second.getId());
+    }
+
+    @Test
+    void doesNotExemptOpponentsCreatures() {
+        harness.addToBattlefield(player1, new CouncilOfReeds());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new QuantumReduction());
+        firstAura.setAttachedTo(first.getId());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new QuantumReduction());
+        secondAura.setAttachedTo(second.getId());
+
+        harness.runStateBasedActions();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(first.getId(), second.getId());
+    }
+
+    @Test
+    void tokenCopiesCreateFurtherCopiesInLaterCombat() {
+        harness.addToBattlefield(player1, new CouncilOfReeds());
+        Permanent opponentCouncil = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castReduction(opponentCouncil);
+        advanceToBeginningOfCombat();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(2);
+
+        advanceToBeginningOfCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(4);
+    }
+
+    @Test
+    void spellCastBeforeCouncilEntersStillQualifies() {
+        Permanent opponentCouncil = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castReduction(opponentCouncil);
+        harness.addToBattlefield(player1, new CouncilOfReeds());
+
+        advanceToBeginningOfCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(2);
+    }
+
+    @Test
+    void copyIsCreatedEvenIfSourceLeavesBeforeResolution() {
+        Permanent council = harness.addToBattlefieldAndReturn(player1, new CouncilOfReeds());
+        Permanent opponentCouncil = harness.addToBattlefieldAndReturn(player2, new CouncilOfReeds());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castReduction(opponentCouncil);
+        advanceToBeginningOfCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(council);
+        gd.playerGraveyards.get(player1.getId()).add(council.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Council of Reeds")).hasSize(1)
+                .allMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    private void castReduction(Permanent target) {
+        harness.setHand(player1, List.of(new QuantumReduction()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.clearPriorityPassed();
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
     }
 
     private void advanceToBeginningOfCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

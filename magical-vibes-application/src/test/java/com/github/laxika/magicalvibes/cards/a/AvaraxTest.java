@@ -79,11 +79,64 @@ class AvaraxTest extends BaseCardTest {
 
         assertThat(avarax.getPowerModifier()).isEqualTo(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(avarax.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Avarax can fail to find even when another Avarax is in the library")
+    void canFailToFindMatchingCard() {
+        setupAndCast();
+        Avarax libraryCard = new Avarax();
+        harness.setLibrary(player1, List.of(libraryCard, new ElvishWarrior()));
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Avarax");
+        assertThat(gd.playerDecks.get(player1.getId())).contains(libraryCard).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("chooses not to take a card. Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Avarax can search an empty library")
+    void canSearchEmptyLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Avarax");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("searches their library but it is empty. Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated Avarax activations stack and boost only their source")
+    void repeatedActivationsBoostOnlySource() {
+        Permanent source = addCreatureReady(player1, new Avarax());
+        Permanent other = addCreatureReady(player1, new Avarax());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(source.getPowerModifier()).isZero();
     }
 
     private void setupAndCast() {

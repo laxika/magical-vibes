@@ -60,4 +60,74 @@ class ContemplationTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
+
+    @Test
+    void castingContemplationDoesNotTriggerItsOwnAbility() {
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new Contemplation(), "{1}{W}{W}");
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Contemplation")).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void noncreatureSpellTriggersLifeGainBeforeTheSpellResolves() {
+        harness.addToBattlefield(player1, new Contemplation());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player1, new Contemplation(), "{1}{W}{W}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Contemplation")).isEqualTo(1);
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Contemplation")).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    void eachControlledContemplationTriggersSeparately() {
+        harness.addToBattlefield(player1, new Contemplation());
+        harness.addToBattlefield(player1, new Contemplation());
+        harness.addToBattlefield(player2, new Contemplation());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player1, new YouthfulKnight(), "{1}{W}");
+
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    void lifeGainTriggerResolvesAfterContemplationLeavesTheBattlefield() {
+        var contemplation = harness.addToBattlefieldAndReturn(player1, new Contemplation());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new YouthfulKnight(), "{1}{W}");
+        gd.playerBattlefields.get(player1.getId()).remove(contemplation);
+        gd.playerGraveyards.get(player1.getId()).add(contemplation.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
 }

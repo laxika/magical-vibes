@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.ResoundingWave;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CorruptedRoots.class, Forest.class, Plains.class, Mountain.class, ResoundingWave.class})
 class CorruptedRootsTest extends BaseCardTest {
-
-    // ===== Casting and targeting =====
 
     @Test
     @DisplayName("Can cast Corrupted Roots targeting a Forest")
@@ -68,14 +69,12 @@ class CorruptedRootsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a Forest or Plains");
     }
 
-    // ===== Tap trigger: controller loses 2 life =====
-
     @Test
     @DisplayName("Tapping the enchanted land queues the trigger (deferred as a mana-ability trigger)")
     void tappingLandQueuesTrigger() {
         addLandWithAura(player1);
 
-        // Tapping a land for mana defers its triggers (CR 603.3) until a player next gets priority.
+        // Tapping a land for mana defers its triggers until a player next gets priority.
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.pendingManaAbilityTriggers).anySatisfy(entry -> {
@@ -91,7 +90,7 @@ class CorruptedRootsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -112,7 +111,7 @@ class CorruptedRootsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -125,7 +124,7 @@ class CorruptedRootsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Corrupted Roots"));
         assertThat(gd.pendingManaAbilityTriggers)
@@ -133,7 +132,89 @@ class CorruptedRootsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Resolving the Aura attaches it to its target without tapping that land")
+    void resolvingAuraAttachesToLand() {
+        harness.addToBattlefield(player2, new Plains());
+        Permanent land = findPermanent(player2, "Plains");
+        harness.setHand(player1, List.of(new CorruptedRoots()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Corrupted Roots").getAttachedTo()).isEqualTo(land.getId());
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Enchanting an already tapped land does not cause life loss")
+    void enchantingTappedLandDoesNotTrigger() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent land = findPermanent(player2, "Forest");
+        land.setTapped(true);
+        harness.setHand(player1, List.of(new CorruptedRoots()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Corrupted Roots").getAttachedTo()).isEqualTo(land.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each new tap of the enchanted land causes another two life loss")
+    void repeatedTapsLoseLifeEachTime() {
+        addLandWithAura(player1);
+        harness.tapPermanent(player1, 0);
+        resolveAllTriggers();
+        findPermanent(player1, "Forest").setTapped(false);
+
+        harness.tapPermanent(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("The land's last controller loses life even if the land is bounced in response")
+    void bouncedLandStillCausesLifeLoss() {
+        addLandWithAura(player1);
+        Permanent land = findPermanent(player1, "Forest");
+        harness.setHand(player2, List.of(new ResoundingWave()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.tapPermanent(player1, 0);
+        harness.passPriority(player1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        harness.castInstant(player2, 0, land.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Removing the Aura in response does not stop its queued life loss")
+    void bouncedAuraStillCausesLifeLoss() {
+        addLandWithAura(player1);
+        Permanent aura = findPermanent(player1, "Corrupted Roots");
+        harness.setHand(player2, List.of(new ResoundingWave()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.tapPermanent(player1, 0);
+        harness.passPriority(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castInstant(player2, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Corrupted Roots");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
 
     /**
      * Places a Forest on {@code owner}'s battlefield (index 0) with a Corrupted Roots attached (index 1).
@@ -148,12 +229,4 @@ class CorruptedRootsTest extends BaseCardTest {
         gd.playerBattlefields.get(owner.getId()).add(aura);
     }
 
-    /**
-     * Drives priority until the stack and any deferred mana-ability triggers are fully resolved.
-     */
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
-    }
 }

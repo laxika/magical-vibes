@@ -37,11 +37,10 @@ class AmbushTest extends BaseCardTest {
     @Test
     @DisplayName("Ambush grants first strike to a blocker declared through combat")
     void grantsFirstStrikeToDeclaredBlocker() {
-        Permanent attacker = addCreatureReady(player1, new LeapingLizard());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new LeapingLizard());
         Permanent blocker = addCreatureReady(player2, new LeapingLizard());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         castAmbush();
 
@@ -66,6 +65,46 @@ class AmbushTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting Ambush before blocks does not grant first strike to later blockers")
+    void doesNotAffectLaterBlockers() {
+        addCreatureReady(player1, new LeapingLizard());
+        Permanent blocker = addCreatureReady(player2, new LeapingLizard());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new Ambush(), "{3}{R}");
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A defending player's Ambush affects every blocker and lasts beyond combat")
+    void defenderCanGrantFirstStrikeToMultipleBlockers() {
+        addCreatureReady(player1, new LeapingLizard());
+        addCreatureReady(player1, new LeapingLizard());
+        Permanent firstBlocker = addCreatureReady(player2, new LeapingLizard());
+        Permanent secondBlocker = addCreatureReady(player2, new LeapingLizard());
+        Permanent idle = addCreatureReady(player2, new LeapingLizard());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+        harness.castFromHand(player2, new Ambush(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, firstBlocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondBlocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, idle, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(firstBlocker.isBlocking()).isFalse();
+        assertThat(secondBlocker.isBlocking()).isFalse();
+        assertThat(gqs.hasKeyword(gd, firstBlocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondBlocker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void castAmbush() {

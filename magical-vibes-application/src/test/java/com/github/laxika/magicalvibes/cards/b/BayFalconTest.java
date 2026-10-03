@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +20,7 @@ class BayFalconTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking")
     void flyingPreventsNonFlyingCreatureBlocking() {
-        Permanent attacker = addCreatureReady(player1, new BayFalcon());
+        addCreatureReady(player1, new BayFalcon());
         addCreatureReady(player2, new ViashinoWarrior());
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -38,5 +39,31 @@ class BayFalconTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Bay Falcon can be blocked by a creature with flying")
+    void flyingCreatureCanBlock() {
+        Permanent attacker = addCreatureReady(player1, new BayFalcon());
+        Permanent blocker = addCreatureReady(player2, new BayFalcon());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Vigilance does not let an already tapped Bay Falcon attack")
+    void tappedCreatureCannotAttackDespiteVigilance() {
+        Permanent attacker = addCreatureReady(player1, new BayFalcon());
+        attacker.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
     }
 }

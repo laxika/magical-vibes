@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesC
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesPlanarModeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
@@ -116,6 +117,10 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ChoiceHandlerService {
+
+    private final LibraryRevealSupport libraryRevealSupport;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService> gameServiceProvider;
 
     private final GameQueryService gameQueryService;
     private final WarpWorldService warpWorldService;
@@ -230,6 +235,23 @@ public class ChoiceHandlerService {
 
         recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
+        if (colorChoice.context() instanceof ChoiceContext.VentureChoice choice) {
+            ventureHandlerProvider.getObject().completeChoice(gameData, choice, colorName);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.TurnFaceUpCostChoice choice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid face-up payment method");
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameServiceProvider.getObject().completeTurnFaceUpCostChoice(
+                    gameData, player, choice.permanentId(), colorName.equals("Morph cost"));
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.RegenerationShieldChoice choice) {
             if (!choice.shields().containsKey(colorName)) {
                 throw new IllegalArgumentException("Invalid regeneration shield");
@@ -249,7 +271,8 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx
                 && ctx.restrictToAllowedNames()
-                && !colorChoice.options().contains(colorName)) {
+                && !colorChoice.options().contains(colorName)
+                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes())) {
             throw new IllegalArgumentException("Invalid restricted card name: " + colorName);
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
@@ -2726,6 +2749,10 @@ public class ChoiceHandlerService {
                     .filter(o -> o.label().equals(chosenLabel))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+            if (!triggerTargetCollector.hasLegalGraveyardTarget(
+                    gameData, chosen.targetFilter(), ctx.controllerId(), ctx.sourceCard())) {
+                throw new IllegalArgumentException("Mode has no legal graveyard target: " + chosenLabel);
+            }
             if (!ctx.effect().modesMayRepeat() && chosenModes.contains(chosen)) {
                 throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
             }
@@ -3567,9 +3594,10 @@ public class ChoiceHandlerService {
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (source != null && target != null && source.getCounterCount(counterType) > 0) {
-            source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
-            permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
+            if (permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1) > 0) {
+                source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -5696,25 +5724,6 @@ public class ChoiceHandlerService {
                 }
                 countersRemoved += moved;
                 if (ctx.countersPerMovedCounter() == 1) {
-                    StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-                    if (sourceEntry != null) {
-                        permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,
-                                ctx.counterType(), moved);
-                    } else {
-                        to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
-                        if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
-                                    gameData, to, player.getId());
-                            UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
-                            if (controllerId != null) {
-                                gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-                            }
-                            permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
-                                    gameData, to, moved, player.getId());
-                        }
-                    }
-                }
-                if (ctx.countersPerMovedCounter() == 1) {
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
                             .card(from.getCard()).text(" and puts ").text(Integer.toString(moved))
@@ -5741,7 +5750,7 @@ public class ChoiceHandlerService {
             nextIndex++;
         }
 
-        if (ctx.countersPerMovedCounter() > 1 && countersRemoved > 0 && to != null
+        if (countersRemoved > 0 && to != null
                 && !cantHaveCounter(gameData, to, ctx.counterType())) {
             int countersToPlace = countersRemoved * ctx.countersPerMovedCounter();
             StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;

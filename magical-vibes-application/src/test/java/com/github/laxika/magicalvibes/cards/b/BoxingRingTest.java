@@ -51,9 +51,7 @@ class BoxingRingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, tortoise.getId());
         harness.passBothPriorities();
 
-        Permanent grizzly = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent grizzly = findPermanent(player1, "Grizzly Bears");
         assertThat(gd.permanentsThatFoughtThisTurn).contains(grizzly.getId());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ring), null, null);
@@ -75,6 +73,93 @@ class BoxingRingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, differentManaValue.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The controller may choose no fight target even when a legal target exists")
+    void canDeclineFight() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new BoxingRing());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castCreature(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(opponent.getMarkedDamage()).isZero();
+        assertThat(gd.permanentsThatFoughtThisTurn).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(ring), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An entry with no matching opposing creature resolves without a fight")
+    void noMatchingCreatureDoesNotFight() {
+        harness.addToBattlefieldAndReturn(player1, new BoxingRing());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castCreature(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(opponent.getMarkedDamage()).isZero();
+        assertThat(gd.permanentsThatFoughtThisTurn).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature controlled by the Ring's controller cannot be selected")
+    void rejectsControlledCreature() {
+        harness.addToBattlefieldAndReturn(player1, new BoxingRing());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castCreature(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ally.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Dead fighters do not satisfy the Treasure activation restriction")
+    void cannotActivateAfterOnlyControlledFighterDies() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new BoxingRing());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castCreature(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponent.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(ring), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ring.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opposing fighter also qualifies for its controller's Ring")
+    void opposingFighterEnablesTreasure() {
+        harness.addToBattlefieldAndReturn(player1, new BoxingRing());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GiantTortoise());
+
+        castCreature(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponent.getId());
+        resolveAllTriggers();
+        Permanent opposingRing = harness.addToBattlefieldAndReturn(player2, new BoxingRing());
+
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(opposingRing), null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1);
+        assertThat(opposingRing.isTapped()).isTrue();
     }
 
     private void castCreature(com.github.laxika.magicalvibes.model.Player player,

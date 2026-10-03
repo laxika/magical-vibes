@@ -51,4 +51,56 @@ class CliffsideLookoutTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Lookout can activate repeatedly with cumulative boosts")
+    void tappedSummoningSickLookoutCanActivateRepeatedly() {
+        Permanent lookout = harness.addToBattlefieldAndReturn(player1, new CliffsideLookout());
+        lookout.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, lookout)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lookout)).isEqualTo(3);
+        assertThat(lookout.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution receive the boost; later creatures do not")
+    void boostAppliesToCreaturesPresentAtResolution() {
+        Permanent lookout = addCreatureReady(player1, new CliffsideLookout());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = harness.enterBattlefieldAndReturn(player1, new CliffsideLookout());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new CliffsideLookout());
+
+        assertThat(gqs.getEffectivePower(gd, lookout)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lookout)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after its source leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent lookout = addCreatureReady(player1, new CliffsideLookout());
+        Permanent otherLookout = addCreatureReady(player1, new CliffsideLookout());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(lookout);
+        gd.playerGraveyards.get(player1.getId()).add(lookout.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, otherLookout)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherLookout)).isEqualTo(2);
+    }
 }

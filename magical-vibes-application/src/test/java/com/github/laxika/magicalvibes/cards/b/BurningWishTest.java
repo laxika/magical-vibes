@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.s.SoulfireGrandMaster;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BattleScreech.class, BattlewiseAven.class, BookBurning.class, BurningWish.class})
+@CardUsed({BattleScreech.class, BattlewiseAven.class, BookBurning.class, BurningWish.class, SoulfireGrandMaster.class})
 class BurningWishTest extends BaseCardTest {
 
     @Test
@@ -81,10 +82,8 @@ class BurningWishTest extends BaseCardTest {
 
     private BurningWish castBurningWish() {
         BurningWish wish = new BurningWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, wish, "{1}{R}");
+        harness.passBothPriorities();
         return wish;
     }
 
@@ -111,24 +110,70 @@ class BurningWishTest extends BaseCardTest {
     void searchesOnlyControllerOutsideTheGameCards() {
         Card ownCreature = new BattlewiseAven();
         Card opponentSorcery = new BookBurning();
-        setSideboardForJudReview(ownCreature);
+        setSideboard(ownCreature);
         gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentSorcery)));
 
-        BurningWish wish = castBurningWishForJudReview();
+        BurningWish wish = castBurningWish();
 
         assertThat(pendingSearch()).isNull();
         assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(opponentSorcery);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
-    private BurningWish castBurningWishForJudReview() {
-        BurningWish wish = new BurningWish();
-        harness.castFromHand(player1, wish, "{1}{R}");
+    @Test
+    @CardUsed(SoulfireGrandMaster.class)
+    @DisplayName("Soulfire Grand Master's return replacement cannot override Burning Wish's exile instruction")
+    void exilesInsteadOfReturningToHandWithSoulfireGrandMaster() {
+        harness.addToBattlefield(player1, new SoulfireGrandMaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        return wish;
+        Card sorcery = new BattleScreech();
+        setSideboard(sorcery);
+
+        BurningWish wish = castBurningWish();
+        choose(sorcery);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorcery);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
     }
 
-    private void setSideboardForJudReview(Card... cards) {
-        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(cards)));
+    @Test
+    @DisplayName("Exiles Burning Wish even with an empty sideboard")
+    void emptySideboardStillExilesWish() {
+        setSideboard();
+
+        BurningWish wish = castBurningWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
+    @Test
+    @DisplayName("Offers only outside-the-game sorceries, excluding library, graveyard and exile")
+    void excludesSorceriesAlreadyInTheGame() {
+        Card outsideSorcery = new BattleScreech();
+        Card librarySorcery = new BookBurning();
+        Card graveyardSorcery = new BattleScreech();
+        Card exiledSorcery = new BookBurning();
+        setSideboard(outsideSorcery);
+        harness.setLibrary(player1, List.of(librarySorcery));
+        harness.setGraveyard(player1, List.of(graveyardSorcery));
+        harness.setExile(player1, List.of(exiledSorcery));
+
+        BurningWish wish = castBurningWish();
+
+        assertThat(pendingSearch().params().cards()).containsExactly(outsideSorcery);
+        choose(outsideSorcery);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(outsideSorcery);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(librarySorcery);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardSorcery);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiledSorcery, wish);
+        assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
     }
 }

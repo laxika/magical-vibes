@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Caltrops;
 import com.github.laxika.magicalvibes.cards.c.CapashenTemplar;
 import com.github.laxika.magicalvibes.cards.f.FledglingOsprey;
 import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
+import com.github.laxika.magicalvibes.cards.s.Scour;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArcheryTraining.class, Caltrops.class, CapashenTemplar.class,
-        FledglingOsprey.class, GoliathBeetle.class})
+        FledglingOsprey.class, GoliathBeetle.class, Scour.class})
 class ArcheryTrainingTest extends BaseCardTest {
 
     private Permanent addEnchantedCreature() {
@@ -221,5 +222,96 @@ class ArcheryTrainingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The granted ability uses the Aura's last known counters after Scour exiles it")
+    void damageUsesLastKnownCountersWhenAuraIsExiled() {
+        addEnchantedCreature();
+        Permanent aura = findPermanent(player1, "Archery Training");
+        aura.setCounterCount(CounterType.ARROW, 2);
+        Permanent target = addCreatureReady(player2, new CapashenTemplar());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        target.setAttacking(true);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.setHand(player2, List.of(new Scour()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Archery Training");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Capashen Templar");
+    }
+
+    @Test
+    @DisplayName("Counter changes before resolution change the granted ability's damage")
+    void damageReadsCountersAtResolution() {
+        addEnchantedCreature();
+        Permanent aura = findPermanent(player1, "Archery Training");
+        aura.setCounterCount(CounterType.ARROW, 1);
+        Permanent target = addCreatureReady(player2, new CapashenTemplar());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        target.setAttacking(true);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        aura.setCounterCount(CounterType.ARROW, 2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Capashen Templar");
+    }
+
+    @Test
+    @DisplayName("Each granted ability counts only the Aura that granted it")
+    void multipleAurasKeepTheirCounterCountsSeparate() {
+        Permanent creature = addEnchantedCreature();
+        findPermanent(player1, "Archery Training").setCounterCount(CounterType.ARROW, 1);
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new ArcheryTraining());
+        secondAura.setAttachedTo(creature.getId());
+        secondAura.setCounterCount(CounterType.ARROW, 2);
+        Permanent target = addCreatureReady(player2, new CapashenTemplar());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        target.setAttacking(true);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+
+        creature.untap();
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Capashen Templar");
+    }
+
+    @Test
+    @DisplayName("Archery Training does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotAddCounters() {
+        addEnchantedCreature();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Archery Training").getCounterCount(CounterType.ARROW)).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning sick creature cannot activate the granted tap ability")
+    void summoningSicknessPreventsGrantedTapAbility() {
+        Permanent creature = addEnchantedCreature();
+        creature.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new CapashenTemplar());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        target.setAttacking(true);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

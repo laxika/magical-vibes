@@ -312,7 +312,9 @@ public class BlockLegalityService {
                 && blk.blocksLandwalkAsThoughNoLandwalk())) {
             return BlockDenial.CANT_BE_BLOCKED;
         }
-        if (atk.shadow() != blk.shadow() && !(atk.shadow() && blk.blocksShadowAsThoughShadow())) {
+        boolean effectiveAttackerShadow = atk.shadow() && !blk.blocksShadowAsThoughNoShadow();
+        if (effectiveAttackerShadow != blk.shadow()
+                && !(effectiveAttackerShadow && blk.blocksShadowAsThoughShadow())) {
             return BlockDenial.SHADOW;
         }
         if (atk.flying() && !blk.flying() && !blk.reach()
@@ -707,6 +709,7 @@ public class BlockLegalityService {
         boolean cantBlockStatic = false;
         boolean cantBlockPowerAtLeastOwnToughnessStatic = false;
         boolean blocksShadowAsThoughShadow = false;
+        boolean blocksShadowAsThoughNoShadow = false;
         boolean blocksLandwalkAsThoughNoLandwalk = false;
         List<PermanentPredicate> blocksAsThoughReachForAttackers = new ArrayList<>();
         Integer cantBlockPowerAtLeast = null;
@@ -720,6 +723,7 @@ public class BlockLegalityService {
                     }
                     if (effect instanceof BlockabilityPermissionEffect permission) {
                         blocksShadowAsThoughShadow |= permission.blocksShadowAsThoughShadow();
+                        blocksShadowAsThoughNoShadow |= permission.blocksShadowAsThoughNoShadow();
                         blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
                         addReachPermission(blocksAsThoughReachForAttackers, permission);
                     }
@@ -772,6 +776,7 @@ public class BlockLegalityService {
         for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof BlockabilityPermissionEffect permission) {
                 blocksShadowAsThoughShadow |= permission.blocksShadowAsThoughShadow();
+                blocksShadowAsThoughNoShadow |= permission.blocksShadowAsThoughNoShadow();
                 blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
                 addReachPermission(blocksAsThoughReachForAttackers, permission);
             }
@@ -791,6 +796,7 @@ public class BlockLegalityService {
         for (BlockabilityPermissionEffect permission : gameQueryService.collectAuraEffects(
                 gameData, blocker, BlockabilityPermissionEffect.class)) {
             blocksShadowAsThoughShadow |= permission.blocksShadowAsThoughShadow();
+            blocksShadowAsThoughNoShadow |= permission.blocksShadowAsThoughNoShadow();
             blocksLandwalkAsThoughNoLandwalk |= permission.blocksLandwalkAsThoughNoLandwalk();
             addReachPermission(blocksAsThoughReachForAttackers, permission);
         }
@@ -810,6 +816,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.HORSEMANSHIP),
                 gameQueryService.hasKeyword(blocker, bonus, Keyword.SHADOW),
                 blocksShadowAsThoughShadow,
+                blocksShadowAsThoughNoShadow,
                 blocksLandwalkAsThoughNoLandwalk,
                 blocksAsThoughReachForAttackers.isEmpty()
                         ? List.of() : List.copyOf(blocksAsThoughReachForAttackers),

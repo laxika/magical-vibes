@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.Abolish;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CelestialConvergence.class)
+@CardUsed({CelestialConvergence.class, Abolish.class})
 class CelestialConvergenceTest extends BaseCardTest {
 
     @Test
@@ -95,6 +96,54 @@ class CelestialConvergenceTest extends BaseCardTest {
         addWithOmenCounters(0);
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.WIN);
+        assertThat(gameLogContains("Alice wins the game")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Life totals are checked when the upkeep ability resolves")
+    void checksLifeTotalsAtResolution() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 20);
+        addWithOmenCounters(1);
+
+        advanceToUpkeep(player1);
+        harness.setLife(player2, 40);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gameLogContains("Bob wins the game")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying the source with one omen counter prevents the win")
+    void destroyedSourceWithOneCounterDoesNotEndGame() {
+        Permanent convergence = addWithOmenCounters(1);
+        harness.setHand(player2, List.of(new Abolish()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player2, 0, convergence.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Celestial Convergence");
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Destroying the source with no omen counters still allows the win")
+    void destroyedSourceWithoutCountersStillEndsGame() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 20);
+        Permanent convergence = addWithOmenCounters(0);
+        harness.setHand(player2, List.of(new Abolish()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player2, 0, convergence.getId());
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);

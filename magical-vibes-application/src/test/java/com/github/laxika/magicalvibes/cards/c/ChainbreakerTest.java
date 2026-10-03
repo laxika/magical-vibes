@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.t.TumbleMagnet;
+import com.github.laxika.magicalvibes.cards.e.ElsewhereFlask;
+import com.github.laxika.magicalvibes.cards.w.WickerWarcrawler;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Chainbreaker.class, WickerWarcrawler.class, ElsewhereFlask.class})
 class ChainbreakerTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class ChainbreakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB processing
+        resolveAllTriggers();
 
         Permanent chainbreaker = findPermanent(player1, "Chainbreaker");
         assertThat(chainbreaker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
@@ -39,11 +39,10 @@ class ChainbreakerTest extends BaseCardTest {
     @Test
     @DisplayName("Ability removes a -1/-1 counter from target creature")
     void removesCounterFromTarget() {
-        addReadyChainbreaker(player1);
-        harness.addToBattlefield(player1, new HillGiant());
+        addCreatureReady(player1, new Chainbreaker());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Permanent giant = findPermanent(player1, "Hill Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new WickerWarcrawler());
         giant.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
 
         harness.activateAbility(player1, 0, 0, null, giant.getId());
@@ -55,11 +54,10 @@ class ChainbreakerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        addReadyChainbreaker(player1);
-        harness.addToBattlefield(player2, new TumbleMagnet());
+        addCreatureReady(player1, new Chainbreaker());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Permanent magnet = findPermanent(player2, "Tumble Magnet");
+        Permanent magnet = harness.addToBattlefieldAndReturn(player2, new ElsewhereFlask());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, magnet.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -69,18 +67,105 @@ class ChainbreakerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the ability without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyChainbreaker(player1);
-        harness.addToBattlefield(player1, new HillGiant());
+        addCreatureReady(player1, new Chainbreaker());
 
-        Permanent giant = findPermanent(player1, "Hill Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new WickerWarcrawler());
         giant.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, giant.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void addReadyChainbreaker(Player player) {
-        Permanent chainbreaker = harness.addToBattlefieldAndReturn(player, new Chainbreaker());
-        chainbreaker.setSummoningSick(false);
+    @Test
+    void canRemoveItsOwnCounterAndPaysTapCost() {
+        Permanent chainbreaker = addCreatureReady(player1, new Chainbreaker());
+        chainbreaker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, chainbreaker.getId());
+
+        assertThat(chainbreaker.isTapped()).isTrue();
+        assertThat(chainbreaker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(chainbreaker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void canRemoveCounterFromOpponentsCreature() {
+        addCreatureReady(player1, new Chainbreaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WickerWarcrawler());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void creatureWithoutMinusCountersIsLegalAndOtherCountersAreUnaffected() {
+        Permanent chainbreaker = addCreatureReady(player1, new Chainbreaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WickerWarcrawler());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(chainbreaker.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent chainbreaker = harness.addToBattlefieldAndReturn(player1, new Chainbreaker());
+        chainbreaker.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, chainbreaker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent chainbreaker = addCreatureReady(player1, new Chainbreaker());
+        chainbreaker.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, chainbreaker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithOnlyTwoMana() {
+        Permanent chainbreaker = addCreatureReady(player1, new Chainbreaker());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, chainbreaker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNothingIfLastMinusCounterIsRemovedBeforeResolution() {
+        addCreatureReady(player1, new Chainbreaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WickerWarcrawler());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertOnBattlefield(player2, "Wicker Warcrawler");
+        harness.assertLife(player1, 20);
     }
 }

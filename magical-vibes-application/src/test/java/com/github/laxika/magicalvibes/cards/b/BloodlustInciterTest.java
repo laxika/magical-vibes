@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BloodlustInciter.class, GrizzlyBears.class, Forest.class})
 class BloodlustInciterTest extends BaseCardTest {
 
     @Test
@@ -67,11 +69,51 @@ class BloodlustInciterTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Tap cost is paid before resolution and prevents a second activation")
+    void tapCostPreventsSecondActivation() {
+        Permanent inciter = addReadyInciter(player1);
+
+        harness.activateAbility(player1, 0, null, inciter.getId());
+
+        assertThat(inciter.isTapped()).isTrue();
+        assertThat(inciter.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(inciter.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, inciter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Inciter cannot activate its tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent inciter = harness.addToBattlefieldAndReturn(player1, new BloodlustInciter());
+        inciter.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, inciter.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(inciter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted haste lets a newly entered Inciter activate its tap ability")
+    void grantedHasteEnablesTapAbility() {
+        addReadyInciter(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BloodlustInciter());
+        target.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
     private Permanent addReadyInciter(Player player) {
-        BloodlustInciter card = new BloodlustInciter();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BloodlustInciter());
     }
 }

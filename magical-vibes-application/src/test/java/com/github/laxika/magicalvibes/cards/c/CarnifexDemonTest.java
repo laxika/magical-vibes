@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({CarnifexDemon.class, ContagiousNim.class, DarksteelAxe.class})
 class CarnifexDemonTest extends BaseCardTest {
-
-    // ===== ETB: enters with two -1/-1 counters =====
 
     @Test
     @DisplayName("Enters the battlefield with two -1/-1 counters (6/6 becomes 4/4)")
@@ -29,23 +29,21 @@ class CarnifexDemonTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB effect
 
         Permanent demon = findDemon(player1);
 
         assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(demon.getEffectivePower()).isEqualTo(4);
         assertThat(demon.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Activated ability puts -1/-1 counter on each other creature")
     void abilityPutsCountersOnOtherCreatures() {
-        Permanent demon = addReadyDemon(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addReadyDemon(player1);
+        harness.addToBattlefield(player1, new ContagiousNim());
+        harness.addToBattlefield(player2, new ContagiousNim());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -54,20 +52,20 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Own Grizzly Bears gets a -1/-1 counter
-        Permanent ownBears = findPermanent(player1, "Grizzly Bears");
-        assertThat(ownBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        // Own Contagious Nim gets a -1/-1 counter
+        Permanent ownNim = findPermanent(player1, "Contagious Nim");
+        assertThat(ownNim.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
-        // Opponent's Grizzly Bears also gets a -1/-1 counter
-        Permanent oppBears = findPermanent(player2, "Grizzly Bears");
-        assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        // Opponent's Contagious Nim also gets a -1/-1 counter
+        Permanent opponentNim = findPermanent(player2, "Contagious Nim");
+        assertThat(opponentNim.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Activated ability does NOT put counter on Carnifex Demon itself")
     void abilityDoesNotAffectSelf() {
         Permanent demon = addReadyDemon(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ContagiousNim());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -103,7 +101,7 @@ class CarnifexDemonTest extends BaseCardTest {
     @DisplayName("Can activate ability twice to remove both counters")
     void canActivateTwice() {
         Permanent demon = addReadyDemon(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ContagiousNim());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -124,12 +122,10 @@ class CarnifexDemonTest extends BaseCardTest {
         assertThat(demon.getEffectivePower()).isEqualTo(6);
         assertThat(demon.getEffectiveToughness()).isEqualTo(6);
 
-        // Opponent's Grizzly Bears (2/2) died from two -1/-1 counters (0/0 toughness)
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Opponent's Contagious Nim (2/2) died from two -1/-1 counters (0/0 toughness)
+        harness.assertNotOnBattlefield(player2, "Contagious Nim");
+        harness.assertInGraveyard(player2, "Contagious Nim");
     }
-
-    // ===== Cannot activate without counters =====
 
     @Test
     @DisplayName("Cannot activate ability when no counters remain")
@@ -146,13 +142,11 @@ class CarnifexDemonTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
-    // ===== No timing restriction (instant speed) =====
-
     @Test
     @DisplayName("Can activate ability during combat (instant speed)")
     void canActivateDuringCombat() {
-        Permanent demon = addReadyDemon(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addReadyDemon(player1);
+        harness.addToBattlefield(player2, new ContagiousNim());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -161,17 +155,15 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent oppBears = findPermanent(player2, "Grizzly Bears");
-        assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        Permanent opponentNim = findPermanent(player2, "Contagious Nim");
+        assertThat(opponentNim.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
-
-    // ===== Non-creature permanents not affected =====
 
     @Test
     @DisplayName("Non-creature permanents are not affected by the ability")
     void nonCreaturePermanentsNotAffected() {
-        Permanent demon = addReadyDemon(player1);
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.s.Spellbook());
+        addReadyDemon(player1);
+        harness.addToBattlefield(player1, new DarksteelAxe());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -180,19 +172,74 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Spellbook (artifact, not a creature) should have no -1/-1 counters
-        Permanent spellbook = findPermanent(player1, "Spellbook");
-        assertThat(spellbook.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
+        Permanent axe = findPermanent(player1, "Darksteel Axe");
+        assertThat(axe.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Counter removal is paid immediately, before other creatures get counters")
+    void paysCounterCostBeforeResolution() {
+        Permanent demon = addReadyDemon(player1);
+        Permanent nim = harness.addToBattlefieldAndReturn(player2, new ContagiousNim());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(nim.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(nim.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another Carnifex Demon is affected even though the source is excluded")
+    void affectsAnotherDemon() {
+        Permanent source = addReadyDemon(player1);
+        Permanent other = addReadyDemon(player2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({CarnifexDemon.class, Cloudshift.class})
+    @DisplayName("A returned source is a different creature and receives a counter")
+    void affectsSourceThatLeftAndReturnedBeforeResolution() {
+        Permanent source = addReadyDemon(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player1, List.of(new Cloudshift()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = findDemon(player1);
+        assertThat(returned.getId()).isNotEqualTo(source.getId());
+        // Resolve the original activation and any incorrectly queued entry trigger separately.
+        for (int i = 0; i < 2 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+    }
 
     private Permanent addReadyDemon(Player player) {
-        CarnifexDemon card = new CarnifexDemon();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CarnifexDemon());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

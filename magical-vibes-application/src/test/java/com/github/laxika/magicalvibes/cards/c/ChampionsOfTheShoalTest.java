@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,15 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChampionsOfTheShoal.class, CoralMerfolk.class, GrizzlyBears.class})
+@CardUsed({ChampionsOfTheShoal.class, ChangelingWayfinder.class})
 class ChampionsOfTheShoalTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB taps up to one target creature and puts a stun counter on it")
     void etbTapsAndStunsTarget() {
-        Card beheldCard = new CoralMerfolk();
+        Card beheldCard = new ChangelingWayfinder();
         Permanent beheldPermanent = harness.addToBattlefieldAndReturn(player1, beheldCard);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChangelingWayfinder());
         harness.setHand(player1, List.of(new ChampionsOfTheShoal()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
@@ -44,14 +43,10 @@ class ChampionsOfTheShoalTest extends BaseCardTest {
     @Test
     @DisplayName("Becomes-tapped trigger taps and stuns up to one target creature")
     void becomesTappedTapsAndStunsTarget() {
-        Permanent source = addCreatureReady(player1, new ChampionsOfTheShoal());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new ChampionsOfTheShoal());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChangelingWayfinder());
 
-        source.tap();
-        harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, source);
-            harness.getTriggerCollectionService().processNextEntersTriggerTarget(gd);
-        });
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -65,12 +60,14 @@ class ChampionsOfTheShoalTest extends BaseCardTest {
     @Test
     @DisplayName("The beheld card returns to its owner's hand when Champions leaves")
     void beheldCardReturnsWhenSourceLeaves() {
-        Card beheldCard = new CoralMerfolk();
+        Card beheldCard = new ChangelingWayfinder();
         Permanent beheldPermanent = harness.addToBattlefieldAndReturn(player1, beheldCard);
         harness.setHand(player1, List.of(new ChampionsOfTheShoal()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castCreatureWithBeholdPermanent(player1, 0, beheldPermanent.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
@@ -79,7 +76,50 @@ class ChampionsOfTheShoalTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, source));
 
+        assertThat(gd.findExiledCard(beheldCard.getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(beheldCard);
+        harness.passBothPriorities();
+
         assertThat(gd.findExiledCard(beheldCard.getId())).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(beheldCard);
+    }
+
+    @Test
+    @DisplayName("A Merfolk card from hand can pay the exile cost with no ETB target")
+    void beholdCardFromHandAndDeclineEtbTarget() {
+        Card beheldCard = new ChangelingWayfinder();
+        harness.setHand(player1, List.of(new ChampionsOfTheShoal(), beheldCard));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreatureWithBeholdHandCard(player1, 0, 1);
+        assertThat(gd.findExiledCard(beheldCard.getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(beheldCard);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof ChampionsOfTheShoal)
+                .findFirst().orElseThrow();
+        assertThat(source.isTapped()).isFalse();
+        assertThat(source.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(gd.findExiledCard(beheldCard.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The becomes-tapped trigger can decline to target a creature")
+    void becomesTappedCanChooseNoTarget() {
+        Permanent source = addCreatureReady(player1, new ChampionsOfTheShoal());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new ChangelingWayfinder());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(other.isTapped()).isFalse();
+        assertThat(other.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(source.getCounterCount(CounterType.STUN)).isZero();
     }
 }

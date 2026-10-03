@@ -93,4 +93,42 @@ class AuramancersGuiseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Each Auramancer's Guise counts both copies attached to the same creature")
+    void multipleCopiesStackAndUpdateWhenOneLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AuramancersGuise());
+        first.setAttachedTo(bears.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AuramancersGuise());
+        second.setAttachedTo(bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(10);
+
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Auras on another creature do not increase Auramancer's Guise's bonus")
+    void ignoresAurasOnOtherCreatures() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent guise = harness.addToBattlefieldAndReturn(player1, new AuramancersGuise());
+        guise.setAttachedTo(bears.getId());
+        Permanent strength = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        strength.setAttachedTo(other.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.VIGILANCE)).isFalse();
+    }
 }

@@ -61,6 +61,53 @@ class CarrionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice is paid before Carrion resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent sacrifice = addCreatureReady(player1, new CadaverousKnight());
+        prepare();
+
+        harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());
+
+        harness.assertInGraveyard(player1, "Cadaverous Knight");
+        harness.assertNotOnBattlefield(player1, "Cadaverous Knight");
+        assertThat(countPermanents(player1, "Insect")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Carrion");
+    }
+
+    @Test
+    @DisplayName("Sacrificing a zero-power creature creates no tokens")
+    void zeroPowerCreatesNoTokens() {
+        Permanent sacrifice = addCreatureReady(player1, new CadaverousKnight());
+        sacrifice.setPowerModifier(-2);
+        prepare();
+
+        harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cadaverous Knight");
+        harness.assertInGraveyard(player1, "Carrion");
+        assertThat(countPermanents(player1, "Insect")).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a negative-power creature creates no tokens")
+    void negativePowerCreatesNoTokens() {
+        Permanent sacrifice = addCreatureReady(player1, new CadaverousKnight());
+        sacrifice.setPowerModifier(-3);
+        prepare();
+
+        harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cadaverous Knight");
+        harness.assertInGraveyard(player1, "Carrion");
+        assertThat(countPermanents(player1, "Insect")).isZero();
+    }
+    @Test
     @DisplayName("Must sacrifice a creature as an additional cost")
     void cannotCastWithoutSacrifice() {
         prepare();

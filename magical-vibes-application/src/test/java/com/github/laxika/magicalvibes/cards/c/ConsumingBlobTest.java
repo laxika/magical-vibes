@@ -66,6 +66,61 @@ class ConsumingBlobTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(4);
     }
 
+    @Test
+    void emptyGraveyardGivesBlobAndTokenZeroPowerAndOneToughness() {
+        Permanent blob = addBlobReady(player1);
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, blob)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blob)).isEqualTo(1);
+
+        advanceToEndStep(player1);
+
+        assertThat(findPermanents(player1, "Ooze")).hasSize(1);
+        Permanent ooze = findPermanent(player1, "Ooze");
+        assertThat(gqs.getEffectivePower(gd, ooze)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(1);
+    }
+
+    @Test
+    void duplicateTypesDoNotIncreasePowerAndRemovingCardsUpdatesIt() {
+        Permanent blob = addBlobReady(player1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Plains()));
+
+        assertThat(gqs.getEffectivePower(gd, blob)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blob)).isEqualTo(3);
+
+        harness.setGraveyard(player1, List.of(new Plains()));
+        assertThat(gqs.getEffectivePower(gd, blob)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blob)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotCreateTokenAtOpponentsEndStep() {
+        addBlobReady(player1);
+
+        advanceToEndStep(player2);
+
+        assertThat(findPermanents(player1, "Ooze")).isEmpty();
+        assertThat(findPermanents(player2, "Ooze")).isEmpty();
+    }
+
+    @Test
+    void tokenKeepsItsAbilityWithoutBlobAndDoesNotCreateMoreTokens() {
+        Permanent blob = addBlobReady(player1);
+        advanceToEndStep(player1);
+        Permanent ooze = findPermanent(player1, "Ooze");
+        gd.playerBattlefields.get(player1.getId()).remove(blob);
+        harness.setGraveyard(player1, List.of(new Plains(), new Ornithopter()));
+
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(4);
+
+        advanceToEndStep(player1);
+
+        assertThat(findPermanents(player1, "Ooze")).containsExactly(ooze);
+    }
+
     private Permanent addBlobReady(Player player) {
         return addCreatureReady(player, new ConsumingBlob());
     }
@@ -75,6 +130,6 @@ class ConsumingBlobTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

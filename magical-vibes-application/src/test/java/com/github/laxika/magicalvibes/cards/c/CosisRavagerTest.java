@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CosisRavager.class, Forest.class, GrizzlyBears.class, LilianaVess.class})
 class CosisRavagerTest extends BaseCardTest {
 
     @Test
@@ -92,6 +94,69 @@ class CosisRavagerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Landfall can damage its controller")
+    void landfallCanTargetController() {
+        addRavager();
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Landfall can damage a planeswalker its controller controls")
+    void landfallCanTargetFriendlyPlaneswalker() {
+        addRavager();
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, liliana.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A land entering without being played still triggers landfall")
+    void landEnteringWithoutBeingPlayedTriggersLandfall() {
+        addRavager();
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Landfall resolves after its source leaves the battlefield")
+    void landfallResolvesAfterSourceLeaves() {
+        Permanent ravager = addRavager();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, ravager));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Cosi's Ravager");
     }
 
     private Permanent addRavager() {

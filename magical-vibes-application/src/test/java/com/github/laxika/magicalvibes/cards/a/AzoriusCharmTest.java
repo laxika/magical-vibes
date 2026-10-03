@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AzoriusCharm.class, GrizzlyBears.class})
 class AzoriusCharmTest extends BaseCardTest {
 
     private void addWU() {
@@ -25,8 +27,25 @@ class AzoriusCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({AzoriusCharm.class, GrizzlyBears.class})
     @DisplayName("Mode 0: Creatures you control gain lifelink until end of turn")
     class LifelinkMode {
+
+        @Test
+        void affectsCreaturesPresentAtResolutionOnly() {
+            Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.setHand(player1, List.of(new AzoriusCharm()));
+            addWU();
+
+            harness.castInstant(player1, 0, 0, null);
+            Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.passBothPriorities();
+            Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+            assertThat(gqs.hasKeyword(gd, original, Keyword.LIFELINK)).isTrue();
+            assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.LIFELINK)).isTrue();
+            assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.LIFELINK)).isFalse();
+        }
 
         @Test
         @DisplayName("Grants lifelink to your creatures")
@@ -76,6 +95,7 @@ class AzoriusCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({AzoriusCharm.class, GrizzlyBears.class})
     @DisplayName("Mode 1: Draw a card")
     class DrawMode {
 
@@ -83,7 +103,7 @@ class AzoriusCharmTest extends BaseCardTest {
         @DisplayName("Draws one card")
         void drawsOneCard() {
             harness.setHand(player1, List.of(new AzoriusCharm()));
-            gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+            harness.setLibrary(player1, List.of(new GrizzlyBears()));
             addWU();
 
             harness.castInstant(player1, 0, 1, null);
@@ -96,17 +116,73 @@ class AzoriusCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({AzoriusCharm.class, GrizzlyBears.class})
     @DisplayName("Mode 2: Put target attacking or blocking creature on top of library")
     class TuckMode {
 
         @Test
+        void tucksOwnBlockingCreature() {
+            Permanent blocker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            blocker.setBlocking(true);
+            int librarySize = gd.playerDecks.get(player1.getId()).size();
+            harness.setHand(player1, List.of(new AzoriusCharm()));
+            addWU();
+
+            harness.castInstant(player1, 0, 2, blocker.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySize + 1);
+            assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(blocker.getCard());
+        }
+
+        @Test
+        void doesNotTuckCreatureThatStopsAttackingBeforeResolution() {
+            Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1.getId());
+            int librarySize = gd.playerDecks.get(player2.getId()).size();
+            harness.setHand(player1, List.of(new AzoriusCharm()));
+            addWU();
+
+            harness.castInstant(player1, 0, 2, attacker.getId());
+            attacker.setAttacking(false);
+            attacker.setAttackTarget(null);
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize);
+            harness.assertInGraveyard(player1, "Azorius Charm");
+        }
+
+        @Test
+        void tucksToOwnersLibraryWhenControlledByOpponent() {
+            GrizzlyBears card = new GrizzlyBears();
+            card.setOwnerId(player1.getId());
+            Permanent attacker = harness.addToBattlefieldAndReturn(player2, card);
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1.getId());
+            int ownerLibrarySize = gd.playerDecks.get(player1.getId()).size();
+            int controllerLibrarySize = gd.playerDecks.get(player2.getId()).size();
+            harness.setHand(player1, List.of(new AzoriusCharm()));
+            addWU();
+
+            harness.castInstant(player1, 0, 2, attacker.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            assertThat(gd.playerDecks.get(player1.getId())).hasSize(ownerLibrarySize + 1);
+            assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(card);
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerLibrarySize);
+        }
+
+        @Test
         @DisplayName("Puts attacking creature on top of owner's library")
         void tucksAttackingCreature() {
-            Permanent attacker = new Permanent(new GrizzlyBears());
+            Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             attacker.setSummoningSick(false);
             attacker.setAttacking(true);
             attacker.setAttackTarget(player1.getId());
-            gd.playerBattlefields.get(player2.getId()).add(attacker);
             UUID targetId = attacker.getId();
             int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -127,11 +203,10 @@ class AzoriusCharmTest extends BaseCardTest {
         void cannotTargetIdleCreature() {
             harness.addToBattlefield(player2, new GrizzlyBears());
             UUID idleId = harness.getPermanentId(player2, "Grizzly Bears");
-            Permanent attacker = new Permanent(new GrizzlyBears());
+            Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             attacker.setSummoningSick(false);
             attacker.setAttacking(true);
             attacker.setAttackTarget(player1.getId());
-            gd.playerBattlefields.get(player2.getId()).add(attacker);
 
             harness.setHand(player1, List.of(new AzoriusCharm()));
             addWU();

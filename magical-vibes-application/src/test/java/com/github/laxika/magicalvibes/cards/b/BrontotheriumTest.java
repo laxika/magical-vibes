@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DrippingDead;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -131,5 +132,73 @@ class BrontotheriumTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(brontotherium.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature tapped after provoke resolves is not required to block")
+    void tappingAfterProvokePreventsBlocking() {
+        addCreatureReady(player1, new Brontotherium());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        blocker.tap();
+
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Provoke can force a creature that entered this turn to block")
+    void provokeCanForceSummoningSickCreatureToBlock() {
+        addCreatureReady(player1, new Brontotherium());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        blocker.setSummoningSick(true);
+        blocker.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blocker.isTapped()).isFalse();
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Provoke's block requirement expires before a later combat in the same turn")
+    void provokeRequirementDoesNotPersistIntoLaterCombat() {
+        Permanent brontotherium = addCreatureReady(player1, new Brontotherium());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        blocker.tap();
+
+        prepareDeclareBlockers();
+        gd.additionalCombatPhasesOnly = 1;
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        });
+
+        brontotherium.untap();
+        blocker.untap();
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of())).doesNotThrowAnyException();
     }
 }

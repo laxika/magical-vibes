@@ -49,8 +49,7 @@ class ChaoticStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInGraveyard(player1, "Chaotic Strike");
         harness.assertInHand(player1, "Raging Kavu");
@@ -116,8 +115,7 @@ class ChaoticStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         harness.assertInGraveyard(player1, "Chaotic Strike");
     }
@@ -132,8 +130,7 @@ class ChaoticStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInGraveyard(player1, "Chaotic Strike");
     }
@@ -153,6 +150,45 @@ class ChaoticStrikeTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("An illegal target prevents both the coin flip and the card draw")
+    void doesNotResolveWhenTargetLeavesBattlefield() {
+        harness.forceActivePlayer(player1);
+        Permanent target = addCreatureReady(player2, new RagingKavu());
+        harness.setHand(player1, List.of(new ChaoticStrike()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chaotic Strike");
+        harness.assertNotInHand(player1, "Mountain");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("coin flip for Chaotic Strike"));
+    }
+
+    @Test
+    @DisplayName("Can target a noncombatant during the opponent's end of combat")
+    void canCastDuringOpponentsEndOfCombat() {
+        harness.forceActivePlayer(player2);
+        Permanent target = addCreatureReady(player1, new RagingKavu());
+        harness.setHand(player1, List.of(new ChaoticStrike()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.ensurePriority(player1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Chaotic Strike");
+        harness.assertInHand(player1, "Mountain");
+    }
+
     private Permanent castAgainstCreature() {
         harness.forceActivePlayer(player1);
         Permanent target = addCreatureReady(player2, new RagingKavu());
@@ -164,8 +200,7 @@ class ChaoticStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         return target;
     }
 }

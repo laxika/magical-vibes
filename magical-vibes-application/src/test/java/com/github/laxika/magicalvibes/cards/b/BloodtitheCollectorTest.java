@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,18 +7,17 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BloodtitheCollector.class, GrizzlyBears.class})
+@CardUsed({BloodtitheCollector.class})
 class BloodtitheCollectorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Does nothing when no opponent lost life this turn")
     void noTriggerWithoutOpponentLifeLoss() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new BloodtitheCollector()));
 
         castBloodtitheCollector();
 
@@ -31,7 +29,7 @@ class BloodtitheCollectorTest extends BaseCardTest {
     @DisplayName("Each opponent discards a card after an opponent lost life")
     void eachOpponentDiscardsAfterOpponentLifeLoss() {
         gd.lifeLostThisTurn.put(player2.getId(), 1);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player2, List.of(new BloodtitheCollector(), new BloodtitheCollector()));
 
         castBloodtitheCollector();
         harness.passBothPriorities();
@@ -50,7 +48,7 @@ class BloodtitheCollectorTest extends BaseCardTest {
     @DisplayName("Does nothing when only you lost life this turn")
     void noTriggerFromControllerLifeLoss() {
         gd.lifeLostThisTurn.put(player1.getId(), 1);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new BloodtitheCollector()));
 
         castBloodtitheCollector();
 
@@ -62,11 +60,45 @@ class BloodtitheCollectorTest extends BaseCardTest {
     @DisplayName("Does nothing when the opponent has no cards in hand")
     void noDiscardWithEmptyOpponentHand() {
         gd.lifeLostThisTurn.put(player2.getId(), 1);
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
 
         castBloodtitheCollector();
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Life loss after entry does not create a discard trigger")
+    void lifeLossAfterEntryDoesNotTrigger() {
+        harness.setHand(player2, List.of(new BloodtitheCollector()));
+
+        castBloodtitheCollector();
+
+        assertThat(gd.stack).isEmpty();
+        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Regaining lost life does not prevent the discard trigger")
+    void regainingLostLifeDoesNotPreventDiscard() {
+        harness.setHand(player2, List.of(new BloodtitheCollector()));
+        harness.setLife(player2, 20);
+        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+
+        castBloodtitheCollector();
+        assertThat(gd.stack).hasSize(1);
+        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

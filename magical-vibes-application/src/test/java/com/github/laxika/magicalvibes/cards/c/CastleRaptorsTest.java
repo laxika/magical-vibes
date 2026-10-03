@@ -50,4 +50,39 @@ class CastleRaptorsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, raptors)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Each copy checks its own tapped state without stacking bonuses")
+    void copiesCheckTheirOwnTappedState() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CastleRaptors());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CastleRaptors());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new CastleRaptors());
+        first.tap();
+
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(5);
+
+        first.untap();
+        second.tap();
+        opposing.tap();
+
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The untap step restores the bonus only for the active player's Raptors")
+    void untapStepRestoresBonusForActivePlayer() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new CastleRaptors());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new CastleRaptors());
+        own.tap();
+        opposing.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(3);
+    }
 }

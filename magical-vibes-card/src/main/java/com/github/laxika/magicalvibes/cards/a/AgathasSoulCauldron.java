@@ -25,10 +25,6 @@ public class AgathasSoulCauldron extends Card {
                 null,
                 List.of(new ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffect()),
                 "{T}: Exile target card from a graveyard. When a creature card is exiled this way, put a +1/+1 counter on target creature you control.",
-                List.of(
-                        new GraveyardCardPredicateTargetFilter(null, GraveyardSearchScope.ALL_GRAVEYARDS),
-                        TargetFilters.creatureYouControl()),
-                2,
-                2));
+                new GraveyardCardPredicateTargetFilter(null, GraveyardSearchScope.ALL_GRAVEYARDS)));
     }
 }

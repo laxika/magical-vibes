@@ -72,6 +72,99 @@ class BloodPoetTest extends BaseCardTest {
         assertThat(gd.playerSparkCounters.get(player1.getId())).isEqualTo(3);
     }
 
+    @Test
+    void lifelinkExpiresAfterTheTurn() {
+        Permanent poet = addPoet();
+        prepareSparkAbilityActivation();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, poet, Keyword.LIFELINK)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, poet, Keyword.LIFELINK)).isFalse();
+        assertThat(gd.playerSparkCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void minusThreeRequiresEnoughSparkCounters() {
+        addPoet();
+        gd.playerSparkCounters.put(player1.getId(), 2);
+        prepareSparkAbilityActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .hasMessageContaining("Not enough spark counters");
+
+        assertThat(gd.playerSparkCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sparkCannotBeActivatedOutsideAMainPhase() {
+        addPoet();
+        prepareSparkAbilityActivation();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .hasMessageContaining("as a sorcery");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerSparkCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    void sparkCannotBeActivatedWithAnotherAbilityOnTheStack() {
+        addPoet();
+        harness.addToBattlefield(player2, new BloodPoet());
+        prepareSparkAbilityActivation();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .hasMessageContaining("as a sorcery");
+
+        harness.forceActivePlayer(player1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void emptyOpposingHandGainsNoLifeFromAnEarlierDiscard() {
+        addPoet();
+        harness.setHand(player2, List.of());
+        gd.lastDiscardedCardManaValue = 3;
+        gd.playerSparkCounters.put(player1.getId(), 3);
+        prepareSparkAbilityActivation();
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSparkCounters.get(player1.getId())).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentChoosesTheDiscardAndLifeIsGainedOnlyAfterThatChoice() {
+        addPoet();
+        BloodPoet discarded = new BloodPoet();
+        BloodPoet retained = new BloodPoet();
+        harness.setHand(player2, List.of(retained, discarded));
+        gd.playerSparkCounters.put(player1.getId(), 3);
+        prepareSparkAbilityActivation();
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertLife(player1, 23);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+    }
+
     private Permanent addPoet() {
         return harness.addToBattlefieldAndReturn(player1, new BloodPoet());
     }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
 import com.github.laxika.magicalvibes.cards.s.SpectralBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ApocalypseChime.class, AetherStorm.class, CemeteryGate.class, Forest.class,
+@CardUsed({ApocalypseChime.class, AetherStorm.class, AnHavvaTownship.class, CemeteryGate.class, Forest.class,
         GrizzlyBears.class, MesaFalcon.class, SpectralBears.class})
 class ApocalypseChimeTest extends BaseCardTest {
 
@@ -136,5 +137,73 @@ class ApocalypseChimeTest extends BaseCardTest {
         ringChime();
 
         harness.assertInGraveyard(player2, "An-Havva Inn");
+    }
+
+    @Test
+    @DisplayName("A tapped Chime cannot pay its activation cost")
+    void cannotActivateWhileTapped() {
+        chimeReady();
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Apocalypse Chime");
+        harness.assertNotInGraveyard(player1, "Apocalypse Chime");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Chime can be activated during the opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        prepareChime(player2, TurnStep.PRECOMBAT_MAIN, 2);
+        harness.addToBattlefield(player2, new SpectralBears());
+
+        ringChime();
+
+        harness.assertInGraveyard(player1, "Apocalypse Chime");
+        harness.assertInGraveyard(player2, "Spectral Bears");
+    }
+
+    @Test
+    @DisplayName("Matching permanents entering before resolution are destroyed too")
+    void checksBattlefieldAtResolution() {
+        chimeReady();
+        harness.activateAbility(player1, 0, null, null);
+        harness.addToBattlefield(player2, new MesaFalcon());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mesa Falcon");
+        harness.assertInGraveyard(player2, "Mesa Falcon");
+    }
+
+    @Test
+    @DisplayName("Indestructible prevents destruction even though regeneration is forbidden")
+    void indestructiblePermanentSurvives() {
+        chimeReady();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new SpectralBears());
+        bears.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.addToBattlefield(player2, new MesaFalcon());
+
+        ringChime();
+
+        harness.assertOnBattlefield(player2, "Spectral Bears");
+        harness.assertNotInGraveyard(player2, "Spectral Bears");
+        harness.assertInGraveyard(player2, "Mesa Falcon");
+    }
+
+    @Test
+    @DisplayName("Matching lands and other artifacts are destroyed")
+    void destroysMatchingLandsAndArtifacts() {
+        chimeReady();
+        harness.addToBattlefield(player2, new AnHavvaTownship());
+        harness.addToBattlefield(player2, new ApocalypseChime());
+
+        ringChime();
+
+        harness.assertInGraveyard(player2, "An-Havva Township");
+        harness.assertInGraveyard(player2, "Apocalypse Chime");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }

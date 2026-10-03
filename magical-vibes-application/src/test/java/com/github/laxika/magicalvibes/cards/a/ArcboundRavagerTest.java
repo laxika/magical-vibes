@@ -135,6 +135,76 @@ class ArcboundRavagerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(ravager.getCard());
     }
 
+    @Test
+    void sacrificeIsPaidBeforeResolutionAndCannotUseOpposingArtifacts() {
+        Permanent ravager = addCreatureReady(player1, new ArcboundRavager());
+        ravager.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent pendant = harness.addToBattlefieldAndReturn(player1, new DarksteelPendant());
+        Permanent opposingPendant = harness.addToBattlefieldAndReturn(player2, new DarksteelPendant());
+
+        harness.activateAbility(player1, 0, null, null);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).doesNotContain(opposingPendant.getId());
+        harness.handlePermanentChosen(player1, pendant.getId());
+
+        harness.assertInGraveyard(player1, "Darksteel Pendant");
+        assertThat(ravager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(ravager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingPendant);
+    }
+
+    @Test
+    void sacrificingItselfTransfersOnlyTheCountersItHadAtDeath() {
+        Permanent ravager = addCreatureReady(player1, new ArcboundRavager());
+        ravager.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, ravager.getId());
+        harness.assertInGraveyard(player1, "Arcbound Ravager");
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Arcbound Ravager");
+    }
+
+    @Test
+    void modularAddsToExistingCountersWithoutCopyingOtherCounterTypes() {
+        Permanent ravager = addCreatureReady(player1, new ArcboundRavager());
+        ravager.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        ravager.setCounterCount(CounterType.CHARGE, 2);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        gargoyle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyRavager(ravager);
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gargoyle.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void dyingWithoutAnArtifactCreatureTargetDoesNotRequireAChoice() {
+        Permanent ravager = addCreatureReady(player1, new ArcboundRavager());
+        ravager.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player1, new CrazedGoblin());
+        harness.addToBattlefield(player1, new DarksteelPendant());
+
+        destroyRavager(ravager);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Arcbound Ravager");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void destroyRavager(Permanent ravager) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

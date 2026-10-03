@@ -2,26 +2,31 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArborElf.class, Forest.class, Island.class})
 class ArborElfTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untaps a tapped Forest and taps Arbor Elf as the cost")
     void untapsTappedForest() {
-        Permanent elf = addReadyElf(player1);
-        Permanent forest = addPermanent(player1, new Forest());
+        Permanent elf = addCreatureReady(player1, new ArborElf());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.tap();
 
         harness.activateAbility(player1, 0, null, forest.getId());
+
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
         harness.passBothPriorities();
 
         assertThat(elf.isTapped()).isTrue();
@@ -31,8 +36,8 @@ class ArborElfTest extends BaseCardTest {
     @Test
     @DisplayName("Can untap a Forest an opponent controls")
     void canTargetOpponentForest() {
-        addReadyElf(player1);
-        Permanent forest = addPermanent(player2, new Forest());
+        addCreatureReady(player1, new ArborElf());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         forest.tap();
 
         harness.activateAbility(player1, 0, null, forest.getId());
@@ -44,8 +49,8 @@ class ArborElfTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-Forest land")
     void cannotTargetNonForest() {
-        addReadyElf(player1);
-        Permanent island = addPermanent(player1, new Island());
+        addCreatureReady(player1, new ArborElf());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         island.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, island.getId()))
@@ -56,9 +61,8 @@ class ArborElfTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while summoning sick")
     void cannotActivateWithSummoningSickness() {
-        Permanent elf = new Permanent(new ArborElf());
-        gd.playerBattlefields.get(player1.getId()).add(elf);
-        Permanent forest = addPermanent(player1, new Forest());
+        harness.addToBattlefield(player1, new ArborElf());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
@@ -66,16 +70,68 @@ class ArborElfTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
-    private Permanent addReadyElf(Player player) {
-        Permanent perm = new Permanent(new ArborElf());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Can target an untapped Forest")
+    void canTargetUntappedForest() {
+        Permanent elf = addCreatureReady(player1, new ArborElf());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot activate an already tapped Arbor Elf")
+    void cannotActivateTappedElf() {
+        Permanent elf = addCreatureReady(player1, new ArborElf());
+        elf.tap();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still untaps its target after Arbor Elf leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent elf = addCreatureReady(player1, new ArborElf());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(elf);
+        gd.playerGraveyards.get(player1.getId()).add(elf.getCard());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability does not untap another Forest when its target leaves")
+    void doesNotRetargetWhenTargetLeaves() {
+        Permanent elf = addCreatureReady(player1, new ArborElf());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent otherForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+        otherForest.tap();
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        gd.playerGraveyards.get(player1.getId()).add(forest.getCard());
+        harness.passBothPriorities();
+
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(otherForest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

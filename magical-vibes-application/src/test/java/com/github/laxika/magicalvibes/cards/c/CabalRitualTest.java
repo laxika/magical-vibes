@@ -53,6 +53,39 @@ class CabalRitualTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("A ritual resolving first can enable threshold for another ritual on the stack")
+    void earlierResolutionEnablesThreshold() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        castCabalRitual();
+        castCabalRitual();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(8);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(8);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing threshold before resolution adds only three black mana")
+    void losingThresholdBeforeResolutionAddsThreeBlackMana() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        castCabalRitual();
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+    }
+
     private void castCabalRitual() {
         harness.castFromHand(player1, new CabalRitual(), "{1}{B}");
     }

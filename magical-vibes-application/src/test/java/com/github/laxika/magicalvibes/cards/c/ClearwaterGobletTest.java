@@ -15,6 +15,53 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ClearwaterGobletTest extends BaseCardTest {
 
     @Test
+    void sunburstCanPutFiveChargeCounters() {
+        harness.setHand(player1, List.of(new ClearwaterGoblet()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Clearwater Goblet").getCounterCount(CounterType.CHARGE))
+                .isEqualTo(5);
+    }
+
+    @Test
+    void upkeepWithNoChargeCountersGainsNoLife() {
+        harness.addToBattlefield(player1, new ClearwaterGoblet());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void upkeepCountsOnlyChargeCountersAndDoesNotConsumeThem() {
+        Permanent goblet = harness.addToBattlefieldAndReturn(player1, new ClearwaterGoblet());
+        goblet.setCounterCount(CounterType.CHARGE, 2);
+        goblet.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 2);
+        harness.assertLife(player2, opponentLifeBefore);
+        assertThat(goblet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(goblet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
     void sunburstPutsOneChargeCounterForEachColorSpent() {
         harness.setHand(player1, List.of(new ClearwaterGoblet()));
         harness.addMana(player1, ManaColor.WHITE, 1);

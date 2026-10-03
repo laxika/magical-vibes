@@ -26,7 +26,6 @@ class AttunedHunterTest extends BaseCardTest {
 
         castReminisce(player1, player1.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -40,9 +39,46 @@ class AttunedHunterTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Shock()));
 
         castReminisce(player2, player1.getId());
-        harness.passBothPriorities();
 
         assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerWhenOpponentGraveyardEmptiesDuringYourTurn() {
+        Permanent hunter = addReadyHunter(player1);
+        harness.setGraveyard(player2, List.of(new Shock()));
+
+        castReminisce(player1, player2.getId());
+
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenEmptyGraveyardIsShuffled() {
+        Permanent hunter = addReadyHunter(player1);
+        harness.setGraveyard(player1, List.of());
+
+        castReminisce(player1, player1.getId());
+
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggersForEachSeparateDepartureDuringSameTurn() {
+        Permanent hunter = addReadyHunter(player1);
+        harness.setGraveyard(player1, List.of(new Shock()));
+
+        castReminisce(player1, player1.getId());
+        harness.passBothPriorities();
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        castReminisce(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private Permanent addReadyHunter(Player player) {
@@ -56,6 +92,6 @@ class AttunedHunterTest extends BaseCardTest {
     private void castReminisce(Player caster, UUID targetPlayerId) {
         harness.setHand(caster, List.of(new Reminisce()));
         harness.addMana(caster, ManaColor.BLUE, 3);
-        harness.castSorcery(caster, 0, targetPlayerId);
+        harness.castAndResolveSorcery(caster, 0, targetPlayerId);
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Banehound.class)
+@CardUsed({Banehound.class})
 class BanehoundTest extends BaseCardTest {
 
     @Test
@@ -26,5 +27,23 @@ class BanehoundTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Attacking and blocking Banehounds both gain life when they die in combat")
+    void lifelinkAppliesToLethalCombatDamageOnBothSides() {
+        harness.addToBattlefield(player1, new Banehound());
+        harness.addToBattlefield(player2, new Banehound());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 21);
+        harness.assertNotOnBattlefield(player1, "Banehound");
+        harness.assertNotOnBattlefield(player2, "Banehound");
+        harness.assertInGraveyard(player1, "Banehound");
+        harness.assertInGraveyard(player2, "Banehound");
     }
 }

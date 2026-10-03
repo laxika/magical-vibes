@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "IKO", collectorNumber = "64")
+@CardRegistration(set = "HBG", collectorNumber = "908")
 public class PouncingShoreshark extends Card {
 
     public PouncingShoreshark() {

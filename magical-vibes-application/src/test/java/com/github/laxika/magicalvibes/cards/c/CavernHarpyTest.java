@@ -113,7 +113,7 @@ class CavernHarpyTest extends BaseCardTest {
     @Test
     @DisplayName("Paying 1 life returns a controlled Cavern Harpy to its owner's hand")
     void payLifeReturnsSelfToOwnersHand() {
-        Permanent harpy = addStolenPermanent(new CavernHarpy());
+        addStolenPermanent(new CavernHarpy());
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);
@@ -123,6 +123,67 @@ class CavernHarpyTest extends BaseCardTest {
         harness.assertInHand(player2, "Cavern Harpy");
         harness.assertNotInHand(player1, "Cavern Harpy");
         harness.assertNotOnBattlefield(player1, "Cavern Harpy");
+    }
+
+    @Test
+    @DisplayName("Life is paid on activation and a tapped Harpy stays until resolution")
+    void lifeIsPaidBeforeBounceResolves() {
+        Permanent harpy = harness.addToBattlefieldAndReturn(player1, new CavernHarpy());
+        harpy.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 19);
+        harness.assertOnBattlefield(player1, "Cavern Harpy");
+        harness.assertNotInHand(player1, "Cavern Harpy");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Cavern Harpy");
+        harness.assertNotOnBattlefield(player1, "Cavern Harpy");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Returning Harpy in response does not stop its ETB from returning another creature")
+    void etbStillReturnsCreatureAfterHarpyLeaves() {
+        UUID blueId = harness.addToBattlefieldAndReturn(player1, new SeaSnidd()).getId();
+        harness.castFromHand(player1, new CavernHarpy(), "{U}{B}");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Cavern Harpy");
+        harness.assertOnBattlefield(player1, "Sea Snidd");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(blueId);
+        harness.handlePermanentChosen(player1, blueId);
+
+        harness.assertInHand(player1, "Sea Snidd");
+        harness.assertNotOnBattlefield(player1, "Sea Snidd");
+    }
+
+    @Test
+    @DisplayName("ETB does nothing if Harpy leaves and no matching creature remains")
+    void etbDoesNothingWithoutMatchingCreature() {
+        harness.addToBattlefield(player1, new AlphaKavu());
+        harness.addToBattlefield(player2, new SeaSnidd());
+        harness.castFromHand(player1, new CavernHarpy(), "{U}{B}");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.assertInHand(player1, "Cavern Harpy");
+        harness.assertOnBattlefield(player1, "Alpha Kavu");
+        harness.assertOnBattlefield(player2, "Sea Snidd");
     }
 
     private void castAndResolveSpell() {

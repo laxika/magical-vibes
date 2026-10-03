@@ -52,7 +52,7 @@ class CityOfTraitorsTest extends BaseCardTest {
     @DisplayName("Putting another land onto the battlefield does not sacrifice City of Traitors")
     void puttingAnotherLandOntoBattlefieldDoesNotSacrifice() {
         harness.addToBattlefield(player1, new CityOfTraitors());
-        harness.addToBattlefield(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "City of Traitors");
@@ -82,5 +82,78 @@ class CityOfTraitorsTest extends BaseCardTest {
         harness.playLand(player2, 0);
 
         harness.assertOnBattlefield(player1, "City of Traitors");
+    }
+
+    @Test
+    @DisplayName("City of Traitors can produce mana before its sacrifice trigger resolves")
+    void canTapForManaInResponseToSacrificeTrigger() {
+        harness.addToBattlefield(player1, new CityOfTraitors());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "City of Traitors");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(findPermanent(player1, "City of Traitors").isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "City of Traitors");
+        harness.assertInGraveyard(player1, "City of Traitors");
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Playing a second City of Traitors sacrifices only the first City")
+    void playingSecondCitySacrificesOnlyFirstCity() {
+        var firstCity = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors());
+        var secondCity = new CityOfTraitors();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(secondCity));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "City of Traitors")).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "City of Traitors").getCard().getId()).isEqualTo(secondCity.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstCity.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(secondCity);
+    }
+
+    @Test
+    @DisplayName("Playing another land sacrifices every City of Traitors controlled by that player")
+    void playingLandSacrificesBothExistingCities() {
+        harness.addToBattlefield(player1, new CityOfTraitors());
+        harness.addToBattlefield(player1, new CityOfTraitors());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "City of Traitors")).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "City of Traitors");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("City of Traitors"))
+                .hasSize(2);
+        harness.assertOnBattlefield(player1, "Forest");
     }
 }

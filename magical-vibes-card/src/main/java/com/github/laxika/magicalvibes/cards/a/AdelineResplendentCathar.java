@@ -29,6 +29,6 @@ public class AdelineResplendentCathar extends Card {
 
         CreateTokenEffect humanToken = new CreateTokenEffect(
                 1, "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN), true);
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokensAttackingEffect(1, humanToken));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new CreateTokensAttackingEffect(1, humanToken));
     }
 }

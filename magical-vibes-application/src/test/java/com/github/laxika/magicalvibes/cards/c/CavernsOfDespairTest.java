@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfHope;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -22,7 +21,7 @@ class CavernsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("No more than two creatures can attack each combat")
     void limitsAttackers() {
-        addReadyPermanent(player2, new CavernsOfDespair());
+        addCreatureReady(player2, new CavernsOfDespair());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
@@ -35,7 +34,7 @@ class CavernsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Two attackers are legal")
     void allowsTwoAttackers() {
-        addReadyPermanent(player2, new CavernsOfDespair());
+        addCreatureReady(player2, new CavernsOfDespair());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
@@ -45,7 +44,7 @@ class CavernsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("No more than two creatures can block each combat")
     void limitsBlockers() {
-        addReadyPermanent(player1, new CavernsOfDespair());
+        addCreatureReady(player1, new CavernsOfDespair());
         addReadyAttacker(player1);
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
@@ -63,7 +62,7 @@ class CavernsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Two blockers are legal")
     void allowsTwoBlockers() {
-        addReadyPermanent(player1, new CavernsOfDespair());
+        addCreatureReady(player1, new CavernsOfDespair());
         addReadyAttacker(player1);
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
@@ -77,7 +76,7 @@ class CavernsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("One blocker can block two attackers and still counts as one blocker")
     void countsDistinctBlockers() {
-        addReadyPermanent(player1, new CavernsOfDespair());
+        addCreatureReady(player1, new CavernsOfDespair());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new AvatarOfHope());
@@ -88,10 +87,33 @@ class CavernsOfDespairTest extends BaseCardTest {
                 new BlockerAssignment(0, 2)))).doesNotThrowAnyException();
     }
 
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("The controller of Caverns is also limited to two attackers")
+    void limitsControllersAttackers() {
+        addCreatureReady(player1, new CavernsOfDespair());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(1, 2, 3)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No more than 2 creatures can attack");
+    }
+
+    @Test
+    @DisplayName("Two distinct blockers may make three blocking assignments")
+    void allowsThreeAssignmentsByTwoBlockers() {
+        addCreatureReady(player1, new CavernsOfDespair());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new AvatarOfHope());
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(player1, List.of(1, 2));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2),
+                new BlockerAssignment(1, 1)))).doesNotThrowAnyException();
     }
 
     private Permanent addReadyAttacker(Player player) {

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 @CardUsed({AkromasVengeance.class, DreamChisel.class, EnchantresssPresence.class, Forest.class, GlorySeeker.class})
 class AkromasVengeanceTest extends BaseCardTest {
 
@@ -62,5 +64,44 @@ class AkromasVengeanceTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Akroma's Vengeance");
         harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately, draws on resolution, and does not destroy permanents")
+    void cyclingPaysDiscardBeforeDrawing() {
+        harness.addToBattlefield(player1, new DreamChisel());
+        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.addToBattlefield(player2, new EnchantresssPresence());
+        harness.setHand(player1, List.of(new AkromasVengeance()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Akroma's Vengeance");
+        harness.assertInGraveyard(player1, "Akroma's Vengeance");
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Dream Chisel");
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        harness.assertOnBattlefield(player2, "Enchantress's Presence");
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with fewer than three mana")
+    void cyclingRequiresThreeMana() {
+        harness.setHand(player1, List.of(new AkromasVengeance()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Akroma's Vengeance");
+        harness.assertNotInGraveyard(player1, "Akroma's Vengeance");
+        harness.assertNotInHand(player1, "Glory Seeker");
     }
 }

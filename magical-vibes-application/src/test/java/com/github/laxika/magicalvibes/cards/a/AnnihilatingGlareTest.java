@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AnnihilatingGlare.class, GarrukWildspeaker.class, GrizzlyBears.class, ScrabblingClaws.class, Plains.class})
 class AnnihilatingGlareTest extends BaseCardTest {
 
     @Test
@@ -34,14 +36,13 @@ class AnnihilatingGlareTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Scrabbling Claws");
         harness.assertInGraveyard(player1, "Scrabbling Claws");
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(target.getId()));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Pays {4} instead of sacrificing and destroys target planeswalker")
     void paysManaInsteadOfSacrificingAndDestroysTargetPlaneswalker() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ScrabblingClaws());
+        harness.addToBattlefield(player1, new ScrabblingClaws());
         Permanent planeswalker = addReadyPlaneswalker(player2, 3);
 
         harness.setHand(player1, List.of(new AnnihilatingGlare()));
@@ -50,10 +51,8 @@ class AnnihilatingGlareTest extends BaseCardTest {
         harness.castSorceryWithSacrifice(player1, 0, planeswalker.getId(), null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(artifact.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(planeswalker.getId()));
+        harness.assertOnBattlefield(player1, "Scrabbling Claws");
+        harness.assertNotOnBattlefield(player2, "Garruk Wildspeaker");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -84,6 +83,63 @@ class AnnihilatingGlareTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void sacrificesCreatureBeforeResolution() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AnnihilatingGlare()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canPayManaWithoutAnyPermanentToSacrifice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AnnihilatingGlare()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), null);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotSacrificeOpponentsPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AnnihilatingGlare()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotSacrificeNonartifactLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AnnihilatingGlare()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Plains");
+    }
     private Permanent addReadyPlaneswalker(Player player, int loyalty) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new GarrukWildspeaker());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);

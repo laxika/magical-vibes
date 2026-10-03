@@ -90,7 +90,6 @@ class CabarettiCharmTest extends BaseCardTest {
         assertThat(opposingBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownBear.getEffectivePower()).isEqualTo(2);
@@ -116,6 +115,73 @@ class CabarettiCharmTest extends BaseCardTest {
             assertThat(citizen.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
             assertThat(citizen.getCard().getSubtypes()).containsExactly(CardSubtype.CITIZEN);
+        });
+    }
+
+    @Test
+    @DisplayName("Damage mode deals zero damage when you control no creatures")
+    void damageWithNoCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new CabarettiCharm()));
+        addRGW();
+
+        harness.castModalInstant(player1, 0, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Cabaretti Charm");
+    }
+
+    @Test
+    @DisplayName("Damage counts creatures at resolution, including tokens created in response")
+    void damageCountsCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new CabarettiCharm(), new CabarettiCharm()));
+        addRGW();
+        addRGW();
+
+        harness.castModalInstant(player1, 0, 0, List.of(target.getId()));
+        harness.castModalInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Citizen")).hasSize(2);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Boost mode affects existing Citizens but not Citizens created afterward")
+    void boostDoesNotAffectLaterCreatures() {
+        harness.setHand(player1, List.of(new CabarettiCharm(), new CabarettiCharm(), new CabarettiCharm()));
+        addRGW();
+        addRGW();
+        addRGW();
+
+        harness.castModalInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+        List<Permanent> originalCitizens = findPermanents(player1, "Citizen");
+        harness.castModalInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+        harness.castModalInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(originalCitizens).allSatisfy(citizen -> {
+            assertThat(citizen.getEffectivePower()).isEqualTo(2);
+            assertThat(citizen.getEffectiveToughness()).isEqualTo(2);
+            assertThat(citizen.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        });
+        List<Permanent> laterCitizens = findPermanents(player1, "Citizen").stream()
+                .filter(citizen -> !originalCitizens.contains(citizen))
+                .toList();
+        assertThat(laterCitizens).hasSize(2).allSatisfy(citizen -> {
+            assertThat(citizen.getEffectivePower()).isEqualTo(1);
+            assertThat(citizen.getEffectiveToughness()).isEqualTo(1);
+            assertThat(citizen.hasKeyword(Keyword.TRAMPLE)).isFalse();
         });
     }
 }

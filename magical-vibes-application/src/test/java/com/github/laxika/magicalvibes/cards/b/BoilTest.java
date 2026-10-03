@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Boil.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
+@CardUsed({Boil.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class, VolcanicIsland.class})
 class BoilTest extends BaseCardTest {
 
     @Test
@@ -44,7 +44,6 @@ class BoilTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys nonbasic lands with the Island subtype")
-    @CardUsed({VolcanicIsland.class})
     void destroysNonbasicIslands() {
         harness.addToBattlefield(player1, new VolcanicIsland());
         harness.castFromHand(player1, new Boil(), "{3}{R}");
@@ -88,6 +87,37 @@ class BoilTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Island");
         harness.assertNotInGraveyard(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("Hexproof and shroud do not save Islands from untargeted destruction")
+    void destroysIslandsWithHexproofAndShroud() {
+        Permanent hexproofIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        hexproofIsland.getGrantedKeywords().add(Keyword.HEXPROOF);
+        Permanent shroudIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        shroudIsland.getGrantedKeywords().add(Keyword.SHROUD);
+
+        castBoilAndResolve();
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInGraveyard(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("Saving one Island with regeneration does not save other Islands")
+    void regenerationOnlySavesShieldedIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setRegenerationShield(1);
+        harness.addToBattlefield(player2, new Island());
+
+        castBoilAndResolve();
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotInGraveyard(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player2, "Island");
     }
 
     private void castBoilAndResolve() {

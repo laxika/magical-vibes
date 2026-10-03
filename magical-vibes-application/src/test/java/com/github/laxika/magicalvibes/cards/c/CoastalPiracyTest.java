@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CoastalPiracy.class, GrizzlyBears.class, FreshVolunteers.class})
+@CardUsed({CoastalPiracy.class, GrizzlyBears.class})
 class CoastalPiracyTest extends BaseCardTest {
 
     private void addCoastalPiracy() {
@@ -112,9 +111,7 @@ class CoastalPiracyTest extends BaseCardTest {
     }
 
     private void acceptPendingMayDraw() {
-        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
-            resolveAllTriggers();
-        }
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
     }
@@ -138,13 +135,50 @@ class CoastalPiracyTest extends BaseCardTest {
     @DisplayName("A creature controlled by another player does not trigger Coastal Piracy")
     void opponentCreatureDoesNotTrigger() {
         addCoastalPiracy();
-        Permanent attacker = addCreatureReady(player2, new FreshVolunteers());
-        attacker.setAttacking(true);
-
-        harness.setLife(player1, 20);
-        resolveCombat(player2);
-        harness.passBothPriorities();
+        addReadyAttacker(player2);
+        resolveCombatAndTrigger(player2);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Two copies trigger independently and their draw choices can differ")
+    void twoCopiesHaveIndependentChoices() {
+        addCoastalPiracy();
+        addCoastalPiracy();
+        addReadyAttacker();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        resolveCombat();
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        acceptPendingMayDraw();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A queued draw trigger still resolves after Coastal Piracy leaves the battlefield")
+    void queuedTriggerSurvivesSourceLeaving() {
+        CoastalPiracy piracy = new CoastalPiracy();
+        harness.addToBattlefield(player1, piracy);
+        addReadyAttacker();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).removeIf(perm -> perm.getCard() == piracy);
+        gd.playerGraveyards.get(player1.getId()).add(piracy);
+        acceptPendingMayDraw();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

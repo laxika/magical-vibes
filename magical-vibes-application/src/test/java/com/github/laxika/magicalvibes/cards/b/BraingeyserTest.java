@@ -24,8 +24,7 @@ class BraingeyserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 3);
     }
@@ -37,8 +36,7 @@ class BraingeyserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         int handBefore = gd.playerHands.get(player1.getId()).size() - 1;
-        harness.castSorcery(player1, 0, 2, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
@@ -50,8 +48,7 @@ class BraingeyserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.castSorcery(player1, 0, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore - 1);
     }
@@ -66,5 +63,50 @@ class BraingeyserTest extends BaseCardTest {
         UUID bearId = bear.getId();
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, bearId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void zeroDrawsFromEmptyLibraryDoesNotLose() {
+        harness.setHand(player1, List.of(new Braingeyser()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    void drawingExactlyRemainingLibraryDoesNotLose() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Braingeyser()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(first, second));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.winnerPlayerId).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void drawingMoreThanRemainingLibraryLoses() {
+        GrizzlyBears remaining = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Braingeyser()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(remaining));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 }

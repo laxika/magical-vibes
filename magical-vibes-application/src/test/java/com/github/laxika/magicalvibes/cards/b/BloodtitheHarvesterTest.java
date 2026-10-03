@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BloodtitheHarvester.class, GrizzlyBears.class, HillGiant.class})
 class BloodtitheHarvesterTest extends BaseCardTest {
 
     @Test
@@ -33,8 +35,7 @@ class BloodtitheHarvesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bloodTokenCount(player1)).isEqualTo(1);
         Permanent blood = findPermanent(player1, "Blood");
@@ -142,11 +143,129 @@ class BloodtitheHarvesterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void bloodCountIsDeterminedAtResolution() {
+        Permanent harvester = addReadyHarvester();
+        addBloodToken(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, indexOf(player1, harvester), null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Blood"));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Bloodtithe Harvester");
+    }
+
+    @Test
+    void opponentsBloodDoesNotIncreaseDebuff() {
+        Permanent harvester = addReadyHarvester();
+        addBloodToken(player1);
+        addBloodToken(player2);
+        addBloodToken(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, indexOf(player1, harvester), null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent harvester = harness.addToBattlefieldAndReturn(player1, new BloodtitheHarvester());
+        harvester.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, harvester), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Bloodtithe Harvester");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent harvester = addReadyHarvester();
+        harvester.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, harvester), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Bloodtithe Harvester");
+    }
+
+    @Test
+    void canTargetOwnCreature() {
+        Permanent harvester = addReadyHarvester();
+        addBloodToken(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, indexOf(player1, harvester), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    void createdBloodTokenDiscardsAndSacrificesToDraw() {
+        harness.setHand(player1, List.of(new BloodtitheHarvester()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent blood = findPermanent(player1, "Blood");
+        Card discarded = new BloodtitheHarvester();
+        Card drawn = new BloodtitheHarvester();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, indexOf(player1, blood), null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blood);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        Permanent harvester = addReadyHarvester();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BloodtitheHarvester());
+        forceMainPhase(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, harvester), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Bloodtithe Harvester");
+    }
+
+    @Test
+    void cannotActivateWithNonemptyStack() {
+        Permanent harvester = addReadyHarvester();
+        forceMainPhase(player1);
+        harness.setHand(player1, List.of(new BloodtitheHarvester()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, harvester), null, harvester.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Bloodtithe Harvester");
+        resolveAllTriggers();
+    }
+
     private Permanent addReadyHarvester() {
-        Permanent perm = new Permanent(new BloodtitheHarvester());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new BloodtitheHarvester());
     }
 
     private void forceMainPhase(Player activePlayer) {

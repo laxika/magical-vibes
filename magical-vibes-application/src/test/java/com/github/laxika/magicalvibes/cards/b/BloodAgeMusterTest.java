@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChargingStrifeknight;
 import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.f.FumingEffigy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarruksUprising;
 import com.github.laxika.magicalvibes.cards.p.PillardropWarden;
 import com.github.laxika.magicalvibes.cards.s.SpiritMascot;
 import com.github.laxika.magicalvibes.cards.s.StoneDocent;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.s.SummonedDromedary;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -47,8 +49,7 @@ class BloodAgeMusterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         List<Permanent> created = gd.playerBattlefields.get(player1.getId()).stream()
@@ -68,11 +69,9 @@ class BloodAgeMusterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb(), new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, first.getId());
+        harness.castAndResolveSorcery(player1, 0, first.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.castSorcery(player1, 0, second.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, second.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
@@ -81,9 +80,106 @@ class BloodAgeMusterTest extends BaseCardTest {
                 .findFirst()).isPresent();
     }
 
+    @Test
+    void doesNotTriggerForCardsLeavingOpponentsGraveyard() {
+        addMuster();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player2, List.of(new SummonedDromedary()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateGraveyardAbility(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .anyMatch(card -> card instanceof SummonedDromedary);
+    }
+
+    @Test
+    void eachMusterTriggersIndependently() {
+        addMuster();
+        addMuster();
+        harness.setGraveyard(player1, List.of(new SummonedDromedary()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void canTriggerAgainOnALaterTurn() {
+        addMuster();
+        harness.setGraveyard(player1, List.of(new SummonedDromedary()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new SummonedDromedary()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @CardUsed(GarruksUprising.class)
+    void entryTriggersSeePowerBeforeTheSubsequentPerpetualChange() {
+        Permanent muster = addMuster();
+        Permanent uprising = harness.addToBattlefieldAndReturn(player1, new GarruksUprising());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new BloodAgeGeneral()));
+        harness.setGraveyard(player1, List.of(new SummonedDromedary()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent conjured = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(muster.getId())
+                        && !permanent.getId().equals(uprising.getId()))
+                .findFirst().orElseThrow();
+        boolean enteredWithPowerFour = List.of("Fuming Effigy", "Summoned Dromedary")
+                .contains(conjured.getCard().getName());
+        if (enteredWithPowerFour) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(enteredWithPowerFour ? 2 : 1);
+        assertThat(conjured.getCard().isToken()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, conjured)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, conjured)).isEqualTo(2);
+    }
+
+    @Test
+    void triggersForGraveyardExileCostsDuringOpponentsTurn() {
+        addMuster();
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new StoneriseSpirit());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new BloodAgeGeneral()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, null, spirit.getId());
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
     private Permanent addMuster() {
-        Permanent muster = new Permanent(new BloodAgeMuster());
-        gd.playerBattlefields.get(player1.getId()).add(muster);
-        return muster;
+        return harness.addToBattlefieldAndReturn(player1, new BloodAgeMuster());
     }
 }

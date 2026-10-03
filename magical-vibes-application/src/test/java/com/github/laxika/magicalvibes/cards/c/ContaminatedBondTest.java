@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AvatarOfHope;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JadeStatue;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ContaminatedBond.class, GrizzlyBears.class, JadeStatue.class})
+@CardUsed({ContaminatedBond.class, GrizzlyBears.class, JadeStatue.class, AvatarOfHope.class})
 class ContaminatedBondTest extends BaseCardTest {
 
     // ===== Attack trigger =====
@@ -249,6 +250,46 @@ class ContaminatedBondTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gameLogContains("loses 3 life")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Life loss follows the enchanted creature's controller at resolution")
+    void lifeLossFollowsControlChangeBeforeResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachContaminatedBond(player2, creature);
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(creature);
+            gd.playerBattlefields.get(player2.getId()).add(creature);
+            creature.setAttacking(false);
+        });
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Blocking multiple creatures triggers Contaminated Bond only once")
+    void blockingMultipleCreaturesCausesOnlyOneLifeLoss() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new AvatarOfHope());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        attachContaminatedBond(player1, blocker);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertLife(player2, 17);
     }
 
     private Permanent attachContaminatedBond(Player controller, Permanent target) {

@@ -13,13 +13,14 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BismuthMindrender.class, Forest.class, GrizzlyBears.class})
 class BismuthMindrenderTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Combat damage exiles through lands and grants a life-paid cast")
-    void combatDamageDigsToNonlandAndGrantsLifeCastPermission() {
+    @DisplayName("Combat damage exiles through lands and offers a cast during resolution")
+    void combatDamageDigsToNonlandAndOffersCastDuringResolution() {
         addAttackingMindrender();
         Card land = new Forest();
         GrizzlyBears nonland = new GrizzlyBears();
@@ -30,21 +31,9 @@ class BismuthMindrenderTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId)
                 .containsExactly(land.getId(), nonland.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(nonland.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(nonland.getId());
-        assertThat(gd.exilePlayForLifeEqualToManaValue).contains(nonland.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.castFromExile(player1, nonland.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().equals(nonland));
-        assertThat(gd.findExiledCard(nonland.getId())).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(land, nonland);
     }
 
     @Test
@@ -61,6 +50,35 @@ class BismuthMindrenderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Declining the cast leaves the card exiled without permission to cast later")
+    void decliningCastDoesNotGrantPermissionForLater() {
+        addAttackingMindrender();
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(nonland));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromExile(player1, nonland.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An empty damaged player's library offers no cast")
+    void emptyLibraryOffersNoCast() {
+        addAttackingMindrender();
+        harness.setLibrary(player2, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private Permanent addAttackingMindrender() {
         Permanent mindrender = addCreatureReady(player1, new BismuthMindrender());
         mindrender.setAttacking(true);
@@ -72,6 +90,6 @@ class BismuthMindrenderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
     }
 }

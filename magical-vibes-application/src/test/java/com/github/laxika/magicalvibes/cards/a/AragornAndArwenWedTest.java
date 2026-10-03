@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,12 +56,55 @@ class AragornAndArwenWedTest extends BaseCardTest {
         harness.assertLife(player1, 12);
     }
 
+    @Test
+    @DisplayName("Opponent creatures receive no counters and contribute no life")
+    void opponentCreaturesAreExcluded() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        Permanent source = castAragornAndArwen();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    @DisplayName("Attack trigger includes creatures added before it resolves")
+    void attackUsesCreaturesAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AragornAndArwenWed());
+        source.setSummoningSick(false);
+        harness.setLife(player1, 10);
+
+        declareAttackers(player1, List.of(0));
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(lateCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 11);
+    }
+
+    @Test
+    @DisplayName("Attack trigger still resolves after its source leaves")
+    void attackTriggerSurvivesSourceLeaving() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AragornAndArwenWed());
+        source.setSummoningSick(false);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLife(player1, 10);
+
+        declareAttackers(player1, List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 11);
+    }
     private Permanent castAragornAndArwen() {
-        harness.setHand(player1, List.of(new AragornAndArwenWed()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AragornAndArwenWed(), "{4}{G}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         return gd.playerBattlefields.get(player1.getId()).stream()

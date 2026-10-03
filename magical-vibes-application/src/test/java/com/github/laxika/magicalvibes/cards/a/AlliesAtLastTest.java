@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.v.ValleyFlamecaller;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AlliesAtLast.class, AvatarEnthusiasts.class, ColossalDreadmaw.class, GrizzlyBears.class,
-        LlanowarElves.class})
+        LlanowarElves.class, ValleyFlamecaller.class})
 class AlliesAtLastTest extends BaseCardTest {
 
     @Test
@@ -25,9 +26,7 @@ class AlliesAtLastTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
-        cast(List.of(victim.getId(), bear.getId(), elf.getId()), 3);
-
-        harness.passBothPriorities();
+        castAndResolve(List.of(victim.getId(), bear.getId(), elf.getId()), 3);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
     }
@@ -37,9 +36,7 @@ class AlliesAtLastTest extends BaseCardTest {
     void allowsOneSource() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
-        cast(List.of(victim.getId(), bear.getId()), 3);
-
-        harness.passBothPriorities();
+        castAndResolve(List.of(victim.getId(), bear.getId()), 3);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
     }
@@ -51,9 +48,7 @@ class AlliesAtLastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvatarEnthusiasts());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
-        cast(List.of(victim.getId(), bear.getId()), 1);
-
-        harness.passBothPriorities();
+        castAndResolve(List.of(victim.getId(), bear.getId()), 1);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
     }
@@ -100,9 +95,72 @@ class AlliesAtLastTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void cast(List<java.util.UUID> targetIds, int greenMana) {
+    @Test
+    void allowsZeroSourceCreatures() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+
+        castAndResolve(List.of(victim.getId()), 3);
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Allies at Last");
+    }
+
+    @Test
+    void appliesDamageBonusForTheCreatureDealingDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ValleyFlamecaller());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+
+        castAndResolve(List.of(victim.getId(), source.getId()), 3);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void remainingSourceDealsDamageWhenOtherSourceLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new AlliesAtLast()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castInstant(player1, 0, List.of(victim.getId(), bear.getId(), elf.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void affinityDoesNotReduceTheGreenManaRequirement() {
+        harness.addToBattlefield(player1, new AvatarEnthusiasts());
+        harness.addToBattlefield(player1, new AvatarEnthusiasts());
+        harness.addToBattlefield(player1, new AvatarEnthusiasts());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new AlliesAtLast()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(victim.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void rejectsThreeSourceCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        harness.setHand(player1, List.of(new AlliesAtLast()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(victim.getId(), first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void castAndResolve(List<java.util.UUID> targetIds, int greenMana) {
         harness.setHand(player1, List.of(new AlliesAtLast()));
         harness.addMana(player1, ManaColor.GREEN, greenMana);
-        harness.castInstant(player1, 0, targetIds);
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 }

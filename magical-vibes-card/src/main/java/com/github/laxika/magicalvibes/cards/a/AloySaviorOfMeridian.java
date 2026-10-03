@@ -24,6 +24,6 @@ public class AloySaviorOfMeridian extends Card {
                 new PermanentIsAttackingPredicate()));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new HasAttacker(new PermanentIsArtifactPredicate()),
-                        new DiscoverEffect(new GreatestPowerAmongControlled(artifactAttacker))));
+                        new DiscoverEffect(new GreatestPowerAmongControlled(artifactAttacker, true, true))));
     }
 }

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ConsecratedSphinx.class, CounselOfTheSoratami.class, GoForTheThroat.class})
 class ConsecratedSphinxTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -21,8 +24,6 @@ class ConsecratedSphinxTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
     }
-
-    
 
     @Test
     @DisplayName("Opponent draw step triggers may ability for controller")
@@ -87,8 +88,7 @@ class ConsecratedSphinxTest extends BaseCardTest {
         harness.setHand(player2, List.of(new CounselOfTheSoratami()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve Counsel of the Soratami (opponent draws 2) → two MayEffects on stack
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         // Two may ability prompts are queued (one per card drawn)
         harness.passBothPriorities(); // resolve first MayEffect → may prompt
@@ -117,5 +117,50 @@ class ConsecratedSphinxTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept second → inner resolves inline (draws 2)
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 4);
+    }
+
+    @Test
+    @DisplayName("An opposing Sphinx triggers for each of the two cards drawn by an accepted ability")
+    void opposingSphinxTriggersTwiceAndCanDeclineBoth() {
+        harness.addToBattlefield(player1, new ConsecratedSphinx());
+        harness.addToBattlefield(player2, new ConsecratedSphinx());
+        int firstHandBefore = gd.playerHands.get(player1.getId()).size();
+        int secondHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(firstHandBefore + 2);
+        for (int i = 0; i < 2; i++) {
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            harness.handleMayAbilityChosen(player2, false);
+        }
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(secondHandBefore + 1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A draw trigger resolves even if the Sphinx is destroyed in response")
+    void triggerSurvivesSourceRemoval() {
+        harness.addToBattlefield(player1, new ConsecratedSphinx());
+        harness.setHand(player2, List.of(new GoForTheThroat()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToDraw(player2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0,
+                findPermanent(player1, "Consecrated Sphinx").getId());
+        harness.assertNotOnBattlefield(player1, "Consecrated Sphinx");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.stack).isEmpty();
     }
 }

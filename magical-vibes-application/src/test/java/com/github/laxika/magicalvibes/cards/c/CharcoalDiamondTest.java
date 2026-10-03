@@ -58,4 +58,34 @@ class CharcoalDiamondTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Enters tapped even when it is not cast")
+    void entersTappedWithoutBeingCast() {
+        Permanent diamond = harness.enterBattlefieldAndReturn(player1, new CharcoalDiamond());
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can produce exactly one black mana immediately after entering and being untapped")
+    void producesManaImmediatelyAfterEnteringAndBeingUntapped() {
+        Permanent diamond = harness.enterBattlefieldAndReturn(player1, new CharcoalDiamond());
+        diamond.untap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color))
+                    .isEqualTo(color == ManaColor.BLACK ? 1 : 0);
+            assertThat(gd.playerManaPools.get(player2.getId()).get(color)).isZero();
+        }
+    }
 }

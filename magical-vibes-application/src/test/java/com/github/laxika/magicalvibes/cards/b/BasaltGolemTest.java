@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +22,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BasaltGolem.class, PatagiaGolem.class, GiantMantis.class, FeralShadow.class})
+@CardUsed({BasaltGolem.class, PatagiaGolem.class, GiantMantis.class, FeralShadow.class,
+        ImprisonedInTheMoon.class})
 class BasaltGolemTest extends BaseCardTest {
 
     @Test
@@ -151,9 +153,8 @@ class BasaltGolemTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ImprisonedInTheMoon());
         aura.setAttachedTo(blocker.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
         assertThat(gqs.isCreature(gd, blocker)).isFalse();
         assertThat(gqs.isLand(gd, blocker)).isTrue();
@@ -161,5 +162,46 @@ class BasaltGolemTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class))
                 .anyMatch(a -> a.permanentId().equals(blocker.getId()));
+    }
+
+    @Test
+    @DisplayName("End-of-combat sacrifice uses the stack and leaves a response window before creating the Wall")
+    void delayedSacrificeWaitsForResolutionAtEndOfCombat() {
+        Permanent golem = addCreatureReady(player1, new BasaltGolem());
+        golem.setAttacking(true);
+        addCreatureReady(player2, new GiantMantis());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Giant Mantis");
+        harness.assertNotInGraveyard(player2, "Giant Mantis");
+        assertThat(findPermanents(player2, "Wall")).isEmpty();
+        assertThat(gd.stack).anyMatch(entry ->
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && entry.getCard().getName().equals("Basalt Golem")
+                        && entry.getControllerId().equals(player1.getId()));
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Giant Mantis");
+        assertThat(findPermanents(player2, "Wall")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An unblocked Basalt Golem creates no Wall and schedules no sacrifice")
+    void unblockedGolemDoesNotCreateWall() {
+        Permanent golem = addCreatureReady(player1, new BasaltGolem());
+        golem.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertLife(player2, 18);
+        assertThat(findPermanents(player1, "Wall")).isEmpty();
+        assertThat(findPermanents(player2, "Wall")).isEmpty();
+        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConvenientTarget.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({ConvenientTarget.class, GrizzlyBears.class, FountainOfYouth.class, Demystify.class})
 class ConvenientTargetTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class ConvenientTargetTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castEnchantment(player1, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getAttachedTo() != null
@@ -66,5 +66,63 @@ class ConvenientTargetTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void suspectTriggerUsesLastKnownAttachmentWhenAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ConvenientTarget(), new Demystify()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Convenient Target");
+        assertThat(bears.isSuspected()).isFalse();
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Convenient Target");
+        resolveAllTriggers();
+
+        assertThat(bears.isSuspected()).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
+        assertThat(bls.canBlock(gd, bears)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void creatureRemainsSuspectedAfterAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ConvenientTarget(), new Demystify()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        resolveAllTriggers();
+        Permanent aura = findPermanent(player1, "Convenient Target");
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Convenient Target");
+        assertThat(bears.isSuspected()).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
+        assertThat(bls.canBlock(gd, bears)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void graveyardAbilityReturnsOnlyTheActivatedCopy() {
+        ConvenientTarget first = new ConvenientTarget();
+        ConvenientTarget second = new ConvenientTarget();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
     }
 }

@@ -81,6 +81,72 @@ class ArmoredGuardianTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, guardian, Keyword.SHROUD)).isFalse();
     }
 
+    @Test
+    @DisplayName("Protection can target the Guardian itself and accumulate different colors")
+    void selfProtectionAccumulatesDifferentColors() {
+        Permanent guardian = addReadyGuardian(player1);
+        addWhiteProtectionMana();
+        harness.activateAbility(player1, 0, 0, null, guardian.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        addWhiteProtectionMana();
+        harness.activateAbility(player1, 0, 0, null, guardian.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(guardian.getProtectionFromColorsUntilEndOfTurn())
+                .contains(CardColor.RED, CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Protection from blue prevents targeting by the Guardian's ability")
+    void protectionFromSourceColorPreventsTargeting() {
+        Permanent guardian = addReadyGuardian(player1);
+        addWhiteProtectionMana();
+        harness.activateAbility(player1, 0, 0, null, guardian.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        addWhiteProtectionMana();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, guardian.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Shroud makes an already pending protection ability fail to resolve")
+    void shroudInvalidatesPendingProtectionTarget() {
+        Permanent guardian = addReadyGuardian(player1);
+        addWhiteProtectionMana();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, guardian.getId());
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, guardian, Keyword.SHROUD)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(guardian.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Guardian with shroud can still activate its untargeted shroud ability")
+    void shroudDoesNotPreventUntargetedActivation() {
+        Permanent guardian = addReadyGuardian(player1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, guardian, Keyword.SHROUD)).isTrue();
+    }
+
     private void addWhiteProtectionMana() {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

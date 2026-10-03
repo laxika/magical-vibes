@@ -53,4 +53,51 @@ class CentaurArcherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature with flying");
     }
+
+    @Test
+    @DisplayName("Can target its controller's flying creature")
+    void canTargetOwnFlyingCreature() {
+        addCreatureReady(player1, new CentaurArcher());
+        Permanent skyknight = harness.addToBattlefieldAndReturn(player1, new KjeldoranSkyknight());
+
+        harness.activateAbility(player1, 0, null, skyknight.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Kjeldoran Skyknight");
+        harness.assertNotOnBattlefield(player1, "Kjeldoran Skyknight");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent archer = harness.addToBattlefieldAndReturn(player1, new CentaurArcher());
+        Permanent windSpirit = harness.addToBattlefieldAndReturn(player2, new WindSpirit());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, windSpirit.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(archer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(windSpirit.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        Permanent archer = addCreatureReady(player1, new CentaurArcher());
+        Permanent windSpirit = harness.addToBattlefieldAndReturn(player2, new WindSpirit());
+
+        harness.activateAbility(player1, 0, null, windSpirit.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, windSpirit.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(archer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(windSpirit.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Wind Spirit");
+    }
 }

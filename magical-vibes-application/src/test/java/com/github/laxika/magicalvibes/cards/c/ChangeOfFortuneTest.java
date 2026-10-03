@@ -22,8 +22,7 @@ class ChangeOfFortuneTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         harness.assertInGraveyard(player1, "Change of Fortune");
@@ -41,10 +40,43 @@ class ChangeOfFortuneTest extends BaseCardTest {
         harness.castSorceryWithDiscard(player1, 0, 2);
         harness.passBothPriorities();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("An empty hand with no earlier discards draws no cards")
+    void emptyHandDrawsNothing() {
+        harness.setHand(player1, List.of(new ChangeOfFortune()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Change of Fortune");
+    }
+
+    @Test
+    @DisplayName("A second resolution counts discards from both resolutions this turn")
+    void repeatedResolutionIncludesEarlierHandDiscard() {
+        harness.setHand(player1, List.of(new ChangeOfFortune(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(
+                new ChangeOfFortune(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }

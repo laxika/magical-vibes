@@ -59,4 +59,49 @@ class ConchHornTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
+    @Test
+    @DisplayName("Can return a newly drawn card above the remaining library")
+    void returnsNewlyDrawnCardAboveRemainingLibrary() {
+        Card firstDraw = new ConchHorn();
+        Card secondDraw = new ConchHorn();
+        Card remaining = new ConchHorn();
+        harness.addToBattlefield(player1, new ConchHorn());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remaining));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(secondDraw.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw, remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Finishes putting a card back before losing after a failed second draw")
+    void finishesHandChoiceBeforeLosingAfterFailedDraw() {
+        Card drawn = new ConchHorn();
+        harness.addToBattlefield(player1, new ConchHorn());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(drawn.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
 }

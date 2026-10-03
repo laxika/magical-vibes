@@ -16,6 +16,44 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AetherSpellbombTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The blue ability can return a creature controlled by its activator")
+    void returnsOwnCreature() {
+        harness.addToBattlefield(player1, new AetherSpellbomb());
+        var target = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Yotian Soldier");
+        harness.assertInHand(player1, "Yotian Soldier");
+        harness.assertInGraveyard(player1, "Aether Spellbomb");
+    }
+
+    @Test
+    @DisplayName("A tapped Spellbomb can pay colored mana to draw, sacrificing immediately but drawing only on resolution")
+    void tappedSpellbombDrawsOnResolutionWithColoredMana() {
+        var spellbomb = harness.addToBattlefieldAndReturn(player1, new AetherSpellbomb());
+        spellbomb.tap();
+        harness.setLibrary(player1, List.of(new YotianSoldier(), new YotianSoldier()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Aether Spellbomb");
+        harness.assertInGraveyard(player1, "Aether Spellbomb");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        harness.assertInHand(player1, "Yotian Soldier");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Resolving the blue ability returns a target creature to its owner's hand")
     void returnsTargetCreatureToOwnersHand() {
         harness.addToBattlefield(player1, new AetherSpellbomb());

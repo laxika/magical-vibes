@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "64")
+@CardRegistration(set = "BRC", collectorNumber = "88")
 public class MnemonicSphere extends Card {
 
     public MnemonicSphere() {

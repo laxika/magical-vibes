@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** Resolves the optional reveal and puts a matching card onto the battlefield tapped. */
-@Component
+@Component("revealTopCardMayPutMatchingOntoBattlefieldTappedMayEffectHandler")
 @RequiredArgsConstructor
 public class RevealTopCardMayPutMatchingOntoBattlefieldTappedEffectHandler
         implements MayEffectHandlerBean {

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
 import com.github.laxika.magicalvibes.cards.e.EbonyRhino;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -100,10 +99,42 @@ class AnZerrinRuinsTest extends BaseCardTest {
         assertThat(dwarf.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Separate Ruins retain independent choices, and removing one releases only its type")
+    void separateRuinsHaveIndependentChoices() {
+        Permanent dwarfRuins = addRuins(player1, CardSubtype.DWARF);
+        addRuins(player2, CardSubtype.RHINO);
+        Permanent dwarf = addCreatureReady(player1, new DwarvenTrader());
+        Permanent rhino = addCreatureReady(player1, new EbonyRhino());
+        dwarf.tap();
+        rhino.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(dwarf.isTapped()).isTrue();
+        assertThat(rhino.isTapped()).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(dwarfRuins);
+        advanceToUpkeep(player1);
+
+        assertThat(dwarf.isTapped()).isFalse();
+        assertThat(rhino.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Matching creatures that are untapped stay untapped")
+    void doesNotTapMatchingCreatures() {
+        addRuins(player1, CardSubtype.DWARF);
+        Permanent dwarf = addCreatureReady(player1, new DwarvenTrader());
+
+        advanceToUpkeep(player1);
+
+        assertThat(dwarf.isTapped()).isFalse();
+    }
+
     private Permanent addRuins(Player player, CardSubtype chosen) {
-        Permanent ruins = new Permanent(new AnZerrinRuins());
+        Permanent ruins = harness.addToBattlefieldAndReturn(player, new AnZerrinRuins());
         ruins.setChosenSubtype(chosen);
-        gd.playerBattlefields.get(player.getId()).add(ruins);
         return ruins;
     }
 

@@ -131,10 +131,76 @@ class AltarOfDementiaTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before the mill ability resolves")
+    void sacrificeIsPaidImmediately() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        addCreatureReady(player1, new GrizzlyBears());
+        trimDeck(player2, 10);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(8);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing a zero-power creature mills no cards")
+    void zeroPowerMillsNothing() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setPowerModifier(-2);
+        trimDeck(player2, 10);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a negative-power creature mills no cards")
+    void negativePowerMillsNothing() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setPowerModifier(-3);
+        trimDeck(player2, 10);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void trimDeck(com.github.laxika.magicalvibes.model.Player player, int size) {
         List<Card> deck = gd.playerDecks.get(player.getId());
-        while (deck.size() > size) {
-            deck.removeFirst();
-        }
+        harness.setLibrary(player, deck.subList(Math.max(0, deck.size() - size), deck.size()));
     }
 }

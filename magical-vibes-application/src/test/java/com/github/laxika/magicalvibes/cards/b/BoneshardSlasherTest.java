@@ -148,6 +148,50 @@ class BoneshardSlasherTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Boneshard Slasher");
     }
 
+    @Test
+    @DisplayName("An opponent's graveyard does not grant the threshold boost")
+    void opponentGraveyardDoesNotGrantBoost() {
+        harness.addToBattlefield(player1, new BoneshardSlasher());
+        fillGraveyard(player2, 7);
+
+        assertStats(1, 1);
+    }
+
+    @Test
+    @DisplayName("With threshold, its controller's spell also triggers the sacrifice")
+    void sacrificesWhenTargetedByControllersSpell() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 7);
+        harness.setHand(player1, List.of(new Accelerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, slasher.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertInGraveyard(player1, "Boneshard Slasher");
+    }
+
+    @Test
+    @DisplayName("Without threshold, being targeted by an ability does not cause a sacrifice")
+    void doesNotSacrificeWhenTargetedByAbilityBelowThreshold() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new BoneshardSlasher());
+        fillGraveyard(player1, 6);
+        Permanent illusionist = harness.addToBattlefieldAndReturn(player1, new CephalidIllusionist());
+        illusionist.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int illusionistIndex = gd.playerBattlefields.get(player1.getId()).indexOf(illusionist);
+        harness.activateAbility(player1, illusionistIndex, null, slasher.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Boneshard Slasher");
+        harness.assertNotInGraveyard(player1, "Boneshard Slasher");
+    }
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {

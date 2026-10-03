@@ -100,6 +100,42 @@ class AmberPrisonTest extends BaseCardTest {
         assertThat(amberPrison.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Choosing to untap cannot override Amber Prison's self-targeted lock")
+    void optionalUntapCannotOverrideSelfLock() {
+        Permanent amberPrison = addReadyAmberPrison(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, amberPrison.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurn(player2);
+        if (!gd.pendingMayAbilities.isEmpty()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(amberPrison.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Amber Prison locked by another cannot choose to untap")
+    void optionalUntapCannotOverrideAnotherPrisonsLock() {
+        Permanent source = addReadyAmberPrison(player1);
+        Permanent target = addReadyAmberPrison(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurn(player1);
+        if (!gd.pendingMayAbilities.isEmpty()) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
     // ===== Prevent untap while source tapped =====
 
     @Test
@@ -124,7 +160,7 @@ class AmberPrisonTest extends BaseCardTest {
     @Test
     @DisplayName("Already-tapped target remains locked while Amber Prison is tapped")
     void alreadyTappedTargetIsLocked() {
-        Permanent amberPrison = addReadyAmberPrison(player1);
+        addReadyAmberPrison(player1);
         Permanent target = addReadyCreature(player2);
         target.tap();
         harness.addMana(player1, ManaColor.WHITE, 4);

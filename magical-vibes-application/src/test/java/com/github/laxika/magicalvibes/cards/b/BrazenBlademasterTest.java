@@ -84,11 +84,57 @@ class BrazenBlademasterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, blademaster)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, blademaster)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, blademaster)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Gaining a second artifact after attacking does not cause a boost")
+    void gainingArtifactsAfterDeclarationDoesNotTrigger() {
+        Permanent blademaster = addBlademaster();
+        harness.addToBattlefield(player1, new Spellbook());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blademaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blademaster)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("More than two artifacts still give only +2/+1")
+    void getsOneBoostWithMoreThanTwoArtifacts() {
+        Permanent blademaster = addBlademaster();
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blademaster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blademaster)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Only the attacking Blademaster gets the boost")
+    void nonattackingBlademasterDoesNotGetBoost() {
+        Permanent attacker = addBlademaster();
+        Permanent nonattacker = addBlademaster();
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonattacker)).isEqualTo(3);
     }
 
     private Permanent addBlademaster() {

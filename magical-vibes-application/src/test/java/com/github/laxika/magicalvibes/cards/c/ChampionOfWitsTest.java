@@ -1,20 +1,25 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChampionOfWits.class, Forest.class, Unsummon.class, CartoucheOfStrength.class})
 class ChampionOfWitsTest extends BaseCardTest {
 
     @Test
@@ -23,12 +28,9 @@ class ChampionOfWitsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new ChampionOfWits()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChampionOfWits(), "{2}{U}");
         harness.passBothPriorities(); // resolve the creature spell → ETB trigger on stack
         harness.passBothPriorities(); // resolve the ETB trigger → MayEffect prompt
 
@@ -57,12 +59,9 @@ class ChampionOfWitsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new ChampionOfWits()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChampionOfWits(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -113,6 +112,101 @@ class ChampionOfWitsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void etbUsesPowerAtResolution() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        Permanent champion = harness.enterBattlefieldAndReturn(player1, new ChampionOfWits());
+        champion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void acceptingAtZeroPowerStillDiscardsTwo() {
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        Permanent champion = harness.enterBattlefieldAndReturn(player1, new ChampionOfWits());
+        champion.setPowerModifier(-2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void etbUsesLastKnownPowerAfterSourceReturnsToHand() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        Permanent champion = harness.enterBattlefieldAndReturn(player1, new ChampionOfWits());
+        champion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, champion.getId());
+        harness.assertNotOnBattlefield(player1, "Champion of Wits");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertInHand(player1, "Champion of Wits");
+    }
+
+    @Test
+    void etbRetainsAuraBoostInLastKnownPower() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        Permanent champion = harness.enterBattlefieldAndReturn(player1, new ChampionOfWits());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CartoucheOfStrength());
+        aura.setAttachedTo(champion.getId());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, champion.getId());
+        harness.assertNotOnBattlefield(player1, "Champion of Wits");
+        harness.assertInGraveyard(player1, "Cartouche of Strength");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInHand(player1, "Champion of Wits");
+    }
+
+    @Test
+    void eternalizeCannotBeActivatedDuringCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setGraveyard(player1, List.of(new ChampionOfWits()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Champion of Wits");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     private Permanent eternalizedToken() {

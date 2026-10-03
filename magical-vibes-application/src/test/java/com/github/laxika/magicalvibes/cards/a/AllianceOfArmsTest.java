@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.v.VedalkenOrrery;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,18 +15,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AllianceOfArms.class)
+@CardUsed({AllianceOfArms.class, VedalkenOrrery.class})
 class AllianceOfArmsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Each player may pay mana and creates that many white Soldiers")
+    @DisplayName("Each player creates white Soldiers equal to the total mana paid")
     void eachPlayerPaysManaForSoldiers() {
         harness.setHand(player1, List.of(new AllianceOfArms()));
         harness.addMana(player1, ManaColor.WHITE, 4); // {W} to cast, then 3 for the effect
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleXValueChosen(player1, 3);
         harness.handleXValueChosen(player2, 2);
@@ -53,8 +53,7 @@ class AllianceOfArmsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleXValueChosen(player1, 0);
         harness.handleXValueChosen(player2, 0);
@@ -72,11 +71,51 @@ class AllianceOfArmsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AllianceOfArms()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(countPermanents(player1, "Soldier")).isZero();
         assertThat(countPermanents(player2, "Soldier")).isZero();
+    }
+
+    @Test
+    @DisplayName("A player who declines payment still receives the total number of Soldiers")
+    void decliningPlayerStillReceivesSoldiers() {
+        harness.setHand(player1, List.of(new AllianceOfArms()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Soldier")).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Payments start with the spell controller on an opponent's turn")
+    void paymentsStartWithControllerOnOpponentsTurn() {
+        harness.addToBattlefield(player2, new VedalkenOrrery());
+        harness.setHand(player2, List.of(new AllianceOfArms()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.passPriority(player1);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        harness.handleXValueChosen(player2, 3);
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+        assertThat(countPermanents(player2, "Soldier")).isZero();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(5);
+        assertThat(countPermanents(player2, "Soldier")).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }

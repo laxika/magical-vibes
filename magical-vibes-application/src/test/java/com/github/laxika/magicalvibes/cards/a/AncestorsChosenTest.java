@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({AncestorsChosen.class, CrawWurm.class, SuntailHawk.class})
+@CardUsed({AncestorsChosen.class, CrawWurm.class, Plains.class, SuntailHawk.class})
 class AncestorsChosenTest extends BaseCardTest {
 
     @Test
@@ -75,6 +76,48 @@ class AncestorsChosenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 12);
+    }
+
+    @Test
+    @DisplayName("ETB counts noncreature cards as well as creature cards")
+    void etbCountsAllCardTypes() {
+        harness.setLife(player1, 10);
+        harness.setGraveyard(player1, List.of(new Plains(), new SuntailHawk(), new Plains()));
+
+        castAndResolveAncestorsChosen();
+
+        harness.assertLife(player1, 13);
+    }
+
+    @Test
+    @DisplayName("ETB does not count cards removed before its trigger resolves")
+    void etbCountsCardsRemainingAtResolution() {
+        harness.setLife(player1, 10);
+        harness.setGraveyard(player1, List.of(new SuntailHawk(), new Plains()));
+
+        harness.castFromHand(player1, new AncestorsChosen(), "{5}{W}{W}");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 10);
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+        harness.assertOnBattlefield(player1, "Ancestor's Chosen");
+    }
+
+    @Test
+    @DisplayName("ETB uses the second player's graveyard when that player controls it")
+    void etbGainsLifeForSecondPlayerController() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player2, 10);
+        harness.setGraveyard(player1, List.of(new Plains(), new SuntailHawk(), new CrawWurm()));
+        harness.setGraveyard(player2, List.of(new Plains()));
+
+        harness.castFromHand(player2, new AncestorsChosen(), "{5}{W}{W}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 11);
     }
 
     @Test

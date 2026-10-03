@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -85,6 +86,43 @@ class BalefulStareTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Counts the opponent's hand at resolution rather than when cast")
+    void countsHandAtResolution() {
+        harness.setHand(player1, List.of(new BalefulStare()));
+        harness.setHand(player2, List.of(new Mountain(), new LavaAxe()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Counts each matching copy and leaves the revealed hand intact")
+    void countsDuplicatesWithoutChangingOpponentHand() {
+        Mountain firstMountain = new Mountain();
+        Mountain secondMountain = new Mountain();
+        LavaAxe firstAxe = new LavaAxe();
+        LavaAxe secondAxe = new LavaAxe();
+        Forest forest = new Forest();
+        List<Card> opponentHand =
+                List.of(firstMountain, secondMountain, firstAxe, secondAxe, forest);
+        harness.setHand(player2, opponentHand);
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        castBalefulStare();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 4);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentHand);
     }
 
     @Test

@@ -83,11 +83,39 @@ class BoulderJockeyTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new BoulderJockey());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        Permanent permanent = addCreatureReady(player, new BoulderJockey());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
+    }
+
+    @Test
+    void acceptingAttackPaymentWithoutARemainingLandDropCreatesNoBoulder() {
+        addCreatureReady(player1);
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(findPermanents(player1, "Boulder")).isEmpty();
+    }
+
+    @Test
+    void twoAttackTriggersCannotSpendTheSameLandDrop() {
+        addCreatureReady(player1);
+        addCreatureReady(player1);
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(findPermanents(player1, "Boulder")).hasSize(1);
+        harness.assertLife(player2, 9);
     }
 }

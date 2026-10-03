@@ -89,11 +89,142 @@ class AvenInterrupterTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castFlashback(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player2, 0, null);
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(card -> card.getId())
                 .contains(thinkTwice.getId());
+    }
+
+    private ThinkTwice exileAndPlotOpponentInstant() {
+        ThinkTwice spell = new ThinkTwice();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new AvenInterrupter()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player2, 0);
+        harness.passPriority(player2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spell.getId());
+        harness.passBothPriorities();
+        return spell;
+    }
+
+    private void advanceToInterrupterControllersNextMainPhase() {
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("A plotted instant cannot be cast during another player's turn")
+    void plottedInstantCannotBeCastOnOpponentsTurn() {
+        ThinkTwice spell = exileAndPlotOpponentInstant();
+        advanceToInterrupterControllersNextMainPhase();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("A plotted instant cannot be cast in response to a spell")
+    void plottedInstantCannotBeCastWithNonemptyStack() {
+        ThinkTwice spell = exileAndPlotOpponentInstant();
+        advanceToInterrupterControllersNextMainPhase();
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new ThinkTwice()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castInstant(player2, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("A plotted instant can be cast in a later main phase for only the exile tax")
+    void plottedInstantCanBeCastAtSorceryTiming() {
+        ThinkTwice spell = exileAndPlotOpponentInstant();
+        advanceToInterrupterControllersNextMainPhase();
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, spell.getId()))
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(spell);
+
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castFromExile(player2, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Think Twice");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(spell);
+    }
+
+    @Test
+    @DisplayName("A plotted creature with flash cannot be cast during another player's turn")
+    void plottedFlashCreatureCannotBeCastOnOpponentsTurn() {
+        AvenInterrupter spell = new AvenInterrupter();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.setHand(player1, List.of(new AvenInterrupter()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spell.getId());
+        harness.passBothPriorities();
+        advanceToInterrupterControllersNextMainPhase();
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("The controller's graveyard spells are not taxed")
+    void doesNotTaxControllersGraveyardSpell() {
+        harness.addToBattlefield(player1, new AvenInterrupter());
+        ThinkTwice spell = new ThinkTwice();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Opponent spells cast from hand are not taxed")
+    void doesNotTaxOpponentHandSpell() {
+        harness.addToBattlefield(player1, new AvenInterrupter());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new ThinkTwice()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.assertInGraveyard(player2, "Think Twice");
     }
 }

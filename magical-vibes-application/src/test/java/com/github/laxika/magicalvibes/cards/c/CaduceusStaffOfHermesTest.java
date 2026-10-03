@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CaduceusStaffOfHermes.class, DoomBlade.class, GrizzlyBears.class, Shock.class})
+@CardUsed({CaduceusStaffOfHermes.class, DoomBlade.class, GrizzlyBears.class, Shock.class, TurnToFrog.class})
 class CaduceusStaffOfHermesTest extends BaseCardTest {
 
     @Test
@@ -123,6 +124,93 @@ class CaduceusStaffOfHermesTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
+    @Test
+    void lifelinkDamageCrossesThresholdAndActivatesRider() {
+        harness.setLife(player1, 28);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent staff = addStaffReady(player1);
+        staff.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat(player1);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(30);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void simultaneousLifelinkGainDoesNotRetroactivelyPreventCombatDamage() {
+        harness.setLife(player1, 28);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent staff = addStaffReady(player1);
+        staff.setAttachedTo(creature.getId());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        creature.setBlocking(true);
+        creature.addBlockingTarget(0);
+
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(30);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void droppingBelowThresholdStopsDamagePrevention() {
+        harness.setLife(player1, 30);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent staff = addStaffReady(player1);
+        staff.setAttachedTo(creature.getId());
+        harness.setLife(player1, 29);
+
+        castAtCreature(player2, new Shock(), creature);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void riderUsesEquipmentControllersLifeRatherThanCreatureControllersLife() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent staff = addStaffReady(player1);
+        staff.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        castAtCreature(player1, new Shock(), creature);
+        assertThat(creature.getMarkedDamage()).isZero();
+
+        harness.setLife(player1, 29);
+        harness.setLife(player2, 30);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
+        castAtCreature(player1, new Shock(), creature);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void laterAbilityRemovalRemovesGrantedDamagePrevention() {
+        harness.setLife(player1, 30);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent staff = addStaffReady(player1);
+        staff.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        castAtCreature(player2, new Shock(), creature);
+
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
     private void castAtCreature(Player caster, com.github.laxika.magicalvibes.model.Card spell,
                                 Permanent target) {
         harness.forceActivePlayer(caster);
@@ -135,9 +223,8 @@ class CaduceusStaffOfHermesTest extends BaseCardTest {
     }
 
     private Permanent addStaffReady(Player player) {
-        Permanent perm = new Permanent(new CaduceusStaffOfHermes());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CaduceusStaffOfHermes());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

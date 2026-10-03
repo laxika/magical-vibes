@@ -14,6 +14,11 @@ public interface BlockabilityPermissionEffect extends CardEffect {
         return false;
     }
 
+    /** Whether the carrier may treat a shadow attacker as though that attacker had no shadow. */
+    default boolean blocksShadowAsThoughNoShadow() {
+        return false;
+    }
+
     /** Whether the carrier can block creatures with landwalk as though they didn't have it. */
     default boolean blocksLandwalkAsThoughNoLandwalk() {
         return false;

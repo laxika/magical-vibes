@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.p.PristineTalisman;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,15 +17,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlindingSouleater.class, Forest.class, PristineTalisman.class})
 class BlindingSouleaterTest extends BaseCardTest {
-
-    // ===== Activated ability: tap target creature paying white mana =====
 
     @Test
     @DisplayName("Resolving ability taps target creature when paying with white mana")
     void tapsTargetCreatureWithWhiteMana() {
         addReadySouleater(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -38,7 +37,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("White mana is consumed when activating ability")
     void whiteManaConsumed() {
         addReadySouleater(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -47,13 +46,11 @@ class BlindingSouleaterTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    // ===== Activated ability: tap target creature paying life (Phyrexian mana) =====
-
     @Test
     @DisplayName("Can pay Phyrexian mana with 2 life when no white mana available")
     void paysLifeWhenNoWhiteMana() {
         addReadySouleater(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.setLife(player1, 20);
         // No mana added — Phyrexian mana auto-pays with 2 life
 
@@ -68,7 +65,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Prefers white mana over life payment when available")
     void prefersWhiteManaOverLife() {
         addReadySouleater(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -79,8 +76,6 @@ class BlindingSouleaterTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
-
-    // ===== Targeting restrictions =====
 
     @Test
     @DisplayName("Cannot target a land")
@@ -110,7 +105,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
         addReadySouleater(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new BlindingSouleater());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
@@ -119,13 +114,11 @@ class BlindingSouleaterTest extends BaseCardTest {
         assertThat(ownCreature.isTapped()).isTrue();
     }
 
-    // ===== Tap cost =====
-
     @Test
     @DisplayName("Activating ability taps Blinding Souleater")
     void activatingTapsSouleater() {
         Permanent souleater = addReadySouleater(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -138,7 +131,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent souleater = addReadySouleater(player1);
         souleater.tap();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -146,17 +139,13 @@ class BlindingSouleaterTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Summoning sickness =====
-
     @Test
     @DisplayName("Cannot activate when summoning sick (it is a creature)")
     void cannotActivateWhenSummoningSick() {
-        BlindingSouleater card = new BlindingSouleater();
-        Permanent souleater = new Permanent(card);
+        Permanent souleater = harness.addToBattlefieldAndReturn(player1, new BlindingSouleater());
         souleater.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(souleater);
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -164,13 +153,11 @@ class BlindingSouleaterTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadySouleater(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -185,27 +172,73 @@ class BlindingSouleaterTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can target itself even though paying the tap cost taps it")
+    void canTargetItself() {
+        Permanent souleater = addReadySouleater(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, souleater.getId());
+        harness.passBothPriorities();
+
+        assertThat(souleater.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped creature remains a legal target")
+    void canTargetTappedCreature() {
+        addReadySouleater(player1);
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent souleater = addReadySouleater(player1);
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(souleater);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Cannot pay two life with only one life and no white mana")
+    void cannotPayMoreLifeThanAvailable() {
+        Permanent souleater = addReadySouleater(player1);
+        Permanent target = addCreatureReady(player2, new BlindingSouleater());
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 1);
+        assertThat(souleater.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadySouleater(Player player) {
-        BlindingSouleater card = new BlindingSouleater();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BlindingSouleater());
     }
 
     private Permanent addReadyLand(Player player) {
-        Forest card = new Forest();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        AngelsFeather card = new AngelsFeather();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new PristineTalisman());
     }
 }

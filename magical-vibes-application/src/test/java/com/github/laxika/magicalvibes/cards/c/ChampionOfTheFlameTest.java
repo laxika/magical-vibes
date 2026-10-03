@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChampionOfTheFlame.class, HolyStrength.class, LeoninScimitar.class})
 class ChampionOfTheFlameTest extends BaseCardTest {
-
-    // ===== Base stats without attachments =====
 
     @Test
     @DisplayName("Without attachments, is 1/1")
@@ -31,8 +31,6 @@ class ChampionOfTheFlameTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(1);
     }
 
-    // ===== With one Equipment =====
-
     @Test
     @DisplayName("With one Equipment attached, gets +2/+2 from Champion ability plus Equipment stats")
     void withOneEquipment() {
@@ -45,8 +43,6 @@ class ChampionOfTheFlameTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(4);
     }
 
-    // ===== With one Aura =====
-
     @Test
     @DisplayName("With one Aura attached, gets +2/+2 from Champion ability plus Aura stats")
     void withOneAura() {
@@ -58,8 +54,6 @@ class ChampionOfTheFlameTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(5);
     }
-
-    // ===== With both Aura and Equipment =====
 
     @Test
     @DisplayName("With one Aura and one Equipment attached, gets +4/+4 from Champion ability")
@@ -75,8 +69,6 @@ class ChampionOfTheFlameTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(8);
     }
 
-    // ===== Attachments on other creatures don't count =====
-
     @Test
     @DisplayName("Equipment on other creatures doesn't count for Champion's bonus")
     void attachmentsOnOtherCreaturesDoNotCount() {
@@ -90,8 +82,6 @@ class ChampionOfTheFlameTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(1);
     }
 
-    // ===== Unattached Equipment doesn't count =====
-
     @Test
     @DisplayName("Unattached Equipment on battlefield doesn't affect Champion")
     void unattachedEquipmentDoesNotCount() {
@@ -101,8 +91,6 @@ class ChampionOfTheFlameTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(1);
     }
-
-    // ===== Multiple Equipment =====
 
     @Test
     @DisplayName("With two Equipment attached, gets +4/+4 from Champion ability")
@@ -119,30 +107,74 @@ class ChampionOfTheFlameTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(7);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Auras controlled by an opponent count toward the bonus")
+    void opponentControlledAuraCounts() {
+        Permanent champion = addChampionReady(player1);
+        Permanent aura = addAuraReady(player2);
+        aura.setAttachedTo(champion.getId());
+
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Each attached Aura counts separately and removed Auras stop counting")
+    void multipleAurasAndRemoval() {
+        Permanent champion = addChampionReady(player1);
+        Permanent first = addAuraReady(player1);
+        Permanent second = addAuraReady(player1);
+        first.setAttachedTo(champion.getId());
+        second.setAttachedTo(champion.getId());
+
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(9);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Moving Equipment immediately updates both Champions' bonuses")
+    void movingEquipmentUpdatesBonuses() {
+        Permanent first = addChampionReady(player1);
+        Permanent second = addChampionReady(player1);
+        Permanent scimitar = addEquipmentReady(player1);
+        scimitar.setAttachedTo(first.getId());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+
+        scimitar.setAttachedTo(second.getId());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+    }
 
     private Permanent findChampion(Player player) {
         return findPermanent(player, "Champion of the Flame");
     }
 
     private Permanent addChampionReady(Player player) {
-        Permanent perm = new Permanent(new ChampionOfTheFlame());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChampionOfTheFlame());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addEquipmentReady(Player player) {
-        Permanent perm = new Permanent(new LeoninScimitar());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addAuraReady(Player player) {
-        Permanent perm = new Permanent(new HolyStrength());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HolyStrength());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

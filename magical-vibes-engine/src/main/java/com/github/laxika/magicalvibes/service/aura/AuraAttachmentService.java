@@ -299,15 +299,13 @@ public class AuraAttachmentService {
             return false;
         }
         TargetFilter filter = auraCard.getDeclaredTargetFilter();
-        if (filter == null) {
-            return true;
-        }
-        if (!(filter instanceof PlayerPredicateTargetFilter playerFilter)
+        if (filter != null && (!(filter instanceof PlayerPredicateTargetFilter playerFilter)
                 || !targetLegalityService.matchesPlayerPredicate(
-                gameData, auraControllerId, playerId, playerFilter.predicate())) {
+                gameData, auraControllerId, playerId, playerFilter.predicate()))) {
             return false;
         }
         return !gameQueryService.playerHasProtectionFromEverything(gameData, playerId)
+                && !gameQueryService.playerHasProtectionFromOpponents(gameData, playerId, auraControllerId)
                 && gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
                 .noneMatch(color -> gameQueryService.playerHasProtectionFromColor(gameData, playerId, color))
                 && !gameQueryService.playerHasProtectionFromChosenName(

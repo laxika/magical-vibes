@@ -99,8 +99,7 @@ class CancelTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -121,8 +120,7 @@ class CancelTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Might of Oaks");
@@ -144,8 +142,7 @@ class CancelTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -165,8 +162,7 @@ class CancelTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Cancel");
@@ -196,6 +192,49 @@ class CancelTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Cancel");
+    }
+
+    @Test
+    @DisplayName("Can counter a spell controlled by its own caster")
+    void countersOwnSpell() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears, new Cancel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Cancel");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not resolve when another Cancel counters its target first")
+    void targetCounteredByAnotherSpell() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Cancel(), new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("Cancel", "Cancel");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("fizzles"));
     }
 }
 

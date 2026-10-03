@@ -43,6 +43,7 @@ public class UnsuspectEffectHandler implements NormalEffectHandlerBean {
             case ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE -> {
                 Permanent source = entry.getSourcePermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                if (source == null) source = entry.getSourcePermanentSnapshot();
                 yield source == null || source.getAttachedTo() == null
                         ? List.of() : List.of(source.getAttachedTo());
             }

@@ -31,8 +31,7 @@ class ComingInHotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ComingInHot()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
@@ -51,8 +50,7 @@ class ComingInHotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ComingInHot()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(top);
@@ -68,8 +66,7 @@ class ComingInHotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ComingInHot()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         harness.forceStep(TurnStep.END_STEP);
@@ -84,12 +81,73 @@ class ComingInHotTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new ComingInHot()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature while scrying the caster's library")
+    void targetsOpponentCreatureAndBottomsCasterTopCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card top = new GrizzlyBears();
+        Card next = new Forest();
+        Card opponentTop = new Forest();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.setLibrary(player2, List.of(opponentTop));
+        harness.setHand(player1, List.of(new ComingInHot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coming In Hot");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the creature effects from resolving")
+    void resolvesWithEmptyLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ComingInHot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coming In Hot");
+    }
+
+    @Test
+    @DisplayName("Does not scry when the only target leaves before resolution")
+    void doesNotScryWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new ComingInHot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coming In Hot");
     }
 }

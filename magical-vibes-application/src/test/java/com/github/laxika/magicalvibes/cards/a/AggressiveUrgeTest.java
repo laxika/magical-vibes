@@ -56,13 +56,13 @@ class AggressiveUrgeTest extends BaseCardTest {
     @DisplayName("Boost from Aggressive Urge wears off at cleanup step")
     void boostWearsOffAtCleanup() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new AggressiveUrge()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isEqualTo(0);
@@ -75,6 +75,7 @@ class AggressiveUrgeTest extends BaseCardTest {
     @DisplayName("Aggressive Urge fizzles and does not draw if target is removed")
     void fizzlesAndDoesNotDrawIfTargetRemoved() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new AggressiveUrge()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -85,6 +86,7 @@ class AggressiveUrgeTest extends BaseCardTest {
 
         assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -127,5 +129,26 @@ class AggressiveUrgeTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Two Aggressive Urges accumulate their boosts and each draw exactly one card")
+    void repeatedCastsAccumulateBoostsAndDraws() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AggressiveUrge(), new AggressiveUrge()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(2)
+                .allMatch(card -> card instanceof AggressiveUrge);
     }
 }
