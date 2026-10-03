@@ -215,6 +215,47 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.castFromHand(player1, new DiabolicTutor(), "{2}{B}{B}");
     }
 
+    @Test
+    @DisplayName("Searching a one-card library puts its last card into hand and finishes resolution")
+    void searchesLastCardInLibrary() {
+        AvenFisher lastCard = new AvenFisher();
+        harness.setLibrary(player1, List.of(lastCard));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+        harness.assertInGraveyard(player1, "Diabolic Tutor");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent cannot choose the card for Diabolic Tutor")
+    void opponentCannotChooseCard() {
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+        Card chosenCard = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not your turn to choose");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(
                 new CavesOfKoilos(), new AvenFisher(), new CavesOfKoilos(), new AvenFisher()));
