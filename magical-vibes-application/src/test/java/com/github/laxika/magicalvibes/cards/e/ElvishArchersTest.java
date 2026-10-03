@@ -25,4 +25,45 @@ class ElvishArchersTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Elvish Archers");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("First strike kills a 2/2 attacker before it deals combat damage")
+    void firstStrikeKillsAttackerBeforeItDealsCombatDamage() {
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player2, new ElvishArchers());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Elvish Archers");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked first striker deals combat damage only once")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        addCreatureReady(player1, new ElvishArchers()).setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Elvish Archers");
+    }
+
+    @Test
+    @DisplayName("Opposing first strikers deal lethal combat damage simultaneously")
+    void opposingFirstStrikersDealDamageSimultaneously() {
+        addCreatureReady(player1, new ElvishArchers()).setAttacking(true);
+        addCreatureReady(player2, new ElvishArchers());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elvish Archers");
+        harness.assertInGraveyard(player2, "Elvish Archers");
+        harness.assertLife(player2, 20);
+    }
 }
