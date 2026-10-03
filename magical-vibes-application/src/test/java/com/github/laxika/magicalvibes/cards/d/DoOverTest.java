@@ -29,8 +29,7 @@ class DoOverTest extends BaseCardTest {
         DoOver doOver = (DoOver) gd.playerHands.get(player1.getId()).getFirst();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
@@ -38,5 +37,50 @@ class DoOverTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(doOver);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(doOver);
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == doOver);
+    }
+
+    @Test
+    void drawnDoOverIsRemovedFromItsTurnStartLibraryPosition() {
+        DoOver doOver = new DoOver();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(doOver));
+        gd.currentStep = TurnStep.UNTAP;
+        gd.captureTurnStartSnapshot();
+
+        gd.playerDecks.get(player1.getId()).remove(doOver);
+        harness.setHand(player1, List.of(doOver));
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(doOver);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(doOver);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(doOver);
+        assertThat(gd.exiledCards).filteredOn(entry -> entry.card() == doOver).hasSize(1);
+    }
+
+    @Test
+    void secondRestartKeepsTheFirstDoOverInExile() {
+        DoOver first = new DoOver();
+        DoOver second = new DoOver();
+        harness.setHand(player1, List.of(first, second));
+        gd.currentStep = TurnStep.UNTAP;
+        gd.captureTurnStartSnapshot();
+
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == first);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == second);
     }
 }
