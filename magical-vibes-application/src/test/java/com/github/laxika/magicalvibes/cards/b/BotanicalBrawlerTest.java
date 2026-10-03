@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -75,6 +76,83 @@ class BotanicalBrawlerTest extends BaseCardTest {
         assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Putting counters on Brawler itself does not trigger its ability")
+    void doesNotTriggerForItsOwnCounters() {
+        Permanent brawler = castBrawler(player1);
+
+        castBondBeetle(player1, brawler);
+
+        assertThat(brawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another Brawler entering with counters triggers once and cannot trigger again that turn")
+    void anotherBrawlerEnteringWithCountersTriggersOnce() {
+        Permanent first = castBrawler(player1);
+        harness.castFromHand(player1, new BotanicalBrawler(), "{G}{W}");
+        harness.passBothPriorities();
+        Permanent second = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(first.getId()))
+                .findFirst().orElseThrow();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        castBondBeetle(player1, second);
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Several counters put on a permanent at once trigger only once")
+    void multipleCountersTriggerOnlyOnce() {
+        Permanent brawler = castBrawler(player1);
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        harness.setHand(player1, List.of(new LifecraftAwakening()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castInstant(player1, 0, 3, relic.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(brawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("First placement tracking resets on the opponent's turn")
+    void triggersAgainOnOpponentsTurn() {
+        Permanent brawler = castBrawler(player1);
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        putCounterOnArtifact(relic);
+        harness.passBothPriorities();
+        assertThat(brawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        putCounterOnArtifact(relic);
+        harness.passBothPriorities();
+
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(brawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's permanent entering with counters does not trigger Brawler")
+    void opponentsCountersDoNotTrigger() {
+        Permanent brawler = castBrawler(player1);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        Permanent opponentBrawler = castBrawler(player2);
+
+        assertThat(brawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(opponentBrawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
     private void castBondBeetle(Player caster, Permanent target) {
         harness.setHand(caster, List.of(new BondBeetle()));
         harness.addMana(caster, ManaColor.GREEN, 2);
@@ -85,10 +163,7 @@ class BotanicalBrawlerTest extends BaseCardTest {
     }
 
     private Permanent castBrawler(Player player) {
-        harness.setHand(player, List.of(new BotanicalBrawler()));
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new BotanicalBrawler(), "{G}{W}");
         harness.passBothPriorities();
         return findPermanent(player, "Botanical Brawler");
     }

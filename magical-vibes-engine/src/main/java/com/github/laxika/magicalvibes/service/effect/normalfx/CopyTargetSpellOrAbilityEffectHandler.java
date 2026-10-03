@@ -40,6 +40,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -110,6 +111,10 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
     private void queueRetargetChoice(GameData gameData, StackEntry entry,
                                      StackEntry targetEntry, StackEntry copyEntry) {
         if (!targetEntry.isSingleTarget()) {
+            if (!copyEntry.isNonTargeting() && !copyEntry.getDeclaredTargetIds().isEmpty()) {
+                psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), entry.getControllerId(),
+                        copyEntry.getTargetableId(), 0);
+            }
             return;
         }
 

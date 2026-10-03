@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,7 +44,7 @@ class BetrayalOfFleshTest extends BaseCardTest {
     @Test
     void reanimatesTargetCreatureCard() {
         AlphaMyr deadCreature = new AlphaMyr();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(deadCreature)));
+        harness.setGraveyard(player1, List.of(deadCreature));
         harness.setHand(player1, List.of(new BetrayalOfFlesh()));
         addMana();
 
@@ -59,7 +58,7 @@ class BetrayalOfFleshTest extends BaseCardTest {
     @Test
     void cannotReanimateNonCreatureCard() {
         Plains land = new Plains();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(land)));
+        harness.setGraveyard(player1, List.of(land));
         harness.setHand(player1, List.of(new BetrayalOfFlesh()));
         addMana();
 
@@ -71,7 +70,7 @@ class BetrayalOfFleshTest extends BaseCardTest {
     @Test
     void cannotReanimateCreatureFromOpponentsGraveyard() {
         AlphaMyr opponentCreature = new AlphaMyr();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(opponentCreature)));
+        harness.setGraveyard(player2, List.of(opponentCreature));
         harness.setHand(player1, List.of(new BetrayalOfFlesh()));
         addMana();
 
@@ -87,7 +86,7 @@ class BetrayalOfFleshTest extends BaseCardTest {
         Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
         Permanent thirdLand = harness.addToBattlefieldAndReturn(player1, new Plains());
         AlphaMyr deadCreature = new AlphaMyr();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(deadCreature)));
+        harness.setGraveyard(player1, List.of(deadCreature));
         harness.setHand(player1, List.of(new BetrayalOfFlesh()));
         addMana();
 
@@ -110,7 +109,7 @@ class BetrayalOfFleshTest extends BaseCardTest {
         Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         AlphaMyr deadCreature = new AlphaMyr();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(deadCreature)));
+        harness.setGraveyard(player1, List.of(deadCreature));
         harness.setHand(player1, List.of(new BetrayalOfFlesh()));
         addMana();
 
@@ -129,7 +128,7 @@ class BetrayalOfFleshTest extends BaseCardTest {
         Permanent nonland = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         AlphaMyr deadCreature = new AlphaMyr();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(deadCreature)));
+        harness.setGraveyard(player1, List.of(deadCreature));
         harness.setHand(player1, List.of(new BetrayalOfFlesh()));
         addMana();
 
@@ -139,6 +138,96 @@ class BetrayalOfFleshTest extends BaseCardTest {
                 List.of(), null, null, false, null, List.of(), null,
                 List.of(firstLand.getId(), secondLand.getId(), nonland.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void entwineStillDestroysCreatureWhenGraveyardTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent thirdLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        AlphaMyr deadCreature = new AlphaMyr();
+        harness.setGraveyard(player1, List.of(deadCreature));
+        harness.setHand(player1, List.of(new BetrayalOfFlesh()));
+        addMana();
+
+        gs.playCard(gd, player1, 0,
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}),
+                deadCreature.getId(), null, List.of(target.getId()), List.of(), false, null, null,
+                List.of(), null, null, false, null, List.of(), null,
+                List.of(firstLand.getId(), secondLand.getId(), thirdLand.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(deadCreature));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        harness.assertNotOnBattlefield(player1, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Betrayal of Flesh");
+    }
+
+    @Test
+    void entwineStillReanimatesWhenBattlefieldTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent thirdLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        AlphaMyr deadCreature = new AlphaMyr();
+        harness.setGraveyard(player1, List.of(deadCreature));
+        harness.setHand(player1, List.of(new BetrayalOfFlesh()));
+        addMana();
+
+        gs.playCard(gd, player1, 0,
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}),
+                deadCreature.getId(), null, List.of(target.getId()), List.of(), false, null, null,
+                List.of(), null, null, false, null, List.of(), null,
+                List.of(firstLand.getId(), secondLand.getId(), thirdLand.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setExile(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alpha Myr");
+        harness.assertNotInGraveyard(player1, "Alpha Myr");
+        harness.assertNotInGraveyard(player2, "Alpha Myr");
+    }
+
+    @Test
+    void entwineCannotSacrificeTheSameLandTwice() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        AlphaMyr deadCreature = new AlphaMyr();
+        harness.setGraveyard(player1, List.of(deadCreature));
+        harness.setHand(player1, List.of(new BetrayalOfFlesh()));
+        addMana();
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0,
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}),
+                deadCreature.getId(), null, List.of(target.getId()), List.of(), false, null, null,
+                List.of(), null, null, false, null, List.of(), null,
+                List.of(firstLand.getId(), secondLand.getId(), firstLand.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstLand, secondLand);
+    }
+
+    @Test
+    void entwineCannotSacrificeOpponentsLand() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        AlphaMyr deadCreature = new AlphaMyr();
+        harness.setGraveyard(player1, List.of(deadCreature));
+        harness.setHand(player1, List.of(new BetrayalOfFlesh()));
+        addMana();
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0,
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}),
+                deadCreature.getId(), null, List.of(target.getId()), List.of(), false, null, null,
+                List.of(), null, null, false, null, List.of(), null,
+                List.of(firstLand.getId(), secondLand.getId(), opponentLand.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstLand, secondLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentLand);
     }
 
     private void addMana() {

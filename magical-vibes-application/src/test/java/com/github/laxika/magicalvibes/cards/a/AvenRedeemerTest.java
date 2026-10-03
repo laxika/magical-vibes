@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenRedeemer.class, GrizzlyBears.class, Plains.class, Shock.class})
+@CardUsed({AvenRedeemer.class, GrizzlyBears.class, Plains.class, ProdigalPyromancer.class, Shock.class})
 class AvenRedeemerTest extends BaseCardTest {
 
     @Test
@@ -95,6 +96,80 @@ class AvenRedeemerTest extends BaseCardTest {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, plains.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Unused prevention carries over between damage events")
+    void partiallyConsumedShieldPreventsRemainingDamage() {
+        addRedeemerReady();
+        addCreatureReady(player1, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Shields from two Redeemers prevent four damage total")
+    void multipleShieldsAccumulate() {
+        addRedeemerReady();
+        addRedeemerReady();
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after the Redeemer is destroyed in response")
+    void sourceLeavingDoesNotStopPrevention() {
+        Permanent redeemer = addRedeemerReady();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castAndResolveInstant(player1, 0, redeemer.getId());
+        harness.assertNotOnBattlefield(player1, "Aven Redeemer");
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Redeemer cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new AvenRedeemer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Redeemer cannot activate again")
+    void cannotActivateWhileTapped() {
+        addRedeemerReady();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

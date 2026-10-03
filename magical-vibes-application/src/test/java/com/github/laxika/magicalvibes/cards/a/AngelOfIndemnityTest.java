@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfernalGrasp;
+import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,14 +15,15 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AngelOfIndemnity.class, GrizzlyBears.class})
+@CardUsed({AngelOfIndemnity.class, ZulaportCutthroat.class, InfernalGrasp.class})
 class AngelOfIndemnityTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB returns a target permanent card with mana value 4 or less")
     void etbReturnsPermanentFromGraveyard() {
-        GrizzlyBears target = new GrizzlyBears();
+        ZulaportCutthroat target = new ZulaportCutthroat();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new AngelOfIndemnity()));
         addCastingMana();
@@ -33,8 +35,8 @@ class AngelOfIndemnityTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Zulaport Cutthroat");
+        harness.assertNotInGraveyard(player1, "Zulaport Cutthroat");
     }
 
     @Test
@@ -52,8 +54,18 @@ class AngelOfIndemnityTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Encore exiles the source and creates a hasty attacking copy")
-    void encoreCreatesHastyAttackingCopy() {
+    @DisplayName("Encore creates an untapped hasty copy that is not already attacking")
+    void encoreCreatesUntappedHastyCopy() {
+        createEncoreCopy();
+
+        Permanent token = findPermanent(player1, "Angel of Indemnity");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+    }
+
+    private void createEncoreCopy() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(new AngelOfIndemnity()));
@@ -62,20 +74,12 @@ class AngelOfIndemnityTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.assertNotInGraveyard(player1, "Angel of Indemnity");
         harness.passBothPriorities();
-
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
     }
 
     @Test
     @DisplayName("Encore sacrifices its token at the next end step")
     void encoreSacrificesTokenAtNextEndStep() {
-        encoreCreatesHastyAttackingCopy();
+        createEncoreCopy();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -83,6 +87,71 @@ class AngelOfIndemnityTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("ETB cannot return an instant or an opponent's permanent")
+    void etbRejectsNonPermanentAndOpponentsGraveyard() {
+        harness.setGraveyard(player1, List.of(new InfernalGrasp()));
+        harness.setGraveyard(player2, List.of(new ZulaportCutthroat()));
+        harness.setHand(player1, List.of(new AngelOfIndemnity()));
+        addCastingMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Infernal Grasp");
+        harness.assertInGraveyard(player2, "Zulaport Cutthroat");
+    }
+
+    @Test
+    @DisplayName("Encore copy triggers the graveyard return ability")
+    void encoreCopyReturnsPermanent() {
+        ZulaportCutthroat target = new ZulaportCutthroat();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new AngelOfIndemnity(), target));
+        addEncoreMana();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Zulaport Cutthroat");
+        harness.assertNotInGraveyard(player1, "Zulaport Cutthroat");
+    }
+
+    @Test
+    @DisplayName("Encore cannot be activated during combat")
+    void encoreRequiresSorceryTiming() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setGraveyard(player1, List.of(new AngelOfIndemnity()));
+        addEncoreMana();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Angel of Indemnity");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB does not return a target that leaves the graveyard before resolution")
+    void etbDoesNotReturnMissingTarget() {
+        ZulaportCutthroat target = new ZulaportCutthroat();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new AngelOfIndemnity()));
+        addCastingMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Zulaport Cutthroat");
+        harness.assertOnBattlefield(player1, "Angel of Indemnity");
     }
 
     private void addCastingMana() {

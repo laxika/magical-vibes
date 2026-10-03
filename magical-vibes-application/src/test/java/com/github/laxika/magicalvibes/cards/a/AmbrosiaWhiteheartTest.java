@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -82,11 +81,69 @@ class AmbrosiaWhiteheartTest extends BaseCardTest {
         assertThat(ambrosia.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Ambrosia can be cast during an opponent's combat")
+    void flashAllowsCastingDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new Island());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        castAmbrosia();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Ambrosia Whiteheart");
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("The ETB ability cannot return Ambrosia or an opponent's permanent")
+    void noOtherControlledPermanentLeavesNothingToReturn() {
+        harness.addToBattlefield(player2, new Island());
+
+        castAmbrosia();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Ambrosia Whiteheart");
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertNotInHand(player1, "Ambrosia Whiteheart");
+    }
+
+    @Test
+    @DisplayName("A borrowed permanent returns to its owner's hand")
+    void returnedPermanentGoesToOwnerInsteadOfController() {
+        Island borrowedIsland = new Island();
+        borrowedIsland.setOwnerId(player2.getId());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, borrowedIsland);
+
+        castAmbrosia();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, island.getId());
+
+        harness.assertInHand(player2, "Island");
+        harness.assertNotInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertOnBattlefield(player1, "Ambrosia Whiteheart");
+    }
+
+    @Test
+    @DisplayName("Landfall triggers for lands entering without being played and stacks")
+    void multipleLandEntriesEachBoostAmbrosia() {
+        Permanent ambrosia = harness.addToBattlefieldAndReturn(player1, new AmbrosiaWhiteheart());
+
+        harness.enterBattlefieldAndReturn(player1, new Island());
+        harness.enterBattlefieldAndReturn(player1, new Island());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(ambrosia.getEffectivePower()).isEqualTo(4);
+        assertThat(ambrosia.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private void castAmbrosia() {
-        harness.setHand(player1, List.of(new AmbrosiaWhiteheart()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AmbrosiaWhiteheart(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

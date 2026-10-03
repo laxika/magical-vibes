@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BeastOfBurden.class, GrizzlyBears.class, HowlingMine.class})
@@ -54,6 +56,30 @@ class BeastOfBurdenTest extends BaseCardTest {
     void doesNotCountNoncreaturePermanents() {
         Permanent beast = addCreatureReady(player1, new BeastOfBurden());
         harness.addToBattlefield(player2, new HowlingMine());
+
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Beasts of Burden count each other without recursive evaluation")
+    void multipleBeastsCountEachOther() {
+        Permanent first = addCreatureReady(player1, new BeastOfBurden());
+        Permanent second = addCreatureReady(player2, new BeastOfBurden());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creature cards in hand, library, and graveyard do not increase Beast of Burden's size")
+    void doesNotCountCreatureCardsOutsideBattlefield() {
+        Permanent beast = addCreatureReady(player1, new BeastOfBurden());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        gd.playerGraveyards.get(player2.getId()).add(new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(1);

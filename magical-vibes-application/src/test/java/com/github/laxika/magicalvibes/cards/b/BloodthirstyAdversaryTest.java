@@ -44,10 +44,7 @@ class BloodthirstyAdversaryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, false);
 
-        Permanent adversary = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof BloodthirstyAdversary)
-                .findFirst()
-                .orElseThrow();
+        Permanent adversary = findPermanent(player1, "Bloodthirsty Adversary");
         assertThat(adversary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(counsel, shock);
@@ -76,5 +73,101 @@ class BloodthirstyAdversaryTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(counsel.getId()));
+    }
+
+    @Test
+    void countersAreAddedOnlyWhenTheReflexiveTriggerResolves() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new BloodthirstyAdversary()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+
+        Permanent adversary = findPermanent(player1, "Bloodthirsty Adversary");
+        assertThat(adversary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(counsel);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(adversary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(counsel);
+    }
+
+    @Test
+    void decliningPaymentLeavesTheGraveyardUntouchedAndAddsNoCounters() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new BloodthirstyAdversary()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Bloodthirsty Adversary")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(counsel);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void payingCanChooseNoGraveyardTargetsAndStillAddsCounters() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new BloodthirstyAdversary()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bloodthirsty Adversary")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(counsel);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentCanKillAdversaryInResponseToPaymentWithoutPreventingTheCopy() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new BloodthirstyAdversary()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Bloodthirsty Adversary"));
+
+        harness.assertNotOnBattlefield(player1, "Bloodthirsty Adversary");
+        harness.assertInGraveyard(player1, "Bloodthirsty Adversary");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(counsel);
     }
 }

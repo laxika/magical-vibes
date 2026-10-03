@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +49,7 @@ class ArmorOfThornsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(3);
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
     }
@@ -70,7 +68,11 @@ class ArmorOfThornsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Armor of Thorns");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Armor of Thorns");
         harness.assertInGraveyard(player1, "Armor of Thorns");
@@ -90,7 +92,11 @@ class ArmorOfThornsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Armor of Thorns");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Armor of Thorns");
         harness.assertInGraveyard(player1, "Armor of Thorns");
@@ -118,5 +124,34 @@ class ArmorOfThornsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a nonblack creature");
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's nonblack creature during their main phase")
+    void castDuringOpponentsMainPhaseUsesCleanupTrigger() {
+        Permanent falcon = addCreatureReady(player2, new BayFalcon());
+        harness.setHand(player1, List.of(new ArmorOfThorns()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player1);
+
+        harness.castEnchantment(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(3);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Armor of Thorns");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Armor of Thorns");
+        harness.assertNotOnBattlefield(player1, "Armor of Thorns");
+        harness.assertOnBattlefield(player2, "Bay Falcon");
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(1);
     }
 }

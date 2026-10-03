@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AppealToEirdu.class, GrizzlyBears.class, AngelicWall.class, QasaliPridemage.class})
 class AppealToEirduTest extends BaseCardTest {
@@ -30,8 +32,7 @@ class AppealToEirduTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, List.of(bearId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bearId));
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(2);
@@ -52,8 +53,7 @@ class AppealToEirduTest extends BaseCardTest {
         UUID id1 = bf.get(0).getId();
         UUID id2 = bf.get(1).getId();
 
-        harness.castInstant(player1, 0, List.of(id1, id2));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(id1, id2));
 
         bf = harness.getGameData().playerBattlefields.get(player1.getId());
         assertThat(bf.get(0).getPowerModifier()).isEqualTo(2);
@@ -235,6 +235,86 @@ class AppealToEirduTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Appeal to Eirdu");
+    }
+
+    @Test
+    void cannotConvokeWithTheSameCreatureMoreThanOnce() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AppealToEirdu()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0,
+                List.of(creature.getId()),
+                List.of(creature.getId(), creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Appeal to Eirdu");
+    }
+
+    @Test
+    void boostsCreaturesOfBothPlayersUntilCleanup() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AppealToEirdu()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0,
+                List.of(ownCreature.getId(), opposingCreature.getId()));
+
+        for (Permanent creature : List.of(ownCreature, opposingCreature)) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        }
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        for (Permanent creature : List.of(ownCreature, opposingCreature)) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void cannotSelectTheSameTargetTwice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AppealToEirdu()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Appeal to Eirdu");
+    }
+
+    @Test
+    void requiresAtLeastOneTarget() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AppealToEirdu()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.<UUID>of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Appeal to Eirdu");
+    }
+
+    @Test
+    void cannotTargetThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AppealToEirdu()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Appeal to Eirdu");
     }
 }
 

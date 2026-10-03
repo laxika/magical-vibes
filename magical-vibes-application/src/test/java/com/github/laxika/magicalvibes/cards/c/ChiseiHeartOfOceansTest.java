@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BakuAltar;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -153,5 +154,23 @@ class ChiseiHeartOfOceansTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Chisei, Heart of Oceans");
         assertThat(chisei.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+    @Test
+    @DisplayName("Spending the last counter before the upkeep ability resolves sacrifices Chisei")
+    void lastCounterSpentInResponseSacrificesChisei() {
+        harness.addToBattlefield(player1, new ChiseiHeartOfOceans());
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new BakuAltar());
+        altar.setCounterCount(CounterType.KI, 1);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(altar.getCounterCount(CounterType.KI)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Chisei, Heart of Oceans");
+        harness.assertInGraveyard(player1, "Chisei, Heart of Oceans");
     }
 }

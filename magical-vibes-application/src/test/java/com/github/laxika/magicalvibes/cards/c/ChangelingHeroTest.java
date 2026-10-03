@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChangelingHero.class, FieldMarshal.class, GrizzlyBears.class, Unsummon.class, Island.class})
 class ChangelingHeroTest extends BaseCardTest {
@@ -98,10 +99,16 @@ class ChangelingHeroTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID heroId = harness.getPermanentId(player1, "Changeling Hero");
-        harness.castInstant(player1, 0, heroId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, heroId);
 
         harness.assertNotOnBattlefield(player1, "Changeling Hero");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -116,14 +123,60 @@ class ChangelingHeroTest extends BaseCardTest {
         UUID heroId = harness.getPermanentId(player1, "Changeling Hero");
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, heroId);
-        harness.passBothPriorities(); // resolve Unsummon
-        harness.passBothPriorities(); // resolve the now-source-less champion ETB
+        harness.castAndResolveInstant(player1, 0, heroId);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Changeling Hero");
         harness.assertInHand(player1, "Changeling Hero");
         harness.assertNotInGraveyard(player1, "Changeling Hero");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Entry ability can still exile another creature after Hero leaves")
+    void canChampionAfterHeroLeavesBeforeEntryAbilityResolves() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        castChangelingHero();
+
+        UUID heroId = harness.getPermanentId(player1, "Changeling Hero");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, heroId);
+        resolveAllTriggers();
+
+        harness.handlePermanentChosen(player1, bearsId);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Changeling Hero");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Champion rejects Hero itself and creatures controlled by the opponent")
+    void championRejectsSelfAndOpponentsCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FieldMarshal());
+        castChangelingHero();
+        harness.passBothPriorities();
+
+        UUID heroId = harness.getPermanentId(player1, "Changeling Hero");
+        UUID marshalId = harness.getPermanentId(player2, "Field Marshal");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, heroId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, marshalId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertOnBattlefield(player1, "Changeling Hero");
+        harness.assertOnBattlefield(player2, "Field Marshal");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
     @Test
@@ -149,6 +202,6 @@ class ChangelingHeroTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(5);
-        assertThat(gqs.hasKeyword(gd, hero, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hero, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

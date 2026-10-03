@@ -150,11 +150,9 @@ class ArmoredAscensionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Armored Ascension")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new Plains());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.setHand(player1, List.of(new ArmoredAscension()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-
-        Permanent land = findPermanent(player1, "Plains");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -168,11 +166,69 @@ class ArmoredAscensionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArmoredAscension()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Armored Ascension");
         harness.assertNotOnBattlefield(player1, "Armored Ascension");
+    }
+
+    @Test
+    @DisplayName("Armored Ascension can resolve on an opponent's creature and uses its own controller's Plains")
+    void resolvesOnOpponentsCreature() {
+        Permanent bear = addCreatureReady(player2, new RuneclawBear());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new ArmoredAscension()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Armored Ascension").getAttachedTo()).isEqualTo(bear.getId());
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple Armored Ascensions add their bonuses and removing one preserves the other")
+    void multipleAurasAddBonusesIndependently() {
+        Permanent bear = addCreatureReady(player1, new RuneclawBear());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new ArmoredAscension(), new ArmoredAscension()));
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.castEnchantment(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        Permanent firstAura = findPermanent(player1, "Armored Ascension");
+        harness.castEnchantment(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Armored Ascension goes to the graveyard when its enchanted creature leaves")
+    void auraIsPutIntoGraveyardWhenCreatureLeaves() {
+        Permanent bear = addCreatureReady(player1, new RuneclawBear());
+        harness.setHand(player1, List.of(new ArmoredAscension()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Armored Ascension");
+        harness.assertInGraveyard(player1, "Armored Ascension");
     }
 }

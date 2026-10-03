@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BonePitBrute.class, GrizzlyBears.class, FountainOfYouth.class})
 class BonePitBruteTest extends BaseCardTest {
 
     @Test
@@ -26,12 +28,11 @@ class BonePitBruteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        Permanent bears = findPermanent(targetId);
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(4);
         assertThat(bears.getToughnessModifier()).isZero();
         assertThat(bears.getEffectivePower()).isEqualTo(6);
@@ -46,16 +47,15 @@ class BonePitBruteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(targetId);
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
         assertThat(bears.getEffectivePower()).isEqualTo(2);
@@ -70,15 +70,14 @@ class BonePitBruteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities();
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -89,16 +88,70 @@ class BonePitBruteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent findPermanent(UUID permanentId) {
-        return gd.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .filter(permanent -> permanent.getId().equals(permanentId))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Can enter an empty battlefield and target itself")
+    void canTargetItselfAfterEntering() {
+        harness.setHand(player1, List.of(new BonePitBrute()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent brute = findPermanent(player1, "Bone Pit Brute");
+        harness.handlePermanentChosen(player1, brute.getId());
+        resolveAllTriggers();
+
+        assertThat(brute.getEffectivePower()).isEqualTo(8);
+        assertThat(brute.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("ETB still resolves after Bone Pit Brute leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BonePitBrute());
+        harness.setHand(player1, List.of(new BonePitBrute()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent != target);
+        resolveAllTriggers();
+
+        assertThat(target.getEffectivePower()).isEqualTo(8);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Menace prevents a single creature from blocking")
+    void cannotBeBlockedByOneCreature() {
+        addCreatureReady(player1, new BonePitBrute());
+        addCreatureReady(player2, new BonePitBrute());
+        addCreatureReady(player2, new BonePitBrute());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Menace permits two creatures to block")
+    void canBeBlockedByTwoCreatures() {
+        addCreatureReady(player1, new BonePitBrute());
+        Permanent first = addCreatureReady(player2, new BonePitBrute());
+        Permanent second = addCreatureReady(player2, new BonePitBrute());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2,
+                        List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))));
+
+        assertThat(first.isBlocking()).isTrue();
+        assertThat(second.isBlocking()).isTrue();
     }
 }

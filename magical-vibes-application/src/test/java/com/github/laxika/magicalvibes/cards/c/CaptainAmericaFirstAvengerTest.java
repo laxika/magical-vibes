@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.FlowstoneCrusher;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
-import com.github.laxika.magicalvibes.cards.s.StriderHarness;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CaptainAmericaFirstAvenger.class, GrizzlyBears.class, StriderHarness.class, FlowstoneCrusher.class, LeoninScimitar.class, LoxodonWarhammer.class})
+@CardUsed({CaptainAmericaFirstAvenger.class, FlowstoneCrusher.class, LeoninScimitar.class, LoxodonWarhammer.class})
 class CaptainAmericaFirstAvengerTest extends BaseCardTest {
 
     @Test
@@ -82,10 +80,118 @@ class CaptainAmericaFirstAvengerTest extends BaseCardTest {
         assertThat(scimitar.getAttachedTo()).isEqualTo(captain.getId());
     }
 
+    @Test
+    void throwCanDivideDamageAmongThreeTargets() {
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new CaptainAmericaFirstAvenger());
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new LoxodonWarhammer());
+        hammer.setAttachedTo(captain.getId());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FlowstoneCrusher());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FlowstoneCrusher());
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(first.getId(), 1, second.getId(), 1, player2.getId(), 1));
+        harness.passBothPriorities();
+
+        assertThat(hammer.getAttachedTo()).isNull();
+        assertThat(first.getMarkedDamage()).isEqualTo(1);
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, lifeBefore - 1);
+    }
+
+    @Test
+    void throwCanUnattachOpponentsEquipment() {
+        Permanent captain = addCreatureReady(player1, new CaptainAmericaFirstAvenger());
+        Permanent hammer = harness.addToBattlefieldAndReturn(player2, new LoxodonWarhammer());
+        hammer.setAttachedTo(captain.getId());
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null, Map.of(player2.getId(), 3));
+        harness.passBothPriorities();
+
+        assertThat(hammer.getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(hammer);
+        harness.assertLife(player2, lifeBefore - 3);
+    }
+
+    @Test
+    void throwRequiresAttachedEquipment() {
+        addCreatureReady(player1, new CaptainAmericaFirstAvenger());
+        harness.addToBattlefield(player1, new LoxodonWarhammer());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(player2.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void throwRejectsDamageExceedingEquipmentManaValue() {
+        Permanent captain = addCreatureReady(player1, new CaptainAmericaFirstAvenger());
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new LoxodonWarhammer());
+        hammer.setAttachedTo(captain.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(player2.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(hammer.getAttachedTo()).isEqualTo(captain.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void catchCanChooseNoEquipmentAndExcludesOpponentsEquipment() {
+        addCreatureReady(player1, new CaptainAmericaFirstAvenger());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+
+        advanceToCombat(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(own.getId(), player1.getId()).doesNotContain(opposing.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(own.getAttachedTo()).isNull();
+        assertThat(opposing.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void catchDoesNotTriggerDuringOpponentsCombat() {
+        addCreatureReady(player1, new CaptainAmericaFirstAvenger());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(scimitar.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void catchMovesEquipmentFromAnotherCreature() {
+        Permanent captain = addCreatureReady(player1, new CaptainAmericaFirstAvenger());
+        Permanent previousBearer = addCreatureReady(player1, new FlowstoneCrusher());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        scimitar.setAttachedTo(previousBearer.getId());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, scimitar.getId());
+        harness.passBothPriorities();
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(captain.getId());
+        assertThat(gqs.getEffectivePower(gd, previousBearer)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(5);
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

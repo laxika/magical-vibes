@@ -142,4 +142,67 @@ class BlindingAngelTest extends BaseCardTest {
 
         assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
     }
+
+    @Test
+    @DisplayName("Combat damage prevention stops the combat-phase skip trigger")
+    void noSkipWhenCombatDamageIsPrevented() {
+        Permanent angel = addCreatureReady(player1, new BlindingAngel());
+        angel.setAttacking(true);
+        harness.setLife(player2, 20);
+        gd.preventAllCombatDamageToPlayers = true;
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("The combat-damage trigger resolves after Blinding Angel dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent angel = addCreatureReady(player1, new BlindingAngel());
+        angel.setAttacking(true);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        resolveCombat();
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        harness.castInstant(player1, 0, angel.getId());
+        harness.castInstant(player1, 0, angel.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Blinding Angel");
+        harness.assertInGraveyard(player1, "Blinding Angel");
+        harness.passBothPriorities();
+
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two resolved triggers skip successive combat phases, then normal combat resumes")
+    void consumesOnlyOneQueuedSkipPerCombatPhase() {
+        Permanent firstAngel = addCreatureReady(player1, new BlindingAngel());
+        Permanent secondAngel = addCreatureReady(player1, new BlindingAngel());
+        firstAngel.setAttacking(true);
+        secondAngel.setAttacking(true);
+        addReadyAttackerForPlayer2();
+
+        resolveCombat();
+        harness.passBothPriorities();
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+    }
 }

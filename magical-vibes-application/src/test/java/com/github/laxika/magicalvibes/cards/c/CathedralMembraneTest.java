@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.Dismember;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LabyrinthOfSkophos;
+import com.github.laxika.magicalvibes.cards.n.NeurokCommando;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CathedralMembrane.class, GrizzlyBears.class, WrathOfGod.class,
+        Dismember.class, LabyrinthOfSkophos.class, NeurokCommando.class, PhyrexianHulk.class})
 class CathedralMembraneTest extends BaseCardTest {
 
     /**
@@ -36,20 +43,14 @@ class CathedralMembraneTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Death trigger during combat =====
-
     @Test
     @DisplayName("When Cathedral Membrane dies in combat, it deals 6 damage to the creature it blocked")
     void deathTriggerDeals6DamageToBlockedCreature() {
         GrizzlyBears attacker = new GrizzlyBears();
         attacker.setPower(3);
         attacker.setToughness(3);
-        harness.addToBattlefield(player1, attacker);
-
-        harness.addToBattlefield(player2, new CathedralMembrane());
-
-        Permanent attackerPerm = findPermanent(player1, "Grizzly Bears");
-        Permanent membranePerm = findPermanent(player2, "Cathedral Membrane");
+        Permanent attackerPerm = harness.addToBattlefieldAndReturn(player1, attacker);
+        Permanent membranePerm = harness.addToBattlefieldAndReturn(player2, new CathedralMembrane());
 
         UUID attackerId = attackerPerm.getId();
         setupCombatWhereMembraneBlocks(attackerPerm, membranePerm);
@@ -83,12 +84,8 @@ class CathedralMembraneTest extends BaseCardTest {
         GrizzlyBears bigAttacker = new GrizzlyBears();
         bigAttacker.setPower(3);
         bigAttacker.setToughness(7);
-        harness.addToBattlefield(player1, bigAttacker);
-
-        harness.addToBattlefield(player2, new CathedralMembrane());
-
-        Permanent attackerPerm = findPermanent(player1, "Grizzly Bears");
-        Permanent membranePerm = findPermanent(player2, "Cathedral Membrane");
+        Permanent attackerPerm = harness.addToBattlefieldAndReturn(player1, bigAttacker);
+        Permanent membranePerm = harness.addToBattlefieldAndReturn(player2, new CathedralMembrane());
 
         UUID attackerId = attackerPerm.getId();
         setupCombatWhereMembraneBlocks(attackerPerm, membranePerm);
@@ -113,7 +110,7 @@ class CathedralMembraneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities(); // Resolve Wrath — all creatures die
 
         GameData gd = harness.getGameData();
@@ -125,5 +122,60 @@ class CathedralMembraneTest extends BaseCardTest {
         // (Membrane died during precombat main, not during combat)
         assertThat(gd.stack).noneMatch(e ->
                 e.getCard().getName().equals("Cathedral Membrane"));
+    }
+
+    @Test
+    void deathDuringCombatTriggersEvenWithoutBlocking() {
+        Permanent membrane = harness.addToBattlefieldAndReturn(player2, new CathedralMembrane());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new Dismember()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, membrane.getId());
+
+        harness.assertInGraveyard(player2, "Cathedral Membrane");
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Cathedral Membrane"));
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void deathDamageDoesNotTargetShroudedBlockedCreature() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new NeurokCommando());
+        Permanent membrane = harness.addToBattlefieldAndReturn(player2, new CathedralMembrane());
+        setupCombatWhereMembraneBlocks(attacker, membrane);
+        harness.setHand(player1, List.of(new Dismember()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, membrane.getId());
+        harness.assertInGraveyard(player2, "Cathedral Membrane");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Neurok Commando");
+        harness.assertNotOnBattlefield(player1, "Neurok Commando");
+    }
+
+    @Test
+    void remembersBlockedCreatureAfterMembraneIsRemovedFromCombat() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new PhyrexianHulk());
+        Permanent membrane = harness.addToBattlefieldAndReturn(player2, new CathedralMembrane());
+        harness.addToBattlefield(player2, new LabyrinthOfSkophos());
+        setupCombatWhereMembraneBlocks(attacker, membrane);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 1, 1, null, membrane.getId());
+        harness.passBothPriorities();
+        assertThat(membrane.isBlocking()).isFalse();
+        harness.setHand(player1, List.of(new Dismember()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, membrane.getId());
+        harness.assertInGraveyard(player2, "Cathedral Membrane");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Phyrexian Hulk");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Hulk");
     }
 }

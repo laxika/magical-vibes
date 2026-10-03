@@ -40,7 +40,7 @@ class AgrusKosSpiritOfJusticeTest extends BaseCardTest {
 
     @Test
     void attackingSuspectsAnUnsuspectedTarget() {
-        addReadyAgrus();
+        addCreatureReady(player1, new AgrusKosSpiritOfJustice());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
@@ -48,6 +48,74 @@ class AgrusKosSpiritOfJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isSuspected()).isTrue();
+    }
+
+    @Test
+    void attackingExilesAnAlreadySuspectedCreature() {
+        addCreatureReady(player1, new AgrusKosSpiritOfJustice());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AgrusKosSpiritOfJustice());
+        target.setSuspected(true);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void attackTriggerChecksSuspectedStatusAtResolution() {
+        addCreatureReady(player1, new AgrusKosSpiritOfJustice());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AgrusKosSpiritOfJustice());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setSuspected(true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void attackTriggerSuspectsCreatureWhoseSuspectedStatusWasRemoved() {
+        addCreatureReady(player1, new AgrusKosSpiritOfJustice());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AgrusKosSpiritOfJustice());
+        target.setSuspected(true);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setSuspected(false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.isSuspected()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
+    }
+
+    @Test
+    void canSuspectItselfWhenAttacking() {
+        Permanent agrus = addCreatureReady(player1, new AgrusKosSpiritOfJustice());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, agrus.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(agrus);
+        assertThat(agrus.isSuspected()).isTrue();
+        assertThat(agrus.isTapped()).isFalse();
+    }
+
+    @Test
+    void canSuspectItselfWhenEnteringWithoutBeingCast() {
+        Permanent agrus = harness.enterBattlefieldAndReturn(player1, new AgrusKosSpiritOfJustice());
+
+        harness.handlePermanentChosen(player1, agrus.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(agrus);
+        assertThat(agrus.isSuspected()).isTrue();
     }
 
     @Test
@@ -79,12 +147,6 @@ class AgrusKosSpiritOfJusticeTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
-    }
-
-    private Permanent addReadyAgrus() {
-        Permanent agrus = harness.addToBattlefieldAndReturn(player1, new AgrusKosSpiritOfJustice());
-        agrus.setSummoningSick(false);
-        return agrus;
     }
 
     private void addMana() {

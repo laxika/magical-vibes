@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -77,5 +80,54 @@ class BogWreckageTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLACK", "GREEN"})
+    @DisplayName("Sacrifice can produce each remaining color without using the stack")
+    void sacrificeAddsRemainingColorsImmediately(ManaColor color) {
+        harness.addToBattlefield(player1, new BogWreckage());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Bog Wreckage");
+        harness.assertInGraveyard(player1, "Bog Wreckage");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Neither mana ability can be activated immediately after entering tapped")
+    void enteringTappedPreventsActivation(int abilityIndex) {
+        harness.setHand(player1, List.of(new BogWreckage()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.assertOnBattlefield(player1, "Bog Wreckage");
+        harness.assertNotInGraveyard(player1, "Bog Wreckage");
+    }
+
+    @Test
+    @DisplayName("A land that entered tapped can be sacrificed after untapping")
+    void untappingAllowsSacrificeAfterEnteringTapped() {
+        harness.setHand(player1, List.of(new BogWreckage()));
+        harness.playLand(player1, 0);
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Bog Wreckage");
+        harness.assertInGraveyard(player1, "Bog Wreckage");
     }
 }

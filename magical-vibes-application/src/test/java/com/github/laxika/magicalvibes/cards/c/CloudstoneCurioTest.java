@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BorosSignet;
+import com.github.laxika.magicalvibes.cards.f.FistsOfIronwood;
 import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LastGasp;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CloudstoneCurio.class, GrayscaledGharial.class, Island.class, BorosSignet.class, LastGasp.class})
+@CardUsed({CloudstoneCurio.class, GrayscaledGharial.class, Island.class, BorosSignet.class, LastGasp.class,
+        FistsOfIronwood.class})
 class CloudstoneCurioTest extends BaseCardTest {
 
     @Test
@@ -130,6 +132,54 @@ class CloudstoneCurioTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Boros Signet");
+    }
+
+    @Test
+    void tokenEntryStillAllowsReturningCreatureAfterTokenCeasesToExist() {
+        Permanent existingCreature = harness.addToBattlefieldAndReturn(player1, new GrayscaledGharial());
+        harness.setHand(player1, List.of(new FistsOfIronwood()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, existingCreature.getId());
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new CloudstoneCurio());
+        harness.passBothPriorities();
+        List<Permanent> saprolings = List.copyOf(findPermanents(player1, "Saproling"));
+        assertThat(saprolings).hasSize(2);
+
+        for (Permanent saproling : saprolings) {
+            harness.setHand(player1, List.of(new LastGasp()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castInstant(player1, 0, saproling.getId());
+            harness.passBothPriorities();
+        }
+        harness.assertNotOnBattlefield(player1, "Saproling");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(existingCreature.getId());
+        harness.handlePermanentChosen(player1, existingCreature.getId());
+        harness.assertInHand(player1, "Grayscaled Gharial");
+    }
+
+    @Test
+    void creatureEntryCannotReturnOpponentsCreature() {
+        harness.addToBattlefield(player1, new CloudstoneCurio());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrayscaledGharial());
+        harness.addToBattlefield(player2, new GrayscaledGharial());
+
+        harness.castFromHand(player1, new GrayscaledGharial(), "{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(ownCreature.getId());
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.assertOnBattlefield(player2, "Grayscaled Gharial");
     }
 
     @Test

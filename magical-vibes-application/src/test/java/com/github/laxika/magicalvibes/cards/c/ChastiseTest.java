@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.o.OrcishOriflamme;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Chastise.class, GrizzlyBears.class})
+@CardUsed({Chastise.class, GrizzlyBears.class, DrudgeSkeletons.class, OrcishOriflamme.class})
 class ChastiseTest extends BaseCardTest {
 
     private void prepareChastise() {
@@ -53,12 +53,11 @@ class ChastiseTest extends BaseCardTest {
 
         castAndResolveChastise(attacker.getId());
 
-        GameData gd = harness.getGameData();
         // Grizzly Bears (2/2) destroyed -> into owner's graveyard
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         // Caster gains life equal to power (2): 15 + 2 = 17
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -115,10 +114,9 @@ class ChastiseTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // No life gain when the spell fizzles
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        harness.assertLife(player2, 20);
+        assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player2, "Chastise");
     }
 
@@ -136,5 +134,51 @@ class ChastiseTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player2, "Chastise");
+    }
+
+    @Test
+    @DisplayName("Uses the surviving creature's power after regeneration removes its attacking bonus")
+    void usesPowerAfterRegeneration() {
+        harness.setLife(player2, 15);
+        harness.addToBattlefield(player1, new OrcishOriflamme());
+        Permanent attacker = addCreatureReady(player1, new DrudgeSkeletons());
+        attacker.setAttacking(true);
+        attacker.setRegenerationShield(1);
+
+        castAndResolveChastise(attacker.getId());
+
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertNotInGraveyard(player1, "Drudge Skeletons");
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.getRegenerationShield()).isZero();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Uses power at resolution rather than when the spell was cast")
+    void usesPowerAtResolution() {
+        harness.setLife(player2, 15);
+        Permanent attacker = addAttacker(player1);
+
+        castChastise(attacker.getId());
+        attacker.setPowerModifier(3);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Negative power causes no life gain or life loss")
+    void negativePowerDoesNotChangeLife() {
+        harness.setLife(player2, 15);
+        Permanent attacker = addAttacker(player1);
+        attacker.setPowerModifier(-3);
+
+        castAndResolveChastise(attacker.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player2, 15);
     }
 }

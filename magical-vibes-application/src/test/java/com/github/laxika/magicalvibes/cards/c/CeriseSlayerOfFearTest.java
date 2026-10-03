@@ -60,12 +60,127 @@ class CeriseSlayerOfFearTest extends BaseCardTest {
                 .containsExactly("Grizzly Bears");
     }
 
+    @Test
+    void seeksCardWithManaValueExactlyEqualToLifeGained() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setLibrary(player1, List.of(new Forest(), new LlanowarElves(), new GrizzlyBears()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    void seeksALandWhenItIsTheOnlyEligibleCard() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    void seeksOnlyOneCardWhenHighestManaValuesAreTied() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Forest()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Grizzly Bears", "Forest");
+    }
+
+    @Test
+    void doesNothingWithAnEmptyLibrary() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setLibrary(player1, List.of());
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotEnableTheTrigger() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        gd.lifeGainedThisTurn.put(player2.getId(), 2);
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsSecondMainPhase() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void usesLifeGainedByTheTimeTheAbilityResolves() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new GrizzlyBears()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    void doesNotTriggerAgainInAThirdMainPhase() {
+        harness.addToBattlefield(player1, new CeriseSlayerOfFear());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        gd.additionalCombatMainPhasePairs = 1;
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void advanceToPostcombatMain(Player activePlayer) {
         harness.setHand(activePlayer, List.of());
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
     }
 }

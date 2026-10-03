@@ -42,8 +42,7 @@ class CloudCoverTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(card -> card.getName().equals("Ancient Spider"))).isTrue();
+        harness.assertInHand(player1, "Ancient Spider");
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .anyMatch(permanent -> permanent.getId().equals(spiderId))).isFalse();
     }
@@ -137,8 +136,7 @@ class CloudCoverTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(card -> card.getName().equals("Sea Snidd"))).isTrue();
+        harness.assertInHand(player1, "Sea Snidd");
     }
 
     @Test
@@ -155,5 +153,62 @@ class CloudCoverTest extends BaseCardTest {
         harness.castInstant(player2, 0, cloudCoverId);
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void targetingOpponentsPermanentDoesNotTriggerCloudCover() {
+        harness.addToBattlefield(player1, new CloudCover());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new AncientSpider());
+        harness.setHand(player1, List.of(new Singe()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, spider.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void borrowedPermanentReturnsToOwnersHand() {
+        harness.addToBattlefield(player1, new CloudCover());
+        AncientSpider spiderCard = new AncientSpider();
+        spiderCard.setOwnerId(player2.getId());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, spiderCard);
+        harness.setHand(player2, List.of(new Singe()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, spider.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(spiderCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spiderCard);
+        harness.assertNotOnBattlefield(player1, "Ancient Spider");
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Singe");
+    }
+
+    @Test
+    void pendingTriggerStillReturnsPermanentAfterCloudCoverIsDestroyed() {
+        Permanent cloudCover = harness.addToBattlefieldAndReturn(player1, new CloudCover());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new AncientSpider());
+        harness.setHand(player2, List.of(new Singe(), new AuraBlast()));
+        harness.setLibrary(player2, List.of(new AncientSpider()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castInstant(player2, 0, spider.getId());
+        harness.castInstant(player2, 0, cloudCover.getId());
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Cloud Cover");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Ancient Spider");
+        harness.assertNotOnBattlefield(player1, "Ancient Spider");
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
     }
 }

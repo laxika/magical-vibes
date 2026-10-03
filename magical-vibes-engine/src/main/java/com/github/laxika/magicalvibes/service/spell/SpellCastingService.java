@@ -1218,6 +1218,14 @@ public class SpellCastingService {
         String modeCost = chosenModes.getFirst().manaCost();
         if (modeCost != null) {
             card.setManaCost(modeCost);
+            List<com.github.laxika.magicalvibes.model.CardColor> colors = new ArrayList<>();
+            if (modeCost.contains("W")) colors.add(com.github.laxika.magicalvibes.model.CardColor.WHITE);
+            if (modeCost.contains("U")) colors.add(com.github.laxika.magicalvibes.model.CardColor.BLUE);
+            if (modeCost.contains("B")) colors.add(com.github.laxika.magicalvibes.model.CardColor.BLACK);
+            if (modeCost.contains("R")) colors.add(com.github.laxika.magicalvibes.model.CardColor.RED);
+            if (modeCost.contains("G")) colors.add(com.github.laxika.magicalvibes.model.CardColor.GREEN);
+            card.setColors(colors);
+            card.setColor(colors.isEmpty() ? null : colors.getFirst());
         }
     }
 
@@ -4337,7 +4345,7 @@ public class SpellCastingService {
             targetLegalityService.validateSpellTargetGroupsAfterPrimary(
                     gameData, card, targetIds, playerId, effectiveXValue, true);
         } else if (!variableMixedTargetGroups && card.getMaxTargets() > 0 && !multipleSpellTargets
-                && (!targetIds.isEmpty() || (targetId == null
+                && (!targetIds.isEmpty() || needsSingleGraveyardTargeting || (targetId == null
                 && card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE))) {
             if (!modalTargetGroupSizes.isEmpty()) {
                 targetLegalityService.validateMultiSpellTargets(
@@ -5740,6 +5748,12 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, null,
                         null, null, null, List.of(), List.of()
                 ));
+            } else if (returnToBattlefieldEffect != null && !targetIds.isEmpty()
+                    && card.getSpellTargets().stream().anyMatch(group ->
+                    group.getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(), filteredSpellEffects, resolvedXValue,
+                        null, null, Map.of(), Zone.GRAVEYARD, List.copyOf(targetIds), List.of()));
             } else if (returnToBattlefieldEffect != null && !returnToBattlefieldEffect.xScaled()) {
                 int targetXValue = resolvedXValue;
                 List<UUID> graveyardOwners = switch (returnToBattlefieldEffect.source()) {
@@ -5755,13 +5769,24 @@ public class SpellCastingService {
                         returnToBattlefieldEffect.dynamicMaxTargets(),
                         new com.github.laxika.magicalvibes.service.effect.AmountContext(
                                 playerId, null, null, resolvedXValue, 0)));
+                int returnTargetGroupIndex = card.getEffectTargetIndex(returnToBattlefieldEffect);
+                GraveyardCardPredicateTargetFilter returnTargetFilter = returnTargetGroupIndex >= 0
+                        && returnTargetGroupIndex < card.getSpellTargets().size()
+                        && card.getSpellTargets().get(returnTargetGroupIndex).getFilter()
+                        instanceof GraveyardCardPredicateTargetFilter filter
+                        ? filter : null;
                 long matchingCount = graveyardOwners.stream()
                         .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
                                 .filter(c -> !returnToBattlefieldEffect.fromBattlefieldThisTurn()
                                         || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                                         .getOrDefault(ownerId, Set.of()).contains(c.getId()))
                                 .filter(c -> !returnToBattlefieldEffect.hasTotalManaValueCap()
-                                        || c.getManaValue() <= returnToBattlefieldEffect.maxTotalManaValue()))
+                                        || c.getManaValue() <= returnToBattlefieldEffect.maxTotalManaValue())
+                                .filter(c -> returnTargetFilter == null
+                                        || returnTargetFilter.minimumPoisonCounters() == null
+                                        || ownerId.equals(playerId)
+                                        || gameData.playerPoisonCounters.getOrDefault(ownerId, 0)
+                                        >= returnTargetFilter.minimumPoisonCounters()))
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(
                                 c, returnToBattlefieldEffect.filter(), card.getId(), gameData,
                                 playerId, null, null, targetXValue))
@@ -9566,6 +9591,11 @@ public class SpellCastingService {
 
     /** Plays a land discarded with madness, whose alternate timing ignores normal land timing. */
     public boolean playLandFromMadness(GameData gameData, Player player, UUID exileCardId) {
+        return playLandFromExileDuringResolution(gameData, player, exileCardId);
+    }
+
+    /** Plays an exiled land when a resolving effect permits it, retaining land-play restrictions. */
+    public boolean playLandFromExileDuringResolution(GameData gameData, Player player, UUID exileCardId) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -9582,7 +9612,7 @@ public class SpellCastingService {
                 false, false, false, false, false);
         Card landFace = selectedModalDoubleFacedLandFace(card, 0);
         if (landCopyOnEnterService.prepare(gameData, player.getId(), card, landFace,
-                true, entersTapped, " from exile for its madness cost.", Zone.EXILE)) {
+                true, entersTapped, " from exile.", Zone.EXILE)) {
             return true;
         }
 
@@ -9595,7 +9625,7 @@ public class SpellCastingService {
         gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
         gameLogService.append(gameData,
                 GameLog.playerPlays(player.getUsername(), landFace,
-                        " from exile for its madness cost."));
+                        " from exile."));
         log.info("Game {} - {} plays {} from exile for its madness cost",
                 gameData.id, player.getUsername(), landFace.getName());
         battlefieldEntryService.putLandOntoBattlefield(gameData, player.getId(), permanent, Zone.EXILE);
@@ -9922,6 +9952,9 @@ public class SpellCastingService {
         }
 
         if (card.hasType(CardType.LAND)) {
+            if (!castingPermissionService.canPlayLandNow(gameData, playerId, card)) {
+                throw new IllegalStateException("Cannot play a land from exile now");
+            }
             boolean entersTapped = gameData.exileCardsEnterTapped.remove(exileCardId);
             commitExileCast(gameData, playerId, exileCardId, sourceFreeCast,
                     collectionCounterPermission, copy, directExilePlayPermission, fromOutsideGame);
@@ -10078,7 +10111,8 @@ public class SpellCastingService {
         boolean needsExileTargeting = exileTargetingEffect != null;
         boolean targetIsExiledCard = targetId != null && gameData.findExiledCard(targetId) != null;
 
-        if (targetId == null && targetIds.isEmpty() && EffectResolution.needsTarget(card)
+        if (targetId == null && targetIds.isEmpty()
+                && EffectResolution.needsSpellCastTarget(effectsToResolve, card.isAura(), card.isEnchantPlayer())
                 && !EffectResolution.needsSpellTarget(effectsToResolve)
                 && !EffectResolution.needsDamageDistribution(effectsToResolve)
                 && !(needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || needsExileTargeting)) {
@@ -11396,6 +11430,9 @@ public class SpellCastingService {
     private List<ManaColor> collectConvokeContributions(GameData gameData, UUID playerId, Card card,
                                                          List<UUID> convokeCreatureIds,
                                                          boolean hasConvoke, boolean hasImprovise) {
+        if (new HashSet<>(convokeCreatureIds).size() != convokeCreatureIds.size()) {
+            throw new IllegalStateException("A permanent cannot be tapped twice to pay for convoke or improvise");
+        }
         List<ManaColor> contributions = new ArrayList<>();
         Map<ManaColor, Integer> remainingColored = new EnumMap<>(ManaColor.class);
         if (card.getManaCost() != null) {

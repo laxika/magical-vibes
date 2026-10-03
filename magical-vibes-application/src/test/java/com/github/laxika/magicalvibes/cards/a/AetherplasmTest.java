@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.i.IzzetSignet;
+import com.github.laxika.magicalvibes.cards.r.Repeal;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Aetherplasm.class, GhostWarden.class, IzzetSignet.class})
+@CardUsed({Aetherplasm.class, GhostWarden.class, IzzetSignet.class, Repeal.class})
 class AetherplasmTest extends BaseCardTest {
 
     @Test
@@ -100,6 +102,57 @@ class AetherplasmTest extends BaseCardTest {
         assertThat(replacement.isBlocking()).isTrue();
         assertThat(replacement.getBlockingTargetIds()).containsExactly(attacker.getId());
         assertThat(attacker.isBlockedWithoutBlockers()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Aetherplasm can return itself as the replacement without triggering again")
+    void returnedAetherplasmCanEnterBlockingWithoutAnotherTrigger() {
+        Permanent attacker = addCreatureReady(player1, new GhostWarden());
+        Permanent aetherplasm = addCreatureReady(player2, new Aetherplasm());
+        harness.setHand(player2, List.of());
+
+        declareBlock(attacker, aetherplasm);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        Permanent replacement = findPermanent(player2, "Aetherplasm");
+        assertThat(replacement.getId()).isNotEqualTo(aetherplasm.getId());
+        assertThat(replacement.isBlocking()).isTrue();
+        assertThat(replacement.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({Aetherplasm.class, GhostWarden.class, Repeal.class})
+    @DisplayName("Aetherplasm removed in response cannot put a replacement onto the battlefield")
+    void cannotReplaceAetherplasmWhenItWasAlreadyReturnedInResponse() {
+        Permanent attacker = addCreatureReady(player1, new GhostWarden());
+        Permanent aetherplasm = addCreatureReady(player2, new Aetherplasm());
+        Card replacementCard = new GhostWarden();
+        harness.setHand(player2, List.of(replacementCard));
+        harness.setHand(player1, List.of(new Repeal()));
+        harness.setLibrary(player1, List.of(new GhostWarden()));
+
+        declareBlock(attacker, aetherplasm);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castInstant(player1, 0, 4, aetherplasm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aetherplasm);
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactlyInAnyOrder(aetherplasm.getCard(), replacementCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private void declareBlock(Permanent attacker, Permanent blocker) {

@@ -20,8 +20,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BountyOfTheHunt.class, DoublingSeason.class, FountainOfYouth.class, GrizzlyBears.class,
-        HillGiant.class, Solemnity.class})
+@CardUsed({BountyOfTheHunt.class, FountainOfYouth.class, GrizzlyBears.class, HillGiant.class})
 class BountyOfTheHuntTest extends BaseCardTest {
 
     @Test
@@ -71,9 +70,7 @@ class BountyOfTheHuntTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -94,8 +91,7 @@ class BountyOfTheHuntTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -156,6 +152,7 @@ class BountyOfTheHuntTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(DoublingSeason.class)
     @DisplayName("Cleanup removes all counters actually put by a counter-doubling replacement")
     void cleanupRemovesAllCountersActuallyPut() {
         harness.addToBattlefield(player1, new DoublingSeason());
@@ -166,13 +163,13 @@ class BountyOfTheHuntTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
         harness.passBothPriorities();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
+    @CardUsed(Solemnity.class)
     @DisplayName("Does not remove existing counters when Solemnity prevents placement")
     void doesNotRemoveExistingCountersWhenPlacementIsPrevented() {
         harness.addToBattlefield(player1, new Solemnity());
@@ -184,9 +181,50 @@ class BountyOfTheHuntTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotRedistributeCountersWhenOneTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new BountyOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castInstant(player1, 0, Map.of(first.getId(), 2, second.getId(), 1));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        harness.passBothPriorities();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotAssignZeroCountersToATarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new BountyOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                Map.of(first.getId(), 3, second.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canExileAnotherBountyOfTheHuntForTheAlternateCost() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BountyOfTheHunt(), new BountyOfTheHunt()));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 0, Map.of(bears.getId(), 3), 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

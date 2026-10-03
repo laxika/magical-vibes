@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "75")
+@CardRegistration(set = "ONC", collectorNumber = "96")
 public class PlagueStinger extends Card {
 }

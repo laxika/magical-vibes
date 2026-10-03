@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "M3C", collectorNumber = "345")
 @CardRegistration(set = "MKC", collectorNumber = "263")
 @CardRegistration(set = "LCC", collectorNumber = "333")
+@CardRegistration(set = "ONC", collectorNumber = "155")
 public class FurycalmSnarl extends Card {
 
     public FurycalmSnarl() {

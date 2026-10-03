@@ -80,6 +80,41 @@ class AetherStingTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
     }
 
+    @Test
+    @DisplayName("Does not trigger when an opponent's creature enters without being cast")
+    void creatureEnteringWithoutBeingCastDoesNotTrigger() {
+        setUpOpponentTurn();
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.enterBattlefieldAndReturn(player2, new HulkingOgre());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hulking Ogre");
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Aether Sting controlled by the second player damages the first player")
+    void secondPlayerSourceDamagesFirstPlayer() {
+        harness.addToBattlefield(player2, new AetherSting());
+        int casterLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player1, new HulkingOgre(), "{2}{R}");
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, casterLifeBefore - 1);
+        harness.assertLife(player2, controllerLifeBefore);
+        harness.assertNotOnBattlefield(player1, "Hulking Ogre");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hulking Ogre");
+        harness.assertLife(player1, casterLifeBefore - 1);
+    }
+
     private void setUpOpponentTurn() {
         harness.addToBattlefield(player1, new AetherSting());
         harness.forceActivePlayer(player2);

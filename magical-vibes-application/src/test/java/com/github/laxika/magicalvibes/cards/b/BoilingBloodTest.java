@@ -119,4 +119,25 @@ class BoilingBloodTest extends BaseCardTest {
         assertThat(target.isAttackedThisTurn()).isFalse();
         assertThat(target.isMustAttackThisTurn()).isTrue();
     }
+
+    @Test
+    @DisplayName("A summoning-sick target is not forced to attack, but the caster still draws")
+    void summoningSickTargetDoesNotAttackAndCasterDraws() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishKnight());
+        target.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new BoilingBlood()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new BenalishKnight()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player1, "Benalish Knight");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        declareAttackers(player2, List.of());
+        assertThat(target.isAttackedThisTurn()).isFalse();
+    }
 }

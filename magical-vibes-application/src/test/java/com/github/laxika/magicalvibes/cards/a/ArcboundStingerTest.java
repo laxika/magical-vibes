@@ -20,10 +20,7 @@ class ArcboundStingerTest extends BaseCardTest {
 
     @Test
     void entersWithOnePlusOneCounter() {
-        harness.setHand(player1, List.of(new ArcboundStinger()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArcboundStinger(), "{2}");
         harness.passBothPriorities();
 
         Permanent stinger = findPermanent(player1, "Arcbound Stinger");
@@ -108,6 +105,51 @@ class ArcboundStingerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modularTransfersAllCountersPresentAtDeath() {
+        Permanent stinger = addCreatureReady(player1, new ArcboundStinger());
+        stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        gargoyle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyStinger(stinger);
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Arcbound Stinger");
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    void modularDoesNotOfferChoiceWithoutLegalArtifactCreatureTarget() {
+        Permanent stinger = addCreatureReady(player1, new ArcboundStinger());
+        stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent glaivemaster = addCreatureReady(player1, new AuriokGlaivemaster());
+
+        destroyStinger(stinger);
+
+        harness.assertInGraveyard(player1, "Arcbound Stinger");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(glaivemaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modularPromptDescribesPlusOneCounters() {
+        Permanent stinger = addCreatureReady(player1, new ArcboundStinger());
+        stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        destroyStinger(stinger);
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice.description()).contains("+1/+1").doesNotContain("-1/-1");
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     private void destroyStinger(Permanent stinger) {

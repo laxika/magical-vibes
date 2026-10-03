@@ -18,7 +18,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param scope  which creature(s) can't attack this turn
  * @param filter optional predicate narrowing the scanned scopes (null = no restriction)
  */
-public record CantAttackThisTurnEffect(TapUntapScope scope, PermanentPredicate filter) implements CardEffect {
+public record CantAttackThisTurnEffect(TapUntapScope scope, PermanentPredicate filter,
+                                      GrantDuration duration) implements CardEffect {
+
+    public CantAttackThisTurnEffect(TapUntapScope scope, PermanentPredicate filter) {
+        this(scope, filter, GrantDuration.END_OF_TURN);
+    }
 
     public CantAttackThisTurnEffect(TapUntapScope scope) {
         this(scope, null);

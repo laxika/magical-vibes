@@ -58,6 +58,69 @@ class BolgEreborsReckoningTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Creatures entering before resolution are affected, but later creatures are not")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        addCreatureReady(player1, new BolgEreborsReckoning());
+        advanceToBeginningOfCombat(player1);
+
+        Permanent goblin = addCreatureReady(player1, new ZhurTaaGoblin());
+        Permanent opponent = addCreatureReady(player2, new HillGiant());
+        harness.passBothPriorities();
+
+        Permanent lateGoblin = addCreatureReady(player1, new ZhurTaaGoblin());
+        Permanent lateOpponent = addCreatureReady(player2, new HillGiant());
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lateGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lateOpponent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lateOpponent)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The combat ability still resolves after Bolg leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        Permanent bolg = addCreatureReady(player1, new BolgEreborsReckoning());
+        Permanent goblin = addCreatureReady(player1, new ZhurTaaGoblin());
+        Permanent opponent = addCreatureReady(player2, new HillGiant());
+        advanceToBeginningOfCombat(player1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(bolg);
+        gd.playerGraveyards.get(player1.getId()).add(bolg.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Combat modifiers expire at cleanup")
+    void modifiersExpireAtEndOfTurn() {
+        addCreatureReady(player1, new BolgEreborsReckoning());
+        Permanent goblin = addCreatureReady(player1, new ZhurTaaGoblin());
+        Permanent opponent = addCreatureReady(player2, new HillGiant());
+        advanceToBeginningOfCombat(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(3);
+    }
+
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

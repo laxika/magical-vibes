@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BaruWurmspeaker.class, ArmadaWurm.class, GrizzlyBears.class})
 class BaruWurmspeakerTest extends BaseCardTest {
@@ -19,10 +20,10 @@ class BaruWurmspeakerTest extends BaseCardTest {
     @Test
     @DisplayName("Wurms you control get +2/+2 and trample")
     void boostsOwnWurms() {
-        Permanent baru = addReady(player1, new BaruWurmspeaker());
-        Permanent wurm = addReady(player1, new ArmadaWurm());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent opponentWurm = addReady(player2, new ArmadaWurm());
+        Permanent baru = addCreatureReady(player1, new BaruWurmspeaker());
+        Permanent wurm = addCreatureReady(player1, new ArmadaWurm());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentWurm = addCreatureReady(player2, new ArmadaWurm());
 
         assertThat(gqs.getEffectivePower(gd, baru)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, baru)).isEqualTo(3);
@@ -39,8 +40,8 @@ class BaruWurmspeakerTest extends BaseCardTest {
     @Test
     @DisplayName("Activates for only the colored mana when a Wurm has power seven")
     void createsWurmWithGreatestPowerCostReduction() {
-        Permanent baru = addReady(player1, new BaruWurmspeaker());
-        addReady(player1, new ArmadaWurm());
+        Permanent baru = addCreatureReady(player1, new BaruWurmspeaker());
+        addCreatureReady(player1, new ArmadaWurm());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         int baruIndex = gd.playerBattlefields.get(player1.getId()).indexOf(baru);
@@ -59,10 +60,84 @@ class BaruWurmspeakerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
     }
 
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player,
-                               com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void paysFullCostWithoutOwnWurmsAndTokenLosesBoostWhenBaruLeaves() {
+        Permanent baru = addCreatureReady(player1, new BaruWurmspeaker());
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(baru.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Wurm");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(baru);
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void ownTokenReducesNextActivationToOneGenericAndOneGreen() {
+        Permanent baru = addCreatureReady(player1, new BaruWurmspeaker());
+        harness.addMana(player1, ManaColor.GREEN, 8);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        baru.setTapped(false);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Wurm")).isEqualTo(2);
+    }
+
+    @Test
+    void opposingWurmDoesNotReduceActivationCost() {
+        addCreatureReady(player1, new BaruWurmspeaker());
+        addCreatureReady(player2, new ArmadaWurm());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Wurm")).isZero();
+    }
+
+    @Test
+    void reductionCannotPayColoredMana() {
+        addCreatureReady(player1, new BaruWurmspeaker());
+        addCreatureReady(player1, new ArmadaWurm());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new BaruWurmspeaker());
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateTwiceWithoutUntapping() {
+        addCreatureReady(player1, new BaruWurmspeaker());
+        harness.addMana(player1, ManaColor.GREEN, 10);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Wurm")).isEqualTo(1);
     }
 }

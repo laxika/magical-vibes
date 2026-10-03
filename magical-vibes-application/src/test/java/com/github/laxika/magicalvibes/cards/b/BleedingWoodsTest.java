@@ -61,6 +61,45 @@ class BleedingWoodsTest extends BaseCardTest {
         assertThat(woods.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Enters untapped when its controller is below 13 life")
+    void entersUntappedWhenControllerIsBelowThirteenLife() {
+        playWoods(7, 20);
+
+        assertThat(findWoods(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when an opponent is below 13 life")
+    void entersUntappedWhenOpponentIsBelowThirteenLife() {
+        playWoods(20, 7);
+
+        assertThat(findWoods(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Dropping to 13 life after entry does not untap the land")
+    void lifeLossAfterEntryDoesNotUntapLand() {
+        playWoods(20, 20);
+
+        harness.setLife(player2, 13);
+
+        assertThat(findWoods(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Rising above 13 life after entry does not tap the land")
+    void lifeGainAfterEntryDoesNotTapLand() {
+        playWoods(13, 20);
+
+        harness.setLife(player1, 20);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(findWoods(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void playWoods(int controllerLife, int opponentLife) {
         harness.setLife(player1, controllerLife);
         harness.setLife(player2, opponentLife);
@@ -69,9 +108,8 @@ class BleedingWoodsTest extends BaseCardTest {
     }
 
     private Permanent addWoodsReady(Player player) {
-        Permanent woods = new Permanent(new BleedingWoods());
+        Permanent woods = harness.addToBattlefieldAndReturn(player, new BleedingWoods());
         woods.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(woods);
         return woods;
     }
 

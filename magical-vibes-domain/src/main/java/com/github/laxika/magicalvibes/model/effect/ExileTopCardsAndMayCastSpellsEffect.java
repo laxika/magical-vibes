@@ -25,8 +25,26 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         boolean putUncastCardsOnBottomRandom,
         boolean putUncastCardsIntoHand,
         CardPredicate uncastCardsToHandFilter,
-        Integer totalManaValueLimit
+        Integer totalManaValueLimit,
+        boolean normalCost
 ) implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
+
+    public ExileTopCardsAndMayCastSpellsEffect(int count, DynamicAmount dynamicCount, LibraryScope scope,
+                                               boolean trackWithSource, boolean faceDown,
+                                               DynamicAmount manaValueLimit, CardPredicate castFilter,
+                                               int maxCastCount, boolean targetedOpponent,
+                                               boolean putUncastCardsOnBottomRandom, boolean putUncastCardsIntoHand,
+                                               CardPredicate uncastCardsToHandFilter, Integer totalManaValueLimit) {
+        this(count, dynamicCount, scope, trackWithSource, faceDown, manaValueLimit, castFilter, maxCastCount,
+                targetedOpponent, putUncastCardsOnBottomRandom, putUncastCardsIntoHand,
+                uncastCardsToHandFilter, totalManaValueLimit, false);
+    }
+
+    /** Exiles cards and allows each to be played immediately while paying its normal costs. */
+    public static ExileTopCardsAndMayCastSpellsEffect controllerMayPlayWithNormalCost(int count) {
+        return new ExileTopCardsAndMayCastSpellsEffect(count, null, LibraryScope.CONTROLLER, false, false,
+                null, null, Integer.MAX_VALUE, false, false, false, null, null, true);
+    }
 
     /** Exiles the top {@code count} cards of the controller's library. */
     public ExileTopCardsAndMayCastSpellsEffect(int count) {

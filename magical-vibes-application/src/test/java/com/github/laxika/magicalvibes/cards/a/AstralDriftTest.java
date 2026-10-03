@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.c.Compulsion;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GusthasScepter;
+import com.github.laxika.magicalvibes.cards.m.MotherBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AstralDrift.class, Censor.class, Compulsion.class, GrizzlyBears.class, GusthasScepter.class})
+@CardUsed({AstralDrift.class, Censor.class, Compulsion.class, GrizzlyBears.class, GusthasScepter.class, MotherBear.class})
 class AstralDriftTest extends BaseCardTest {
 
     @Test
@@ -102,6 +103,7 @@ class AstralDriftTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Censor()));
         harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -111,10 +113,104 @@ class AstralDriftTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
     }
 
+    @Test
+    @CardUsed({AstralDrift.class, MotherBear.class})
+    @DisplayName("Cycling Astral Drift from hand triggers exile before drawing")
+    void cyclingAstralDriftItselfTriggers() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new MotherBear());
+        harness.setHand(player1, List.of(new AstralDrift()));
+        harness.setLibrary(player1, List.of(new MotherBear()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Mother Bear");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Mother Bear");
+        harness.assertInGraveyard(player1, "Astral Drift");
+        advanceToEndStep();
+        harness.assertOnBattlefield(player2, "Mother Bear");
+    }
+
+    @Test
+    @DisplayName("The return at the next end step uses the stack")
+    void endStepReturnWaitsForDelayedTriggerToResolve() {
+        harness.addToBattlefield(player1, new AstralDrift());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Censor()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isNotEmpty();
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent cycling a card does not trigger your Astral Drift")
+    void opponentCyclingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AstralDrift());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Censor()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Cycling during an end step delays the return until the next turn's end step")
+    void cyclingDuringEndStepReturnsNextTurn() {
+        harness.addToBattlefield(player1, new AstralDrift());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Censor()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

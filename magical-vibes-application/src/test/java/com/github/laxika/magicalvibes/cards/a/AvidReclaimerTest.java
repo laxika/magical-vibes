@@ -7,11 +7,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({AvidReclaimer.class, NissaGenesisMage.class})
 class AvidReclaimerTest extends BaseCardTest {
 
     @Test
@@ -58,7 +63,7 @@ class AvidReclaimerTest extends BaseCardTest {
     @Test
     @DisplayName("Does not gain life when opponent controls the Nissa")
     void noLifeGainWhenOpponentHasNissa() {
-        Permanent reclaimer = addCreatureReady(player1, new AvidReclaimer());
+        addCreatureReady(player1, new AvidReclaimer());
         addReadyNissa(player2, 5);
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -68,12 +73,75 @@ class AvidReclaimerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
+    @Test
+    void blueManaAlsoGainsLifeWithNissa() {
+        Permanent reclaimer = addCreatureReady(player1, new AvidReclaimer());
+        addReadyNissa(player1, 5);
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(reclaimer.isTapped()).isTrue();
+    }
+
+    @Test
+    void nissaInHandDoesNotGrantLifeGain() {
+        addCreatureReady(player1, new AvidReclaimer());
+        harness.setHand(player1, List.of(new NissaGenesisMage()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void cannotActivateOtherColorAfterTapping() {
+        addCreatureReady(player1, new AvidReclaimer());
+        addReadyNissa(player1, 5);
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    void summoningSicknessPreventsBothManaChoices() {
+        harness.addToBattlefield(player1, new AvidReclaimer());
+        addReadyNissa(player1, 5);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyNissa(Player player, int loyalty) {
-        NissaGenesisMage card = new NissaGenesisMage();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new NissaGenesisMage());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrawlingChorus;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,14 +9,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AtraxasSkitterfang.class, CrawlingChorus.class})
 class AtraxasSkitterfangTest extends BaseCardTest {
 
     @Test
@@ -38,7 +42,7 @@ class AtraxasSkitterfangTest extends BaseCardTest {
     @DisplayName("Accepting the combat trigger removes an oil counter and grants the chosen keyword")
     void acceptsCombatTriggerAndGrantsChosenKeyword() {
         Permanent skitterfang = addSkitterfang(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CrawlingChorus());
         advanceToCombat(player1);
         harness.passBothPriorities();
 
@@ -55,8 +59,8 @@ class AtraxasSkitterfangTest extends BaseCardTest {
     @DisplayName("The combat trigger only offers creatures controlled by its controller")
     void onlyOffersControlledCreatures() {
         addSkitterfang(player1);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CrawlingChorus());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new CrawlingChorus());
         advanceToCombat(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -85,7 +89,7 @@ class AtraxasSkitterfangTest extends BaseCardTest {
     @DisplayName("The chosen keyword wears off at end of turn")
     void chosenKeywordWearsOffAtEndOfTurn() {
         addSkitterfang(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CrawlingChorus());
         advanceToCombat(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -97,8 +101,7 @@ class AtraxasSkitterfangTest extends BaseCardTest {
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
@@ -113,6 +116,47 @@ class AtraxasSkitterfangTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = Keyword.class, names = {"FLYING", "VIGILANCE", "DEATHTOUCH", "LIFELINK"})
+    @DisplayName("Each offered keyword can be granted to Skitterfang itself")
+    void grantsEachKeywordToItself(Keyword keyword) {
+        Permanent skitterfang = addSkitterfang(player1);
+        skitterfang.setCounterCount(CounterType.OIL, 1);
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(skitterfang.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(gqs.hasKeyword(gd, skitterfang, keyword)).isFalse();
+
+        harness.handlePermanentChosen(player1, skitterfang.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, skitterfang, keyword)).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, keyword.name());
+
+        assertThat(gqs.hasKeyword(gd, skitterfang, keyword)).isTrue();
+        assertThat(skitterfang.getCounterCount(CounterType.OIL)).isZero();
+    }
+
+    @Test
+    @DisplayName("No oil counters means no reflexive trigger or keyword grant")
+    void cannotGrantKeywordWithoutOil() {
+        Permanent skitterfang = addSkitterfang(player1);
+        skitterfang.setCounterCount(CounterType.OIL, 0);
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(skitterfang.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gqs.hasKeyword(gd, skitterfang, Keyword.FLYING)).isFalse();
+    }
+
     private Permanent addSkitterfang(Player player) {
         Permanent skitterfang = harness.addToBattlefieldAndReturn(player, new AtraxasSkitterfang());
         skitterfang.setCounterCount(CounterType.OIL, 3);
@@ -122,7 +166,6 @@ class AtraxasSkitterfangTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 }

@@ -15,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GloriousAnthem extends Card {
 
     public GloriousAnthem() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
     }
 }

@@ -16,6 +16,63 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BellowingBruiserTest extends BaseCardTest {
 
     @Test
+    void adventureCanTargetOneCreatureYouControlWithoutAffectingOthers() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BellowingBruiser());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new BellowingBruiser());
+        BellowingBruiser card = new BellowingBruiser();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void adventureCannotTargetThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BellowingBruiser());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BellowingBruiser());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new BellowingBruiser());
+        harness.setHand(player1, List.of(new BellowingBruiser()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventureCannotChooseTheSameCreatureTwice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BellowingBruiser());
+        harness.setHand(player1, List.of(new BellowingBruiser()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0,
+                List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void creatureCanAttackTheTurnItIsCast() {
+        harness.setHand(player1, List.of(new BellowingBruiser()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent creature = findPermanent(player1, "Bellowing Bruiser");
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
+    @Test
     void adventureMakesUpToTwoCreaturesUnableToBlockThisTurn() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

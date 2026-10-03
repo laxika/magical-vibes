@@ -68,14 +68,13 @@ class ChainOfVaporTest extends BaseCardTest {
     @DisplayName("Declining the sacrifice creates no copy")
     void decliningSacrificeCreatesNoCopy() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
         castAt(target.getId());
 
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(land.getId()));
+        harness.assertOnBattlefield(player2, "Island");
     }
 
     @Test
@@ -144,6 +143,104 @@ class ChainOfVaporTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Keeping the copy's original target makes it fail to resolve after that target was bounced")
+    void unchangedCopyTargetDoesNotOfferAnotherSacrifice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player1, new GlorySeeker());
+        castAt(target.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, sacrificedLand.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertOnBattlefield(player1, "Glory Seeker");
+        harness.assertInHand(player2, "Glory Seeker");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Chain of Vapor");
+    }
+
+    @Test
+    @DisplayName("A copy can itself be copied by its target's controller")
+    void copyCanContinueTheChain() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        Permanent thirdTarget = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        castAt(firstTarget.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, firstLand.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, secondTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, secondLand.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, thirdTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName()).containsExactlyInAnyOrder("Glory Seeker", "Glory Seeker");
+        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInGraveyard(player2, "Island");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal original target prevents both the bounce and the sacrifice choice")
+    void targetLeavingBeforeResolutionPreventsSacrifice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new ChainOfVapor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertInHand(player2, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Chain of Vapor");
+    }
+
+    @Test
+    @DisplayName("A stolen permanent returns to its owner but offers the sacrifice to its controller")
+    void ownerAndControllerAreHandledSeparately() {
+        GlorySeeker creature = new GlorySeeker();
+        creature.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, creature);
+        harness.addToBattlefield(player2, new Island());
+        castAt(target.getId());
+
+        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertNotInHand(player2, "Glory Seeker");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.assertOnBattlefield(player2, "Island");
     }
 
     private void castAt(java.util.UUID targetId) {

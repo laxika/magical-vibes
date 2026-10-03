@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCre
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesInAllZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnLandsAndLandCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToOwnLandsAndLandCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -1826,6 +1827,17 @@ public class LayerSystemService {
                                     subtype, false, false, null, null));
                         }));
             }
+            case GrantSupertypeToOwnLandsAndLandCardsEffect grant -> {
+                manage(board, instance);
+                applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                        (target, harvested) -> harvested.getGrantedSupertypes().stream().findFirst().ifPresent(supertype -> {
+                            CharacteristicState state = states.get(target.permanent().getId());
+                            if (state == null) return;
+                            state.addSupertype(supertype);
+                            record(board, instance, target, new L4Contribution(
+                                    null, false, false, null, supertype));
+                        }));
+            }
             case GrantChosenBasicLandTypeToOwnLandsEffect ignored -> {
                 manage(board, instance);
                 if (instance.source() == null) return;
@@ -2539,13 +2551,19 @@ public class LayerSystemService {
         for (TextReplacement replacement : permanent.getTextReplacements()) {
             CardSubtype from = TextChangeTransformer.basicLandTypeForWord(replacement.fromWord());
             CardSubtype to = TextChangeTransformer.basicLandTypeForWord(replacement.toWord());
+            boolean landTypeReplacement = from != null && to != null;
+            if (!landTypeReplacement) {
+                from = TextChangeTransformer.creatureTypeForWord(replacement.fromWord());
+                to = TextChangeTransformer.creatureTypeForWord(replacement.toWord());
+            }
             if (from == null || to == null || !state.hasSubtype(from)) {
                 continue;
             }
-            state.removeSubtypesIf(subtype -> subtype == from);
+            CardSubtype replacedSubtype = from;
+            state.removeSubtypesIf(subtype -> subtype == replacedSubtype);
             state.addSubtype(to);
             if (state.hasCardType(CardType.LAND)) {
-                landTypeOverrides.put(permanent.getId(), List.of(to));
+                if (landTypeReplacement) landTypeOverrides.put(permanent.getId(), List.of(to));
             }
         }
     }

@@ -30,9 +30,7 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
     }
 
     private Permanent addAsmira() {
-        Permanent asmira = new Permanent(new AsmiraHolyAvenger());
-        gd.playerBattlefields.get(player1.getId()).add(asmira);
-        return asmira;
+        return harness.addToBattlefieldAndReturn(player1, new AsmiraHolyAvenger());
     }
 
     @Test
@@ -47,7 +45,7 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ignores creatures that died under an opponent's control")
+    @DisplayName("Ignores creatures put into an opponent's graveyard")
     void ignoresOpponentDeaths() {
         Permanent asmira = addAsmira();
         gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 1, Integer::sum);
@@ -104,5 +102,70 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
         advanceToEndStepAndResolve(player1);
 
         assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts creatures that died before Asmira entered the battlefield")
+    void countsDeathsBeforeEntering() {
+        Permanent falcon = addCreatureReady(player1, new BayFalcon());
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Bay Falcon");
+
+        harness.castFromHand(player1, new AsmiraHolyAvenger(), "{2}{G}{W}");
+        harness.passBothPriorities();
+        Permanent asmira = findPermanent(player1, "Asmira, Holy Avenger");
+
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts a creature that dies in response to the end-step trigger")
+    void countsDeathsWhileTriggerIsOnStack() {
+        Permanent asmira = addAsmira();
+        Permanent falcon = addCreatureReady(player1, new BayFalcon());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Bay Falcon");
+        resolveAllTriggers();
+
+        assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts your creature that dies while an opponent controls it")
+    void countsOwnCreatureControlledByOpponent() {
+        Permanent asmira = addAsmira();
+        Permanent falcon = addCreatureReady(player1, new BayFalcon());
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castInstant(player2, 0, falcon.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Bay Falcon");
+        harness.assertInGraveyard(player1, "Bay Falcon");
+
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,10 +24,7 @@ class BenthicDjinnTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BenthicDjinn());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -46,10 +42,7 @@ class BenthicDjinnTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BenthicDjinn());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -84,5 +77,55 @@ class BenthicDjinnTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each Benthic Djinn triggers separately during its controller's upkeep")
+    void multipleDjinnEachLoseTwoLife() {
+        harness.addToBattlefield(player1, new BenthicDjinn());
+        harness.addToBattlefield(player1, new BenthicDjinn());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opposing controller loses life only from their own Djinn")
+    void opposingControllerLosesLifeOnTheirUpkeep() {
+        harness.addToBattlefield(player1, new BenthicDjinn());
+        harness.addToBattlefield(player2, new BenthicDjinn());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An Island controlled only by the attacker does not prevent blocking")
+    void attackersIslandDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent blocker = addCreatureReady(player2, new BenthicDjinn());
+        Permanent attacker = addCreatureReady(player1, new BenthicDjinn());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

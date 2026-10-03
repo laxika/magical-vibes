@@ -20,11 +20,7 @@ class AcornHarvestTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Acorn Harvest creates two 1/1 green Squirrel tokens")
     void createsTwoSquirrelTokens() {
-        harness.setHand(player1, List.of(new AcornHarvest()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AcornHarvest(), "{3}{G}");
         harness.passBothPriorities();
 
         List<Permanent> squirrels = findPermanents(player1, "Squirrel");
@@ -36,6 +32,35 @@ class AcornHarvestTest extends BaseCardTest {
             assertThat(squirrel.getCard().getSubtypes()).contains(CardSubtype.SQUIRREL);
             assertThat(squirrel.getCard().isToken()).isTrue();
         });
+    }
+
+    @Test
+    @DisplayName("A normally cast Acorn Harvest can be flashed back once from its graveyard")
+    void normalCastThenFlashback() {
+        harness.castFromHand(player1, new AcornHarvest(), "{3}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Acorn Harvest");
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFlashback(player1, 0);
+
+        harness.assertLife(player1, 17);
+        harness.assertNotInGraveyard(player1, "Acorn Harvest");
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(4);
+        harness.assertLife(player1, 17);
+        harness.assertNotInGraveyard(player1, "Acorn Harvest");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .singleElement().satisfies(card -> assertThat(card.getName()).isEqualTo("Acorn Harvest"));
     }
 
     @Test

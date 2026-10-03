@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -51,6 +50,73 @@ class BrightPalmSoulAwakenerTest extends BaseCardTest {
         resolveEtbTargeting(brightPalm);
 
         assertThat(brightPalm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        brightPalm.setSummoningSick(false);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(brightPalm)));
+        harness.handlePermanentChosen(player1, brightPalm.getId());
+        harness.passBothPriorities();
+
+        assertThat(brightPalm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Bright-Palm can double counters on an opponent's nonattacking creature")
+    void intrinsicAttackTriggerTargetsOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent brightPalm = castBrightPalm();
+        resolveEtbTargeting(target);
+        brightPalm.setSummoningSick(false);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(brightPalm)));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(brightPalm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A target with no counters still receives the blocking restriction")
+    void zeroCountersStillRestrictsBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent brightPalm = castBrightPalm();
+        resolveEtbTargeting(brightPalm);
+        brightPalm.setSummoningSick(false);
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(brightPalm)));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Bright-Palm receiving backup has two independently targeted attack triggers")
+    void backupAddsAnIndependentAttackTrigger() {
+        Permanent opponentBrightPalm = addCreatureReady(player2, new BrightPalmSoulAwakener());
+        Permanent ownBrightPalm = castBrightPalm();
+        resolveEtbTargeting(opponentBrightPalm);
+
+        declareAttackers(player2, List.of(
+                gd.playerBattlefields.get(player2.getId()).indexOf(opponentBrightPalm)));
+        harness.handlePermanentChosen(player2, opponentBrightPalm.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player2, ownBrightPalm.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(opponentBrightPalm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(ownBrightPalm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -66,20 +132,13 @@ class BrightPalmSoulAwakenerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent castBrightPalm() {
-        harness.setHand(player1, List.of(new BrightPalmSoulAwakener()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BrightPalmSoulAwakener(), "{1}{R}{G}{W}");
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof BrightPalmSoulAwakener)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Bright-Palm, Soul Awakener");
     }
 
     private void resolveEtbTargeting(Permanent target) {

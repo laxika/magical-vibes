@@ -359,6 +359,21 @@ public final class TokenCreationReplacementSupport {
             blueprints.add(food);
             blueprints.add(treasure);
         }
+        if (!original.subtypes().contains(CardSubtype.TREASURE)) {
+            List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
+            for (Permanent permanent : battlefield) {
+                if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect add
+                            && add.affectedSubtype() == CardSubtype.TREASURE
+                            && !permanent.isStaticEffectSuppressed(add.getClass())) {
+                        for (int i = 0; i < add.additionalTokens(); i++) {
+                            blueprints.add(treasure);
+                        }
+                    }
+                }
+            }
+        }
         return blueprints;
     }
 

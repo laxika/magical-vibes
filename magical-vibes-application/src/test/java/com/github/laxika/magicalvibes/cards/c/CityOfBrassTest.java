@@ -154,4 +154,48 @@ class CityOfBrassTest extends BaseCardTest {
         assertThat(city.isTapped()).isFalse();
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("City of Brass triggers again when tapped after being untapped in the same turn")
+    void tappingAgainAfterUntappingDealsAnotherDamage() {
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        harness.forceActivePlayer(player1);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Twiddle()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        resolveAllTriggers();
+        harness.assertLife(player1, 19);
+
+        harness.castAndResolveInstant(player1, 0, city.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        assertThat(city.isTapped()).isFalse();
+        harness.assertLife(player1, 19);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.assertLife(player1, 19);
+        resolveAllTriggers();
+
+        assertThat(city.isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Declining Twiddle leaves City of Brass untapped and causes no damage")
+    void decliningToTapDoesNotTriggerDamage() {
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, city.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(city.isTapped()).isFalse();
+        harness.assertLife(player1, 20);
+    }
 }

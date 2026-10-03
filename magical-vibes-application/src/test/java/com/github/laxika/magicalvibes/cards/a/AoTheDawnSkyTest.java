@@ -69,8 +69,7 @@ class AoTheDawnSkyTest extends BaseCardTest {
     @Test
     void deathTriggerPutsCountersOnControlledCreaturesAndVehiclesOnly() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent vehicle = new Permanent(new ThunderousVelocipede());
-        gd.playerBattlefields.get(player1.getId()).add(vehicle);
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new ThunderousVelocipede());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -87,16 +86,71 @@ class AoTheDawnSkyTest extends BaseCardTest {
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void battlefieldModeAllowsChoosingZeroAndLeavesCardsBelowTopSevenUntouched() {
+        Card bears = new GrizzlyBears();
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        Card fourth = new Forest();
+        Card fifth = new Forest();
+        Card sixth = new Forest();
+        Card untouched = new Forest();
+        harness.setLibrary(player1, List.of(bears, first, second, third, fourth, fifth, sixth, untouched));
+        harness.addToBattlefield(player1, new AoTheDawnSky());
+
+        destroyAo();
+        harness.handleListChoice(player1, BATTLEFIELD_MODE);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(untouched, bears, first, second, third, fourth, fifth, sixth);
+    }
+
+    @Test
+    void battlefieldModeAcceptsNoncreaturePermanentsAtExactTotalManaValueLimit() {
+        Card bears = new GrizzlyBears();
+        Card stone = new MindStone();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(bears, stone, forest));
+        harness.addToBattlefield(player1, new AoTheDawnSky());
+
+        destroyAo();
+        harness.handleListChoice(player1, BATTLEFIELD_MODE);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId(), stone.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Mind Stone");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void battlefieldModeWithNoEligibleCardsKeepsShortLibraryIntact() {
+        Card forest = new Forest();
+        Card shock = new Shock();
+        Card expensivePermanent = new AoTheDawnSky();
+        harness.setLibrary(player1, List.of(forest, shock, expensivePermanent));
+        harness.addToBattlefield(player1, new AoTheDawnSky());
+
+        destroyAo();
+        harness.handleListChoice(player1, BATTLEFIELD_MODE);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ao, the Dawn Sky");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(forest, shock, expensivePermanent);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNull();
+    }
+
     private void destroyAo() {
-        Permanent ao = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof AoTheDawnSky)
-                .findFirst()
-                .orElseThrow();
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, ao.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Ao, the Dawn Sky"));
         harness.passBothPriorities();
     }
 }

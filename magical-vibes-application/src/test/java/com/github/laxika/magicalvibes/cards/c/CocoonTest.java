@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Cocoon.class, BarbaryApes.class})
+@CardUsed({Cocoon.class, BarbaryApes.class, Boomerang.class})
 class CocoonTest extends BaseCardTest {
 
     @Test
@@ -79,6 +80,58 @@ class CocoonTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
+    @Test
+    @DisplayName("An opponent's upkeep does not remove pupa counters")
+    void opponentUpkeepDoesNotRemoveCounters() {
+        Permanent creature = addCreatureReady(player1, new BarbaryApes());
+        Permanent cocoon = castCocoon(creature);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(cocoon.getCounterCount(CounterType.PUPA)).isEqualTo(3);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Bouncing Cocoon in response to upkeep still rewards its former enchanted creature")
+    void bouncedCocoonStillRewardsCreature() {
+        Permanent creature = addCreatureReady(player1, new BarbaryApes());
+        Permanent cocoon = castCocoon(creature);
+
+        advanceToUpkeep(player1);
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, cocoon.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Cocoon");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bouncing a mature Cocoon in response to upkeep still grants its reward")
+    void bouncedMatureCocoonStillRewardsCreature() {
+        Permanent creature = addCreatureReady(player1, new BarbaryApes());
+        Permanent cocoon = castCocoon(creature);
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+        }
+
+        advanceToUpkeep(player1);
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, cocoon.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Cocoon");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
     private Permanent castCocoon(Permanent creature) {
         harness.setHand(player1, List.of(new Cocoon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -87,9 +140,6 @@ class CocoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof Cocoon)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Cocoon");
     }
 }

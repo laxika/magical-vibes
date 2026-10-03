@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blessing.class, GrizzlyBears.class, SolRing.class})
+@CardUsed({Blessing.class, GrizzlyBears.class, JayemdaeTome.class, Disenchant.class})
 class BlessingTest extends BaseCardTest {
 
     @Test
@@ -92,14 +93,68 @@ class BlessingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new SolRing());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new JayemdaeTome());
         harness.setHand(player1, List.of(new Blessing()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-
-        Permanent artifact = findPermanent(player1, "Sol Ring");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Aura controller can boost an opponent's enchanted creature")
+    void boostsOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Blessing()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Destroying Blessing in response does not stop its activated boost")
+    void abilityResolvesAfterAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Blessing());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Blessing");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Destroying Blessing after resolution does not remove the temporary boost")
+    void boostPersistsAfterAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Blessing());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Blessing");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
  */
 @CardRegistration(set = "M19", collectorNumber = "66")
 @CardRegistration(set = "DRC", collectorNumber = "80")
+@CardRegistration(set = "BRC", collectorNumber = "90")
 @CardRegistration(set = "PIP", collectorNumber = "179")
 @CardRegistration(set = "PIP", collectorNumber = "462")
 @CardRegistration(set = "PIP", collectorNumber = "707")

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CallousOppressor.class, GlorySeeker.class, BarkhideMauler.class})
+@CardUsed({CallousOppressor.class, GlorySeeker.class, BarkhideMauler.class, Shock.class})
 class CallousOppressorTest extends BaseCardTest {
 
     @Test
@@ -87,6 +88,61 @@ class CallousOppressorTest extends BaseCardTest {
         assertThat(oppressor.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(beast);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(beast);
+    }
+
+    @Test
+    @DisplayName("Control ends when Callous Oppressor leaves the battlefield")
+    void controlEndsWhenSourceLeaves() {
+        Permanent oppressor = addReadyOppressor(player1, CardSubtype.SOLDIER);
+        Permanent beast = addReadyCreature(player2, new BarkhideMauler());
+
+        harness.activateAbility(player1, 0, null, beast.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(beast);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, oppressor.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(oppressor, beast);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(beast);
+    }
+
+    @Test
+    @DisplayName("Removing Callous Oppressor in response prevents gaining control")
+    void sourceLeavesBeforeAbilityResolves() {
+        Permanent oppressor = addReadyOppressor(player1, CardSubtype.SOLDIER);
+        Permanent beast = addReadyCreature(player2, new BarkhideMauler());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, beast.getId());
+        harness.castInstant(player2, 0, oppressor.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(oppressor);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(beast);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(beast);
+    }
+
+    @Test
+    @DisplayName("Changing Callous Oppressor's controller does not end its control effect")
+    void controlPersistsWhenSourceChangesController() {
+        Permanent oppressor = addReadyOppressor(player1, CardSubtype.SOLDIER);
+        Permanent otherOppressor = addReadyOppressor(player2, CardSubtype.SOLDIER);
+        Permanent beast = addReadyCreature(player2, new BarkhideMauler());
+
+        harness.activateAbility(player1, 0, null, beast.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(otherOppressor), null, oppressor.getId());
+        harness.passBothPriorities();
+
+        assertThat(oppressor.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(oppressor).doesNotContain(beast);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(beast).doesNotContain(oppressor);
     }
 
     private Permanent addReadyOppressor(Player player, CardSubtype chosenSubtype) {

@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
 import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -29,10 +27,6 @@ class AkkiBlizzardHerderTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GnarledMass());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 
     @Test
@@ -43,7 +37,7 @@ class AkkiBlizzardHerderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new TendoIceBridge());
 
         setupCombatWhereHerderDies();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Tendo Ice Bridge");
@@ -58,7 +52,7 @@ class AkkiBlizzardHerderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GodsEyeGateToTheReikai());
 
         setupCombatWhereHerderDies();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -85,7 +79,7 @@ class AkkiBlizzardHerderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GodsEyeGateToTheReikai());
 
         setupCombatWhereHerderDies();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -116,10 +110,47 @@ class AkkiBlizzardHerderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GnarledMass());
 
         setupCombatWhereHerderDies();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("The active opponent chooses first and sacrifices wait for both choices")
+    void activeOpponentChoosesFirstAndSacrificesAreDeferred() {
+        Permanent herder = harness.addToBattlefieldAndReturn(player1, new AkkiBlizzardHerder());
+        harness.addToBattlefield(player1, new TendoIceBridge());
+        harness.addToBattlefield(player1, new GodsEyeGateToTheReikai());
+        harness.addToBattlefield(player2, new TendoIceBridge());
+        harness.addToBattlefield(player2, new GodsEyeGateToTheReikai());
+        harness.forceActivePlayer(player2);
+
+        herder.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Akki Blizzard-Herder");
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2,
+                List.of(harness.getPermanentId(player2, "Tendo Ice Bridge")));
+
+        harness.assertOnBattlefield(player2, "Tendo Ice Bridge");
+        choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Tendo Ice Bridge")));
+
+        harness.assertInGraveyard(player1, "Tendo Ice Bridge");
+        harness.assertInGraveyard(player2, "Tendo Ice Bridge");
+        harness.assertNotOnBattlefield(player1, "Tendo Ice Bridge");
+        harness.assertNotOnBattlefield(player2, "Tendo Ice Bridge");
+        harness.assertOnBattlefield(player1, "Gods' Eye, Gate to the Reikai");
+        harness.assertOnBattlefield(player2, "Gods' Eye, Gate to the Reikai");
     }
 
     @Test
@@ -128,7 +159,6 @@ class AkkiBlizzardHerderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AkkiBlizzardHerder());
         harness.addToBattlefield(player1, new TendoIceBridge());
         harness.addToBattlefield(player2, new TendoIceBridge());
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.passBothPriorities();
 

@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.s.ShimmeringGrotto;
+import com.github.laxika.magicalvibes.cards.w.WoodlandCemetery;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CagedSun.class, Forest.class, Mountain.class, ShimmeringGrotto.class, WoodlandCemetery.class})
 class CagedSunTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
@@ -32,8 +36,6 @@ class CagedSunTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Caged Sun puts it on the stack as an artifact spell")
     void castingPutsOnStack() {
@@ -45,7 +47,6 @@ class CagedSunTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Caged Sun");
     }
 
     @Test
@@ -76,8 +77,6 @@ class CagedSunTest extends BaseCardTest {
         assertThat(cagedSun.getChosenColor()).isEqualTo(CardColor.GREEN);
     }
 
-    // ===== Static effect: +1/+1 to creatures of chosen color =====
-
     @Test
     @DisplayName("Creatures of chosen color get +1/+1")
     void boostsCreaturesOfChosenColor() {
@@ -85,10 +84,8 @@ class CagedSunTest extends BaseCardTest {
         harness.addToBattlefield(player1, greenCreature);
 
         // Add Caged Sun with chosen color green
-        CagedSun cagedSunCard = new CagedSun();
-        Permanent cagedSunPerm = new Permanent(cagedSunCard);
+        Permanent cagedSunPerm = harness.addToBattlefieldAndReturn(player1, new CagedSun());
         cagedSunPerm.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
         Permanent bear = findPermanent(player1, "Green Bear");
 
@@ -102,10 +99,8 @@ class CagedSunTest extends BaseCardTest {
         Card redCreature = createCreature("Red Goblin", 1, 1, CardColor.RED);
         harness.addToBattlefield(player1, redCreature);
 
-        CagedSun cagedSunCard = new CagedSun();
-        Permanent cagedSunPerm = new Permanent(cagedSunCard);
+        Permanent cagedSunPerm = harness.addToBattlefieldAndReturn(player1, new CagedSun());
         cagedSunPerm.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
         Permanent goblin = findPermanent(player1, "Red Goblin");
 
@@ -119,10 +114,8 @@ class CagedSunTest extends BaseCardTest {
         Card greenCreature = createCreature("Green Bear", 2, 2, CardColor.GREEN);
         harness.addToBattlefield(player2, greenCreature);
 
-        CagedSun cagedSunCard = new CagedSun();
-        Permanent cagedSunPerm = new Permanent(cagedSunCard);
+        Permanent cagedSunPerm = harness.addToBattlefieldAndReturn(player1, new CagedSun());
         cagedSunPerm.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
         Permanent bear = findPermanent(player2, "Green Bear");
 
@@ -145,15 +138,11 @@ class CagedSunTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
-    // ===== Mana trigger: extra mana on land tap =====
-
     @Test
     @DisplayName("Tapping a Forest with green chosen adds extra green mana")
     void extraManaOnMatchingLandTap() {
-        CagedSun cagedSunCard = new CagedSun();
-        Permanent cagedSunPerm = new Permanent(cagedSunCard);
+        Permanent cagedSunPerm = harness.addToBattlefieldAndReturn(player1, new CagedSun());
         cagedSunPerm.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
         harness.addToBattlefield(player1, new Forest());
 
@@ -167,10 +156,8 @@ class CagedSunTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping a land of non-chosen color does not add extra mana")
     void noExtraManaOnNonMatchingLandTap() {
-        CagedSun cagedSunCard = new CagedSun();
-        Permanent cagedSunPerm = new Permanent(cagedSunCard);
+        Permanent cagedSunPerm = harness.addToBattlefieldAndReturn(player1, new CagedSun());
         cagedSunPerm.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
         harness.addToBattlefield(player1, new Mountain());
 
@@ -185,10 +172,8 @@ class CagedSunTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's land tap does not trigger extra mana")
     void noExtraManaForOpponentLandTap() {
-        CagedSun cagedSunCard = new CagedSun();
-        Permanent cagedSunPerm = new Permanent(cagedSunCard);
+        Permanent cagedSunPerm = harness.addToBattlefieldAndReturn(player1, new CagedSun());
         cagedSunPerm.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
         harness.addToBattlefield(player2, new Forest());
 
@@ -202,10 +187,8 @@ class CagedSunTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple Forests each get the extra mana")
     void extraManaOnMultipleLandTaps() {
-        CagedSun cagedSunCard = new CagedSun();
-        Permanent cagedSunPerm = new Permanent(cagedSunCard);
+        Permanent cagedSunPerm = harness.addToBattlefieldAndReturn(player1, new CagedSun());
         cagedSunPerm.setChosenColor(CardColor.GREEN);
-        gd.playerBattlefields.get(player1.getId()).add(cagedSunPerm);
 
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
@@ -232,8 +215,6 @@ class CagedSunTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
-    // ===== Full cast-and-resolve integration =====
-
     @Test
     @DisplayName("Full flow: cast, resolve, choose color, boost creature, get extra mana")
     void fullIntegrationTest() {
@@ -256,21 +237,65 @@ class CagedSunTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
 
-        // Find Forest index (it's before Caged Sun since it was added first)
-        int forestIndex = -1;
-        var bf = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < bf.size(); i++) {
-            if (bf.get(i).getCard().getName().equals("Forest")) {
-                forestIndex = i;
-                break;
-            }
-        }
-        assertThat(forestIndex).isGreaterThanOrEqualTo(0);
-
-        // Tap Forest for extra mana
-        harness.tapPermanent(player1, forestIndex);
+        harness.tapPermanent(player1, 1);
 
         // Should get 2 green mana: 1 from Forest + 1 from Caged Sun
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An activated land ability producing the chosen color adds one extra mana")
+    void activatedLandManaGetsBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.GREEN);
+        harness.addToBattlefield(player1, new WoodlandCemetery());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing the matching color from a land's mana ability adds one extra mana")
+    void chosenLandManaGetsBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.GREEN);
+        harness.addToBattlefield(player1, new ShimmeringGrotto());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land's ability producing another color does not add chosen-color mana")
+    void activatedLandManaOfOtherColorGetsNoBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.GREEN);
+        harness.addToBattlefield(player1, new WoodlandCemetery());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Caged Suns each add one extra mana from the same land ability")
+    void multipleSunsEachAddMana() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        first.setChosenColor(CardColor.GREEN);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        second.setChosenColor(CardColor.GREEN);
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }

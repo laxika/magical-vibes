@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CanopySpider.class, TrainedArmodon.class, WindDrake.class})
 class CanopySpiderTest extends BaseCardTest {
@@ -40,5 +41,34 @@ class CanopySpiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(spider.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not prevent a non-flying creature from blocking Canopy Spider")
+    void reachDoesNotGrantFlyingEvasion() {
+        addCreatureReady(player1, new CanopySpider());
+        Permanent armodon = addCreatureReady(player2, new TrainedArmodon());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(armodon.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not allow a tapped Canopy Spider to block")
+    void tappedSpiderCannotBlockFlyingCreature() {
+        Permanent spider = addCreatureReady(player2, new CanopySpider());
+        spider.setTapped(true);
+        addCreatureReady(player1, new WindDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't block");
+        assertThat(spider.isBlocking()).isFalse();
     }
 }

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +26,8 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,6 +40,15 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
 
         UUID controllerId = entry.getControllerId();
         int xValue = entry.getXValue();
+
+        if (e.checkManaValueOnlyOnResolution() && e.maxManaValue() != null) {
+            Card target = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+            int limit = amountEvaluationService.evaluate(gameData, e.maxManaValue(),
+                    com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, null));
+            if (target == null || target.getManaValue() > limit) {
+                return;
+            }
+        }
 
         GraveyardReturnSupport.StolenCreatureResult result = graveyardReturnSupport.stealFromOpponentGraveyard(gameData, entry, controllerId);
         if (result == null) return;

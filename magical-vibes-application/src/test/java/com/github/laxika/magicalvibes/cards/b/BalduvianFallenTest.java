@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BalduvianFallen.class)
+@CardUsed({BalduvianFallen.class})
 class BalduvianFallenTest extends BaseCardTest {
 
     @Test
@@ -47,12 +48,11 @@ class BalduvianFallenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(fallen.getPowerModifier()).isEqualTo(1);
 
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(fallen.getPowerModifier()).isZero();
     }
@@ -79,5 +79,64 @@ class BalduvianFallenTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fallen);
         harness.assertInGraveyard(player1, "Balduvian Fallen");
+    }
+
+    @Test
+    @DisplayName("Paying upkeep puts a separate boost trigger on the stack before the boost applies")
+    void paymentBoostCanBeRespondedTo() {
+        Permanent fallen = harness.addToBattlefieldAndReturn(player1, new BalduvianFallen());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(fallen.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(fallen.getPowerModifier()).isEqualTo(1);
+        assertThat(fallen.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("White, blue, and green mana pay cumulative upkeep without boosting power")
+    void otherColoredManaDoesNotBoostPower() {
+        Permanent fallen = harness.addToBattlefieldAndReturn(player1, new BalduvianFallen());
+        fallen.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        });
+
+        assertThat(fallen.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fallen);
+        assertThat(fallen.getPowerModifier()).isZero();
+        assertThat(fallen.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana cannot partially pay cumulative upkeep or produce a boost")
+    void insufficientManaSacrificesWithoutBoost() {
+        Permanent fallen = harness.addToBattlefieldAndReturn(player1, new BalduvianFallen());
+        fallen.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fallen);
+        harness.assertInGraveyard(player1, "Balduvian Fallen");
+        assertThat(fallen.getPowerModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

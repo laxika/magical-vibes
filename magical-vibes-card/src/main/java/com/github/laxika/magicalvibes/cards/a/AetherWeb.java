@@ -17,6 +17,6 @@ public class AetherWeb extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new CanBlockCreaturesWithShadowEffect());
+                .addEffect(EffectSlot.STATIC, new CanBlockCreaturesWithShadowEffect(true));
     }
 }

@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CenoteScout.class, Forest.class, GrizzlyBears.class})
+@CardUsed({CenoteScout.class, Forest.class})
 class CenoteScoutTest extends BaseCardTest {
 
     @Test
@@ -36,7 +34,7 @@ class CenoteScoutTest extends BaseCardTest {
     @Test
     @DisplayName("Exploring a nonland puts a +1/+1 counter on Cenote Scout")
     void exploringNonlandPutsCounterOnScout() {
-        Card nonland = new GrizzlyBears();
+        Card nonland = new CenoteScout();
         gd.playerDecks.get(player1.getId()).addFirst(nonland);
 
         castCenoteScout();
@@ -48,7 +46,7 @@ class CenoteScoutTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the nonland graveyard choice leaves the card on top")
     void decliningNonlandGraveyardChoiceLeavesCardOnTop() {
-        Card nonland = new GrizzlyBears();
+        Card nonland = new CenoteScout();
         gd.playerDecks.get(player1.getId()).addFirst(nonland);
 
         castCenoteScout();
@@ -62,7 +60,7 @@ class CenoteScoutTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the nonland graveyard choice puts the card into the graveyard")
     void acceptingNonlandGraveyardChoicePutsCardIntoGraveyard() {
-        Card nonland = new GrizzlyBears();
+        Card nonland = new CenoteScout();
         gd.playerDecks.get(player1.getId()).addFirst(nonland);
 
         castCenoteScout();
@@ -74,11 +72,46 @@ class CenoteScoutTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(nonland.getId()));
     }
 
-    private void castCenoteScout() {
-        harness.setHand(player1, List.of(new CenoteScout()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+    @Test
+    @DisplayName("Exploring an empty library still puts a +1/+1 counter on Cenote Scout")
+    void exploringEmptyLibraryPutsCounterOnScout() {
+        harness.setLibrary(player1, List.of());
 
-        harness.castCreature(player1, 0);
+        castCenoteScout();
+
+        assertThat(findCenoteScout().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Exploring an empty library still counts as exploring this turn")
+    void exploringEmptyLibraryRecordsExploreEvent() {
+        harness.setLibrary(player1, List.of());
+
+        castCenoteScout();
+
+        assertThat(gd.playersWhoControlledPermanentThatExploredThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Exploring uses only the controller's library and hand")
+    void exploringDoesNotUseOpponentsLibrary() {
+        Card land = new Forest();
+        Card opponentTopCard = new CenoteScout();
+        harness.setLibrary(player1, List.of(land));
+        harness.setLibrary(player2, List.of(opponentTopCard));
+        List<Card> opponentHand = List.copyOf(gd.playerHands.get(player2.getId()));
+
+        castCenoteScout();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTopCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentHand);
+    }
+
+    private void castCenoteScout() {
+        harness.castFromHand(player1, new CenoteScout(), "{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

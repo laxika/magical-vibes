@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.f.FrilledSandwalla;
+import com.github.laxika.magicalvibes.cards.m.Manalith;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,32 +15,32 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BontusLastReckoning.class, FrilledSandwalla.class, Swamp.class, Manalith.class})
 class BontusLastReckoningTest extends BaseCardTest {
-
-    // ===== Destroy all creatures =====
 
     @Nested
     @DisplayName("Destroy all creatures")
+    @CardUsed({BontusLastReckoning.class, FrilledSandwalla.class, Swamp.class})
     class DestroyAllCreatures {
 
         @Test
         @DisplayName("Destroys all creatures on both sides")
         void destroysAllCreatures() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player2, new LlanowarElves());
+            harness.addToBattlefield(player1, new FrilledSandwalla());
+            harness.addToBattlefield(player2, new FrilledSandwalla());
 
             cast();
 
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Llanowar Elves");
+            harness.assertNotOnBattlefield(player1, "Frilled Sandwalla");
+            harness.assertNotOnBattlefield(player2, "Frilled Sandwalla");
+            harness.assertInGraveyard(player1, "Frilled Sandwalla");
+            harness.assertInGraveyard(player2, "Frilled Sandwalla");
         }
 
         @Test
         @DisplayName("Leaves lands on the battlefield")
         void leavesLands() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new FrilledSandwalla());
             harness.addToBattlefield(player1, new Swamp());
 
             cast();
@@ -50,21 +49,22 @@ class BontusLastReckoningTest extends BaseCardTest {
         }
     }
 
-    // ===== Lands you control don't untap =====
-
     @Nested
     @DisplayName("Lands you control don't untap during your next untap step")
+    @CardUsed({BontusLastReckoning.class, Swamp.class})
     class LandsDontUntap {
 
         @Test
-        @DisplayName("Marks each of the controller's lands to skip their next untap")
-        void marksControllerLands() {
+        @DisplayName("An untapped land at resolution is still prevented from untapping later")
+        void initiallyUntappedLandIsRestricted() {
             Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-            swamp.tap();
-
             cast();
 
-            assertThat(swamp.getSkipUntapCount()).isEqualTo(1);
+            assertThat(swamp.isTapped()).isFalse();
+            swamp.tap();
+            harness.performUntapStep(player1);
+
+            assertThat(swamp.isTapped()).isTrue();
         }
 
         @Test
@@ -76,13 +76,13 @@ class BontusLastReckoningTest extends BaseCardTest {
             cast();
 
             // player1's turn -> player2's untap -> player1's next untap (skip consumed)
-            advanceToNextTurn(player1);
-            advanceToNextTurn(player2);
+            harness.performUntapStep(player2);
+            harness.performUntapStep(player1);
             assertThat(swamp.isTapped()).isTrue();
 
             // Following untap step untaps normally
-            advanceToNextTurn(player1);
-            advanceToNextTurn(player2);
+            harness.performUntapStep(player2);
+            harness.performUntapStep(player1);
             assertThat(swamp.isTapped()).isFalse();
         }
 
@@ -94,32 +94,81 @@ class BontusLastReckoningTest extends BaseCardTest {
 
             cast();
 
-            assertThat(opponentSwamp.getSkipUntapCount()).isZero();
-
             // Reach player2's untap step — opponent's land untaps normally
-            advanceToNextTurn(player1);
+            harness.performUntapStep(player2);
 
             assertThat(opponentSwamp.isTapped()).isFalse();
         }
     }
 
-    // ===== Helpers =====
+    @Test
+    void landsEnteringAfterResolutionStayTappedDuringNextUntap() {
+        cast();
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.tap();
+
+        harness.performUntapStep(player1);
+        assertThat(swamp.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(swamp.isTapped()).isFalse();
+    }
+
+    @Test
+    void landGivenToOpponentAfterResolutionUntapsForOpponent() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.tap();
+        cast();
+        gd.playerBattlefields.get(player1.getId()).remove(swamp);
+        gd.playerBattlefields.get(player2.getId()).add(swamp);
+
+        harness.performUntapStep(player2);
+
+        assertThat(swamp.isTapped()).isFalse();
+    }
+
+    @Test
+    void landAcquiredAfterResolutionStaysTappedDuringNextUntap() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        swamp.tap();
+        cast();
+        gd.playerBattlefields.get(player2.getId()).remove(swamp);
+        gd.playerBattlefields.get(player1.getId()).add(swamp);
+
+        harness.performUntapStep(player1);
+
+        assertThat(swamp.isTapped()).isTrue();
+    }
+
+    @Test
+    void multipleResolutionsRestrictOnlyOneUntapStep() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.tap();
+        cast();
+        cast();
+
+        harness.performUntapStep(player1);
+        assertThat(swamp.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(swamp.isTapped()).isFalse();
+    }
+
+    @Test
+    void noncreatureArtifactSurvivesAndUntapsNormally() {
+        Permanent manalith = harness.addToBattlefieldAndReturn(player1, new Manalith());
+        manalith.tap();
+        cast();
+
+        harness.assertOnBattlefield(player1, "Manalith");
+        harness.performUntapStep(player1);
+
+        assertThat(manalith.isTapped()).isFalse();
+    }
 
     private void cast() {
         harness.setHand(player1, List.of(new BontusLastReckoning()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
     }
 }

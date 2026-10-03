@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AsylumVisitor.class, GrizzlyBears.class, RavensCrime.class})
 class AsylumVisitorTest extends BaseCardTest {
 
     /** Force player1 to discard Asylum Visitor via Raven's Crime from player2. */
@@ -24,8 +26,7 @@ class AsylumVisitorTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         // player1 chooses the only card in hand to discard
         harness.handleCardChosen(player1, 0);
         return visitor;
@@ -156,5 +157,78 @@ class AsylumVisitorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(visitor.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Visitors on your upkeep only draw once while the drawn card stays in hand")
+    void multipleVisitorsOnOwnUpkeepOnlyDrawOnce() {
+        harness.addToBattlefield(player1, new AsylumVisitor());
+        harness.addToBattlefield(player1, new AsylumVisitor());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new AsylumVisitor(), new AsylumVisitor()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Multiple Visitors on an empty-handed opponent's upkeep each draw and lose life")
+    void multipleVisitorsOnOpponentUpkeepEachDraw() {
+        harness.addToBattlefield(player1, new AsylumVisitor());
+        harness.addToBattlefield(player1, new AsylumVisitor());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new AsylumVisitor(), new AsylumVisitor()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("An upkeep that begins with a card in hand never triggers even if the hand empties later")
+    void emptyingHandAfterUpkeepBeginsDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AsylumVisitor());
+        harness.setHand(player1, List.of(new AsylumVisitor()));
+        harness.setLibrary(player1, List.of(new AsylumVisitor()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Gaining a card before your own upkeep trigger resolves prevents both effects")
+    void gainingCardOnOwnUpkeepPreventsDrawAndLifeLoss() {
+        harness.addToBattlefield(player1, new AsylumVisitor());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new AsylumVisitor()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        AsylumVisitor gained = new AsylumVisitor();
+        harness.setHand(player1, List.of(gained));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(gained);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 }

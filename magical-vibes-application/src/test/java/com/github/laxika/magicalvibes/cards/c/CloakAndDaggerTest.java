@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CloakAndDagger.class, FrogtosserBanneret.class, GrizzlyBears.class})
 class CloakAndDaggerTest extends BaseCardTest {
 
-    // ===== Static: +2/+0 and shroud =====
 
     @Test
     @DisplayName("Equipped creature gets +2/+0")
@@ -57,7 +58,6 @@ class CloakAndDaggerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
     }
 
-    // ===== Equip {3} =====
 
     @Test
     @DisplayName("Resolving equip attaches Cloak to target creature")
@@ -72,7 +72,6 @@ class CloakAndDaggerTest extends BaseCardTest {
         assertThat(cloak.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    // ===== Trigger: Rogue creature enters =====
 
     @Test
     @DisplayName("Accepting the may attaches Cloak to the Rogue that entered")
@@ -155,13 +154,57 @@ class CloakAndDaggerTest extends BaseCardTest {
         assertThat(cloak.getAttachedTo()).isEqualTo(rogue.getId());
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The enter trigger can attach to a Rogue with shroud")
+    void attachesToEnteringRogueWithShroud() {
+        Permanent cloak = addCloakReady(player1);
+        Permanent otherCloak = addCloakReady(player1);
+        harness.setHand(player1, List.of(new FrogtosserBanneret()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent rogue = rogueOnBattlefield(player1);
+        otherCloak.setAttachedTo(rogue.getId());
+        assertThat(gqs.hasKeyword(gd, rogue, Keyword.SHROUD)).isTrue();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cloak.getAttachedTo()).isEqualTo(rogue.getId());
+        assertThat(otherCloak.getAttachedTo()).isEqualTo(rogue.getId());
+        assertThat(gqs.getEffectivePower(gd, rogue)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Accepting the enter trigger moves Cloak from its previous creature")
+    void triggerMovesEquipmentAndItsBonuses() {
+        Permanent original = addCreatureReady(player1, new FrogtosserBanneret());
+        Permanent cloak = addCloakReady(player1);
+        cloak.setAttachedTo(original.getId());
+        harness.setHand(player1, List.of(new FrogtosserBanneret()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof FrogtosserBanneret && p != original)
+                .findFirst().orElseThrow();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cloak.getAttachedTo()).isEqualTo(entering.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.SHROUD)).isTrue();
+    }
 
     private Permanent addCloakReady(Player player) {
-        Permanent perm = new Permanent(new CloakAndDagger());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new CloakAndDagger());
     }
 
     private Permanent rogueOnBattlefield(Player player) {

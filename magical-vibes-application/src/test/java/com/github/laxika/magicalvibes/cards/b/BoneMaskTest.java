@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.e.EnergyBolt;
+import com.github.laxika.magicalvibes.cards.f.FlameElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,8 +16,75 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoneMask.class, GiantMantis.class, EnergyBolt.class})
+@CardUsed({BoneMask.class, GiantMantis.class, EnergyBolt.class, FlameElemental.class})
 class BoneMaskTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A sacrificed creature referenced by an ability on the stack is a legal source choice")
+    void canChooseSacrificedSourceOfPendingAbility() {
+        harness.addToBattlefield(player1, new BoneMask());
+        Permanent mantis = addCreatureReady(player1, new GiantMantis());
+        Permanent elemental = addCreatureReady(player2, new FlameElemental());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.activateAbility(player2, 0, null, mantis.getId());
+        harness.assertInGraveyard(player2, "Flame Elemental");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(elemental.getId());
+        harness.handlePermanentChosen(player1, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(mantis.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An empty library does not stop damage prevention")
+    void preventsDamageWithEmptyLibrary() {
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new BoneMask());
+        Permanent mantis = addCreatureReady(player2, new GiantMantis());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, mantis.getId());
+        mantis.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles the top cards in order and leaves the remaining library intact")
+    void exilesTopCardsOnly() {
+        GiantMantis first = new GiantMantis();
+        EnergyBolt second = new EnergyBolt();
+        BoneMask third = new BoneMask();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.addToBattlefield(player1, new BoneMask());
+        Permanent mantis = addCreatureReady(player2, new GiantMantis());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, mantis.getId());
+        mantis.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.findExiledCard(first.getId())).isNotNull();
+        assertThat(gd.findExiledCard(second.getId())).isNotNull();
+        assertThat(gd.findExiledCard(third.getId())).isNull();
+    }
 
     @Test
     @DisplayName("Activating the ability prompts for a source choice")

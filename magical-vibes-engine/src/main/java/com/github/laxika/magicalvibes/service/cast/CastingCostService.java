@@ -1329,6 +1329,7 @@ public class CastingCostService {
     public boolean hasFreePowerUpAbilityCost(GameData gameData, UUID activatingPlayerId,
                                              ActivatedAbility ability) {
         if (!ability.isPowerUpAbility()
+                || !activatingPlayerId.equals(gameData.activePlayerId)
                 || gameData.playersWhoActivatedPowerUpAbilityThisTurn.contains(activatingPlayerId)) {
             return false;
         }
@@ -2632,6 +2633,8 @@ public class CastingCostService {
         for (Permanent perm : defenderBattlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof RequirePaymentToAttackEffect tax
+                        && !perm.isFaceDown()
+                        && !gameQueryService.hasLostAllAbilities(gameData, perm)
                         && (!tax.planeswalkersOnly() || attackingPlaneswalker)
                         && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
                         && (tax.activeCondition() == null || conditionEvaluationService.isMet(

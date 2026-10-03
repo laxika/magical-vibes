@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "228")
+@CardRegistration(set = "BRC", collectorNumber = "145")
 public class LiquimetalTorque extends Card {
 
     public LiquimetalTorque() {

@@ -529,6 +529,8 @@ public class Permanent {
     /** Number of untap steps this permanent should skip. Decremented each untap step.
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
+    /** Restricts an exert-style untap skip to the player who chose it. */
+    @Setter private UUID skipUntapControllerId;
     @Setter private int skipUntapCount;
     /** Accumulated damage marked on this creature (CR 704.5g). Reset during cleanup step. */
     private int markedDamage;
@@ -565,7 +567,15 @@ public class Permanent {
     @Setter private int permanentBaseToughnessOverride;
     /** CR 613.7 timestamp of the exchange that set {@link #baseToughnessOverriddenPermanently}. */
     @Setter private long permanentBaseToughnessOverrideTimestamp;
-    @Setter private boolean transformed;
+    private boolean transformed;
+    /** Number of face changes, used to prevent an older ability from transforming this object again. */
+    private int transformationSequence;
+    /** Effective toughness recorded immediately before this object leaves the battlefield. */
+    @Setter private Integer lastKnownToughness;
+    /** Effective power recorded immediately before this permanent leaves the battlefield. */
+    @Setter private Integer lastKnownPower;
+    /** Colors immediately before this permanent left the battlefield. */
+    @Setter private Set<CardColor> lastKnownColors;
     /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
@@ -958,6 +968,7 @@ public class Permanent {
         this.landTypesUntilSourceLeaves.putAll(source.landTypesUntilSourceLeaves);
         this.mireCounterLandIds.addAll(source.mireCounterLandIds);
         this.skipUntapCount = source.skipUntapCount;
+        this.skipUntapControllerId = source.skipUntapControllerId;
         this.markedDamage = source.markedDamage;
         this.markedDamageBySource.putAll(source.markedDamageBySource);
         this.damagedByDeathtouch = source.damagedByDeathtouch;
@@ -970,6 +981,10 @@ public class Permanent {
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
         this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
+        this.transformationSequence = source.transformationSequence;
+        this.lastKnownToughness = source.lastKnownToughness;
+        this.lastKnownPower = source.lastKnownPower;
+        this.lastKnownColors = source.lastKnownColors == null ? null : Set.copyOf(source.lastKnownColors);
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.losesAllAbilitiesUntilNextTurnControllers.addAll(
                 source.losesAllAbilitiesUntilNextTurnControllers);
@@ -1663,6 +1678,13 @@ public class Permanent {
 
     public void addCombatTriggeredEffect(EffectSlot slot, CardEffect effect) {
         combatTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+    }
+
+    public void setTransformed(boolean transformed) {
+        if (this.transformed != transformed) {
+            transformationSequence++;
+        }
+        this.transformed = transformed;
     }
 
     public void addPersistentTriggeredEffect(EffectSlot slot, CardEffect effect) {

@@ -45,8 +45,7 @@ class CandlesGlowTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GaleForce()));
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, List.of());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
@@ -96,6 +95,55 @@ class CandlesGlowTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("The shield spans damage events, gains life for its controller, and stops after three damage")
+    void consumesShieldAcrossSeparateDamageEvents() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        resolveCandlesGlow(player2.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GlacialRay(), new GlacialRay(), new GlacialRay()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Damage to another player does not consume the targeted player's shield")
+    void onlyPreventsDamageToChosenTarget() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        resolveCandlesGlow(player1.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GlacialRay(), new GlacialRay()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
     private void resolveCandlesGlow(UUID targetId) {

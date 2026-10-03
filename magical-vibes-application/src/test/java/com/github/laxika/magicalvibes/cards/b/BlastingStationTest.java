@@ -121,6 +121,68 @@ class BlastingStationTest extends BaseCardTest {
         assertThat(station.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Tap and sacrifice costs are paid before damage resolves")
+    void paysCostsBeforeResolution() {
+        Permanent station = addReadyStation(player1);
+        harness.addToBattlefield(player1, new DrossCrocodile());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        assertThat(station.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Dross Crocodile");
+        harness.assertNotOnBattlefield(player1, "Dross Crocodile");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("The targeted creature may also be sacrificed to pay the cost")
+    void canSacrificeTargetedCreature() {
+        Permanent station = addReadyStation(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(station.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Dross Crocodile");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Station cannot activate and does not sacrifice a creature")
+    void cannotActivateWhileTapped() {
+        addReadyStation(player1).tap();
+        harness.addToBattlefield(player1, new DrossCrocodile());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Dross Crocodile");
+        harness.assertNotInGraveyard(player1, "Dross Crocodile");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature entering can untap the Station")
+    void opponentCreatureCanUntapStation() {
+        Permanent station = addReadyStation(player1);
+        station.tap();
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        otherCreature.tap();
+        castCreatureFor(player2);
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(station.isTapped()).isFalse();
+        assertThat(otherCreature.isTapped()).isTrue();
+    }
+
     private Permanent addReadyStation(Player player) {
         return harness.addToBattlefieldAndReturn(player, new BlastingStation());
     }

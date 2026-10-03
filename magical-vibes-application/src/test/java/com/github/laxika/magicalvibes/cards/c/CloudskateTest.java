@@ -65,4 +65,23 @@ class CloudskateTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Cloudskate");
     }
+
+    @Test
+    @DisplayName("Removing the last fade counter leaves Cloudskate alive until the next upkeep")
+    void survivesLastCounterRemovalThenIsSacrificedNextUpkeep() {
+        Permanent cloudskate = addCreatureReady(player1, new Cloudskate());
+        cloudskate.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(cloudskate.getCounterCount(CounterType.FADE)).isZero();
+        harness.assertOnBattlefield(player1, "Cloudskate");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cloudskate");
+        harness.assertInGraveyard(player1, "Cloudskate");
+    }
 }

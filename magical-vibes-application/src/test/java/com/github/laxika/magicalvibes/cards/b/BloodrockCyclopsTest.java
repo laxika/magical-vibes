@@ -18,10 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BloodrockCyclops.class, GrizzlyBears.class, WindbornMuse.class})
+@CardUsed({BloodrockCyclops.class, GrizzlyBears.class, WindbornMuse.class, ChandraNalaar.class})
 class BloodrockCyclopsTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Bloodrock Cyclops puts it on the battlefield")
@@ -48,8 +46,6 @@ class BloodrockCyclopsTest extends BaseCardTest {
         Permanent perm = findPermanent(player1, "Bloodrock Cyclops");
         assertThat(perm.isSummoningSick()).isTrue();
     }
-
-    // ===== Must attack =====
 
     @Test
     @DisplayName("Declaring Bloodrock Cyclops as attacker succeeds")
@@ -129,8 +125,6 @@ class BloodrockCyclopsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Attack tax exemption (CR 508.1d) =====
-
     @Test
     @DisplayName("Bloodrock Cyclops is not forced to attack when opponent controls Windborn Muse (attack tax)")
     void notForcedToAttackWithAttackTax() {
@@ -139,12 +133,7 @@ class BloodrockCyclopsTest extends BaseCardTest {
         // Opponent has Windborn Muse (tax 2 per attacker)
         harness.addToBattlefield(player2, new WindbornMuse());
 
-        // Per CR 508.1d, the player is not required to pay the attack tax
-        // so Bloodrock Cyclops is not forced to attack — empty declaration is valid
-        // (provided the player can't/doesn't want to pay)
-        // Actually, the player needs mana to pay; with no mana, they can't attack at all
-        // The combat step should skip if they can't afford
-        // Let's give them enough mana and verify they CAN decline
+        // The controller may decline to pay the attack tax even with enough mana.
         harness.addMana(player1, ManaColor.RED, 2);
 
         declareAttackers(List.of());
@@ -153,14 +142,46 @@ class BloodrockCyclopsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({BloodrockCyclops.class, ChandraNalaar.class, WindbornMuse.class})
+    @DisplayName("A Windborn Muse controlled by the attacker does not exempt Cyclops from attacking")
+    void ownWindbornMuseDoesNotExemptAttack() {
+        addCreatureReady(player1, new BloodrockCyclops());
+        harness.addToBattlefield(player1, new WindbornMuse());
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("No attack is required when the only Cyclops is tapped")
+    void tappedCyclopsAllowsEmptyDeclaration() {
+        Permanent cyclops = addCreatureReady(player1, new BloodrockCyclops());
+        cyclops.tap();
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("No attack is required when the only Cyclops has summoning sickness")
+    void summoningSickCyclopsAllowsEmptyDeclaration() {
+        harness.addToBattlefield(player1, new BloodrockCyclops());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Must attack an untaxed planeswalker despite Windborn Muse")
     void mustAttackUntaxedPlaneswalkerDespiteWindbornMuse() {
         addCreatureReady(player1, new BloodrockCyclops());
 
-        Permanent planeswalker = new Permanent(new ChandraNalaar());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.addToBattlefield(player2, new WindbornMuse());
 
         harness.forceActivePlayer(player1);
@@ -177,8 +198,6 @@ class BloodrockCyclopsTest extends BaseCardTest {
                 .isEqualTo(planeswalker.getId());
     }
 
-    // ===== Combat damage =====
-
     @Test
     @DisplayName("Bloodrock Cyclops deals 3 combat damage when unblocked")
     void dealsThreeDamageUnblocked() {
@@ -187,8 +206,7 @@ class BloodrockCyclopsTest extends BaseCardTest {
         addCreatureReady(player1, new BloodrockCyclops());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities(); // through declare blockers (no blockers)
-        harness.passBothPriorities(); // through combat damage
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -210,8 +228,6 @@ class BloodrockCyclopsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bloodrock Cyclops");
         harness.assertInGraveyard(player2, "Bloodrock Cyclops");
     }
-
-    // ===== Multiple must-attack creatures =====
 
     @Test
     @DisplayName("Multiple Bloodrock Cyclops must all attack")

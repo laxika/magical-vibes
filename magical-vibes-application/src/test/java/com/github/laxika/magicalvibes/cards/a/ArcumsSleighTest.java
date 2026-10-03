@@ -149,6 +149,56 @@ class ArcumsSleighTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Removing the snow land after activation does not prevent resolution")
+    void snowLandIsOnlyRequiredAtActivation() {
+        Permanent snowLand = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        Permanent sleigh = harness.addToBattlefieldAndReturn(player1, new ArcumsSleigh());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        enterCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, sleigh), 0, null, bears.getId());
+        harness.inMutationScope(() -> gd.playerBattlefields.get(player2.getId()).remove(snowLand));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying two mana")
+    void cannotActivateWithInsufficientMana() {
+        harness.addToBattlefield(player2, new SnowCoveredIsland());
+        Permanent sleigh = harness.addToBattlefieldAndReturn(player1, new ArcumsSleigh());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        enterCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, sleigh), 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sleigh.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate when the Sleigh is already tapped")
+    void cannotActivateTappedSleigh() {
+        harness.addToBattlefield(player2, new SnowCoveredIsland());
+        Permanent sleigh = harness.addToBattlefieldAndReturn(player1, new ArcumsSleigh());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        sleigh.tap();
+
+        enterCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, sleigh), 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+    }
+
     private void enterCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);

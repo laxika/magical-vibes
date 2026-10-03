@@ -34,12 +34,52 @@ class CharismaticVanguardTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated activations work while tapped and their boosts stack")
+    void repeatedActivationsWhileTappedStack() {
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new CharismaticVanguard());
+        vanguard.tap();
+        vanguard.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(4);
+        assertThat(vanguard.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only creatures present when the ability resolves receive the boost")
+    void determinesAffectedCreaturesAtResolution() {
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new CharismaticVanguard());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new CharismaticVanguard());
+        assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new CharismaticVanguard());
+
+        assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 }

@@ -55,6 +55,18 @@ import java.util.UUID;
 @Service
 public class TriggerTargetCollector {
 
+    /** Whether a modal graveyard target restriction currently has a legal card to select. */
+    public boolean hasLegalGraveyardTarget(GameData gameData, TargetFilter filter,
+                                           UUID controllerId, Card sourceCard) {
+        if (!(filter instanceof com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter graveyard)) {
+            return true;
+        }
+        return graveyard.scope().graveyardOwners(gameData.orderedPlayerIds, controllerId).stream()
+                .anyMatch(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                        .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(
+                                card, graveyard.predicate(), sourceCard.getId(), gameData, controllerId)));
+    }
+
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetLegalityService targetLegalityService;

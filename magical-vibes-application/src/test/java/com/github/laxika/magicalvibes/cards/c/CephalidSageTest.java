@@ -103,6 +103,49 @@ class CephalidSageTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
+    @Test
+    @DisplayName("Gaining threshold after entry does not retroactively trigger the ability")
+    void gainingThresholdAfterEntryDoesNotTrigger() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1,
+                List.of(new AngelOfRetribution(), new AngelOfRetribution(), new AngelOfRetribution()));
+
+        harness.enterBattlefieldAndReturn(player1, new CephalidSage());
+        harness.setGraveyard(player1, graveyardCards(7));
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The threshold entry ability resolves after the Sage dies")
+    void thresholdAbilityResolvesAfterSageDies() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1,
+                List.of(new AngelOfRetribution(), new AngelOfRetribution(), new AngelOfRetribution()));
+
+        var sage = harness.enterBattlefieldAndReturn(player1, new CephalidSage());
+        sage.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void addSageMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

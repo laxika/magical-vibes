@@ -37,8 +37,7 @@ class AlliedStrategiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 5);
     }
@@ -53,8 +52,7 @@ class AlliedStrategiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
@@ -74,10 +72,42 @@ class AlliedStrategiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Domain is counted when the spell resolves")
+    void countsLandTypesAtResolution() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player2, List.of(new Plains(), new Island(), new Mountain()));
+        harness.setHand(player1, List.of(new AlliedStrategies()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addToBattlefield(player2, new Island());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A player with no lands draws nothing even with an empty library")
+    void zeroDomainDoesNotAttemptToDraw() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new AlliedStrategies()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
     }
 
     @Test

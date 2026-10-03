@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AncestralVision;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,16 +13,17 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CandlesOfLeng.class)
+@CardUsed({CandlesOfLeng.class, ThinkTwice.class, AncestralVision.class})
 class CandlesOfLengTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts the revealed card into the graveyard when its name is already there")
     void matchingNamePutsRevealedCardIntoGraveyard() {
-        Card graveyardCard = createNamedCard("Shared Name");
-        Card revealedCard = createNamedCard("Shared Name");
-        Card nextCard = createNamedCard("Next Card");
+        Card graveyardCard = new ThinkTwice();
+        Card revealedCard = new ThinkTwice();
+        Card nextCard = new AncestralVision();
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(graveyardCard));
         harness.setLibrary(player1, List.of(revealedCard, nextCard));
@@ -41,9 +43,9 @@ class CandlesOfLengTest extends BaseCardTest {
     @Test
     @DisplayName("Draws the revealed card when its name is not in the graveyard")
     void nonmatchingNameDrawsRevealedCard() {
-        Card graveyardCard = createNamedCard("Graveyard Card");
-        Card revealedCard = createNamedCard("Revealed Card");
-        Card nextCard = createNamedCard("Next Card");
+        Card graveyardCard = new AncestralVision();
+        Card revealedCard = new ThinkTwice();
+        Card nextCard = new CandlesOfLeng();
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(graveyardCard));
         harness.setLibrary(player1, List.of(revealedCard, nextCard));
@@ -61,9 +63,9 @@ class CandlesOfLengTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does nothing when the library is empty")
-    void emptyLibraryDoesNothing() {
-        Card graveyardCard = createNamedCard("Graveyard Card");
+    @DisplayName("Attempts to draw and loses when the library is empty")
+    void emptyLibraryCausesDrawLoss() {
+        Card graveyardCard = new ThinkTwice();
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(graveyardCard));
         harness.setLibrary(player1, List.of());
@@ -72,6 +74,8 @@ class CandlesOfLengTest extends BaseCardTest {
 
         activateAndResolve();
 
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(graveyardCard.getId());
@@ -87,12 +91,86 @@ class CandlesOfLengTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private static Card createNamedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.BLUE);
-        return card;
+    @Test
+    @DisplayName("A matching name in the opponent's graveyard does not prevent drawing")
+    void ignoresOpponentsGraveyard() {
+        Card revealedCard = new ThinkTwice();
+        Card opponentCard = new ThinkTwice();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setLibrary(player1, List.of(revealedCard));
+        addReadyCandles();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        activateAndResolve();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    @DisplayName("Checks graveyard names when the ability resolves")
+    void checksGraveyardAtResolution() {
+        Card revealedCard = new ThinkTwice();
+        Card graveyardCard = new ThinkTwice();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(revealedCard));
+        addReadyCandles();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard, revealedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("An artifact can activate immediately and pays four mana and taps")
+    void newlyEnteredArtifactPaysActivationCosts() {
+        Card revealedCard = new ThinkTwice();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(revealedCard));
+        var candles = harness.addToBattlefieldAndReturn(player1, new CandlesOfLeng());
+        candles.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(candles.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealedCard);
+    }
+
+    @Test
+    @DisplayName("Three mana cannot pay the four-mana activation cost")
+    void cannotActivateWithOnlyThreeMana() {
+        addReadyCandles();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped artifact cannot activate its tap ability")
+    void cannotActivateWhenTapped() {
+        var candles = harness.addToBattlefieldAndReturn(player1, new CandlesOfLeng());
+        candles.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 }

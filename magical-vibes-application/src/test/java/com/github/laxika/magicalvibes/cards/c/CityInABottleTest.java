@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.FlyingMen;
+import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CityInABottle.class, FlyingMen.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({CityInABottle.class, FlyingMen.class, GrizzlyBears.class, Mountain.class, Desert.class})
 class CityInABottleTest extends BaseCardTest {
 
     @Test
@@ -62,7 +64,7 @@ class CityInABottleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
 
-        harness.setHand(player2, List.of(new Mountain()));
+        harness.setHand(player2, List.of(new Desert()));
         assertThatThrownBy(() -> harness.playLand(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
@@ -81,5 +83,84 @@ class CityInABottleTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Allows playing Mountain because it was originally printed before ARN")
+    void allowsPlayingMountain() {
+        harness.addToBattlefield(player1, new CityInABottle());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Mountain()));
+
+        harness.playLand(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice Mountains already on the battlefield")
+    void doesNotSacrificeMountains() {
+        harness.addToBattlefield(player1, new CityInABottle());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Ignores tokens even when their names match affected cards")
+    void ignoresTokensWithAffectedNames() {
+        harness.addToBattlefield(player1, new CityInABottle());
+        var token = harness.addToBattlefieldAndReturn(player2, new FlyingMen());
+        TestCards.mutableCard(token).setToken(true);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Flying Men");
+    }
+
+    @Test
+    @DisplayName("Sacrifices affected lands but leaves unrelated creatures")
+    void sacrificesAffectedLandsOnly() {
+        harness.addToBattlefield(player1, new CityInABottle());
+        harness.addToBattlefield(player2, new Desert());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Desert");
+        harness.assertNotOnBattlefield(player2, "Desert");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not duplicate a pending state trigger and triggers again for later arrivals")
+    void triggersAgainForLaterArrivals() {
+        harness.addToBattlefield(player1, new CityInABottle());
+        harness.addToBattlefield(player2, new FlyingMen());
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Flying Men");
+
+        harness.addToBattlefield(player1, new FlyingMen());
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Flying Men");
+        harness.assertNotOnBattlefield(player1, "Flying Men");
+        assertThat(gd.stack).isEmpty();
     }
 }

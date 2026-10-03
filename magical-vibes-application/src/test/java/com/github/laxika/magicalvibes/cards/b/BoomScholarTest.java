@@ -8,12 +8,15 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BoomScholar.class, GreasewrenchGoblin.class, GrizzlyBears.class, DragonRoost.class, Boommobile.class})
 @DisplayName("Boom Scholar")
 class BoomScholarTest extends BaseCardTest {
 
@@ -82,5 +85,58 @@ class BoomScholarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    void multipleScholarsReduceEachOthersExhaustCosts() {
+        Permanent scholar = harness.addToBattlefieldAndReturn(player1, new BoomScholar());
+        harness.addToBattlefield(player1, new BoomScholar());
+        harness.addToBattlefield(player1, new BoomScholar());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(scholar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, scholar, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void doesNotReduceOpponentsExhaustCosts() {
+        harness.addToBattlefield(player1, new BoomScholar());
+        harness.addToBattlefield(player2, new GreasewrenchGoblin());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void trampleAppliesOnlyToPermanentsPresentAtResolutionAndExpires() {
+        Permanent scholar = harness.addToBattlefieldAndReturn(player1, new BoomScholar());
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new Boommobile());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GreasewrenchGoblin());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GreasewrenchGoblin());
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GreasewrenchGoblin());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.TRAMPLE)).isTrue();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, scholar, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.TRAMPLE)).isFalse();
+        assertThat(scholar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

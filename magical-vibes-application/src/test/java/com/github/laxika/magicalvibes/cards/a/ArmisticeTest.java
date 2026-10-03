@@ -70,6 +70,70 @@ class ArmisticeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Draw and life gain wait until the ability resolves")
+    void effectsWaitForResolution() {
+        harness.addToBattlefield(player1, new Armistice());
+        harness.setLibrary(player1, List.of(new DeadlyInsect()));
+        harness.setLife(player2, 10);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    @DisplayName("The other controller draws while their opponent gains life")
+    void otherControllerDraws() {
+        harness.addToBattlefield(player2, new Armistice());
+        harness.setLibrary(player2, List.of(new DeadlyInsect()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 15);
+        int opponentHandBefore = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Deadly Insect");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(opponentHandBefore);
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without an opponent target")
+    void cannotActivateWithoutTarget() {
+        harness.addToBattlefield(player1, new Armistice());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Generic mana cannot replace the second white mana")
+    void requiresTwoWhiteMana() {
+        harness.addToBattlefield(player1, new Armistice());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 2);

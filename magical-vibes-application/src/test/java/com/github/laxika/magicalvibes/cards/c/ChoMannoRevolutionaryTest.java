@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.l.Lunge;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChoMannoRevolutionary.class, CrossbowInfantry.class, Lunge.class})
+@CardUsed({ChoMannoRevolutionary.class, CrossbowInfantry.class, Lunge.class, HillGiant.class, Terror.class})
 class ChoMannoRevolutionaryTest extends BaseCardTest {
 
     @Test
@@ -26,7 +29,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Cho-Manno, Revolutionary");
+        assertThat(entry.getCard()).isInstanceOf(ChoMannoRevolutionary.class);
     }
 
     @Test
@@ -57,18 +60,17 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        CrossbowInfantry bigCreature = new CrossbowInfantry();
-        bigCreature.setPower(5);
-        bigCreature.setToughness(5);
-        Permanent attacker = addCreatureReady(player1, bigCreature);
+        Permanent attacker = addCreatureReady(player1, new HillGiant());
         attacker.setAttacking(true);
 
         resolveCombat(player1);
 
         // Cho-Manno survives — all damage prevented
         harness.assertOnBattlefield(player2, "Cho-Manno, Revolutionary");
-        // Attacker takes 2 damage from Cho-Manno (2 < 5 toughness) → survives too
-        harness.assertOnBattlefield(player1, "Crossbow Infantry");
+        // Hill Giant survives the 2 damage dealt by Cho-Manno.
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -112,8 +114,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Lunge()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, List.of(choManno.getId(), player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(choManno.getId(), player2.getId()));
 
         assertThat(choManno.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Cho-Manno, Revolutionary");
@@ -131,24 +132,55 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         attacker.setAttacking(true);
         defender.setBlocking(true);
         defender.addBlockingTarget(0);
-        resolveCombat(player1);
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
 
         // Cho-Manno survived, Crossbow Infantry died
         harness.assertOnBattlefield(player2, "Cho-Manno, Revolutionary");
 
         // Add a new attacker for second combat
-        CrossbowInfantry largerAttackerCard = new CrossbowInfantry();
-        largerAttackerCard.setPower(4);
-        largerAttackerCard.setToughness(4);
-        Permanent attacker2 = addCreatureReady(player1, largerAttackerCard);
+        Permanent attacker2 = addCreatureReady(player1, new HillGiant());
         attacker2.setAttacking(true);
 
+        defender.clearCombatState();
         defender.setBlocking(true);
         defender.addBlockingTarget(0);
-        resolveCombat(player1);
+        harness.resolveCombatDamage();
 
         // Cho-Manno still survives second combat
         harness.assertOnBattlefield(player2, "Cho-Manno, Revolutionary");
+        assertThat(defender.getMarkedDamage()).isZero();
+        assertThat(attacker2.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cho-Manno prevents damage from an activated ability")
+    void preventsActivatedAbilityDamage() {
+        Permanent choManno = addCreatureReady(player1, new ChoMannoRevolutionary());
+        choManno.setAttacking(true);
+        addCreatureReady(player2, new CrossbowInfantry());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.ensurePriority(player2);
+
+        harness.activateAbility(player2, 0, null, choManno.getId());
+        harness.passBothPriorities();
+
+        assertThat(choManno.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Cho-Manno, Revolutionary");
+    }
+
+    @Test
+    @DisplayName("Damage prevention does not prevent destruction")
+    void destructionStillKillsChoManno() {
+        Permanent choManno = addCreatureReady(player1, new ChoMannoRevolutionary());
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
+
+        harness.castAndResolveInstant(player2, 0, choManno.getId());
+
+        harness.assertNotOnBattlefield(player1, "Cho-Manno, Revolutionary");
+        harness.assertInGraveyard(player1, "Cho-Manno, Revolutionary");
     }
 
     @Test

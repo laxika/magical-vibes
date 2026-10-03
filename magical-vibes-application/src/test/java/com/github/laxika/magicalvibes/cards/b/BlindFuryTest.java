@@ -39,6 +39,51 @@ class BlindFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Blind Furys quadruple combat damage to creatures")
+    void multipleCopiesMultiplyDamage() {
+        Permanent attacker = addAttacker(new AvatarOfMight());
+        Permanent blocker = addBlocker(new GrizzlyBears());
+        castBlindFury();
+        castBlindFury();
+
+        resolveOpponentCombat(attacker, blocker);
+
+        harness.assertInGraveyard(player2, "Avatar of Might");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution also deal and receive doubled combat damage")
+    void doublesDamageForLaterCreatures() {
+        castBlindFury();
+        Permanent attacker = addAttacker(new GiantSpider());
+        Permanent blocker = addBlocker(new GiantSpider());
+
+        resolveOpponentCombat(attacker, blocker);
+
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("A trampler entering after resolution retains trample and doubles only creature damage")
+    void laterTramplerKeepsTrample() {
+        harness.setLife(player1, 20);
+        castBlindFury();
+        Permanent attacker = addAttacker(new AvatarOfMight());
+        Permanent blocker = addBlocker(new GiantSpider());
+
+        resolveOpponentCombat(attacker, blocker);
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(
+                blocker.getId(), 4,
+                player1.getId(), 4));
+
+        harness.assertLife(player1, 16);
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertNotInGraveyard(player2, "Avatar of Might");
+    }
+
+    @Test
     @DisplayName("Combat damage dealt to a blocking creature is doubled")
     void doublesCombatDamageToBlocker() {
         Permanent attacker = addAttacker(new GrizzlyBears());

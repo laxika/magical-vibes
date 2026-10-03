@@ -21,7 +21,7 @@ class BarbarianOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BarbarianOutcast());
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Barbarian Outcast");
         harness.assertInGraveyard(player1, "Barbarian Outcast");
@@ -46,7 +46,7 @@ class BarbarianOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BarbarianOutcast());
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Barbarian Outcast");
         harness.assertInGraveyard(player1, "Barbarian Outcast");
@@ -79,6 +79,61 @@ class BarbarianOutcastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
         resolveAllTriggers();
 
+        harness.assertNotOnBattlefield(player1, "Barbarian Outcast");
+        harness.assertInGraveyard(player1, "Barbarian Outcast");
+    }
+
+    @Test
+    @DisplayName("Does not duplicate its state trigger while it is on the stack")
+    void doesNotDuplicatePendingTrigger() {
+        harness.addToBattlefield(player1, new BarbarianOutcast());
+
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Barbarian Outcast");
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Barbarian Outcast");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Survives losing a Swamp when another Swamp remains")
+    void survivesWhenAnotherSwampRemains() {
+        var swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new BarbarianOutcast());
+        harness.setHand(player1, List.of(new RancidEarth()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, swamp.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertOnBattlefield(player1, "Barbarian Outcast");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting without a Swamp leaves a sacrifice trigger to resolve")
+    void castingWithoutSwampTriggersSacrifice() {
+        harness.setHand(player1, List.of(new BarbarianOutcast()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Barbarian Outcast");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
         harness.assertNotOnBattlefield(player1, "Barbarian Outcast");
         harness.assertInGraveyard(player1, "Barbarian Outcast");
     }

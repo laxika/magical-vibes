@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FencerClique;
 import com.github.laxika.magicalvibes.cards.k.KithkinZephyrnaut;
 import com.github.laxika.magicalvibes.cards.o.OrderOfTheGoldenCricket;
 import com.github.laxika.magicalvibes.cards.s.StonybrookSchoolmaster;
+import com.github.laxika.magicalvibes.cards.v.VeteransArmaments;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,8 +17,55 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BallyrushBanneret.class, FencerClique.class, KithkinZephyrnaut.class,
-        OrderOfTheGoldenCricket.class, StonybrookSchoolmaster.class})
+        OrderOfTheGoldenCricket.class, StonybrookSchoolmaster.class, VeteransArmaments.class})
 class BallyrushBanneretTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Two Bannerets remove both generic mana from a Kithkin Soldier spell")
+    void twoBanneretsRemoveTwoGenericMana() {
+        harness.addToBattlefield(player1, new BallyrushBanneret());
+        harness.addToBattlefield(player1, new BallyrushBanneret());
+        harness.setHand(player1, List.of(new KithkinZephyrnaut()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A noncreature Soldier spell receives the cost reduction")
+    void noncreatureSoldierSpellCostsOneLess() {
+        harness.addToBattlefield(player1, new BallyrushBanneret());
+        harness.setHand(player1, List.of(new VeteransArmaments()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Banneret on the battlefield reduces another Banneret spell")
+    void reducesAnotherBanneretSpell() {
+        harness.addToBattlefield(player1, new BallyrushBanneret());
+        harness.setHand(player1, List.of(new BallyrushBanneret()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Banneret spell does not reduce its own casting cost")
+    void doesNotReduceItsOwnCost() {
+        harness.setHand(player1, List.of(new BallyrushBanneret()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     @Test
     @DisplayName("Kithkin spells cost {1} less with Ballyrush Banneret on the battlefield")

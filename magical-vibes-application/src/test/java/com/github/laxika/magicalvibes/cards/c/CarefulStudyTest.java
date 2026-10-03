@@ -22,8 +22,7 @@ class CarefulStudyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CarefulStudy(), new Island(), new Island()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
@@ -34,5 +33,28 @@ class CarefulStudyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
         harness.assertInGraveyard(player1, "Careful Study");
+    }
+
+    @Test
+    @DisplayName("With no other cards in hand, both drawn cards must be discarded")
+    void discardsBothDrawnCardsWhenCastFromOtherwiseEmptyHand() {
+        Island firstDraw = new Island();
+        Island secondDraw = new Island();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new CarefulStudy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDraw, secondDraw).hasSize(3);
+        harness.assertInGraveyard(player1, "Careful Study");
+        assertThat(gd.stack).isEmpty();
     }
 }

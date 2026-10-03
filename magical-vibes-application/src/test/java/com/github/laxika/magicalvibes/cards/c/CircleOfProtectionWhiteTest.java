@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionWhite.class, DAvenantArcher.class, GrizzlyBears.class,
+@CardUsed({CircleOfProtectionWhite.class, DAvenantArcher.class, Disenchant.class, GrizzlyBears.class,
         HealingSalve.class, Incinerate.class, Justice.class, Lifelace.class, PearledUnicorn.class})
 class CircleOfProtectionWhiteTest extends BaseCardTest {
 
@@ -192,8 +193,7 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Lifelace()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, source.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, source.getId());
 
         source.setAttacking(true);
         resolveCombat(player2);
@@ -248,8 +248,7 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -294,6 +293,61 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(source.getId()));
+    }
+
+    @Test
+    void departedWhiteSourceReferencedByPendingTriggerCanBeChosen() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new CircleOfProtectionWhite());
+        Permanent justice = harness.addToBattlefieldAndReturn(player2, new Justice());
+        harness.setHand(player1, List.of(new Incinerate(), new Disenchant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, justice.getId());
+        harness.assertInGraveyard(player2, "Justice");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(justice.getId());
+        harness.handlePermanentChosen(player1, justice.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void repeatedActivationsPreventSeparateDamageEventsFromSameSource() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new CircleOfProtectionWhite());
+        Permanent justice = harness.addToBattlefieldAndReturn(player2, new Justice());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        for (int activation = 0; activation < 2; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, justice.getId());
+        }
+
+        harness.setHand(player1, List.of(new Incinerate(), new Incinerate(), new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        for (int event = 0; event < 3; event++) {
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            resolveAllTriggers();
+            harness.assertLife(player1, event < 2 ? 20 : 17);
+        }
+        harness.assertLife(player2, 11);
     }
 
 }

@@ -517,6 +517,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         UUID returnControllerId = flickered.returnControllerId();
         boolean hadBonusSubtype = flickered.hadBonusSubtype();
 
+        if (card.isToken() || gameData.findExiledCard(card.getId()) == null) {
+            return;
+        }
+
         // Immediately return from exile as a new permanent
         gameData.removeFromExile(card.getId());
         if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF

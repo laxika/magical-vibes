@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.d.DarksteelColossus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IntangibleVirtue;
 import com.github.laxika.magicalvibes.cards.l.LiquimetalCoating;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BrokenWings.class, AirElemental.class, GrizzlyBears.class, IntangibleVirtue.class,
+        LiquimetalCoating.class, DarksteelColossus.class})
 class BrokenWingsTest extends BaseCardTest {
 
     @Test
@@ -67,11 +71,32 @@ class BrokenWingsTest extends BaseCardTest {
                 .hasMessageContaining("artifact, enchantment, or creature with flying");
     }
 
+    @Test
+    @DisplayName("Can destroy a flying creature controlled by the caster")
+    void destroysOwnFlyingCreature() {
+        harness.addToBattlefield(player1, new AirElemental());
+
+        castBrokenWings(findPermanent(player1, "Air Elemental"));
+
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Can target a nonflying artifact creature but cannot destroy it if indestructible")
+    void doesNotDestroyIndestructibleArtifactCreature() {
+        harness.addToBattlefield(player2, new DarksteelColossus());
+
+        castBrokenWings(findPermanent(player2, "Darksteel Colossus"));
+
+        harness.assertOnBattlefield(player2, "Darksteel Colossus");
+        harness.assertInGraveyard(player1, "Broken Wings");
+    }
+
     private void castBrokenWings(Permanent target) {
         harness.setHand(player1, List.of(new BrokenWings()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

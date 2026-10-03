@@ -24,8 +24,7 @@ class BeyeenVeilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, 0, null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(0);
@@ -36,6 +35,41 @@ class BeyeenVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+    }
+
+    @Test
+    void affectsAllOpponentCreaturesPresentAtResolutionButNotLaterArrivals() {
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BeyeenVeil()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0);
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isZero();
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Beyeen Veil");
+    }
+
+    @Test
+    void resolvesWithNoOpponentCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BeyeenVeil()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Beyeen Veil");
     }
 
     @Test

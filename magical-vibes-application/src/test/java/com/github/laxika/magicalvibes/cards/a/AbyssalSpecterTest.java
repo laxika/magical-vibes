@@ -115,10 +115,7 @@ class AbyssalSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Damage to its controller also makes that player discard a card")
     void damageToControllerMakesControllerDiscard() {
-        AbyssalSpecter card = new AbyssalSpecter();
-        card.addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)), "{T}: This creature deals 1 damage to any target."));
-        Permanent specter = addCreatureReady(player1, card);
+        Permanent specter = addPingingSpecter();
         harness.setHand(player1, List.of(new Island()));
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
@@ -127,5 +124,44 @@ class AbyssalSpecterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to a creature does not cause its controller to discard")
+    void noncombatDamageToCreatureDoesNotTriggerDiscard() {
+        Permanent specter = addPingingSpecter();
+        Permanent drake = addCreatureReady(player2, new WindDrake());
+        Island island = new Island();
+        harness.setHand(player2, List.of(island));
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specter),
+                null, drake.getId());
+        resolveAllTriggers();
+
+        assertThat(drake.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(island);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The defending player discards when the other player attacks with the Specter")
+    void opponentControlledSpecterMakesDefenderDiscard() {
+        addCreatureReady(player2, new AbyssalSpecter());
+        Island island = new Island();
+        WindDrake drake = new WindDrake();
+        harness.setHand(player1, List.of(island, drake));
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drake);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

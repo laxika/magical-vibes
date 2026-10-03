@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ChandrasOutburst.class)
+@CardUsed({ChandrasOutburst.class, ChandraBoldPyromancer.class})
 class ChandrasOutburstTest extends BaseCardTest {
 
     @Test
@@ -26,17 +24,13 @@ class ChandrasOutburstTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
     }
 
     @Test
     @DisplayName("Finds named card in graveyard and puts it into hand")
     void findsNamedCardInGraveyard() {
-        Card chandraBold = new Card();
-        chandraBold.setName("Chandra, Bold Pyromancer");
-        chandraBold.setType(CardType.PLANESWALKER);
-        chandraBold.setManaCost("{4}{R}{R}");
-        chandraBold.setColor(CardColor.RED);
+        ChandraBoldPyromancer chandraBold = new ChandraBoldPyromancer();
 
         harness.setGraveyard(player1, List.of(chandraBold));
         harness.setHand(player1, List.of(new ChandrasOutburst()));
@@ -47,7 +41,7 @@ class ChandrasOutburstTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Damage dealt
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
         // Named card moved from graveyard to hand
         harness.assertInHand(player1, "Chandra, Bold Pyromancer");
         harness.assertNotInGraveyard(player1, "Chandra, Bold Pyromancer");
@@ -64,8 +58,100 @@ class ChandrasOutburstTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Damage still dealt
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
         // No card found
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void dealsFourDamageToPlaneswalker() {
+        var chandra = harness.addToBattlefieldAndReturn(player2, new ChandraBoldPyromancer());
+        harness.setHand(player1, List.of(new ChandrasOutburst()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, chandra.getId());
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void canTargetItsController() {
+        harness.setHand(player1, List.of(new ChandrasOutburst()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    void findsNamedCardInLibrary() {
+        var chandra = new ChandraBoldPyromancer();
+        harness.setLibrary(player1, List.of(chandra));
+        harness.setHand(player1, List.of(new ChandrasOutburst()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chandra);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void mayFailToFindNamedCardInLibrary() {
+        var chandra = new ChandraBoldPyromancer();
+        harness.setLibrary(player1, List.of(chandra));
+        harness.setHand(player1, List.of(new ChandrasOutburst()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chandra);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void doesNotForceGraveyardCopyWhenLibraryCopyIsAvailable() {
+        var graveyardCopy = new ChandraBoldPyromancer();
+        var libraryCopy = new ChandraBoldPyromancer();
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        harness.setHand(player1, List.of(new ChandrasOutburst()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCopy);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
+    @Test
+    void doesNotSearchWhenOnlyTargetLeavesBattlefield() {
+        var target = harness.addToBattlefieldAndReturn(player2, new ChandraBoldPyromancer());
+        var searchableCard = new ChandraBoldPyromancer();
+        harness.setLibrary(player1, List.of(searchableCard));
+        harness.setHand(player1, List.of(new ChandrasOutburst()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(searchableCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Chandra's Outburst");
     }
 }

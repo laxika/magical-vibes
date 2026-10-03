@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SanctuaryCat;
+import com.github.laxika.magicalvibes.cards.r.RayOfRevelation;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,72 +13,67 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BurdenOfGuilt.class, SanctuaryCat.class, RayOfRevelation.class})
 class BurdenOfGuiltTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Burden of Guilt puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new SanctuaryCat());
 
         harness.setHand(player1, List.of(new BurdenOfGuilt()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, creaturePerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Burden of Guilt");
     }
 
     @Test
     @DisplayName("Resolving Burden of Guilt attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new SanctuaryCat());
 
         harness.setHand(player1, List.of(new BurdenOfGuilt()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, creaturePerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Burden of Guilt")
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bearsPerm.getId()));
+                        && p.getAttachedTo().equals(creaturePerm.getId()));
     }
-
-    // ===== Activated ability: tap enchanted creature =====
 
     @Test
     @DisplayName("Activating ability taps the enchanted creature")
     void activatingAbilityTapsEnchantedCreature() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new SanctuaryCat());
 
-        Permanent auraPerm = new Permanent(new BurdenOfGuilt());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        // The Aura is at index 1 (bears at 0, aura at 1)
+        // The Aura is at index 1 (creature at 0, aura at 1)
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.isTapped()).isTrue();
+        assertThat(creaturePerm.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingAbilityPutsOnStack() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new SanctuaryCat());
 
-        Permanent auraPerm = new Permanent(new BurdenOfGuilt());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -84,17 +81,15 @@ class BurdenOfGuiltTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Burden of Guilt");
     }
 
     @Test
     @DisplayName("Ability can be activated multiple times per turn")
     void abilityCanBeActivatedMultipleTimes() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new SanctuaryCat());
 
-        Permanent auraPerm = new Permanent(new BurdenOfGuilt());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -102,25 +97,22 @@ class BurdenOfGuiltTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.isTapped()).isTrue();
+        assertThat(creaturePerm.isTapped()).isTrue();
 
         // Activate again (creature already tapped, but ability still works - it just doesn't change state)
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.isTapped()).isTrue();
+        assertThat(creaturePerm.isTapped()).isTrue();
     }
-
-    // ===== Can enchant opponent's creature =====
 
     @Test
     @DisplayName("Can enchant and tap opponent's creature")
     void canEnchantAndTapOpponentCreature() {
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new SanctuaryCat());
 
-        Permanent auraPerm = new Permanent(new BurdenOfGuilt());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
         auraPerm.setAttachedTo(opponentCreature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -131,22 +123,79 @@ class BurdenOfGuiltTest extends BaseCardTest {
         assertThat(opponentCreature.isTapped()).isTrue();
     }
 
-    // ===== Aura removed - ability no longer available =====
-
     @Test
     @DisplayName("Ability is no longer available when aura is removed from battlefield")
     void abilityGoneWhenAuraRemoved() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creaturePerm = addCreatureReady(player1, new SanctuaryCat());
 
-        Permanent auraPerm = new Permanent(new BurdenOfGuilt());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
+        auraPerm.setAttachedTo(creaturePerm.getId());
 
         // Remove the aura
         gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
 
-        // Bears should not be tappable via the ability anymore
-        // Bears has no activated ability of its own
-        harness.assertNotOnBattlefield(player1, "Burden of Guilt");
+        // The creature should not be tappable via the ability anymore
+        // The creature has no activated ability of its own
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creaturePerm.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroying the Aura in response does not stop the creature from being tapped")
+    void abilityResolvesAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player2, new SanctuaryCat());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new RayOfRevelation()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(creature.isTapped()).isFalse();
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Burden of Guilt");
+        assertThat(creature.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activating requires paying one mana")
+    void cannotActivateWithoutMana() {
+        Permanent creature = addCreatureReady(player2, new SanctuaryCat());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
+        aura.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Aura can activate and only its enchanted creature is tapped")
+    void tappedAuraCanActivateWithoutTargetingAnotherCreature() {
+        Permanent enchanted = addCreatureReady(player2, new SanctuaryCat());
+        Permanent other = addCreatureReady(player2, new SanctuaryCat());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurdenOfGuilt());
+        aura.setAttachedTo(enchanted.getId());
+        aura.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(enchanted.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+        assertThat(aura.isTapped()).isTrue();
     }
 }

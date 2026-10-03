@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "166")
+@CardRegistration(set = "ONC", collectorNumber = "133")
 public class IchorclawMyr extends Card {
 
     public IchorclawMyr() {

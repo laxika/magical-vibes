@@ -123,10 +123,83 @@ class CloakOfInvisibilityTest extends BaseCardTest {
         assertThat(gd.anyPermanentMatches(permanent -> permanent.getId().equals(bears.getId()))).isFalse();
     }
 
+    @Test
+    @DisplayName("A Cloak cast on an opponent's creature follows that creature's phasing cycle")
+    void opponentCreatureAndCloakPhaseTogether() {
+        Permanent creature = addCreatureReady(player2, new IronTuskElephant());
+        harness.setHand(player1, List.of(new CloakOfInvisibility()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent cloak = findPermanent(player1, "Cloak of Invisibility");
+        assertThat(cloak.getAttachedTo()).isEqualTo(creature.getId());
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cloak);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.performUntapStep(player2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cloak);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(cloak);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cloak);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(cloak);
+
+        harness.performUntapStep(player2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cloak);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(cloak.getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertNotInGraveyard(player1, "Cloak of Invisibility");
+    }
+
+    @Test
+    @DisplayName("Phasing happens before untapping and does not affect other creatures")
+    void phasesOutBeforeUntappingAndUntapsWhenPhasingIn() {
+        Permanent creature = addCreatureReady(player1, new IronTuskElephant());
+        Permanent otherCreature = addCreatureReady(player1, new IronTuskElephant());
+        Permanent cloak = enchant(creature);
+        creature.tap();
+        otherCreature.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(creature, cloak);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherCreature);
+        assertThat(otherCreature.isTapped()).isFalse();
+
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, cloak);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Other creatures remain blockable by non-Walls")
+    void blockingRestrictionOnlyAppliesToEnchantedCreature() {
+        Permanent enchanted = addCreatureReady(player1, new IronTuskElephant());
+        enchant(enchanted);
+        Permanent attacker = addCreatureReady(player1, new IronTuskElephant());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new IronTuskElephant());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent enchant(Permanent host) {
-        Permanent cloak = new Permanent(new CloakOfInvisibility());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player1, new CloakOfInvisibility());
         cloak.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(cloak);
         return cloak;
     }
 

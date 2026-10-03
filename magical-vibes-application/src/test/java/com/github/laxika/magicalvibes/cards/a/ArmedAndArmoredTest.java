@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.f.FearlessLiberator;
 import com.github.laxika.magicalvibes.cards.k.KondasBanner;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ArmedAndArmored.class, DuskLegionDreadnought.class, FearlessLiberator.class,
-        KondasBanner.class, LeoninScimitar.class})
+        KondasBanner.class, LeoninScimitar.class, MaskwoodNexus.class})
 class ArmedAndArmoredTest extends BaseCardTest {
 
     @Test
@@ -72,11 +73,96 @@ class ArmedAndArmoredTest extends BaseCardTest {
         assertThat(equipment.getAttachedTo()).isEqualTo(dwarf.getId());
     }
 
+    @Test
+    @DisplayName("Animates Vehicles even when no controlled Dwarf can be chosen")
+    void animatesWithoutControlledDwarf() {
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought());
+        addCreatureReady(player2, new FearlessLiberator());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        cast();
+
+        assertThat(gqs.isCreature(gd, vehicle)).isTrue();
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing zero Equipment preserves existing attachments")
+    void canChooseZeroEquipment() {
+        Permanent dwarf = addCreatureReady(player1, new FearlessLiberator());
+        Permanent otherDwarf = addCreatureReady(player1, new FearlessLiberator());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(otherDwarf.getId());
+
+        cast();
+        harness.handlePermanentChosen(player1, dwarf.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(otherDwarf.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Moves multiple controlled Equipment and excludes opposing Equipment")
+    void attachesMultipleEquipment() {
+        Permanent dwarf = addCreatureReady(player1, new FearlessLiberator());
+        Permanent otherDwarf = addCreatureReady(player1, new FearlessLiberator());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        first.setAttachedTo(otherDwarf.getId());
+
+        cast();
+        harness.handlePermanentChosen(player1, dwarf.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId())
+                .doesNotContain(opposing.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(first.getAttachedTo()).isEqualTo(dwarf.getId());
+        assertThat(second.getAttachedTo()).isEqualTo(dwarf.getId());
+        assertThat(opposing.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not animate Vehicles entering after resolution")
+    void doesNotAnimateLaterVehicles() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought());
+
+        cast();
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought());
+
+        assertThat(gqs.isCreature(gd, original)).isTrue();
+        assertThat(gqs.isCreature(gd, later)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can choose an animated Vehicle made a Dwarf by Maskwood Nexus")
+    void choosesDwarfGrantedByContinuousEffect() {
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        cast();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(vehicle.getId());
+        harness.handlePermanentChosen(player1, vehicle.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(vehicle.getId());
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new ArmedAndArmored()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }

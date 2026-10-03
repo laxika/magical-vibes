@@ -47,11 +47,7 @@ class BurningYardTrainerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target Burning-Yard Trainer itself")
     void etbCannotTargetItself() {
-        harness.setHand(player1, List.of(new BurningYardTrainer()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BurningYardTrainer(), "{4}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -74,13 +70,51 @@ class BurningYardTrainerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    @DisplayName("The trigger resolves even after the Trainer leaves the battlefield")
+    void triggerResolvesWithoutTrainer() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new VenerableKnight());
+        castTrainerWithTriggerPending(knight.getId());
+        Permanent trainer = findPermanent(player1, "Burning-Yard Trainer");
+        gd.playerBattlefields.get(player1.getId()).remove(trainer);
+        gd.playerGraveyards.get(player1.getId()).add(trainer.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(knight.getPowerModifier()).isEqualTo(2);
+        assertThat(knight.getToughnessModifier()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The trigger does not affect a Knight whose control changes before resolution")
+    void targetMustStillBeControlledAtResolution() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new VenerableKnight());
+        castTrainerWithTriggerPending(knight.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(knight);
+        gd.playerBattlefields.get(player2.getId()).add(knight);
+
+        resolveAllTriggers();
+
+        assertThat(knight.getPowerModifier()).isZero();
+        assertThat(knight.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
+    }
+
     private void castTrainer(UUID targetId) {
+        castTrainerWithTriggerPending(targetId);
+        resolveAllTriggers();
+    }
+
+    private void castTrainerWithTriggerPending(UUID targetId) {
         harness.setHand(player1, List.of(new BurningYardTrainer()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
     }
 }

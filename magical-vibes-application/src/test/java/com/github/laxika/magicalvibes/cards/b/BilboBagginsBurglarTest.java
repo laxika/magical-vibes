@@ -79,4 +79,46 @@ class BilboBagginsBurglarTest extends BaseCardTest {
         harness.assertInHand(player1, "Take a Glance");
         assertThat(gd.findExiledCard(card.getId())).isNull();
     }
+
+    @Test
+    void adventureResolvesWithAnEmptyLibrary() {
+        BilboBagginsBurglar card = new BilboBagginsBurglar();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        harness.assertNotOnBattlefield(player1, "Bilbo Baggins, Burglar");
+        harness.assertNotInGraveyard(player1, "Bilbo Baggins, Burglar");
+    }
+
+    @Test
+    void adventureScriesTheOnlyCardWithoutDrawingIt() {
+        BilboBagginsBurglar card = new BilboBagginsBurglar();
+        Card top = new BilboBagginsBurglar();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(top));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(top);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+    }
 }

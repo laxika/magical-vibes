@@ -32,4 +32,51 @@ class BraidwoodCupTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void lifeIsGainedOnlyWhenTheAbilityResolves() {
+        Permanent cup = harness.addToBattlefieldAndReturn(player1, new BraidwoodCup());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 15);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(cup.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 15);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 15);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateAgainAfterUntapping() {
+        harness.addToBattlefield(player1, new BraidwoodCup());
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+    }
+
+    @Test
+    void opponentControlledCupGainsLifeForItsController() {
+        harness.addToBattlefield(player2, new BraidwoodCup());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 15);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 16);
+    }
 }

@@ -111,4 +111,59 @@ class AetherVialTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Leonin Bola");
         harness.assertInHand(player1, "Leonin Bola");
     }
+
+    @Test
+    @DisplayName("Uses the number of charge counters at resolution rather than activation")
+    void usesCounterCountAtResolution() {
+        Permanent vial = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+        vial.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player1, List.of(new DroolingOgre(), new CrazedGoblin()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        vial.setCounterCount(CounterType.CHARGE, 2);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Drooling Ogre");
+        harness.assertNotInHand(player1, "Drooling Ogre");
+        harness.assertInHand(player1, "Crazed Goblin");
+    }
+
+    @Test
+    @DisplayName("Uses the last counter count when Aether Vial leaves before resolution")
+    void usesLastKnownCounterCountAfterSourceLeaves() {
+        Permanent vial = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+        vial.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player1, List.of(new DroolingOgre(), new CrazedGoblin()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        vial.setCounterCount(CounterType.CHARGE, 2);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, vial);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Aether Vial");
+        harness.assertOnBattlefield(player1, "Drooling Ogre");
+        harness.assertInHand(player1, "Crazed Goblin");
+    }
+
+    @Test
+    @DisplayName("A replacement Aether Vial does not supply the departed source's counter count")
+    void usesDepartedSourceRatherThanAnotherVial() {
+        Permanent vial = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+        vial.setCounterCount(CounterType.CHARGE, 2);
+        harness.setHand(player1, List.of(new DroolingOgre(), new CrazedGoblin()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, vial);
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+        replacement.setCounterCount(CounterType.CHARGE, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Drooling Ogre");
+        harness.assertInHand(player1, "Crazed Goblin");
+        assertThat(replacement.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(replacement.isTapped()).isFalse();
+    }
 }

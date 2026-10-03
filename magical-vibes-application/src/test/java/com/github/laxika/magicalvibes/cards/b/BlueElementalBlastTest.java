@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BlueElementalBlastTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({BlueElementalBlast.class, Fireball.class, GrizzlyBears.class, HillGiant.class})
     @DisplayName("Mode 0: Counter target red spell")
     class CounterRedSpellMode {
 
@@ -46,23 +47,64 @@ class BlueElementalBlastTest extends BaseCardTest {
         @DisplayName("Cannot counter a non-red spell")
         void cannotCounterNonRedSpell() {
             GrizzlyBears bears = new GrizzlyBears();
-            harness.setHand(player2, List.of(bears));
-            harness.addMana(player2, ManaColor.GREEN, 2);
             harness.setHand(player1, List.of(new BlueElementalBlast()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
             harness.forceActivePlayer(player2);
-            harness.castCreature(player2, 0);
+            harness.castFromHand(player2, bears, "{1}{G}");
             harness.passPriority(player2);
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, bears.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
+
+        @Test
+        void countersRedCreatureSpell() {
+            HillGiant giant = new HillGiant();
+            harness.forceActivePlayer(player2);
+            harness.castFromHand(player2, giant, "{3}{R}");
+            harness.passPriority(player2);
+            harness.setHand(player1, List.of(new BlueElementalBlast()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castInstant(player1, 0, 0, giant.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertNotOnBattlefield(player2, "Hill Giant");
+            harness.assertInGraveyard(player2, "Hill Giant");
+            harness.assertInGraveyard(player1, "Blue Elemental Blast");
+        }
+
+        @Test
+        void cannotCounterRedPermanentOnBattlefield() {
+            var giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+            harness.setHand(player1, List.of(new BlueElementalBlast()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, giant.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 
     @Nested
+    @CardUsed({BlueElementalBlast.class, GrizzlyBears.class, HillGiant.class})
     @DisplayName("Mode 1: Destroy target red permanent")
     class DestroyRedPermanentMode {
+
+        @Test
+        void destroysControllersOwnRedPermanent() {
+            var giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+            harness.setHand(player1, List.of(new BlueElementalBlast()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castInstant(player1, 0, 1, giant.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player1, "Hill Giant");
+            harness.assertInGraveyard(player1, "Hill Giant");
+            harness.assertInGraveyard(player1, "Blue Elemental Blast");
+        }
 
         @Test
         @DisplayName("Destroys a red permanent")

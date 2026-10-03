@@ -78,4 +78,60 @@ class AkkiDrillmasterTest extends BaseCardTest {
 
         assertThat(source.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        Permanent source = addCreatureReady(player1, new AkkiDrillmaster());
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Drillmaster cannot activate its tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AkkiDrillmaster());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tap cost is paid before resolution and prevents a second activation")
+    void tapCostPaidBeforeResolution() {
+        Permanent source = addCreatureReady(player1, new AkkiDrillmaster());
+        Permanent target = addCreatureReady(player1, new AkkiDrillmaster());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.passBothPriorities();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted haste lets a newly entered creature activate its tap ability")
+    void grantedHasteEnablesTapAbility() {
+        Permanent source = addCreatureReady(player1, new AkkiDrillmaster());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AkkiDrillmaster());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(source.hasKeyword(Keyword.HASTE)).isTrue();
+    }
 }

@@ -86,4 +86,49 @@ class AgrusKosWojekVeteranTest extends BaseCardTest {
         assertThat(red.getPowerModifier()).isZero();
         assertThat(red.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Creatures removed from combat before resolution receive no boost")
+    void checksAttackingStatusAtResolution() {
+        addCreatureReady(player1, new AgrusKosWojekVeteran());
+        Permanent red = addCreatureReady(player1, new ViashinoFangtail());
+        Permanent white = addCreatureReady(player1, new CourierHawk());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1, 2));
+            assertThat(gd.stack).hasSize(1);
+            red.setAttacking(false);
+            white.setAttacking(false);
+            resolveAllTriggers();
+        });
+
+        assertThat(red.getPowerModifier()).isZero();
+        assertThat(red.getToughnessModifier()).isZero();
+        assertThat(white.getPowerModifier()).isZero();
+        assertThat(white.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Boosts persist after combat and do not extend to later attackers")
+    void affectedCreaturesAreFixedAtResolution() {
+        Permanent agrus = addCreatureReady(player1, new AgrusKosWojekVeteran());
+        Permanent red = addCreatureReady(player1, new ViashinoFangtail());
+        Permanent white = addCreatureReady(player1, new CourierHawk());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveAllTriggers();
+        });
+
+        agrus.setAttacking(false);
+        red.setAttacking(false);
+        white.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, agrus)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, agrus)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, red)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, red)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, white)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, white)).isEqualTo(2);
+    }
 }

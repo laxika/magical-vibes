@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -132,16 +133,72 @@ class AnimalBoneyardTest extends BaseCardTest {
     @Test
     @DisplayName("Granted ability disappears when Animal Boneyard leaves the battlefield")
     void grantedAbilityDisappearsWhenAuraLeaves() {
-        Permanent forest = attachToForest();
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof AnimalBoneyard)
-                .findFirst()
-                .orElseThrow();
+        attachToForest();
+        Permanent aura = findPermanent(player1, "Animal Boneyard");
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("Life gain uses toughness including counters, without subtracting marked damage")
+    void gainsLifeUsingModifiedToughnessBeforeSacrifice() {
+        attachToForest();
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        spider.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        spider.setMarkedDamage(3);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+        if (gd.interaction.activeInteraction() != null) {
+            harness.handlePermanentChosen(player1, spider.getId());
+        }
+
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 6);
+    }
+
+    @Test
+    @DisplayName("With multiple creatures, life gain uses the chosen creature's toughness")
+    void gainsLifeUsingChosenCreatureToughness() {
+        attachToForest();
+        Permanent remaining = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, chosen.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remaining).doesNotContain(chosen);
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 7);
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted land cannot pay the granted ability's tap cost")
+    void cannotActivateTappedLand() {
+        Permanent forest = attachToForest();
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        forest.tap();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spider);
     }
 
     private Permanent attachToForest() {

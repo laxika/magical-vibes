@@ -26,8 +26,7 @@ class ContractHeroTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -88,6 +87,71 @@ class ContractHeroTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    void canChooseSacrificeWhenDiscardIsAlsoAvailable() {
+        Shock card = new Shock();
+        harness.setHand(player1, List.of(card));
+        Permanent hero = addCreatureReady(player1, new ContractHero());
+        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+
+        attackAndAcceptMay();
+        harness.handleListChoice(player1, "Sacrifice an artifact");
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
+    }
+
+    @Test
+    void canChooseDiscardWhenSacrificeIsAlsoAvailable() {
+        Shock card = new Shock();
+        harness.setHand(player1, List.of(card));
+        Permanent hero = addCreatureReady(player1, new ContractHero());
+        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+
+        attackAndAcceptMay();
+        harness.handleListChoice(player1, "Discard a card");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    void acceptingWithoutAnArtifactOrCardDoesNotBoostHero() {
+        harness.setHand(player1, List.of());
+        Permanent hero = addCreatureReady(player1, new ContractHero());
+        addCreatureReady(player2, new Ornithopter());
+
+        attackAndAcceptMay();
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canSacrificeTheTreasureCreatedOnEntering() {
+        harness.setHand(player1, List.of(new ContractHero()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent hero = findPermanent(player1, "Contract Hero");
+        hero.setSummoningSick(false);
+        Permanent treasure = findPermanent(player1, "Treasure");
+
+        attackAndAcceptMay();
+        harness.handlePermanentChosen(player1, treasure.getId());
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     private void attackAndAcceptMay() {

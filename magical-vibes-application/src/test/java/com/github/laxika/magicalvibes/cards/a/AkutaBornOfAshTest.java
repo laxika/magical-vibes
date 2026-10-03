@@ -18,6 +18,62 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AkutaBornOfAshTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Equal hand sizes do not trigger Akuta's ability")
+    void doesNotTriggerWithEqualHandSizes() {
+        harness.setGraveyard(player1, List.of(new AkutaBornOfAsh()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Akuta does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.setGraveyard(player1, List.of(new AkutaBornOfAsh()));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new Swamp());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Akuta, Born of Ash");
+    }
+
+    @Test
+    @DisplayName("The sacrifice returns only the triggering Akuta and cannot use an opponent's Swamp")
+    void returnsOnlySourceAndOffersOnlyControlledSwamps() {
+        AkutaBornOfAsh akuta = new AkutaBornOfAsh();
+        GrizzlyBears otherCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(akuta, otherCard));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addToBattlefield(player2, new Swamp());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(swamp.getId());
+        harness.handlePermanentChosen(player1, swamp.getId());
+
+        harness.assertOnBattlefield(player1, "Akuta, Born of Ash");
+        harness.assertNotInGraveyard(player1, "Akuta, Born of Ash");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertOnBattlefield(player2, "Swamp");
+    }
+
+    @Test
     @DisplayName("Triggers from the graveyard when the controller has more cards in hand")
     void triggersWithMoreCardsInHand() {
         AkutaBornOfAsh akuta = new AkutaBornOfAsh();

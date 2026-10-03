@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.c.CastDown;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,9 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AmaranthineWall.class, CastDown.class})
 class AmaranthineWallTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Amaranthine Wall puts it on the stack")
@@ -45,8 +46,6 @@ class AmaranthineWallTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Amaranthine Wall");
     }
-
-    // ===== Indestructible ability =====
 
     @Test
     @DisplayName("Activating indestructible ability puts it on the stack")
@@ -94,8 +93,6 @@ class AmaranthineWallTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, wall, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    // ===== Activation constraints =====
-
     @Test
     @DisplayName("Activating ability does NOT tap Amaranthine Wall")
     void activatingAbilityDoesNotTap() {
@@ -133,8 +130,7 @@ class AmaranthineWallTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness (no tap required)")
     void canActivateWithSummoningSickness() {
-        Permanent wall = new Permanent(new AmaranthineWall());
-        gd.playerBattlefields.get(player1.getId()).add(wall);
+        harness.addToBattlefield(player1, new AmaranthineWall());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -157,11 +153,9 @@ class AmaranthineWallTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, wall, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Amaranthine Wall is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without granting indestructible if its source has left the battlefield")
+    void abilityHasNoEffectIfSourceRemoved() {
         addWallReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -174,12 +168,47 @@ class AmaranthineWallTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Indestructible protects the Wall from Cast Down")
+    void indestructiblePreventsDestruction() {
+        Permanent wall = addWallReady(player1);
+        Permanent otherWall = harness.addToBattlefieldAndReturn(player1, new AmaranthineWall());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
 
+        assertThat(gqs.hasKeyword(gd, otherWall, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.setHand(player2, List.of(new CastDown()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, wall.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wall);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroying the Wall in response prevents its ability from protecting it")
+    void destructionInResponseIsNotPrevented() {
+        Permanent wall = addWallReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.setHand(player2, List.of(new CastDown()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, wall.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Amaranthine Wall");
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new AmaranthineWall());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
     private Permanent addWallReady(Player player) {
-        Permanent perm = new Permanent(new AmaranthineWall());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AmaranthineWall());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
+

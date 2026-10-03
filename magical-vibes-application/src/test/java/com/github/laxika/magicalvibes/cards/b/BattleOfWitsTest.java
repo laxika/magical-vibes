@@ -104,6 +104,52 @@ class BattleOfWitsTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("The second player wins using their own library during their upkeep")
+    void secondPlayerWinsWithTheirOwnLibrary() {
+        harness.addToBattlefield(player2, new BattleOfWits());
+        setLibrarySize(player1, 199);
+        setLibrarySize(player2, 200);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("An opponent's large library does not satisfy the controller's condition")
+    void opponentsLibraryDoesNotSatisfyCondition() {
+        harness.addToBattlefield(player1, new BattleOfWits());
+        setLibrarySize(player1, 199);
+        setLibrarySize(player2, 250);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Wins if the library recovers to 200 before the trigger resolves")
+    void winsWhenLibraryRecoversBeforeResolution() {
+        harness.addToBattlefield(player1, new BattleOfWits());
+        setLibrarySize(player1, 200);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        setLibrarySize(player1, 199);
+        setLibrarySize(player1, 200);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
     private void setLibrarySize(Player player, int count) {
         List<Card> library = new ArrayList<>();
         for (int i = 0; i < count; i++) {

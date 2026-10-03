@@ -103,4 +103,45 @@ class BlackCarriageTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
+    @Test
+    void sacrificeIsPaidBeforeUntapResolves() {
+        Permanent carriage = addCreatureReady(player1, new BlackCarriage());
+        carriage.tap();
+        Permanent sacrifice = addCreatureReady(player1, new BeastWalkers());
+        sacrifice.tap();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        harness.assertInGraveyard(player1, "Beast Walkers");
+        assertThat(carriage.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(carriage.isTapped()).isFalse();
+    }
+
+    @Test
+    void canActivateWhileUntappedAndSummoningSick() {
+        Permanent carriage = addCreatureReady(player1, new BlackCarriage());
+        carriage.setSummoningSick(true);
+        Permanent sacrifice = addCreatureReady(player1, new BeastWalkers());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(carriage.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Black Carriage");
+        harness.assertInGraveyard(player1, "Beast Walkers");
+    }
+
 }

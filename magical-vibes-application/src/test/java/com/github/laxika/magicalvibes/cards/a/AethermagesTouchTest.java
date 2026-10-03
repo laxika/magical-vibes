@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CytoplastManipulator;
+import com.github.laxika.magicalvibes.cards.v.Voidslime;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AethermagesTouch.class, AssaultZeppelid.class, AzoriusSignet.class, CytoplastManipulator.class})
+@CardUsed({AethermagesTouch.class, AssaultZeppelid.class, AzoriusSignet.class, CytoplastManipulator.class, Voidslime.class})
 class AethermagesTouchTest extends BaseCardTest {
 
     @Test
@@ -34,24 +35,17 @@ class AethermagesTouchTest extends BaseCardTest {
         castAndResolve();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 0);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
+        gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
-                .findFirst()
-                .orElseThrow();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(rest1, rest2, rest3);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(entered.getId())
-                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP
-                        && player1.getId().equals(action.controllerId()));
 
         advanceToEndStep(player2);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
 
         advanceToEndStep(player1);
+        harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
@@ -70,7 +64,7 @@ class AethermagesTouchTest extends BaseCardTest {
         assertThat(gameLogContains("reveals")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 1);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
+        gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -103,17 +97,14 @@ class AethermagesTouchTest extends BaseCardTest {
         harness.clearPriorityPassed();
         castAndResolve();
         harness.handleCardChosen(player1, 0);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
+        gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(chosenCreature.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent entered = findPermanent(player1, "Cytoplast Manipulator");
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -134,6 +125,7 @@ class AethermagesTouchTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(chosenCreature);
 
         advanceToEndStep(player2);
+        harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(entered.getCard().getId()));
         assertThat(gd.playerHands.get(player1.getId())).contains(chosenCreature);
@@ -151,7 +143,7 @@ class AethermagesTouchTest extends BaseCardTest {
         castAndResolve();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, -1);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
+        gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -169,12 +161,86 @@ class AethermagesTouchTest extends BaseCardTest {
 
         castAndResolve();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
+        gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactly(artifact1, artifact2, artifact3, artifact4);
+    }
+
+    @Test
+    @DisplayName("The return ability uses the stack and triggers again after being countered")
+    void returnAbilityCanBeCounteredAndTriggersAgain() {
+        AssaultZeppelid creature = new AssaultZeppelid();
+        setLibrary(creature);
+        castAndResolve();
+        harness.handleCardChosen(player1, 0);
+
+        advanceToEndStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        StackEntry trigger = gd.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new Voidslime()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, trigger.getCard().getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+
+        advanceToEndStep(player2);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Reorders only the top four cards onto the bottom beneath unrevealed cards")
+    void reordersRevealedCardsBeneathUnrevealedCards() {
+        AzoriusSignet first = new AzoriusSignet();
+        AzoriusSignet second = new AzoriusSignet();
+        AzoriusSignet third = new AzoriusSignet();
+        AzoriusSignet fourth = new AzoriusSignet();
+        AssaultZeppelid unrevealed = new AssaultZeppelid();
+        setLibrary(first, second, third, fourth, unrevealed);
+        castAndResolve();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(3, 1, 0, 2)));
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(unrevealed, fourth, second, first, third);
+    }
+
+    @Test
+    @DisplayName("Resolving during your end step waits until your next end step")
+    void resolvingDuringEndStepWaitsForNextEndStep() {
+        advanceToEndStep(player1);
+        AssaultZeppelid creature = new AssaultZeppelid();
+        setLibrary(creature);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            castAndResolve();
+            harness.handleCardChosen(player1, 0);
+        });
+        advanceToEndStep(player2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the spell from resolving")
+    void resolvesWithEmptyLibrary() {
+        setLibrary();
+        castAndResolve();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof AethermagesTouch);
     }
 
     private void castAndResolve() {

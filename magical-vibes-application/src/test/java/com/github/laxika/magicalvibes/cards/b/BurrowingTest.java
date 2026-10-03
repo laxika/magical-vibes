@@ -190,4 +190,40 @@ class BurrowingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Burrowing goes to the graveyard if its target dies before resolution")
+    void targetDiesBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Burrowing()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Burrowing");
+        harness.assertNotOnBattlefield(player1, "Burrowing");
+    }
+
+    @Test
+    @DisplayName("Burrowing goes to its owner's graveyard when the enchanted opposing creature dies")
+    void auraGoesToOwnersGraveyardWhenCreatureDies() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Burrowing()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Burrowing");
+        harness.assertNotInGraveyard(player2, "Burrowing");
+        harness.assertNotOnBattlefield(player1, "Burrowing");
+    }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirElemental.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GiantGrowth.class, GrizzlyBears.class, Hurricane.class})
+@CardUsed({AirElemental.class, CentaurArcher.class, CircleOfProtectionGreen.class, FemerefArchers.class, GiantGrowth.class, GrizzlyBears.class, Hurricane.class, Unsummon.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -202,8 +203,7 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
@@ -267,5 +267,58 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
         assertThat(gd.playerSourceNextDamageShields)
                 .filteredOn(s -> s.playerId().equals(player1.getId()))
                 .anyMatch(s -> s.sourceId().equals(archers.getId()));
+    }
+
+    @Test
+    @DisplayName("A green source referred to by an ability on the stack remains a legal choice after leaving the battlefield")
+    void canChooseDepartedSourceOfPendingAbility() {
+        addReadyCircle(player1);
+        Permanent target = addCreatureReady(player1, new AirElemental());
+        target.setAttacking(true);
+        Permanent archers = addCreatureReady(player2, new FemerefArchers());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.castInstant(player1, 0, archers.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Femeref Archers");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsAnyOf(archers.getId(), archers.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Prevents all damage to you from your own chosen green spell without protecting your opponent")
+    void preventsDamageFromOwnGreenSpell() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        addReadyCircle(player1);
+        Hurricane hurricane = new Hurricane();
+        harness.setHand(player1, List.of(hurricane));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hurricane.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
     }
 }

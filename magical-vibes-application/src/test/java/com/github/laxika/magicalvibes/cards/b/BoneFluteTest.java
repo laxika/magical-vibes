@@ -50,4 +50,35 @@ class BoneFluteTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, existingGoblin)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, laterGoblin)).isEqualTo(2);
     }
+
+    @Test
+    void creaturesEnteringBeforeResolutionAreDebuffed() {
+        Permanent flute = harness.addToBattlefieldAndReturn(player1, new BoneFlute());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(flute), null, null);
+        Permanent goblin = harness.enterBattlefieldAndReturn(player2, new GoblinHero());
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+    }
+
+    @Test
+    void multipleActivationsStackAndCanReducePowerBelowZero() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinHero());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        for (int i = 0; i < 3; i++) {
+            Permanent flute = harness.addToBattlefieldAndReturn(player1, new BoneFlute());
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(flute), null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Goblin Hero");
+    }
 }

@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImperialMoth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,18 +10,18 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BefriendingTheMoths.class, ImperialMoth.class, GrizzlyBears.class})
+@CardUsed({BefriendingTheMoths.class, ImperialMoth.class, BearerOfMemory.class})
 class BefriendingTheMothsTest extends BaseCardTest {
 
     @Test
     void chapterIAndIIBoostAndGrantFlyingToTargetCreatureYouControl() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new BearerOfMemory());
         castSaga();
 
         PendingInteraction.PermanentChoice choice =
@@ -64,11 +62,104 @@ class BefriendingTheMothsTest extends BaseCardTest {
         assertThat(transformedSaga.getCard()).isSameAs(transformedSaga.getOriginalCard().getBackFaceCard());
     }
 
+    @Test
+    void chapterBoostAndFlyingExpireAtEndOfTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
+        castSaga();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void chapterDoesNotAffectCreatureNoLongerControlledByAbilityController(int chapter) {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
+        if (chapter == 1) {
+            castSaga();
+        } else {
+            Permanent saga = harness.addToBattlefieldAndReturn(player1, new BefriendingTheMoths());
+            saga.setCounterCount(CounterType.LORE, 1);
+            advanceToNextChapter(player1);
+        }
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void chapterDoesNotRedirectWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
+        castSaga();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void returnedMothIsNewObjectAndCannotAttackUntilNextTurn() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new BefriendingTheMoths());
+        saga.setCounterCount(CounterType.LORE, 2);
+        saga.setTapped(true);
+        advanceToNextChapter(player1);
+        harness.passBothPriorities();
+
+        Permanent moth = findSaga();
+        assertThat(moth.getId()).isNotEqualTo(saga.getId());
+        assertThat(moth.isTransformed()).isTrue();
+        assertThat(moth.isTapped()).isFalse();
+        assertThat(moth.getCounterCount(CounterType.LORE)).isZero();
+        assertThat(als.canAttack(gd, moth, player1.getId())).isFalse();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(als.canAttack(gd, moth, player1.getId())).isTrue();
+    }
+
+    @Test
+    void sagaContinuesWithoutAnyCreatureYouControlToTarget() {
+        harness.addToBattlefield(player2, new BearerOfMemory());
+        castSaga();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findSaga().getCounterCount(CounterType.LORE)).isEqualTo(1);
+
+        advanceToNextChapter(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findSaga().getCounterCount(CounterType.LORE)).isEqualTo(2);
+
+        advanceToNextChapter(player1);
+        harness.passBothPriorities();
+
+        assertThat(findSaga().isTransformed()).isTrue();
+    }
+
     private void castSaga() {
-        harness.setHand(player1, List.of(new BefriendingTheMoths()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new BefriendingTheMoths(), "{3}{W}");
         harness.passBothPriorities();
     }
 

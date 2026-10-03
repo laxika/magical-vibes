@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BladeHistorian.class, GrizzlyBears.class})
 class BladeHistorianTest extends BaseCardTest {
 
     @Test
@@ -24,9 +28,7 @@ class BladeHistorianTest extends BaseCardTest {
     @Test
     @DisplayName("Blade Historian gains double strike while attacking")
     void sourceGainsDoubleStrikeWhileAttacking() {
-        BladeHistorian historian = new BladeHistorian();
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, historian);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player1, new BladeHistorian());
         permanent.setAttacking(true);
 
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.DOUBLE_STRIKE)).isTrue();
@@ -63,6 +65,44 @@ class BladeHistorianTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
+    @Test
+    @DisplayName("An unblocked attacking Blade Historian deals damage twice")
+    void unblockedHistorianDealsDamageTwice() {
+        addCreatureReady(player1, new BladeHistorian());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Double strike disappears immediately when a creature stops attacking")
+    void doubleStrikeIsLostWhenCreatureStopsAttacking() {
+        harness.addToBattlefield(player1, new BladeHistorian());
+        Permanent attacker = addCreatureReady(player1, new BladeHistorian());
+        attacker.setAttacking(true);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        attacker.setAttacking(false);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blade Historian entering during combat grants double strike to existing attackers")
+    void enteringHistorianGrantsDoubleStrikeToExistingAttackers() {
+        Permanent attacker = addAttackingBears(player1);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        harness.addToBattlefield(player1, new BladeHistorian());
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
     private Permanent addAttackingBears(Player controller) {
         Permanent creature = addReadyBears(controller);
         creature.setAttacking(true);
@@ -70,9 +110,6 @@ class BladeHistorianTest extends BaseCardTest {
     }
 
     private Permanent addReadyBears(Player controller) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(controller.getId()).add(creature);
-        return creature;
+        return addCreatureReady(controller, new GrizzlyBears());
     }
 }

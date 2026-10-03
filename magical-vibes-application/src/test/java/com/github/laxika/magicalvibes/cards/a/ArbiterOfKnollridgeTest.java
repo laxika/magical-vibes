@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({ArbiterOfKnollridge.class})
+@CardUsed({ArbiterOfKnollridge.class, PlatinumAngel.class})
 class ArbiterOfKnollridgeTest extends BaseCardTest {
 
     @Test
@@ -77,5 +78,35 @@ class ArbiterOfKnollridgeTest extends BaseCardTest {
 
         harness.assertLife(player1, 40);
         harness.assertLife(player2, 40);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast also equalizes life totals")
+    void enteringWithoutCastingEqualizesLife() {
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 25);
+
+        harness.enterBattlefieldAndReturn(player1, new ArbiterOfKnollridge());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 25);
+    }
+
+    @Test
+    @CardUsed({ArbiterOfKnollridge.class, PlatinumAngel.class})
+    @DisplayName("ETB preserves a negative highest life total when players cannot lose")
+    void etbUsesNegativeHighestLifeTotal() {
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        harness.addToBattlefield(player2, new PlatinumAngel());
+        harness.setLife(player1, -10);
+        harness.setLife(player2, -5);
+        harness.castFromHand(player1, new ArbiterOfKnollridge(), "{6}{W}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, -5);
+        harness.assertLife(player2, -5);
     }
 }

@@ -29,8 +29,7 @@ class CaseOfTheGatewayExpressTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
@@ -69,11 +68,81 @@ class CaseOfTheGatewayExpressTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
     }
 
+    @Test
+    void repeatedAttacksByTheSameTwoCreaturesDoNotSolve() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheGatewayExpress());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        resolveCombat();
+        first.untap();
+        second.untap();
+        first.setAttacking(false);
+        second.setAttacking(false);
+        declareAttackers(List.of(1, 2));
+        resolveEndStepTriggers();
+
+        assertThat(casePermanent.isSolved()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+    }
+
+    @Test
+    void countsCreaturesThatAttackedBeforeTheCaseEntered() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(List.of(0, 1, 2));
+        resolveCombat();
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheGatewayExpress());
+
+        resolveEndStepTriggers();
+
+        assertThat(casePermanent.isSolved()).isTrue();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+    }
+
+    @Test
+    void damageUsesCreaturesPresentWhenTheTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent departingCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CaseOfTheGatewayExpress()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(departingCreature);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void dealsNoDamageWithoutControlledCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new CaseOfTheGatewayExpress()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Case of the Gateway Express");
+    }
+
     private void resolveEndStepTriggers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

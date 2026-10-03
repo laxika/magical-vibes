@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BespokeBattlegarb.class, GrizzlyBears.class})
+@CardUsed({BespokeBattlegarb.class, GrizzlyBears.class, Forest.class})
 class BespokeBattlegarbTest extends BaseCardTest {
 
     @Test
@@ -73,27 +74,108 @@ class BespokeBattlegarbTest extends BaseCardTest {
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("Lands do not count toward celebration")
+    void landsDoNotCountTowardCelebration() {
+        castEquipment();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Opposing nonland permanents do not count toward celebration")
+    void opposingPermanentsDoNotCountTowardCelebration() {
+        castEquipment();
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Celebration can choose no target without detaching the Equipment")
+    void celebrationCanChooseNoTarget() {
+        Permanent equipment = castEquipment();
+        Permanent creature = castCreature();
+        equipment.setAttachedTo(creature.getId());
+
+        advanceToBeginningOfCombat();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Celebration still triggers when no creature is available")
+    void celebrationWithNoCreatureAvailable() {
+        Permanent firstEquipment = castEquipment();
+        Permanent secondEquipment = harness.enterBattlefieldAndReturn(player1, new BespokeBattlegarb());
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(firstEquipment.getAttachedTo()).isNull();
+        assertThat(secondEquipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Celebration moves the Equipment and its boost to the chosen creature")
+    void celebrationMovesEquipmentToChosenCreature() {
+        Permanent oldCreature = addCreatureReady(player1);
+        Permanent equipment = castEquipment();
+        Permanent newCreature = castCreature();
+        equipment.setAttachedTo(oldCreature.getId());
+
+        advanceToBeginningOfCombat();
+        harness.handlePermanentChosen(player1, newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newCreature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Celebration does not trigger during an opponent's combat")
+    void celebrationDoesNotTriggerDuringOpponentsCombat() {
+        castEquipment();
+        castCreature();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent castEquipment() {
-        harness.setHand(player1, List.of(new BespokeBattlegarb()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new BespokeBattlegarb(), "{1}{R}");
         harness.passBothPriorities();
         return findPermanent(player1, "Bespoke Battlegarb");
     }
 
     private Permanent castCreature() {
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Grizzly Bears");
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private Permanent addEquipmentReady(Player player) {

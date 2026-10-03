@@ -69,11 +69,71 @@ class CheckForTrapsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
-    private void castWithHand(Card chosenCard, Card land) {
+    @Test
+    @DisplayName("An empty hand still makes the controller lose 1 life")
+    void emptyHandMakesControllerLoseLife() {
+        castWithHand();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A hand containing only lands still makes the controller lose 1 life")
+    void landsOnlyMakesControllerLoseLife() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        castWithHand(first, second);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The caster cannot choose a land from the revealed hand")
+    void cannotChooseLand() {
+        castWithHand(new Peek(), new Forest());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("The caster chooses exactly one nonland card, rather than the opponent")
+    void casterChoosesOneNonlandCard() {
+        Peek instant = new Peek();
+        GrizzlyBears creature = new GrizzlyBears();
+        Forest land = new Forest();
+        castWithHand(instant, creature, land);
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(instant, land);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void castWithHand(Card... cards) {
         harness.setHand(player1, List.of(new CheckForTraps()));
-        harness.setHand(player2, List.of(chosenCard, land));
+        harness.setHand(player2, List.of(cards));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }

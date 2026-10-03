@@ -59,9 +59,8 @@ class ColossificationTest extends BaseCardTest {
     @DisplayName("Colossification's boost ends when it leaves the battlefield")
     void boostStopsWhenRemoved() {
         Permanent creature = addCreature(player1);
-        Permanent aura = new Permanent(new Colossification());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Colossification());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(22);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(22);
@@ -97,6 +96,78 @@ class ColossificationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The boost applies before the tap trigger resolves, including on an opponent's creature")
+    void boostsOpponentsCreatureBeforeTapTriggerResolves() {
+        Permanent creature = addCreature(player2);
+        Permanent otherCreature = addCreature(player1);
+        harness.setHand(player1, List.of(new Colossification()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(22);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(22);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Colossification");
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(otherCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colossification can enchant an already tapped creature and does not prevent untapping")
+    void enchantsTappedCreatureAndAllowsNormalUntap() {
+        Permanent creature = addCreature(player1);
+        creature.tap();
+        harness.setHand(player1, List.of(new Colossification()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(22);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(22);
+
+        harness.performUntapStep(player1);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(22);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("The tap trigger still taps the creature if Colossification leaves before it resolves")
+    void tapTriggerUsesLastKnownAttachmentAfterAuraLeaves() {
+        Permanent creature = addCreature(player1);
+        harness.setHand(player1, List.of(new Colossification()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Colossification"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, aura));
+
+        harness.assertInGraveyard(player1, "Colossification");
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
     }
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {

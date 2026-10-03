@@ -46,6 +46,7 @@ class AstralSlideTest extends BaseCardTest {
 
         resolveAllTriggers();
         advanceToEndStep(player1);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Elvish Warrior");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -132,12 +133,64 @@ class AstralSlideTest extends BaseCardTest {
         harness.setHand(player2, List.of(new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("The delayed return uses the stack and allows responses at the end step")
+    void delayedReturnUsesStack() {
+        harness.addToBattlefield(player1, new AstralSlide());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        harness.setHand(player1, List.of(new ForgottenCave()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Elvish Warrior");
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        advanceToEndStep(player1);
+
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Elvish Warrior"));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Cycling during the end step postpones return until the following end step")
+    void cyclingDuringEndStepReturnsAtFollowingEndStep() {
+        harness.addToBattlefield(player1, new AstralSlide());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        harness.setHand(player1, List.of(new ForgottenCave()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
+        harness.setLibrary(player2, List.of(new ElvishWarrior(), new ElvishWarrior()));
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Elvish Warrior"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
         harness.assertOnBattlefield(player2, "Elvish Warrior");
     }
 

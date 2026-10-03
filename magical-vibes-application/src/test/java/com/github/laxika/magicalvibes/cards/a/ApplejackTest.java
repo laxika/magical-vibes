@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -21,7 +20,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Applejack.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Applejack.class, Forest.class})
 class ApplejackTest extends BaseCardTest {
 
     @Test
@@ -38,14 +37,14 @@ class ApplejackTest extends BaseCardTest {
         assertThat(token.getCard().getColors()).containsExactly(CardColor.BLUE);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(findPermanents(player1, "Food")).isEmpty();
-        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(toy);
+        assertThat(gd.playerSideboards.get(player1.getId())).doesNotContain(toy);
     }
 
     @Test
     void hornScriesAfterPuttingToyTokenOntoBattlefield() {
         Card toy = toy("Horned Toy", CardColor.WHITE,
                 List.of(CardSubtype.TOY, CardSubtype.UNICORN), Set.of());
-        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         beginGathering(toy);
 
         answerToy(toy);
@@ -70,13 +69,81 @@ class ApplejackTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Food")).hasSize(1);
     }
 
+    @Test
+    void wingsAndHornGrantFlyingAndScryWithoutFood() {
+        Card toy = toy("Winged Horned Toy", CardColor.WHITE,
+                List.of(CardSubtype.TOY, CardSubtype.UNICORN, CardSubtype.PEGASUS), Set.of());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        beginGathering(toy);
+
+        answerToy(toy);
+
+        Permanent token = findPermanent(player1, "Winged Horned Toy");
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(token.getCard().getSubtypes())
+                .containsExactly(CardSubtype.TOY, CardSubtype.UNICORN, CardSubtype.PEGASUS);
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+    }
+
+    @Test
+    void ordinarySideboardCardIsNotAnOwnedToy() {
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(new Forest())));
+        harness.addToBattlefield(player1, new Applejack());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ApplejackToyChoice.class)).isNull();
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+    }
+
+    @Test
+    void gatheringDoesNotTriggerDuringOpponentsEndStep() {
+        Card toy = toy("Plain Toy", CardColor.GREEN, List.of(CardSubtype.TOY), Set.of());
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(toy)));
+        harness.addToBattlefield(player1, new Applejack());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ApplejackToyChoice.class)).isNull();
+        assertThat(findPermanents(player1, "Plain Toy")).isEmpty();
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+    }
+
+    @Test
+    void noOwnedToyDoesNotCreateFood() {
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>());
+        harness.addToBattlefield(player1, new Applejack());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ApplejackToyChoice.class)).isNull();
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+    }
+
     private void beginGathering(Card toy) {
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(toy)));
         harness.addToBattlefield(player1, new Applejack());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ApplejackToyChoice.class))
                 .isNotNull();

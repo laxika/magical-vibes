@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.e.EagleVision;
+import com.github.laxika.magicalvibes.cards.m.MirrorEntity;
+import com.github.laxika.magicalvibes.cards.p.Propaganda;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -21,8 +24,73 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BrotherhoodHeadquarters.class)
+@CardUsed({BrotherhoodHeadquarters.class, EagleVision.class, Propaganda.class, MirrorEntity.class})
 class BrotherhoodHeadquartersTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Restricted mana can activate an Assassin source with changeling")
+    void restrictedManaPaysChangelingAbility() {
+        harness.addToBattlefield(player1, new BrotherhoodHeadquarters());
+        harness.addToBattlefield(player1, new MirrorEntity());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.activateAbility(player1, 1, 1, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSubtypeSpellOrAbilityManaForColor(
+                Set.of(CardSubtype.ASSASSIN_OR_FREERUNNING), ManaColor.GREEN)).isZero();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Colorless mana can pay for an unrelated spell")
+    void colorlessManaIsUnrestricted() {
+        harness.addToBattlefield(player1, new BrotherhoodHeadquarters());
+        harness.setHand(player1, List.of(new Propaganda()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Propaganda");
+    }
+
+    @Test
+    @DisplayName("Restricted mana can cast a freerunning spell for its normal cost")
+    void restrictedManaPaysNormalCostOfFreerunningSpell() {
+        harness.addToBattlefield(player1, new BrotherhoodHeadquarters());
+        harness.setHand(player1, List.of(new EagleVision()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSubtypeSpellOrAbilityManaForColor(
+                Set.of(CardSubtype.ASSASSIN_OR_FREERUNNING), ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Restricted mana cannot pay the matching colored cost of an unrelated spell")
+    void restrictedManaRejectsMatchingColorUnrelatedSpell() {
+        harness.addToBattlefield(player1, new BrotherhoodHeadquarters());
+        harness.setHand(player1, List.of(new Propaganda()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Brotherhood Headquarters adds restricted mana of a chosen color")

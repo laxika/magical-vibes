@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,12 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BitterbladeWarrior.class})
 class BitterbladeWarriorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking offers the exert may prompt")
     void attackTriggersExertPrompt() {
-        addReadyWarrior(player1);
+        addCreatureReady(player1, new BitterbladeWarrior());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -30,7 +32,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Exerting gives +1/+0 and deathtouch until end of turn")
     void exertBoostsAndGrantsDeathtouch() {
-        Permanent warrior = addReadyWarrior(player1);
+        Permanent warrior = addCreatureReady(player1, new BitterbladeWarrior());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -44,7 +46,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Exerting keeps the creature tapped through its next untap step")
     void exertSkipsNextUntap() {
-        Permanent warrior = addReadyWarrior(player1);
+        Permanent warrior = addCreatureReady(player1, new BitterbladeWarrior());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -57,7 +59,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Declining exert leaves base stats and grants no deathtouch")
     void decliningExertDoesNothing() {
-        Permanent warrior = addReadyWarrior(player1);
+        Permanent warrior = addCreatureReady(player1, new BitterbladeWarrior());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -69,9 +71,52 @@ class BitterbladeWarriorTest extends BaseCardTest {
         assertThat(warrior.getSkipUntapCount()).isZero();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Exert applies the untap restriction before its bonus trigger resolves")
+    void exertRestrictionAppliesBeforeBonusResolves() {
+        Permanent warrior = addCreatureReady(player1, new BitterbladeWarrior());
 
-    private Permanent addReadyWarrior(Player player) {
-        return addCreatureReady(player, new BitterbladeWarrior());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(warrior.getSkipUntapCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Exert bonuses expire at end of turn")
+    void exertBonusesExpireAtEndOfTurn() {
+        Permanent warrior = addCreatureReady(player1, new BitterbladeWarrior());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(warrior.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exert skips only the controller's next untap step")
+    void exertSkipsExactlyOneControllerUntap() {
+        Permanent warrior = addCreatureReady(player1, new BitterbladeWarrior());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.performUntapStep(player2);
+        assertThat(warrior.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(warrior.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(warrior.isTapped()).isFalse();
     }
 }

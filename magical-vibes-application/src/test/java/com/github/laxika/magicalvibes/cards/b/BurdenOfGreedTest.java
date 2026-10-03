@@ -60,6 +60,63 @@ class BurdenOfGreedTest extends BaseCardTest {
                 .hasMessageContaining("This spell can only target players");
     }
 
+    @Test
+    @DisplayName("The caster can target themselves and loses life only for their own tapped artifacts")
+    void canTargetCaster() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DarksteelCitadel());
+        artifact.tap();
+        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        opposingArtifact.tap();
+
+        castBurdenOfGreed(player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Tapped nonartifacts do not contribute to the life loss")
+    void ignoresTappedNonartifacts() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new CrazedGoblin());
+        goblin.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        artifact.tap();
+
+        castBurdenOfGreed(player2.getId());
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Artifacts that become tapped before resolution are counted")
+    void countsArtifactsTappedAfterCasting() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        harness.setHand(player1, List.of(new BurdenOfGreed()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.tapPermanent(player2, 0);
+        assertThat(artifact.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Artifacts that become untapped before resolution are not counted")
+    void ignoresArtifactsUntappedAfterCasting() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        artifact.tap();
+        harness.setHand(player1, List.of(new BurdenOfGreed()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castInstant(player1, 0, player2.getId());
+
+        artifact.untap();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
     private void castBurdenOfGreed(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new BurdenOfGreed()));
         harness.addMana(player1, ManaColor.BLACK, 4);

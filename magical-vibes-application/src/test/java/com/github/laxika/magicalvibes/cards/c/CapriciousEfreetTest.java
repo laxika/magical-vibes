@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.d.DarksteelColossus;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.k.KalonianBehemoth;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,15 +19,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CapriciousEfreet.class, RuneclawBear.class, CanyonMinotaur.class, Mountain.class, KalonianBehemoth.class, DarksteelColossus.class, RodOfRuin.class})
 class CapriciousEfreetTest extends BaseCardTest {
-
-    // ===== Trigger: own target selection (step 1) =====
 
     @Test
     @DisplayName("Upkeep trigger presents own nonland permanent selection")
     void upkeepTriggerPresentsOwnTargetSelection() {
         addReadyEfreet(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RuneclawBear());
 
         advanceToUpkeep(player1);
 
@@ -52,14 +53,12 @@ class CapriciousEfreetTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(efreet.getId());
     }
 
-    // ===== Trigger: opponent target selection (step 2) =====
-
     @Test
     @DisplayName("After own target, presents opponent nonland permanent selection")
     void afterOwnTargetPresentsOpponentSelection() {
         addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        addCreatureReady(player2, new CanyonMinotaur());
 
         advanceToUpkeep(player1);
 
@@ -80,8 +79,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Can choose zero opponent targets (skipping optional targets)")
     void canChooseZeroOpponentTargets() {
         addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        addCreatureReady(player2, new CanyonMinotaur());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -99,8 +98,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Can choose one opponent target")
     void canChooseOneOpponentTarget() {
         addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        Permanent hillGiant = addCreatureReady(player2, new CanyonMinotaur());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -111,16 +110,16 @@ class CapriciousEfreetTest extends BaseCardTest {
                 .containsExactly(bears.getId(), hillGiant.getId());
         assertThat(gd.gameLog)
                 .extracting(GameLogEntry::plainText)
-                .contains("Capricious Efreet's ability targets Grizzly Bears, Hill Giant.");
+                .contains("Capricious Efreet's ability targets Runeclaw Bear, Canyon Minotaur.");
     }
 
     @Test
     @DisplayName("Can choose two opponent targets")
     void canChooseTwoOpponentTargets() {
         addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
-        Permanent bears2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        Permanent hillGiant = addCreatureReady(player2, new CanyonMinotaur());
+        Permanent bears2 = addCreatureReady(player2, new RuneclawBear());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -130,8 +129,6 @@ class CapriciousEfreetTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId(), hillGiant.getId(), bears2.getId());
     }
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Resolving with only own target destroys it")
@@ -155,8 +152,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Resolving destroys exactly one permanent from the target pool")
     void resolvingDestroysExactlyOnePermanent() {
         addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+        Permanent hillGiant = addCreatureReady(player2, new CanyonMinotaur());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -178,7 +175,7 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("If all targets leave before resolution, ability fizzles")
     void abilityFizzlesIfAllTargetsLeave() {
         addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -192,8 +189,6 @@ class CapriciousEfreetTest extends BaseCardTest {
         // Nothing should be destroyed
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldSizeBefore);
     }
-
-    // ===== Targeting constraints =====
 
     @Test
     @DisplayName("Lands are not valid targets for own permanent selection")
@@ -216,8 +211,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @Test
     @DisplayName("Skips opponent target step when opponent has no nonland permanents")
     void skipsOpponentStepWhenNoOpponentNonlands() {
-        Permanent efreet = addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addReadyEfreet(player1);
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
         addReadyLand(player2); // only a land — no valid opponent targets
 
         advanceToUpkeep(player1);
@@ -233,7 +228,7 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Stack entry is a triggered ability")
     void stackEntryIsTriggeredAbility() {
         addReadyEfreet(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -243,21 +238,126 @@ class CapriciousEfreetTest extends BaseCardTest {
                 .isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void ownShroudedPermanentIsNotOfferedAsTarget() {
+        Permanent efreet = addReadyEfreet(player1);
+        Permanent behemoth = addCreatureReady(player1, new KalonianBehemoth());
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).contains(efreet.getId()).doesNotContain(behemoth.getId());
+        harness.handlePermanentChosen(player1, efreet.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(behemoth);
+    }
+
+    @Test
+    void opponentShroudedPermanentIsNotOfferedAsTarget() {
+        Permanent efreet = addReadyEfreet(player1);
+        Permanent behemoth = addCreatureReady(player2, new KalonianBehemoth());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, efreet.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(efreet.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(behemoth);
+    }
+
+    @Test
+    void ownTargetThatChangesControllerIsNotDestroyed() {
+        Permanent efreet = addReadyEfreet(player1);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, efreet.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(efreet);
+        gd.playerBattlefields.get(player2.getId()).add(efreet);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(efreet);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentTargetThatChangesControllerIsNotDestroyed() {
+        Permanent efreet = addReadyEfreet(player1);
+        Permanent bear = addCreatureReady(player2, new RuneclawBear());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, efreet.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(efreet);
+        gd.playerBattlefields.get(player2.getId()).remove(bear);
+        gd.playerBattlefields.get(player1.getId()).add(bear);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void remainingLegalOpponentTargetIsDestroyedWhenOwnTargetLeaves() {
+        Permanent efreet = addReadyEfreet(player1);
+        Permanent bear = addCreatureReady(player2, new RuneclawBear());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, efreet.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(efreet);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bear.getCard());
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent efreet = addReadyEfreet(player1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+    }
+
+    @Test
+    void indestructibleTargetCanBeChosenAndSurvivesDestruction() {
+        addReadyEfreet(player1);
+        Permanent colossus = addCreatureReady(player1, new DarksteelColossus());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, colossus.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(colossus);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void noncreatureArtifactCanBeTargetedAndDestroyed() {
+        addReadyEfreet(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, rod.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rod);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rod.getCard());
+    }
 
     private Permanent addReadyEfreet(Player player) {
-        CapriciousEfreet card = new CapriciousEfreet();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CapriciousEfreet());
     }
 
     private Permanent addReadyLand(Player player) {
-        Card land = new Card();
-        land.setType(CardType.LAND);
-        Permanent perm = new Permanent(land);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Mountain());
     }
 }

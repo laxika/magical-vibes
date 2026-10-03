@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.o.Orgg;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CombatMedic.class, ChandraNalaar.class, GoblinChirurgeon.class, GoblinGrenade.class, IcatianStore.class, Orgg.class})
+@CardUsed({CombatMedic.class, GoblinChirurgeon.class, GoblinGrenade.class, IcatianStore.class, Orgg.class})
 class CombatMedicTest extends BaseCardTest {
 
     private Permanent addMedicReady() {
@@ -49,6 +50,7 @@ class CombatMedicTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(ChandraNalaar.class)
     @DisplayName("Prevents 1 damage to a target planeswalker")
     void preventsDamageToPlaneswalker() {
         addMedicReady();
@@ -101,5 +103,80 @@ class CombatMedicTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, store.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Repeated activations add their prevention shields")
+    void repeatedActivationsStack() {
+        addMedicReady();
+        Permanent goblin = addActivationManaAndGrenade();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), goblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("The shield is consumed by the first damage event")
+    void shieldDoesNotPreventLaterDamage() {
+        addMedicReady();
+        Permanent firstGoblin = addActivationManaAndGrenade();
+        Permanent secondGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinChirurgeon());
+        harness.setHand(player1, List.of(new GoblinGrenade(), new GoblinGrenade()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), firstGoblin.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), secondGoblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    @DisplayName("An unused shield expires at the end of the turn")
+    void unusedShieldExpires() {
+        addMedicReady();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player2, List.of(new CombatMedic()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinChirurgeon());
+        harness.setHand(player2, List.of(new GoblinGrenade()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castSorceryWithSacrifice(player2, 0, player2.getId(), goblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent medic = harness.addToBattlefieldAndReturn(player1, new CombatMedic());
+        medic.setSummoningSick(true);
+        medic.setTapped(true);
+        Permanent goblin = addActivationManaAndGrenade();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), goblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(medic.isTapped()).isTrue();
     }
 }

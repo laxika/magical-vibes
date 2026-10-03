@@ -35,8 +35,7 @@ class BodyOfJukaiTest extends BaseCardTest {
         addCreatureReady(player1, new BodyOfJukai());
         Permanent blocker = addCreatureReady(player2, new PatronOfTheOrochi());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -67,6 +66,10 @@ class BodyOfJukaiTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(spirit.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -84,7 +87,11 @@ class BodyOfJukaiTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -110,6 +117,44 @@ class BodyOfJukaiTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).contains(cheapSpirit.getId());
         assertThat(choice.validCardIds()).doesNotContain(expensiveSpirit.getId(), nonSpirit.getId(), opponentSpirit.getId());
+    }
+
+    @Test
+    @DisplayName("Soulshift requires a target even if the controller intends to decline the return")
+    void soulshiftRequiresTargetBeforeResolution() {
+        harness.addToBattlefield(player1, new BodyOfJukai());
+        Card spirit = new PatronOfTheOrochi();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        sickeningShoalToKillBody();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(spirit.getId());
+    }
+
+    @Test
+    @DisplayName("Soulshift cannot return a target that leaves the graveyard before resolution")
+    void soulshiftDoesNotReturnRemovedTarget() {
+        harness.addToBattlefield(player1, new BodyOfJukai());
+        Card spirit = new PatronOfTheOrochi();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        sickeningShoalToKillBody();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+
+        harness.setGraveyard(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> !card.getId().equals(spirit.getId())).toList());
+        harness.setExile(player1, List.of(spirit));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(spirit.getId()));
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getId().equals(spirit.getId()));
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Abrade;
+import com.github.laxika.magicalvibes.cards.p.PanickedAltisaur;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ContestedGameBall.class, GrizzlyBears.class})
+@CardUsed({ContestedGameBall.class, PanickedAltisaur.class, Abrade.class})
 class ContestedGameBallTest extends BaseCardTest {
 
     @Test
@@ -23,10 +24,11 @@ class ContestedGameBallTest extends BaseCardTest {
     void combatDamageTransfersControlAndUntaps() {
         Permanent ball = addBall(player2);
         ball.tap();
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new PanickedAltisaur());
         attacker.setAttacking(true);
 
-        resolveCombat(player1, player2);
+        resolveCombat(player1);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ball);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(ball);
@@ -37,7 +39,7 @@ class ContestedGameBallTest extends BaseCardTest {
     @DisplayName("The activated ability draws and adds a point counter")
     void activatedAbilityDrawsAndAddsPointCounter() {
         Permanent ball = addBall(player1);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new PanickedAltisaur()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -54,7 +56,7 @@ class ContestedGameBallTest extends BaseCardTest {
     void fifthPointCounterSacrificesAndCreatesTreasure() {
         Permanent ball = addBall(player1);
         ball.setCounterCount(CounterType.POINT, 4);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new PanickedAltisaur()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -67,14 +69,104 @@ class ContestedGameBallTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Treasure"));
     }
 
-    private Permanent addBall(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new ContestedGameBall());
+    @Test
+    @DisplayName("Combat damage leaves the ball with its controller until the trigger resolves")
+    void controlChangesOnlyWhenTriggerResolves() {
+        Permanent ball = addBall(player2);
+        ball.tap();
+        Permanent attacker = addCreatureReady(player1, new PanickedAltisaur());
+        attacker.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player1));
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ball);
+        assertThat(ball.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ball);
+        assertThat(ball.isTapped()).isFalse();
     }
 
-    private void resolveCombat(Player attacker, Player defender) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Simultaneous combat damage from two creatures triggers only once")
+    void simultaneousCombatDamageTriggersOnce() {
+        Permanent ball = addBall(player2);
+        addCreatureReady(player1, new PanickedAltisaur()).setAttacking(true);
+        addCreatureReady(player1, new PanickedAltisaur()).setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player1));
+
+        harness.assertLife(player2, 12);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ball);
+
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ball);
+    }
+
+    @Test
+    @DisplayName("Noncombat damage does not transfer control or untap the ball")
+    void noncombatDamageDoesNotTransferControl() {
+        Permanent ball = addBall(player2);
+        ball.tap();
+        addCreatureReady(player1, new PanickedAltisaur());
+
+        harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ball);
+        assertThat(ball.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A destroyed ball with five point counters still creates Treasure on resolution")
+    void destroyedBallWithFiveCountersStillCreatesTreasure() {
+        Permanent ball = addBall(player1);
+        ball.setCounterCount(CounterType.POINT, 5);
+        harness.setLibrary(player1, List.of(new PanickedAltisaur()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Abrade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castModalInstant(player2, 0, 1, List.of(ball.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Contested Game Ball");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Panicked Altisaur");
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+    }
+
+    @Test
+    @DisplayName("A destroyed ball with four point counters draws without creating Treasure")
+    void destroyedBallBelowThresholdStillDraws() {
+        Permanent ball = addBall(player1);
+        ball.setCounterCount(CounterType.POINT, 4);
+        harness.setLibrary(player1, List.of(new PanickedAltisaur()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Abrade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castModalInstant(player2, 0, 1, List.of(ball.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Contested Game Ball");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Panicked Altisaur");
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    private Permanent addBall(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new ContestedGameBall());
     }
 }

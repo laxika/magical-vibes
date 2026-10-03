@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.Set;
 
@@ -105,6 +107,76 @@ class CarpetOfFlowersTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("The controller's Islands do not contribute to the mana amount")
+    void ignoresControllersIslands() {
+        harness.addToBattlefield(player1, new CarpetOfFlowers());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        advanceToPrecombatMain(player1);
+        chooseOpponentAndResolve();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not trigger during either main phase of the opponent's turn")
+    void doesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new CarpetOfFlowers());
+        harness.addToBattlefield(player2, new Island());
+
+        advanceToPrecombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A different Carpet can add mana after the first Carpet has done so")
+    void tracksManaSeparatelyForEachCarpet() {
+        harness.addToBattlefield(player1, new CarpetOfFlowers());
+        harness.addToBattlefield(player2, new Island());
+
+        advanceToPrecombatMain(player1);
+        chooseOpponentAndResolve();
+        harness.addToBattlefield(player1, new CarpetOfFlowers());
+
+        advanceToPostcombatMain(player1);
+        chooseOpponentAndResolve();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Adds the entire amount in any one chosen color")
+    void addsManaOfAnyOneColor(ManaColor color) {
+        harness.addToBattlefield(player1, new CarpetOfFlowers());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        advanceToPrecombatMain(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
     private void chooseOpponentAndResolve() {
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
@@ -136,14 +208,12 @@ class CarpetOfFlowersTest extends BaseCardTest {
     private void advanceToPrecombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 
     private void advanceToPostcombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.POSTCOMBAT_MAIN);
     }
 }

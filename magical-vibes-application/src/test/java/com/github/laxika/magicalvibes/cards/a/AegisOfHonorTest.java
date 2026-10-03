@@ -119,8 +119,7 @@ class AegisOfHonorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new VolcanicSpray()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
@@ -141,6 +140,57 @@ class AegisOfHonorTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("A self-controlled spell still deals damage to you and consumes the shield")
+    void selfControlledSpellConsumesShieldWithoutPreventingDamage() {
+        Permanent aegis = addReadyAegis(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        activateAegis(aegis);
+        castFlameBurstAt(player1, player1);
+        castFlameBurstAt(player2, player1);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Ability damage leaves the shield available for a later spell")
+    void abilityDamageDoesNotConsumeShield() {
+        Permanent aegis = addReadyAegis(player1);
+        Permanent chainflinger = addCreatureReady(player2, new Chainflinger());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        activateAegis(aegis);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(chainflinger),
+                0, null, player1.getId());
+        harness.passBothPriorities();
+        castFlameBurstAt(player2, player1);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The ability protects its controller when the second player controls Aegis")
+    void protectsSecondPlayerController() {
+        Permanent aegis = addReadyAegis(player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(aegis), null, null);
+        harness.passBothPriorities();
+        castFlameBurstAt(player1, player2);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addReadyAegis(Player player) {

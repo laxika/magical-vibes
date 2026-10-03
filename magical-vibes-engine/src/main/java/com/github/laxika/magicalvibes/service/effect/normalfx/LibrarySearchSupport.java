@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,7 @@ public class LibrarySearchSupport {
 
     private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
     @Autowired
     private ReverseMiracleSupport reverseMiracleSupport;
 
@@ -93,7 +95,8 @@ public class LibrarySearchSupport {
             boolean started = performLibrarySearch(
                     gameData,
                     nextPlayerId,
-                    card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC),
+                    card -> card.hasType(CardType.LAND)
+                            && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, nextPlayerId),
                     "basic land cards",
                     prompt,
                     false,

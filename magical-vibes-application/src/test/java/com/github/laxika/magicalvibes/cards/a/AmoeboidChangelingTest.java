@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.k.KithkinHealer;
 import com.github.laxika.magicalvibes.cards.s.SecludedGlen;
 import com.github.laxika.magicalvibes.cards.w.WizenedCenn;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,15 +22,12 @@ class AmoeboidChangelingTest extends BaseCardTest {
 
     /** Adds Amoeboid Changeling at battlefield index 0, ready to tap. */
     private void addAmoeboidReady() {
-        Permanent amoeboid = harness.addToBattlefieldAndReturn(player1, new AmoeboidChangeling());
-        amoeboid.setSummoningSick(false);
+        addCreatureReady(player1, new AmoeboidChangeling());
     }
 
     private Permanent find(String name) {
         return findPermanent(player1, name);
     }
-
-    // ===== Ability 1: gains all creature types =====
 
     @Test
     @DisplayName("Ability 1 makes a non-Kithkin count as a Kithkin, so Wizened Cenn buffs it")
@@ -65,8 +65,6 @@ class AmoeboidChangelingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, aethersnipe)).isEqualTo(5);
     }
 
-    // ===== Ability 2: loses all creature types =====
-
     @Test
     @DisplayName("Ability 2 strips a base Kithkin's creature types, removing Wizened Cenn's buff")
     void loseAllCreatureTypesRemovesTribalBuff() {
@@ -98,12 +96,10 @@ class AmoeboidChangelingTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(2);
 
-        kithkin.resetModifiers(); // end-of-turn cleanup
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(3); // Kithkin again
     }
-
-    // ===== Targeting restrictions =====
 
     @Test
     @DisplayName("Abilities can only target creatures")
@@ -117,5 +113,130 @@ class AmoeboidChangelingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Gained creature types expire during turn cleanup")
+    void gainedTypesExpireDuringCleanup() {
+        addAmoeboidReady();
+        harness.addToBattlefield(player1, new WizenedCenn());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aethersnipe());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A later gain of all creature types restores tribal bonuses after type loss")
+    void laterTypeGainOverridesEarlierTypeLoss() {
+        addAmoeboidReady();
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.addToBattlefield(player1, new WizenedCenn());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aethersnipe());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+
+        harness.activateAbility(player1, 1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A later loss of all creature types overrides an earlier gain")
+    void laterTypeLossOverridesEarlierTypeGain() {
+        addAmoeboidReady();
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.addToBattlefield(player1, new WizenedCenn());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aethersnipe());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Gaining every creature type does not grant the changeling ability")
+    void gainingTypesDoesNotGrantChangeling() {
+        addAmoeboidReady();
+        harness.addToBattlefield(player1, new WizenedCenn());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aethersnipe());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.CHANGELING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing every creature type removes tribal bonuses but leaves changeling intact")
+    void losingTypesDoesNotRemoveChangeling() {
+        Permanent target = addCreatureReady(player1, new AmoeboidChangeling());
+        harness.addToBattlefield(player1, new WizenedCenn());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.CHANGELING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Type loss can target an opponent's creature")
+    void typeLossCanTargetOpponentCreature() {
+        addAmoeboidReady();
+        harness.addToBattlefield(player2, new WizenedCenn());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KithkinHealer());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both tap abilities are unavailable while summoning sick")
+    void summoningSicknessPreventsBothAbilities() {
+        harness.addToBattlefield(player1, new AmoeboidChangeling());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aethersnipe());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activating either ability pays the tap cost immediately")
+    void activationTapsSourceAndPreventsAnotherActivation() {
+        for (int abilityIndex : List.of(0, 1)) {
+            Permanent source = addCreatureReady(player1, new AmoeboidChangeling());
+            int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
+            harness.activateAbility(player1, sourceIndex, abilityIndex, null, source.getId());
+
+            assertThat(source.isTapped()).isTrue();
+            int otherAbilityIndex = 1 - abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, otherAbilityIndex, null, source.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+            harness.passBothPriorities();
+        }
     }
 }

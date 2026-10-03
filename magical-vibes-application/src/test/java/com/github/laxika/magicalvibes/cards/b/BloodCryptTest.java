@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BloodCrypt.class)
+@CardUsed({BloodCrypt.class})
 class BloodCryptTest extends BaseCardTest {
 
     @Test
@@ -80,6 +80,48 @@ class BloodCryptTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(crypt.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly played Blood Crypt can produce mana immediately after paying life")
+    void paidLandCanProduceManaImmediately() {
+        playBloodCrypt(20);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(findCrypt(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blood Crypt offers its life payment when put onto the battlefield without being played")
+    void enteringWithoutLandPlayOffersPaymentToController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+
+        Permanent crypt = harness.enterBattlefieldAndReturn(player2, new BloodCrypt());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(8);
+        assertThat(crypt.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blood Crypt enters tapped when put onto the battlefield and its payment is declined")
+    void enteringWithoutLandPlayDecliningPaymentEntersTapped() {
+        harness.setLife(player1, 20);
+
+        Permanent crypt = harness.enterBattlefieldAndReturn(player1, new BloodCrypt());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(crypt.isTapped()).isTrue();
     }
 

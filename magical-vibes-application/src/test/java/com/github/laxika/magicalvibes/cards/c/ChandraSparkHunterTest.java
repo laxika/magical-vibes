@@ -5,21 +5,24 @@ import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChandraSparkHunter.class, AirResponseUnit.class, DuskLegionDreadnought.class,
+        FountainOfYouth.class, GrizzlyBears.class, Ornithopter.class, PaladinEnVec.class})
 class ChandraSparkHunterTest extends BaseCardTest {
 
     @Test
@@ -27,7 +30,7 @@ class ChandraSparkHunterTest extends BaseCardTest {
         addChandra();
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought());
 
-        advanceToCombat(player1);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
         harness.handlePermanentChosen(player1, vehicle.getId());
         harness.passBothPriorities();
@@ -88,10 +91,7 @@ class ChandraSparkHunterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Vehicle");
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.VEHICLE);
         assertThat(gqs.isArtifact(gd, token)).isTrue();
         assertThat(gqs.isCreature(gd, token)).isFalse();
@@ -122,6 +122,121 @@ class ChandraSparkHunterTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
     }
 
+    @Test
+    void plusTwoCanBeDeclinedWithoutDrawing() {
+        Permanent chandra = addChandra();
+        harness.setHand(player1, List.of(new AirResponseUnit()));
+        harness.setLibrary(player1, List.of(new ChandraSparkHunter()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Air Response Unit");
+        harness.assertNotInHand(player1, "Chandra, Spark Hunter");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void plusTwoDoesNotDrawWhenThereIsNoCardToDiscard() {
+        addChandra();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new AirResponseUnit()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Discard a card. If you do, draw a card");
+
+        harness.assertNotInHand(player1, "Air Response Unit");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotAnimateVehiclesDuringOpponentsCombat() {
+        addChandra();
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new AirResponseUnit());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void vehicleTokenCanBeCrewedWithTwoPowerCreature() {
+        addChandra();
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Vehicle");
+
+        harness.activateAbility(player1, 2, null, null);
+
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, token)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, token)).isTrue();
+        assertThat(gqs.isArtifact(gd, token)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+    }
+
+    @Test
+    void emblemCanTargetAndDamageCreatureWithProtectionFromRed() {
+        Permanent chandra = addChandra();
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
+        chandra.setCounterCount(CounterType.LOYALTY, 7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new FountainOfYouth()));
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).contains(protectedCreature.getId());
+        harness.handlePermanentChosen(player1, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Paladin en-Vec");
+        harness.assertInGraveyard(player2, "Paladin en-Vec");
+    }
+
+    @Test
+    void plusTwoDoesNotDrawWhenThereIsNoArtifactToSacrifice() {
+        addChandra();
+        harness.setLibrary(player1, List.of(new AirResponseUnit()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw a card");
+
+        harness.assertNotInHand(player1, "Air Response Unit");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void emblemDoesNotTriggerForOpponentsArtifact() {
+        Permanent chandra = addChandra();
+        chandra.setCounterCount(CounterType.LOYALTY, 7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.enterBattlefieldAndReturn(player2, new AirResponseUnit());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent addChandra() {
         Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraSparkHunter());
         chandra.setCounterCount(CounterType.LOYALTY, 3);
@@ -131,10 +246,4 @@ class ChandraSparkHunterTest extends BaseCardTest {
         return chandra;
     }
 
-    private void advanceToCombat(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

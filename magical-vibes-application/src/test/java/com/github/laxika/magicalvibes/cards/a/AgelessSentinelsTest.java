@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,8 +16,57 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AgelessSentinels.class, ScornfulEgotist.class})
+@CardUsed({AgelessSentinels.class, ScornfulEgotist.class, Clone.class})
 class AgelessSentinelsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Blocking changes types and removes defender only when the trigger resolves")
+    void changesWaitForTriggerResolution() {
+        addCreatureReady(player1, new ScornfulEgotist());
+        Permanent sentinels = addCreatureReady(player2, new AgelessSentinels());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, sentinels)).containsExactly(CardSubtype.WALL);
+        assertThat(gqs.hasKeyword(gd, sentinels, Keyword.DEFENDER)).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, sentinels))
+                .containsExactlyInAnyOrder(CardSubtype.BIRD, CardSubtype.GIANT);
+        assertThat(gqs.hasKeyword(gd, sentinels, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sentinels, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Copying changed Ageless Sentinels does not copy its blocking type change")
+    void copyingDoesNotCopyBlockingTypeChange() {
+        addCreatureReady(player1, new ScornfulEgotist());
+        Permanent sentinels = addCreatureReady(player2, new AgelessSentinels());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, sentinels))
+                .containsExactlyInAnyOrder(CardSubtype.BIRD, CardSubtype.GIANT);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, sentinels.getId());
+
+        Permanent copy = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
+                .findFirst().orElseThrow();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, copy)).containsExactly(CardSubtype.WALL);
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.DEFENDER)).isTrue();
+    }
 
     @Test
     @DisplayName("When Ageless Sentinels blocks, it becomes a Bird Giant and loses defender")

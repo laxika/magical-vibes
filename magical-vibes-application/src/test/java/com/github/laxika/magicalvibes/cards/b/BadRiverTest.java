@@ -107,6 +107,53 @@ class BadRiverTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Bad River is sacrificed as a cost before its search resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        activateSearch();
+
+        harness.assertNotOnBattlefield(player1, "Bad River");
+        harness.assertInGraveyard(player1, "Bad River");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Chosen Swamp enters untapped and only that card leaves the library")
+    void canFindSwamp() {
+        Swamp swamp = new Swamp();
+        Island island = new Island();
+        harness.addToBattlefield(player1, new BadRiver());
+        harness.setLibrary(player1, List.of(swamp, island));
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent found = findPermanent(player1, "Swamp");
+        assertThat(found.getCard()).isSameAs(swamp);
+        assertThat(found.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Search resolves normally with an empty library")
+    void searchEmptyLibrary() {
+        harness.addToBattlefield(player1, new BadRiver());
+        harness.setLibrary(player1, List.of());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bad River");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void activateSearch() {
         harness.addToBattlefield(player1, new BadRiver());
         setupLibrary();

@@ -57,4 +57,55 @@ class CarrionFeederTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The creature is sacrificed as a cost before the counter is placed")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent feeder = addCreatureReady(player1, new CarrionFeeder());
+        Permanent egotist = addCreatureReady(player1, new ScornfulEgotist());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, egotist.getId());
+
+        harness.assertInGraveyard(player1, "Scornful Egotist");
+        harness.assertNotOnBattlefield(player1, "Scornful Egotist");
+        assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Carrion Feeder can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent feeder = harness.addToBattlefieldAndReturn(player1, new CarrionFeeder());
+        feeder.setSummoningSick(true);
+        feeder.setTapped(true);
+        Permanent egotist = addCreatureReady(player1, new ScornfulEgotist());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, egotist.getId());
+        harness.passBothPriorities();
+
+        assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Scornful Egotist");
+    }
+
+    @Test
+    @DisplayName("Multiple activations each put a counter on the same Carrion Feeder")
+    void multipleActivationsAccumulateCounters() {
+        Permanent feeder = addCreatureReady(player1, new CarrionFeeder());
+        Permanent first = addCreatureReady(player1, new ScornfulEgotist());
+        Permanent second = addCreatureReady(player1, new ScornfulEgotist());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, second.getId());
+        resolveAllTriggers();
+
+        assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
 }

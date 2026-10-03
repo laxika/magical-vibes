@@ -26,8 +26,7 @@ class CircleOfPowerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         addCircleOfPowerMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent wizard = findPermanent(player1, "Wizard");
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
@@ -49,13 +48,11 @@ class CircleOfPowerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         addCircleOfPowerMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
@@ -66,8 +63,7 @@ class CircleOfPowerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         addCircleOfPowerMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         Permanent wizard = findPermanent(player1, "Wizard");
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -84,6 +80,101 @@ class CircleOfPowerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, wizard)).isZero();
         assertThat(gqs.hasKeyword(gd, wizard, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void tokenDamageGainsLifeBeforeTheNoncreatureSpellResolves() {
+        harness.setHand(player1, List.of(new CircleOfPower()));
+        harness.setLibrary(player1, List.of(new CircleOfPower(), new CircleOfPower()));
+        addCircleOfPowerMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentNoncreatureSpellDoesNotTriggerWizard() {
+        harness.setHand(player1, List.of(new CircleOfPower()));
+        harness.setLibrary(player1, List.of(new CircleOfPower(), new CircleOfPower()));
+        addCircleOfPowerMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void secondResolutionBoostsExistingWizardAndNewWizardOnlyOnceEach() {
+        harness.setHand(player1, List.of(new CircleOfPower()));
+        harness.setLibrary(player1, List.of(new CircleOfPower(), new CircleOfPower(),
+                new CircleOfPower(), new CircleOfPower()));
+        addCircleOfPowerMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent firstWizard = findPermanent(player1, "Wizard");
+
+        addCircleOfPowerMana();
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        List<Permanent> wizards = gd.playerBattlefields.get(player1.getId());
+        assertThat(wizards).hasSize(2);
+        Permanent secondWizard = wizards.stream()
+                .filter(permanent -> !permanent.getId().equals(firstWizard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, firstWizard)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondWizard)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, firstWizard, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondWizard, Keyword.LIFELINK)).isTrue();
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void tokenKeepsItsTriggerAfterTemporaryLifelinkExpires() {
+        harness.setHand(player1, List.of(new CircleOfPower()));
+        harness.setLibrary(player1, List.of(new CircleOfPower(), new CircleOfPower()));
+        addCircleOfPowerMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 17);
     }
 
     private void addCircleOfPowerMana() {

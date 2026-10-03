@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.d.DokaiWeaverOfLife;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.n.NeglectedHeirloom;
+import com.github.laxika.magicalvibes.cards.a.AshmouthBlade;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BudokaGardener.class, DokaiWeaverOfLife.class, DevotedRetainer.class, Forest.class})
+@CardUsed({BudokaGardener.class, DokaiWeaverOfLife.class, DevotedRetainer.class, Forest.class,
+        BoundByMoonsilver.class, NeglectedHeirloom.class, AshmouthBlade.class})
 class BudokaGardenerTest extends BaseCardTest {
 
     @Test
@@ -101,5 +104,42 @@ class BudokaGardenerTest extends BaseCardTest {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new Forest());
         }
+    }
+
+    @Test
+    @CardUsed({BoundByMoonsilver.class})
+    @DisplayName("A restriction on transforming does not prevent flipping")
+    void flipsWhileBoundByMoonsilver() {
+        Permanent gardener = addCreatureReady(player1, new BudokaGardener());
+        addForests(player1, 10);
+        harness.addToBattlefield(player1, new BoundByMoonsilver());
+        findPermanent(player1, "Bound by Moonsilver").setAttachedTo(gardener.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gardener.isTransformed()).isTrue();
+    }
+
+    @Test
+    @CardUsed({NeglectedHeirloom.class, AshmouthBlade.class})
+    @DisplayName("Flipping does not trigger Neglected Heirloom")
+    void flippingDoesNotTriggerTransformAbilities() {
+        Permanent gardener = addCreatureReady(player1, new BudokaGardener());
+        addForests(player1, 10);
+        harness.addToBattlefield(player1, new NeglectedHeirloom());
+        Permanent heirloom = findPermanent(player1, "Neglected Heirloom");
+        heirloom.setAttachedTo(gardener.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gardener.isTransformed()).isTrue();
+        assertThat(heirloom.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

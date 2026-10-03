@@ -53,4 +53,39 @@ class AkuDjinnTest extends BaseCardTest {
 
         assertThat(oppCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("Every opposing creature gets one counter, including a creature entering before resolution")
+    void countersAllOpponentCreaturesAtResolution() {
+        Permanent djinn = harness.addToBattlefieldAndReturn(player1, new AkuDjinn());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Warthog());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Warthog());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToUpkeep(player1);
+        Permanent lateArrival = harness.addToBattlefieldAndReturn(player2, new Warthog());
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(lateArrival.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(djinn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves after Aku Djinn dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent djinn = harness.addToBattlefieldAndReturn(player1, new AkuDjinn());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new Warthog());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new Warthog());
+
+        advanceToUpkeep(player1);
+        djinn.setMarkedDamage(6);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(djinn);
+        harness.passBothPriorities();
+
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }

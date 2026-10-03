@@ -23,6 +23,7 @@ import java.util.Set;
 
 @CardRegistration(set = "C21", collectorNumber = "40")
 @CardRegistration(set = "OTC", collectorNumber = "133")
+@CardRegistration(set = "BRC", collectorNumber = "105")
 public class FainTheBroker extends Card {
 
     public FainTheBroker() {

@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CanyonWildcat;
+import com.github.laxika.magicalvibes.cards.c.Chill;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GiantCrab;
+import com.github.laxika.magicalvibes.cards.k.Krakilin;
+import com.github.laxika.magicalvibes.cards.w.Willbender;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Aluren.class, CanyonWildcat.class, DarkRitual.class, GiantCrab.class, WindDrake.class})
+@CardUsed({Aluren.class, CanyonWildcat.class, Chill.class, DarkRitual.class, GiantCrab.class,
+        Krakilin.class, Willbender.class, WindDrake.class})
 class AlurenTest extends BaseCardTest {
 
     @Test
@@ -148,6 +152,78 @@ class AlurenTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(creature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("An X creature can be cast for free with X=0 and dies if its toughness is zero")
+    void xCreatureCanBeCastWithZeroX() {
+        harness.addToBattlefield(player1, new Aluren());
+        harness.setHand(player1, List.of(new Krakilin()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Krakilin");
+        harness.assertNotOnBattlefield(player1, "Krakilin");
+    }
+
+    @Test
+    @DisplayName("Casting without paying the mana cost cannot choose a nonzero X")
+    void freeCastCannotChooseNonzeroX() {
+        harness.addToBattlefield(player1, new Aluren());
+        harness.setHand(player1, List.of(new Krakilin()));
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Aluren does not allow casting a creature for its morph cost during combat")
+    void morphCannotUseAlurensFlashPermission() {
+        harness.addToBattlefield(player1, new Aluren());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Willbender()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreatureWithMorph(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Aluren does not itself grant permission to cast creatures from the graveyard")
+    void cannotCastFromGraveyardWithoutZonePermission() {
+        harness.addToBattlefield(player1, new Aluren());
+        harness.setGraveyard(player1, List.of(new CanyonWildcat()));
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cost increases must still be paid when casting with Aluren")
+    void costIncreaseCannotBeWaived() {
+        harness.addToBattlefield(player1, new Aluren());
+        harness.addToBattlefield(player2, new Chill());
+        harness.setHand(player1, List.of(new CanyonWildcat()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Aluren waives the mana cost but allows paying a cost increase with generic mana")
+    void paysOnlyCostIncrease() {
+        harness.addToBattlefield(player1, new Aluren());
+        harness.addToBattlefield(player2, new Chill());
+        harness.setHand(player1, List.of(new CanyonWildcat()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Canyon Wildcat");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 }

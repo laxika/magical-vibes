@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.cards.s.SeedbornMuse;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlindingBeam.class, AlphaMyr.class, GreatFurnace.class, SeedbornMuse.class})
+@CardUsed({BlindingBeam.class, AlphaMyr.class, GreatFurnace.class, SeedbornMuse.class, Shatter.class})
 class BlindingBeamTest extends BaseCardTest {
 
     @Test
@@ -145,6 +146,93 @@ class BlindingBeamTest extends BaseCardTest {
                 player1, 0, 1, 2, new int[]{0, 1},
                 List.of(first.getId(), second.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tap mode requires two distinct creatures")
+    void tapModeRejectsDuplicateTargets() {
+        Permanent creature = addCreatureReady(player2, new AlphaMyr());
+        harness.setHand(player1, List.of(new BlindingBeam()));
+        addMana(player1, false);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0}, List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tap mode cannot be cast with only one target")
+    void tapModeRejectsOnlyOneTarget() {
+        Permanent creature = addCreatureReady(player2, new AlphaMyr());
+        harness.setHand(player1, List.of(new BlindingBeam()));
+        addMana(player1, false);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0}, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tap mode alone does not prevent the next untap")
+    void tapModeAllowsNormalUntap() {
+        Permanent ownCreature = addCreatureReady(player1, new AlphaMyr());
+        Permanent opposingCreature = addCreatureReady(player2, new AlphaMyr());
+
+        cast(player1, new int[]{0}, List.of(ownCreature.getId(), opposingCreature.getId()));
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(opposingCreature.isTapped()).isTrue();
+        advanceToUpkeep(player2);
+        assertThat(opposingCreature.isTapped()).isFalse();
+        assertThat(ownCreature.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(ownCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untap restriction survives another player's turn and expires after one affected untap")
+    void untapRestrictionAppliesOnlyToTargetsNextUntap() {
+        Permanent ownCreature = addCreatureReady(player1, new AlphaMyr());
+        Permanent opposingCreature = addCreatureReady(player2, new AlphaMyr());
+        ownCreature.tap();
+        opposingCreature.tap();
+
+        cast(player1, new int[]{1}, List.of(player1.getId()));
+
+        advanceToUpkeep(player2);
+        assertThat(opposingCreature.isTapped()).isFalse();
+        assertThat(ownCreature.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(ownCreature.isTapped()).isTrue();
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        assertThat(ownCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entwine resolves after one creature target is destroyed")
+    void entwineResolvesWithOneCreatureTargetGone() {
+        Permanent first = addCreatureReady(player2, new AlphaMyr());
+        Permanent second = addCreatureReady(player2, new AlphaMyr());
+        Permanent third = addCreatureReady(player2, new AlphaMyr());
+        harness.setHand(player1, List.of(new BlindingBeam()));
+        addMana(player1, true);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(first.getId(), second.getId(), player2.getId()));
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first);
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isFalse();
+        third.tap();
+        advanceToUpkeep(player2);
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
     }
 
     private void cast(Player player, int[] modes, List<UUID> targetIds) {

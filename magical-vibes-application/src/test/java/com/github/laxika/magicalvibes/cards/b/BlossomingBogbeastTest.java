@@ -55,6 +55,72 @@ class BlossomingBogbeastTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bogbeast, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Life lost does not reduce the total life gained used for the boost")
+    void lifeLossDoesNotReduceBoost() {
+        Permanent bogbeast = addCreatureReady(player1, new BlossomingBogbeast());
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "test"));
+
+        attackWith(bogbeast);
+
+        harness.assertLife(player1, 22);
+        assertThat(gqs.getEffectivePower(gd, bogbeast)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bogbeast)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Each attacking Bogbeast counts life gained by earlier resolving triggers")
+    void multipleBogbeastsStackTheirBoosts() {
+        Permanent first = addCreatureReady(player1, new BlossomingBogbeast());
+        Permanent second = addCreatureReady(player1, new BlossomingBogbeast());
+        Permanent nonattacker = addCreatureReady(player1, new BlossomingBogbeast());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        for (Permanent creature : List.of(first, second, nonattacker)) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(9);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(9);
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("The boost uses life gained and creatures present when the trigger resolves")
+    void evaluatesLifeAndCreaturesAtResolution() {
+        Permanent bogbeast = addCreatureReady(player1, new BlossomingBogbeast());
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 7));
+        Permanent ally = harness.enterBattlefieldAndReturn(player1, new BlossomingBogbeast());
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 25);
+        assertThat(gqs.getEffectivePower(gd, bogbeast)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Later life gain and creatures entering later do not change the resolved bonus")
+    void resolvedBonusIsFixed() {
+        Permanent bogbeast = addCreatureReady(player1, new BlossomingBogbeast());
+        attackWith(bogbeast);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 5));
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player1, new BlossomingBogbeast());
+
+        assertThat(gqs.getEffectivePower(gd, bogbeast)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bogbeast)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
     private void attackWith(Permanent creature) {
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
         resolveAllTriggers();

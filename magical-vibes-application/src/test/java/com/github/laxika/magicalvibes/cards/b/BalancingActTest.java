@@ -59,8 +59,7 @@ class BalancingActTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new Peek())));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -109,5 +108,49 @@ class BalancingActTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A zero minimum empties the opponent's battlefield and hand")
+    void zeroMinimumEmptiesBattlefieldAndHand() {
+        harness.setHand(player1, List.of(new BalancingAct(), new Peek(), new DwarvenGrunt()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new DwarvenGrunt());
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Dwarven Grunt");
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Peek");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equal permanent and hand counts require no sacrifices or discards")
+    void equalCountsLeaveBothPlayersUnchanged() {
+        harness.setHand(player1, List.of(new BalancingAct(), new Peek()));
+        harness.setHand(player2, List.of(new DwarvenGrunt()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent grunt = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(grunt);
+        harness.assertInHand(player1, "Peek");
+        harness.assertInHand(player2, "Dwarven Grunt");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

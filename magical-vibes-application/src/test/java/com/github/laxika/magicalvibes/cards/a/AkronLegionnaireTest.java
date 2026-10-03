@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.b.BronzeHorse;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -75,5 +76,48 @@ class AkronLegionnaireTest extends BaseCardTest {
         declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(apes)));
 
         assertThat(apes.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Non-artifact creatures can attack after the last Akron Legionnaire dies")
+    void restrictionEndsWhenAkronDies() {
+        Permanent akron = harness.addToBattlefieldAndReturn(player1, new AkronLegionnaire());
+        Permanent apes = addCreatureReady(player1, new BarbaryApes());
+        akron.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Akron Legionnaire");
+
+        harness.setLife(player2, 20);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(apes)));
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("One remaining Akron Legionnaire still prevents non-artifact creatures from attacking")
+    void restrictionRemainsWhileAnotherAkronSurvives() {
+        Permanent akron = harness.addToBattlefieldAndReturn(player1, new AkronLegionnaire());
+        harness.addToBattlefield(player1, new AkronLegionnaire());
+        Permanent apes = addCreatureReady(player1, new BarbaryApes());
+        akron.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Akron Legionnaire");
+
+        assertThatThrownBy(() -> declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(apes))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Non-artifact creatures can block while their controller controls Akron Legionnaire")
+    void nonArtifactCreatureCanBlock() {
+        harness.addToBattlefield(player2, new AkronLegionnaire());
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        addCreatureReady(player1, new BarbaryApes());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0))))
+                .doesNotThrowAnyException();
     }
 }

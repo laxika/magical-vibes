@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TragicSlip;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +21,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlackCat.class, Shock.class, GrizzlyBears.class, GiantGrowth.class, LightningBolt.class,
+        TragicSlip.class})
 class BlackCatTest extends BaseCardTest {
-
-    // ===== Death trigger =====
 
     @Test
     @DisplayName("When Black Cat dies, targeted opponent discards a card at random")
@@ -34,8 +36,7 @@ class BlackCatTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID catId = harness.getPermanentId(player1, "Black Cat");
-        harness.castInstant(player2, 0, catId);
-        harness.passBothPriorities(); // Shock resolves → cat dies → death trigger awaits target
+        harness.castAndResolveInstant(player2, 0, catId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
@@ -56,8 +57,6 @@ class BlackCatTest extends BaseCardTest {
     @Test
     @DisplayName("Death trigger only offers opponents as valid targets")
     void targetFilterExcludesController() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-
         harness.addToBattlefield(player1, new BlackCat());
 
         setupPlayer2Active();
@@ -65,8 +64,7 @@ class BlackCatTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID catId = harness.getPermanentId(player1, "Black Cat");
-        harness.castInstant(player2, 0, catId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, catId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -89,13 +87,12 @@ class BlackCatTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID catId = harness.getPermanentId(player1, "Black Cat");
-        harness.castInstant(player2, 0, catId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, catId);
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        // Started with 4 non-Shock cards (Shock was cast), so 3 in hand when trigger resolves,
+        // Started with 4 cards (Shock was cast), so 3 in hand when trigger resolves,
         // one is discarded at random → 2 left, 1 in graveyard.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -113,8 +110,7 @@ class BlackCatTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID catId = harness.getPermanentId(player1, "Black Cat");
-        harness.castInstant(player2, 0, catId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, catId);
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -126,7 +122,51 @@ class BlackCatTest extends BaseCardTest {
                 .isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Opponent-controlled Black Cat makes the other player discard only when its trigger resolves")
+    void opponentControlledCatTargetsOtherPlayer() {
+        UUID catId = harness.addToBattlefieldAndReturn(player2, new BlackCat()).getId();
+        BlackCat discarded = new BlackCat();
+        TragicSlip retained = new TragicSlip();
+        harness.setHand(player1, List.of(new TragicSlip(), discarded));
+        harness.setHand(player2, List.of(retained));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, catId);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player1.getId());
+        harness.assertInGraveyard(player2, "Black Cat");
+        harness.handlePermanentChosen(player2, player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Death trigger discards from the opponent's hand at resolution even if it was empty at death")
+    void usesHandAtResolution() {
+        UUID catId = harness.addToBattlefieldAndReturn(player1, new BlackCat()).getId();
+        harness.setHand(player1, List.of(new TragicSlip()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, catId);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        BlackCat arrivingCard = new BlackCat();
+        harness.setHand(player2, List.of(arrivingCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(arrivingCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);

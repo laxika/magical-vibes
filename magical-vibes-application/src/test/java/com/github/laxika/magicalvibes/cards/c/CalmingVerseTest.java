@@ -53,6 +53,57 @@ class CalmingVerseTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Rhystic Cave");
     }
 
+    @Test
+    @DisplayName("Keeps own enchantments when the controller has no lands")
+    void keepsOwnEnchantmentsWithNoLands() {
+        harness.addToBattlefield(player1, new AuraFracture());
+        harness.addToBattlefield(player2, new BrutalSuppression());
+        castAndResolve();
+
+        harness.assertOnBattlefield(player1, "Aura Fracture");
+        harness.assertNotOnBattlefield(player2, "Brutal Suppression");
+    }
+
+    @Test
+    @DisplayName("Destroys own enchantments even when there are no opposing enchantments")
+    void destroysOwnEnchantmentsWithoutOpposingEnchantments() {
+        harness.addToBattlefield(player1, new AuraFracture());
+        harness.addToBattlefield(player1, new RhysticCave());
+        castAndResolve();
+
+        harness.assertNotOnBattlefield(player1, "Aura Fracture");
+        harness.assertOnBattlefield(player1, "Rhystic Cave");
+    }
+
+    @Test
+    @DisplayName("Keeps own enchantments if the last untapped land becomes tapped before resolution")
+    void checksTappedLandAtResolution() {
+        harness.addToBattlefield(player1, new AuraFracture());
+        harness.addToBattlefield(player2, new BrutalSuppression());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        harness.castFromHand(player1, new CalmingVerse(), "{3}{G}");
+        land.tap();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aura Fracture");
+        harness.assertNotOnBattlefield(player2, "Brutal Suppression");
+    }
+
+    @Test
+    @DisplayName("Destroys own enchantments if a land becomes untapped before resolution")
+    void checksUntappedLandAtResolution() {
+        harness.addToBattlefield(player1, new AuraFracture());
+        harness.addToBattlefield(player2, new BrutalSuppression());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        land.tap();
+        harness.castFromHand(player1, new CalmingVerse(), "{3}{G}");
+        land.untap();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Aura Fracture");
+        harness.assertNotOnBattlefield(player2, "Brutal Suppression");
+    }
+
     private void castAndResolve() {
         harness.castFromHand(player1, new CalmingVerse(), "{3}{G}");
         harness.passBothPriorities();

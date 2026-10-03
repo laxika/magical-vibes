@@ -41,6 +41,13 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        GrantKeywordEffect linkedGrant = (GrantKeywordEffect) effect;
+        if (linkedGrant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                && (entry.getSourcePermanentId() == null
+                || !entry.getControllerId().equals(gameQueryService.findPermanentController(
+                        gameData, entry.getSourcePermanentId())))) {
+            return;
+        }
         var grant = (GrantKeywordEffect) effect;
         if (grant.scope() == GrantScope.OWN_CREATURES
                 || grant.scope() == GrantScope.ALL_OWN_CREATURES) {

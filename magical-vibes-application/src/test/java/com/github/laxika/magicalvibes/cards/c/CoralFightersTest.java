@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -27,12 +28,11 @@ class CoralFightersTest extends BaseCardTest {
     }
 
     private void attackUnblocked() {
-        declareAttackers(List.of(0));
-
-        // Advance into the declare-blockers step (the defender has no blockers), firing the
-        // "attacks and isn't blocked" trigger, then resolve it to present the may choice.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            resolveAllTriggers();
+        });
     }
 
     private List<String> libraryNames() {
@@ -49,10 +49,10 @@ class CoralFightersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
-        // Accepting puts the ability on the stack; let it resolve.
-        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(libraryNames()).containsExactly("Viashino Warrior", "Forest", "Femeref Scouts");
@@ -83,7 +83,7 @@ class CoralFightersTest extends BaseCardTest {
 
         addAttacker();
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -101,5 +101,46 @@ class CoralFightersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bottoming the only library card finishes during the original trigger")
+    void singleCardLibraryKeepsItsCard() {
+        Card onlyCard = new FemerefScouts();
+        harness.setLibrary(player2, List.of(onlyCard));
+        addAttacker();
+
+        attackUnblocked();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    @DisplayName("Player two's unblocked attack looks at and bottoms player one's card")
+    void oppositePlayerAttackUsesDefendersLibrary() {
+        harness.setLibrary(player1, List.of(new FemerefScouts(), new ViashinoWarrior(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new ViashinoWarrior()));
+        addCreatureReady(player2, new CoralFighters());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player1, List.of());
+            resolveAllTriggers();
+        });
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player2, true));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).stream().map(Card::getName).toList())
+                .containsExactly("Viashino Warrior", "Forest", "Femeref Scouts");
+        assertThat(libraryNames()).containsExactly("Forest", "Viashino Warrior");
     }
 }

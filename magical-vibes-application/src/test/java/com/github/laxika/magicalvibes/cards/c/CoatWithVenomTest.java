@@ -26,8 +26,7 @@ class CoatWithVenomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CoatWithVenom()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
@@ -41,10 +40,8 @@ class CoatWithVenomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CoatWithVenom()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
@@ -55,7 +52,6 @@ class CoatWithVenomTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new CoatWithVenom()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -63,5 +59,45 @@ class CoatWithVenomTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can grant the boost and deathtouch to an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CoatWithVenom()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, otherBear, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple copies stack their boosts and all effects expire at cleanup")
+    void multipleCopiesStackUntilCleanup() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CoatWithVenom(), new CoatWithVenom()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
     }
 }

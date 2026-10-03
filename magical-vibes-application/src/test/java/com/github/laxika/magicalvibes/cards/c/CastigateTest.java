@@ -82,6 +82,42 @@ class CastigateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolves without a choice when the opponent's hand is empty")
+    void resolvesWithEmptyHand() {
+        harness.setHand(player2, List.of());
+
+        castAndResolve();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Castigate");
+    }
+
+    @Test
+    @DisplayName("The caster must choose exactly one card, even when names are duplicated")
+    void mandatoryChoiceExilesOnlyOneCopy() {
+        Cremate first = new Cremate();
+        Cremate second = new Cremate();
+        harness.setHand(player2, List.of(first, second));
+
+        castAndResolve();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(second);
+        harness.assertNotInGraveyard(player2, "Cremate");
+        harness.assertInGraveyard(player1, "Castigate");
+    }
+
+    @Test
     @DisplayName("Cannot target yourself")
     void cannotTargetSelf() {
         harness.setHand(player1, List.of(new Castigate()));

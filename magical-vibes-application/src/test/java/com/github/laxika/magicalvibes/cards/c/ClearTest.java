@@ -71,4 +71,51 @@ class ClearTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Clear");
         harness.assertInHand(player1, "Angelic Page");
     }
+
+    @Test
+    @DisplayName("Can destroy an enchantment you control")
+    void destroysOwnEnchantment() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new AngelicChorus()).getId();
+        harness.setHand(player1, List.of(new Clear()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Angelic Chorus");
+        harness.assertInGraveyard(player1, "Angelic Chorus");
+        harness.assertInGraveyard(player1, "Clear");
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately but draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new Clear()));
+        harness.setLibrary(player1, List.of(new AngelicPage()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Clear");
+        harness.assertInGraveyard(player1, "Clear");
+        harness.assertNotInHand(player1, "Angelic Page");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Angelic Page");
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and does not discard when payment fails")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new Clear()));
+        harness.setLibrary(player1, List.of(new AngelicPage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Clear");
+        harness.assertNotInGraveyard(player1, "Clear");
+        harness.assertNotInHand(player1, "Angelic Page");
+    }
 }

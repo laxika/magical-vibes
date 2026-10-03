@@ -75,11 +75,42 @@ class BubblingBeeblesTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("An enchantment in the defender's graveyard does not prevent blocking")
+    void canBeBlockedWhenEnchantmentIsInGraveyard() {
+        harness.setGraveyard(player2, List.of(new Attrition()));
+        Permanent blocker = addCreatureReady(player2, new WildColos());
+        Permanent beebles = attackingBeebles();
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(beebles))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An enchantment entering after attackers are declared prevents blocking")
+    void enchantmentEnteringBeforeBlockersPreventsBlocking() {
+        Permanent blocker = addCreatureReady(player2, new WildColos());
+        Permanent beebles = addCreatureReady(player1, new BubblingBeebles());
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(beebles)));
+
+        harness.enterBattlefieldAndReturn(player2, new Attrition());
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(beebles)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
     private Permanent attackingBeebles() {
-        Permanent beebles = new Permanent(new BubblingBeebles());
-        beebles.setSummoningSick(false);
+        Permanent beebles = addCreatureReady(player1, new BubblingBeebles());
         beebles.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(beebles);
         return beebles;
     }
 }

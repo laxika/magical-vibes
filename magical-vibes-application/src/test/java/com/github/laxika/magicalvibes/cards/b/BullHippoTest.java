@@ -44,9 +44,7 @@ class BullHippoTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new BullHippo());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -61,8 +59,7 @@ class BullHippoTest extends BaseCardTest {
     void canBeBlockedWhenDefenderDoesNotControlIsland() {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new BullHippo());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -79,8 +76,7 @@ class BullHippoTest extends BaseCardTest {
         Permanent atkPerm = addCreatureReady(player1, new BullHippo());
         harness.addToBattlefield(player1, new Island());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -90,14 +86,30 @@ class BullHippoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bull Hippo can be blocked after the defender loses their only Island")
+    void canBeBlockedAfterDefenderLosesIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BullHippo());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gd.playerBattlefields.get(player2.getId()).remove(island);
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Bull Hippo can be blocked when defending player controls only a Forest")
     void canBeBlockedWithForestOnly() {
         harness.addToBattlefield(player2, new Forest());
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new BullHippo());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

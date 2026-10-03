@@ -18,7 +18,7 @@ public class AcererakTheArchlich extends Card {
 
     public AcererakTheArchlich() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new NotCondition(new ControllerHasCompletedDungeon()),
+                new NotCondition(new ControllerHasCompletedDungeon(com.github.laxika.magicalvibes.model.Dungeon.TOMB_OF_ANNIHILATION)),
                 SequenceEffect.of(ReturnToHandEffect.self(), new VentureIntoDungeonEffect())));
         addEffect(EffectSlot.ON_ATTACK,
                 new EachOpponentCreatesTokenUnlessSacrificesCreatureEffect(CreateTokenEffect.blackZombie(1)));

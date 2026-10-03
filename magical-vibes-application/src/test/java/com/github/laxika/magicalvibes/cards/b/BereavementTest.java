@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.d.Dodecapod;
+import com.github.laxika.magicalvibes.cards.d.DarkestHour;
 import com.github.laxika.magicalvibes.cards.e.Expunge;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.PouncingJaguar;
 import com.github.laxika.magicalvibes.cards.s.SteamBlast;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -20,7 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Bereavement.class, CruelEdict.class, Expunge.class, Forest.class, GoblinRaider.class, GrizzlyBears.class, HillGiant.class, PouncingJaguar.class, SteamBlast.class})
+@CardUsed({Bereavement.class, CruelEdict.class, DarkestHour.class, Dodecapod.class, Expunge.class, Forest.class, GoblinRaider.class, GrizzlyBears.class, HillGiant.class, PouncingJaguar.class, SteamBlast.class})
 class BereavementTest extends BaseCardTest {
 
     @Test
@@ -60,9 +63,8 @@ class BereavementTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        castExpunge(player1, dyingCreature);
+        castAndResolveExpunge(player1, dyingCreature);
 
-        harness.passBothPriorities(); // resolve Expunge; Pouncing Jaguar dies
         harness.passBothPriorities(); // resolve Bereavement trigger; discard choice
 
         // The dying creature's controller (player2), not Bereavement's controller, discards.
@@ -110,9 +112,8 @@ class BereavementTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        castExpunge(player2, dyingCreature);
+        castAndResolveExpunge(player2, dyingCreature);
 
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -184,9 +185,8 @@ class BereavementTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        castExpunge(player1, dyingCreature);
+        castAndResolveExpunge(player1, dyingCreature);
 
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
@@ -224,9 +224,82 @@ class BereavementTest extends BaseCardTest {
                 .count()).isEqualTo(2);
     }
 
-    private void castExpunge(Player caster, Permanent target) {
+    @Test
+    void emptyHandDoesNotRequireDiscardChoice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new Bereavement());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
+
+        castAndResolveExpunge(player1, creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void dyingCreatureControllerChoosesWhichCardToDiscard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new Bereavement());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Forest(), new HillGiant()));
+
+        castAndResolveExpunge(player1, creature);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void opponentControlledBereavementAllowsDodecapodReplacement() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new Bereavement());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Dodecapod()));
+
+        castAndResolveExpunge(player1, creature);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Dodecapod");
+        harness.assertNotInGraveyard(player2, "Dodecapod");
+        assertThat(findPermanent(player2, "Dodecapod").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void creatureMadeBlackByDarkestHourDoesNotTriggerBereavement() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new Bereavement());
+        harness.addToBattlefield(player1, new DarkestHour());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.castFromHand(player1, new SteamBlast(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Forest");
+    }
+
+    private void castAndResolveExpunge(Player caster, Permanent target) {
         harness.setHand(caster, List.of(new Expunge()));
         harness.addMana(caster, ManaColor.BLACK, 3);
-        harness.castInstant(caster, 0, target.getId());
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 }

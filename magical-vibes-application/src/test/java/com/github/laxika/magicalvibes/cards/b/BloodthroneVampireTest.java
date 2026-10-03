@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodthroneVampire.class, RuneclawBear.class})
 class BloodthroneVampireTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Bloodthrone Vampire puts it on the stack")
@@ -50,23 +50,21 @@ class BloodthroneVampireTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Bloodthrone Vampire");
     }
 
-    // ===== Activation: sacrificing a creature =====
-
     @Test
     @DisplayName("Activating ability sacrifices the chosen creature and puts boost on the stack")
     void activatingAbilitySacrificesCreatureAndPutsBoostOnStack() {
         Permanent vampPerm = addBloodthroneVampireReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
 
-        // Grizzly Bears should be sacrificed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        // Runeclaw Bear should be sacrificed
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
 
         // Bloodthrone Vampire should still be on the battlefield
         harness.assertOnBattlefield(player1, "Bloodthrone Vampire");
@@ -84,8 +82,8 @@ class BloodthroneVampireTest extends BaseCardTest {
     @DisplayName("Resolving ability gives Bloodthrone Vampire +2/+2")
     void resolvingAbilityBoostsVampire() {
         addBloodthroneVampireReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
@@ -105,10 +103,10 @@ class BloodthroneVampireTest extends BaseCardTest {
     @DisplayName("Can activate multiple times by sacrificing different creatures")
     void canActivateMultipleTimes() {
         addBloodthroneVampireReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RuneclawBear());
         harness.addToBattlefield(player1, createTokenCreature("Saproling Token"));
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
@@ -126,7 +124,7 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(vamp.getEffectivePower()).isEqualTo(5);
         assertThat(vamp.getEffectiveToughness()).isEqualTo(5);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
         harness.assertNotInGraveyard(player1, "Saproling Token");
     }
 
@@ -149,8 +147,8 @@ class BloodthroneVampireTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Boost fizzles when Vampire sacrifices itself")
-    void boostFizzlesWhenVampireSacrificesItself() {
+    @DisplayName("Ability resolves without a boost when Vampire sacrifices itself")
+    void abilityResolvesWithoutBoostWhenVampireSacrificesItself() {
         addBloodthroneVampireReady(player1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -159,19 +157,17 @@ class BloodthroneVampireTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        // Vampire is in the graveyard, ability fizzled — no crash
+        // The non-targeting ability resolves, but its source is no longer on the battlefield.
         harness.assertNotOnBattlefield(player1, "Bloodthrone Vampire");
         harness.assertInGraveyard(player1, "Bloodthrone Vampire");
     }
 
-    // ===== No mana cost =====
-
     @Test
-    @DisplayName("Ability has no mana cost — can activate without mana")
+    @DisplayName("Ability has no mana cost Ă˘â‚¬â€ť can activate without mana")
     void canActivateWithoutMana() {
         addBloodthroneVampireReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
@@ -184,8 +180,8 @@ class BloodthroneVampireTest extends BaseCardTest {
     @DisplayName("Ability does not tap Bloodthrone Vampire")
     void activatingAbilityDoesNotTap() {
         addBloodthroneVampireReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
@@ -194,14 +190,12 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(vamp.isTapped()).isFalse();
     }
 
-    // ===== Boost resets at end of turn =====
-
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         addBloodthroneVampireReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new RuneclawBear());
+        UUID bearsId = harness.getPermanentId(player1, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
@@ -222,8 +216,6 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(vamp.getEffectiveToughness()).isEqualTo(1);
     }
 
-    // ===== Validation errors =====
-
     @Test
     @DisplayName("With only Vampire on battlefield, auto-sacrifices itself")
     void autoSacrificesItselfWhenOnlyCreature() {
@@ -239,13 +231,50 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A tapped, summoning-sick Vampire can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent vamp = harness.addToBattlefieldAndReturn(player1, new BloodthroneVampire());
+        vamp.setSummoningSick(true);
+        vamp.setTapped(true);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        assertThat(vamp.getEffectivePower()).isEqualTo(3);
+        assertThat(vamp.getEffectiveToughness()).isEqualTo(3);
+        assertThat(vamp.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the source with a boost pending does not boost another Vampire")
+    void pendingBoostDoesNotAffectAnotherVampire() {
+        Permanent source = addBloodthroneVampireReady(player1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new BloodthroneVampire());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bear.getId());
+        assertThat(source.getEffectivePower()).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Bloodthrone Vampire");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Bloodthrone Vampire");
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
 
     private Permanent addBloodthroneVampireReady(Player player) {
-        BloodthroneVampire card = new BloodthroneVampire();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BloodthroneVampire());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

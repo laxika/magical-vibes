@@ -75,4 +75,89 @@ class CatalystStoneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("Multiple Stones stack their flashback reductions")
+    void multipleStonesStackReductions() {
+        harness.addToBattlefield(player1, new CatalystStone());
+        harness.addToBattlefield(player1, new CatalystStone());
+        harness.setGraveyard(player1, List.of(new CallOfTheHerd()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple opposing Stones stack their flashback increases")
+    void multipleOpposingStonesStackIncreases() {
+        harness.addToBattlefield(player2, new CatalystStone());
+        harness.addToBattlefield(player2, new CatalystStone());
+        harness.setGraveyard(player1, List.of(new CallOfTheHerd()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Opposing Stones cancel before the generic cost is floored at zero")
+    void opposingStonesCancel() {
+        harness.addToBattlefield(player1, new CatalystStone());
+        harness.addToBattlefield(player2, new CatalystStone());
+        harness.setGraveyard(player1, List.of(new ChatterOfTheSquirrel()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A flashback reduction cannot pay the colored mana requirement")
+    void coloredManaStillRequired() {
+        harness.addToBattlefield(player1, new CatalystStone());
+        harness.setGraveyard(player1, List.of(new ChatterOfTheSquirrel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Stone in the graveyard does not modify flashback costs")
+    void stoneInGraveyardDoesNotReduceCost() {
+        harness.setGraveyard(player1, List.of(new CallOfTheHerd(), new CatalystStone()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }

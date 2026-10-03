@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.m.MtendaGriffin;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Chaosphere.class, MtendaGriffin.class, FemerefScouts.class})
+@CardUsed({Chaosphere.class, MtendaGriffin.class, FemerefScouts.class, Opalescence.class})
 class ChaosphereTest extends BaseCardTest {
 
     @Test
@@ -66,6 +68,61 @@ class ChaosphereTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ground creatures can still block ground attackers")
+    void groundCreatureCanBlockGroundCreature() {
+        addChaosphere();
+        addCreatureReady(player1, new FemerefScouts()).setAttacking(true);
+        addCreatureReady(player2, new FemerefScouts());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Chaosphere also grants reach to its controller's creatures")
+    void controllersGroundCreatureCanBlockFlier() {
+        addChaosphere();
+        addCreatureReady(player2, new MtendaGriffin()).setAttacking(true);
+        addCreatureReady(player1, new FemerefScouts());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures lose granted reach when Chaosphere leaves the battlefield")
+    void reachEndsWhenChaosphereLeaves() {
+        var chaosphere = harness.addToBattlefieldAndReturn(player1, new Chaosphere());
+        addCreatureReady(player1, new MtendaGriffin()).setAttacking(true);
+        var blocker = addCreatureReady(player2, new FemerefScouts());
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.REACH)).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(chaosphere);
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed({Chaosphere.class, MtendaGriffin.class, Opalescence.class})
+    @DisplayName("Chaosphere itself gains reach when animated without flying")
+    void animatedChaosphereCanBlockFlier() {
+        addCreatureReady(player1, new MtendaGriffin()).setAttacking(true);
+        harness.addToBattlefield(player2, new Chaosphere());
+        harness.addToBattlefield(player2, new Opalescence());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     private void addChaosphere() {

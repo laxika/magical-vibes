@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "AER", collectorNumber = "176")
 @CardRegistration(set = "KLR", collectorNumber = "270")
+@CardRegistration(set = "BRC", collectorNumber = "158")
 public class ServoSchematic extends Card {
 
     public ServoSchematic() {

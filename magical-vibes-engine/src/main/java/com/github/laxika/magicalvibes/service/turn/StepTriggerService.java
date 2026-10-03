@@ -700,6 +700,8 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(EchoAtNextUpkeep.class)) {
             List<EchoAtNextUpkeep> pendingEchoes = gameData.drainDelayedActions(EchoAtNextUpkeep.class);
             for (EchoAtNextUpkeep action : pendingEchoes) {
+                Permanent echoSource = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (echoSource == null || gameQueryService.hasLostAllAbilities(gameData, echoSource)) continue;
                 UUID controllerId = gameQueryService.findPermanentController(gameData, action.permanentId());
                 if (controllerId == null) {
                     continue;
@@ -3680,15 +3682,17 @@ public class StepTriggerService {
         List<DelayedEndOfCombatTrigger> delayedTriggers =
                 gameData.drainDelayedActions(DelayedEndOfCombatTrigger.class);
         for (DelayedEndOfCombatTrigger delayedTrigger : delayedTriggers) {
-            gameData.stack.add(new StackEntry(
+            StackEntry delayedEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     delayedTrigger.sourceCard(),
                     delayedTrigger.controllerId(),
                     delayedTrigger.sourceCard().getName() + "'s end-of-combat ability",
                     new ArrayList<>(List.of(delayedTrigger.effect())),
-                    (UUID) null,
+                    delayedTrigger.affectedPermanentId(),
                     delayedTrigger.sourcePermanentId()
-            ));
+            );
+            delayedEntry.setNonTargeting(delayedTrigger.affectedPermanentId() != null);
+            gameData.stack.add(delayedEntry);
 
             gameLogService.append(gameData, GameLog.cardThen(
                     delayedTrigger.sourceCard(), "'s end-of-combat ability triggers."));
@@ -6294,8 +6298,7 @@ public class StepTriggerService {
 
         // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED
         // effects. These fire during the enchanted permanent's controller's end step (e.g. Nettlevine
-        // Blight). The ability is controlled by the enchanted permanent's controller, so the stack
-        // entry's controller is that player even though the Aura keeps its own controller.
+        // Blight). The Aura's controller controls its own triggered abilities.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedControllerEndStepEffects =
                     perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED);
@@ -6310,8 +6313,7 @@ public class StepTriggerService {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
-                        effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect
-                                ? auraOwnerId : enchantedPermanentControllerId,
+                        auraOwnerId,
                         perm.getCard().getName() + "'s end step ability",
                         new ArrayList<>(List.of(effect)),
                         perm.getAttachedTo(),

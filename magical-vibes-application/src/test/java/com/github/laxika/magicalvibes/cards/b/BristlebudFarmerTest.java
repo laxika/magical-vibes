@@ -62,14 +62,123 @@ class BristlebudFarmerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Milling happens during the attack ability, without another priority round")
+    void millsBeforePlayersCanRespondAfterSacrifice() {
+        castAndResolve();
+        harness.setHand(player2, List.of(new Opt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setLibrary(player1, List.of(new BristlebudFarmer(), new BristlebudFarmer(), new BristlebudFarmer()));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Food"));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("All milled permanents may be declined without undoing the sacrifice or mill")
+    void declinesEveryMilledPermanent() {
+        castAndResolve();
+        harness.setLibrary(player1, List.of(new BristlebudFarmer(), new BristlebudFarmer(), new BristlebudFarmer()));
+
+        sacrificeFoodAndResolveMill();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A later milled permanent can be chosen, and only one card is returned")
+    void choosesLaterPermanentAndCannotReturnAnother() {
+        castAndResolve();
+        harness.setLibrary(player1, List.of(new Forest(), new BristlebudFarmer(), new Forest()));
+
+        sacrificeFoodAndResolveMill();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Bristlebud Farmer");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A short library mills only its remaining cards and does not return an older graveyard card")
+    void shortLibraryWithoutMilledPermanent() {
+        castAndResolve();
+        harness.setGraveyard(player1, List.of(new BristlebudFarmer()));
+        harness.setLibrary(player1, List.of(new Opt()));
+
+        sacrificeFoodAndResolveMill();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Opt");
+        harness.assertInGraveyard(player1, "Bristlebud Farmer");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking without a Food does not mill")
+    void noFoodDoesNotMill() {
+        addCreatureReady(player1, new BristlebudFarmer());
+        harness.setLibrary(player1, List.of(new BristlebudFarmer()));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Created Food can be tapped and sacrificed for two mana to gain three life")
+    void activatesCreatedFood() {
+        castAndResolve();
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        harness.assertLife(player1, 23);
+    }
+
+    private void sacrificeFoodAndResolveMill() {
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Food"));
+        resolveAllTriggers();
+    }
+
     private void castAndResolve() {
         harness.setHand(player1, List.of(new BristlebudFarmer()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         findPermanent(player1, "Bristlebud Farmer").setSummoningSick(false);
     }
 }

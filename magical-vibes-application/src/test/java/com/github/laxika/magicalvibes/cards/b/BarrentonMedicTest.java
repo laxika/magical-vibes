@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.w.WiltLeafCavaliers;
+import com.github.laxika.magicalvibes.cards.m.MeliraSylvokOutcast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,11 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BarrentonMedic.class, WiltLeafCavaliers.class})
+@CardUsed({BarrentonMedic.class, WiltLeafCavaliers.class, MeliraSylvokOutcast.class})
 class BarrentonMedicTest extends BaseCardTest {
-
-    // ===== Prevent ability =====
 
     @Test
     @DisplayName("Tap ability prevents the next 1 damage to a targeted player")
@@ -59,8 +59,6 @@ class BarrentonMedicTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(target.getDamagePreventionShield()).isZero();
     }
-
-    // ===== Untap ability =====
 
     @Test
     @DisplayName("Untap ability untaps the Medic")
@@ -105,7 +103,98 @@ class BarrentonMedicTest extends BaseCardTest {
         assertThat(medic.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Untap ability can be activated while summoning sick")
+    void untapAbilityWorksWhileSummoningSick() {
+        Permanent medic = harness.addToBattlefieldAndReturn(player1, new BarrentonMedic());
+        medic.setSummoningSick(true);
+        medic.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(medic.isTapped()).isTrue();
+        assertThat(medic.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(medic.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the tap ability")
+    void tapAbilityCannotBeActivatedWhileSummoningSick() {
+        Permanent medic = harness.addToBattlefieldAndReturn(player1, new BarrentonMedic());
+        medic.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(medic.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A fourth counter kills the Medic before its untap ability resolves")
+    void lethalCounterCostRemovesMedicBeforeResolution() {
+        Permanent medic = addReadyMedic(player1);
+        medic.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        medic.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Barrenton Medic");
+        harness.assertInGraveyard(player1, "Barrenton Medic");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Barrenton Medic");
+    }
+
+    @Test
+    @DisplayName("Untapping and activating again stacks prevention on the same player")
+    void repeatedTapActivationsPreventTwoDamage() {
+        Permanent medic = addReadyMedic(player1);
+        Permanent attacker = addCreatureReady(player1, new WiltLeafCavaliers());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(medic.isTapped()).isTrue();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 19);
+        assertThat(medic.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({BarrentonMedic.class, MeliraSylvokOutcast.class})
+    @DisplayName("Melira prevents paying the untap ability's counter cost")
+    void cannotActivateUntapAbilityWhenMinusCountersAreForbidden() {
+        Permanent medic = addReadyMedic(player1);
+        medic.tap();
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(medic.isTapped()).isTrue();
+        assertThat(medic.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyMedic(Player player) {
         return addCreatureReady(player, new BarrentonMedic());

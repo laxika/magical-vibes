@@ -81,4 +81,65 @@ class BlightedWoodlandTest extends BaseCardTest {
                 .matches(Permanent::isTapped);
         harness.assertInGraveyard(player1, "Blighted Woodland");
     }
+
+    @Test
+    @DisplayName("The search can find zero lands even when basic lands are available")
+    void canDeclineAllLands() {
+        harness.addToBattlefield(player1, new BlightedWoodland());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertInGraveyard(player1, "Blighted Woodland");
+    }
+
+    @Test
+    @DisplayName("Sacrifice and mana are paid before the search resolves, even with an empty library")
+    void paysCostsBeforeResolutionWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new BlightedWoodland());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Blighted Woodland");
+        harness.assertInGraveyard(player1, "Blighted Woodland");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only one available basic land enters tapped; nonbasic lands remain in the library")
+    void findsOnlyAvailableBasicLand() {
+        harness.addToBattlefield(player1, new BlightedWoodland());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new BlightedWoodland()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .matches(permanent -> permanent.getCard() instanceof Forest && permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .singleElement().isInstanceOf(BlightedWoodland.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PlatedSliver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,8 +11,62 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CloudshredderSliver.class, PlatedSliver.class, GrizzlyBears.class, BonescytheSliver.class})
+@CardUsed({CloudshredderSliver.class, GrizzlyBears.class, BonescytheSliver.class})
 class CloudshredderSliverTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Haste lets newly entered Slivers attack until the source leaves")
+    void newlyEnteredSliversCanAttackWhileSourceRemains() {
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new CloudshredderSliver());
+        Permanent other = harness.enterBattlefieldAndReturn(player1, new BonescytheSliver());
+        source.setSummoningSick(true);
+        other.setSummoningSick(true);
+
+        assertThat(als.canAttack(gd, source, player1.getId())).isTrue();
+        assertThat(als.canAttack(gd, other, player1.getId())).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+
+        assertThat(als.canAttack(gd, other, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Cloudshredder keeps granting keywords when one source leaves")
+    void keywordsRemainUntilLastSourceLeaves() {
+        Permanent first = addCreatureReady(player1, new CloudshredderSliver());
+        Permanent second = addCreatureReady(player1, new CloudshredderSliver());
+        Permanent other = addCreatureReady(player1, new BonescytheSliver());
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The grant follows the source's current controller")
+    void grantFollowsSourceController() {
+        Permanent source = addCreatureReady(player1, new CloudshredderSliver());
+        Permanent formerControllersSliver = addCreatureReady(player1, new BonescytheSliver());
+        Permanent newControllersSliver = addCreatureReady(player2, new BonescytheSliver());
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+
+        assertThat(gqs.hasKeyword(gd, formerControllersSliver, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, formerControllersSliver, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newControllersSliver, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newControllersSliver, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
+    }
 
     @Test
     @DisplayName("Cloudshredder Sliver grants itself flying and haste")
@@ -48,6 +101,7 @@ class CloudshredderSliverTest extends BaseCardTest {
     }
 }
 
+@CardUsed({CloudshredderSliver.class, GrizzlyBears.class, BonescytheSliver.class})
 class Mh1CloudshredderSliverTest extends BaseCardTest {
 
     @Test

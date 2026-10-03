@@ -89,9 +89,8 @@ class AquitectsWillTest extends BaseCardTest {
     @Test
     @DisplayName("Grant resolved in an AI simulation copy does not leak into the real game")
     void simulatedGrantDoesNotLeakIntoRealGame() {
-        harness.addToBattlefield(player1, new Mountain());
-        UUID mountainId = harness.getPermanentId(player1, "Mountain");
-        Permanent realMountain = gqs.findPermanentById(gd, mountainId);
+        Permanent realMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        UUID mountainId = realMountain.getId();
 
         GameData simCopy = gd.simulationCopy();
         Permanent simMountain = simCopy.playerBattlefields.get(player1.getId()).stream()
@@ -126,10 +125,111 @@ class AquitectsWillTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Merfolk does not satisfy the draw condition")
+    void opponentsMerfolkDoesNotAllowDraw() {
+        harness.addToBattlefield(player2, new JudgeOfCurrents());
+
+        castWillOnMountain();
+
+        assertThat(handSize()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can put a flood counter on an opponent's land")
+    void canTargetOpponentsLand() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new AquitectsWill()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, mountain.getId());
+
+        assertThat(mountain.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain))
+                .containsExactlyInAnyOrder(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+        assertThat(handSize()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Merfolk entering before resolution allows the draw")
+    void checksMerfolkPresenceAtResolution() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new AquitectsWill()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castSorcery(player1, 0, mountain.getId());
+
+        harness.addToBattlefield(player1, new JudgeOfCurrents());
+        harness.passBothPriorities();
+
+        assertThat(handSize()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Merfolk leaving before resolution prevents the draw")
+    void noDrawIfMerfolkLeavesBeforeResolution() {
+        Permanent judge = harness.addToBattlefieldAndReturn(player1, new JudgeOfCurrents());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new AquitectsWill()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castSorcery(player1, 0, mountain.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(judge);
+        harness.passBothPriorities();
+
+        assertThat(handSize()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("No card is drawn when the only target has left the battlefield")
+    void illegalTargetPreventsDrawEvenWithMerfolk() {
+        harness.addToBattlefield(player1, new JudgeOfCurrents());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new AquitectsWill()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castSorcery(player1, 0, mountain.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(mountain);
+        harness.passBothPriorities();
+
+        assertThat(handSize()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Aquitect's Will");
+    }
+
+    @Test
+    @DisplayName("Repeated casts add flood counters and the grant lasts until all are removed")
+    void repeatedCastsAddCounters() {
+        UUID mountainId = castWillOnMountain();
+        Permanent mountain = gqs.findPermanentById(gd, mountainId);
+        harness.setHand(player1, List.of(new AquitectsWill()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, mountainId);
+
+        assertThat(mountain.getCounterCount(CounterType.FLOOD)).isEqualTo(2);
+        mountain.setCounterCount(CounterType.FLOOD, 1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).contains(CardSubtype.ISLAND);
+        mountain.setCounterCount(CounterType.FLOOD, 0);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
+        assertThat(gqs.intrinsicBasicLandManaColors(gd, mountain)).containsExactly(ManaColor.RED);
+    }
+
+    @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonland() {
-        harness.addToBattlefield(player2, new JudgeOfCurrents());
-        UUID judgeId = harness.getPermanentId(player2, "Judge of Currents");
+        UUID judgeId = harness.addToBattlefieldAndReturn(player2, new JudgeOfCurrents()).getId();
         harness.setHand(player1, List.of(new AquitectsWill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player1);
@@ -144,8 +244,7 @@ class AquitectsWillTest extends BaseCardTest {
     }
 
     private UUID castWillOnMountain() {
-        harness.addToBattlefield(player1, new Mountain());
-        UUID mountainId = harness.getPermanentId(player1, "Mountain");
+        UUID mountainId = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
         harness.setHand(player1, List.of(new AquitectsWill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player1);

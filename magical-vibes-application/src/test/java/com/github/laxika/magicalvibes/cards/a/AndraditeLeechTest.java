@@ -56,7 +56,6 @@ class AndraditeLeechTest extends BaseCardTest {
     void opponentBlackSpellsAreNotTaxed() {
         harness.addToBattlefield(player1, new AndraditeLeech());
         harness.forceActivePlayer(player2);
-        harness.forceStep(gd.currentStep);
         harness.clearPriorityPassed();
 
         harness.castFromHand(player2, new Duskwalker(), "{B}");
@@ -91,5 +90,52 @@ class AndraditeLeechTest extends BaseCardTest {
 
         assertThat(leech.getPowerModifier()).isZero();
         assertThat(leech.getToughnessModifier()).isZero();
+    }
+    @Test
+    @DisplayName("Multiple Leeches each add one black mana to black spells")
+    void multipleLeechesIncreaseCostCumulatively() {
+        harness.addToBattlefield(player1, new AndraditeLeech());
+        harness.addToBattlefield(player1, new AndraditeLeech());
+        harness.setHand(player1, List.of(new Duskwalker()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Leech does not increase its own cost before entering the battlefield")
+    void leechDoesNotTaxItselfOnStack() {
+        harness.castFromHand(player1, new AndraditeLeech(), "{2}{B}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Andradite Leech");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Leech can activate repeatedly for one black mana each")
+    void summoningSickLeechCanActivateRepeatedly() {
+        Permanent leech = harness.addToBattlefieldAndReturn(player1, new AndraditeLeech());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(leech.getPowerModifier()).isZero();
+        assertThat(leech.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(leech.getPowerModifier()).isEqualTo(2);
+        assertThat(leech.getToughnessModifier()).isEqualTo(2);
     }
 }

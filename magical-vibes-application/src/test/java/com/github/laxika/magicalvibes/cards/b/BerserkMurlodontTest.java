@@ -98,4 +98,51 @@ class BerserkMurlodontTest extends BaseCardTest {
         assertThat(murlodont.getPowerModifier()).isZero();
         assertThat(murlodont.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Each Murlodont grants its bonus to another blocked Beast")
+    void multipleMurlodontsBoostAnotherBeast() {
+        Permanent first = addCreatureReady(player1, new BerserkMurlodont());
+        Permanent second = addCreatureReady(player1, new BerserkMurlodont());
+        Permanent beast = addCreatureReady(player1, new Hundroog());
+        addCreatureReady(player2, new AvenEnvoy());
+        addCreatureReady(player2, new AvenEnvoy());
+
+        declareAttackersAndPrepareBlockers(List.of(2));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 2),
+                new BlockerAssignment(1, 2)
+        ));
+        resolveAllTriggers();
+
+        assertThat(beast.getPowerModifier()).isEqualTo(4);
+        assertThat(beast.getToughnessModifier()).isEqualTo(4);
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getPowerModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each blocked Beast counts only its own blockers")
+    void simultaneouslyBlockedBeastsCountTheirOwnBlockers() {
+        Permanent murlodont = addCreatureReady(player1, new BerserkMurlodont());
+        Permanent beast = addCreatureReady(player1, new Hundroog());
+        addCreatureReady(player2, new AvenEnvoy());
+        addCreatureReady(player2, new AvenEnvoy());
+        addCreatureReady(player2, new AvenEnvoy());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1),
+                new BlockerAssignment(2, 1)
+        ));
+        resolveAllTriggers();
+
+        assertThat(murlodont.getPowerModifier()).isEqualTo(1);
+        assertThat(murlodont.getToughnessModifier()).isEqualTo(1);
+        assertThat(beast.getPowerModifier()).isEqualTo(2);
+        assertThat(beast.getToughnessModifier()).isEqualTo(2);
+    }
 }

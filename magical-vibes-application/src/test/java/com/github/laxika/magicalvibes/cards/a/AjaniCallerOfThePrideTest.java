@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SilvercoatLion;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,17 +20,32 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AjaniCallerOfThePride.class, SilvercoatLion.class})
 class AjaniCallerOfThePrideTest extends BaseCardTest {
 
     @Nested
     @DisplayName("+1: +1/+1 counter on up to one target creature")
+    @CardUsed({AjaniCallerOfThePride.class, SilvercoatLion.class})
     class PlusOne {
+
+        @Test
+        void canPutCounterOnOpponentsCreature() {
+            Permanent ajani = addAjani(player1, 4);
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new SilvercoatLion());
+
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ajani),
+                    0, null, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        }
 
         @Test
         @DisplayName("Puts a +1/+1 counter on the target creature")
         void putsCounterOnTarget() {
             Permanent ajani = addAjani(player1, 4);
-            Permanent target = addCreature(player1, "GrizzlyBears", 2, 2);
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new SilvercoatLion());
 
             int idx = gd.playerBattlefields.get(player1.getId()).indexOf(ajani);
             harness.activateAbility(player1, idx, 0, null, target.getId());
@@ -55,13 +72,28 @@ class AjaniCallerOfThePrideTest extends BaseCardTest {
 
     @Nested
     @DisplayName("-3: flying and double strike until end of turn")
+    @CardUsed({AjaniCallerOfThePride.class, SilvercoatLion.class})
     class MinusThree {
+
+        @Test
+        void resolvesForOpponentsCreatureAfterAjaniDiesFromLoyaltyCost() {
+            Permanent ajani = addAjani(player1, 3);
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new SilvercoatLion());
+
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ajani),
+                    1, null, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ajani);
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        }
 
         @Test
         @DisplayName("Grants flying and double strike, which wear off at end of turn")
         void grantsKeywordsUntilEndOfTurn() {
             Permanent ajani = addAjani(player1, 4);
-            Permanent target = addCreature(player1, "GrizzlyBears", 2, 2);
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new SilvercoatLion());
 
             int idx = gd.playerBattlefields.get(player1.getId()).indexOf(ajani);
             harness.activateAbility(player1, idx, 1, null, target.getId());
@@ -83,7 +115,7 @@ class AjaniCallerOfThePrideTest extends BaseCardTest {
         @DisplayName("Cannot be activated with insufficient loyalty")
         void cannotActivateWithInsufficientLoyalty() {
             Permanent ajani = addAjani(player1, 2);
-            Permanent target = addCreature(player1, "GrizzlyBears", 2, 2);
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new SilvercoatLion());
 
             int idx = gd.playerBattlefields.get(player1.getId()).indexOf(ajani);
             assertThatThrownBy(() -> harness.activateAbility(player1, idx, 1, null, target.getId()))
@@ -93,13 +125,32 @@ class AjaniCallerOfThePrideTest extends BaseCardTest {
 
     @Nested
     @DisplayName("-8: X 2/2 white Cats where X is your life total")
+    @CardUsed({AjaniCallerOfThePride.class})
     class MinusEight {
+
+        @Test
+        void usesControllersLifeTotalAtResolution() {
+            Permanent ajani = addAjani(player1, 8);
+            harness.setLife(player1, 5);
+            harness.setLife(player2, 12);
+
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ajani),
+                    2, null, (UUID) null);
+            harness.setLife(player1, 3);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ajani);
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .filteredOn(p -> p.getCard().isToken() && p.getCard().getSubtypes().contains(CardSubtype.CAT))
+                    .hasSize(3);
+            assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        }
 
         @Test
         @DisplayName("Creates one Cat token per point of life")
         void createsCatsEqualToLifeTotal() {
             Permanent ajani = addAjani(player1, 8);
-            gd.playerLifeTotals.put(player1.getId(), 5);
+            harness.setLife(player1, 5);
 
             int idx = gd.playerBattlefields.get(player1.getId()).indexOf(ajani);
             harness.activateAbility(player1, idx, 2, null, (UUID) null);
@@ -115,28 +166,18 @@ class AjaniCallerOfThePrideTest extends BaseCardTest {
                     .findFirst().orElseThrow();
             assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(2);
+            assertThat(cat.getCard().getColor()).isEqualTo(CardColor.WHITE);
+            assertThat(cat.getCard().getType()).isEqualTo(CardType.CREATURE);
         }
     }
 
     private Permanent addAjani(Player player, int loyalty) {
-        Permanent perm = new Permanent(new AjaniCallerOfThePride());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AjaniCallerOfThePride());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
-    private Permanent addCreature(Player player, String name, int power, int toughness) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

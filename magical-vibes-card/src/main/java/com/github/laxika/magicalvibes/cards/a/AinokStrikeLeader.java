@@ -30,7 +30,9 @@ public class AinokStrikeLeader extends Card {
                 new ConditionalEffect(
                         new AnyOf(List.of(
                                 new HasAttacker(new PermanentIsSourcePermanentPredicate()),
-                                new HasAttacker(new PermanentIsCommanderPredicate())
+                                new HasAttacker(new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCommanderPredicate(),
+                                        new com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate())))
                         )),
                         new CreateTokensAttackingEachOpponentEffect(
                                 new CreateTokenEffect(1, "Goblin", 1, 1, CardColor.RED,

@@ -67,6 +67,8 @@ class BurrGrafterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(spirit.getId()));
@@ -94,6 +96,8 @@ class BurrGrafterTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(eligibleSpirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(eligibleSpirit);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -111,8 +115,10 @@ class BurrGrafterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Devoted Retainer"));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(spirit.getId()));
@@ -134,5 +140,39 @@ class BurrGrafterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonSpirit);
+    }
+
+    @Test
+    @DisplayName("Burr Grafter can target itself but the sacrificed target receives no boost")
+    void canTargetItself() {
+        harness.addToBattlefield(player1, new BurrGrafter());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Burr Grafter"));
+        harness.assertNotOnBattlefield(player1, "Burr Grafter");
+        harness.assertInGraveyard(player1, "Burr Grafter");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Burr Grafter");
+    }
+
+    @Test
+    @DisplayName("Soulshift does not return a target that has left the graveyard")
+    void soulshiftTargetLeavesGraveyard() {
+        harness.addToBattlefield(player1, new BurrGrafter());
+        harness.addToBattlefield(player2, new DevotedRetainer());
+        Card spirit = new LanternKami();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Devoted Retainer"));
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.setGraveyard(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> !card.getId().equals(spirit.getId())).toList());
+        harness.setExile(player1, List.of(spirit));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Lantern Kami");
+        harness.assertNotInGraveyard(player1, "Lantern Kami");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }

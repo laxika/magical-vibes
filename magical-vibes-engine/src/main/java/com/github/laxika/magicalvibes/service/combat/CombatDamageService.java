@@ -1695,10 +1695,17 @@ public class CombatDamageService {
             }
 
             List<CardEffect> allDamageEffects = new ArrayList<>();
-            allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
-            allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            boolean hasPrintedAbilities = !creature.isFaceDown()
+                    && !creature.isLosesAllAbilitiesUntilEndOfTurn()
+                    && !gameQueryService.computeStaticBonus(gameData, creature).losesAllAbilities();
+            if (hasPrintedAbilities) {
+                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            }
             if (!attackerId.equals(defenderId)) {
-                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                if (hasPrintedAbilities) {
+                    allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                }
                 allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
                 allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
                 allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
@@ -1722,6 +1729,8 @@ public class CombatDamageService {
                     gameData, attackerId, creature, false, combatDamageContext));
             try {
             for (CardEffect rawEffect : allDamageEffects) {
+                if (rawEffect instanceof com.github.laxika.magicalvibes.model.effect.RenownEffect
+                        && creature.isRenowned()) continue;
                 CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
                         ? amountAware.snapshotCombatDamage(damageDealt)
                         : rawEffect;

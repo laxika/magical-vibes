@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,16 +18,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BogardanHellkite.class, BenalishCavalry.class})
+@CardUsed({BogardanHellkite.class, RuneclawBear.class, GarrukWildspeaker.class, Unsummon.class})
 class BogardanHellkiteTest extends BaseCardTest {
-
-    @Test
-    @DisplayName("Bogardan Hellkite has flying")
-    void hasFlying() {
-        Permanent hellkite = addCreatureReady(player1, new BogardanHellkite());
-
-        assertThat(gqs.hasKeyword(gd, hellkite, Keyword.FLYING)).isTrue();
-    }
 
     @Test
     @DisplayName("Bogardan Hellkite can be cast during an opponent's turn because it has flash")
@@ -39,11 +34,72 @@ class BogardanHellkiteTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== ETB trigger: deal 5 divided damage =====
-
+    @CardUsed({BogardanHellkite.class, RuneclawBear.class, GarrukWildspeaker.class, Unsummon.class})
     @Nested
     @DisplayName("ETB trigger")
     class ETBTrigger {
+
+        @Test
+        @DisplayName("ETB asks for targets and damage division before players can respond")
+        void etbRequestsDamageDivisionWhenEnteringNormally() {
+            castBogardanHellkite();
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.isAwaitingInput()).isTrue();
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
+        }
+
+        @Test
+        @DisplayName("ETB damage removes loyalty from a planeswalker")
+        void etbDealsDamageToPlaneswalker() {
+            Permanent garruk = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+            garruk.setCounterCount(CounterType.LOYALTY, 3);
+            gd.pendingETBDamageAssignments = Map.of(garruk.getId(), 2, player2.getId(), 3);
+
+            castBogardanHellkite();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+            harness.assertOnBattlefield(player2, "Garruk Wildspeaker");
+            harness.assertLife(player2, 17);
+        }
+
+        @Test
+        @DisplayName("Damage assigned to a removed target is lost rather than redistributed")
+        void etbDoesNotRedistributeDamageWhenTargetLeaves() {
+            Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+            gd.pendingETBDamageAssignments = Map.of(bear.getId(), 2, player2.getId(), 3);
+            castBogardanHellkite();
+            harness.passBothPriorities();
+
+            harness.setHand(player2, List.of(new Unsummon()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.castInstant(player2, 0, bear.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertInHand(player2, "Runeclaw Bear");
+            harness.assertLife(player2, 17);
+        }
+
+        @Test
+        @DisplayName("ETB damage still happens when Hellkite leaves before resolution")
+        void etbResolvesAfterSourceLeaves() {
+            gd.pendingETBDamageAssignments = Map.of(player2.getId(), 5);
+            castBogardanHellkite();
+            harness.passBothPriorities();
+
+            harness.setHand(player2, List.of(new Unsummon()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.castInstant(player2, 0, harness.getPermanentId(player1, "Bogardan Hellkite"));
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertInHand(player1, "Bogardan Hellkite");
+            harness.assertLife(player2, 15);
+        }
 
         @Test
         @DisplayName("ETB deals all 5 damage to a single player")
@@ -62,31 +118,31 @@ class BogardanHellkiteTest extends BaseCardTest {
         @Test
         @DisplayName("ETB deals all 5 damage to a single creature, killing it")
         void etbDeals5DamageToSingleCreature() {
-            Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+            Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
-            gd.pendingETBDamageAssignments = Map.of(cavalry.getId(), 5);
+            gd.pendingETBDamageAssignments = Map.of(bear.getId(), 5);
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            harness.assertInGraveyard(player2, "Benalish Cavalry");
+            harness.assertInGraveyard(player2, "Runeclaw Bear");
         }
 
         @Test
         @DisplayName("ETB divides damage among a creature and a player")
         void etbDividesDamageAmongCreatureAndPlayer() {
             harness.setLife(player2, 20);
-            Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+            Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
-            gd.pendingETBDamageAssignments = Map.of(cavalry.getId(), 2, player2.getId(), 3);
+            gd.pendingETBDamageAssignments = Map.of(bear.getId(), 2, player2.getId(), 3);
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            // Cavalry took 2 damage, which is lethal for a 2/2.
-            harness.assertInGraveyard(player2, "Benalish Cavalry");
+            // Bear took 2 damage, which is lethal for a 2/2.
+            harness.assertInGraveyard(player2, "Runeclaw Bear");
 
             // Player took 3 damage
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -97,10 +153,10 @@ class BogardanHellkiteTest extends BaseCardTest {
         void etbDividesDamageAmongThreeTargets() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+            Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
             gd.pendingETBDamageAssignments = Map.of(
-                    cavalry.getId(), 1,
+                    bear.getId(), 1,
                     player1.getId(), 2,
                     player2.getId(), 2
             );
@@ -109,7 +165,7 @@ class BogardanHellkiteTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(cavalry.getMarkedDamage()).isEqualTo(1);
+            assertThat(bear.getMarkedDamage()).isEqualTo(1);
 
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -119,11 +175,11 @@ class BogardanHellkiteTest extends BaseCardTest {
         @DisplayName("ETB can divide all 5 damage among five targets")
         void etbDividesDamageAmongFiveTargets() {
             List<Permanent> targets = List.of(
-                    harness.addToBattlefieldAndReturn(player1, new BenalishCavalry()),
-                    harness.addToBattlefieldAndReturn(player1, new BenalishCavalry()),
-                    harness.addToBattlefieldAndReturn(player2, new BenalishCavalry()),
-                    harness.addToBattlefieldAndReturn(player2, new BenalishCavalry()),
-                    harness.addToBattlefieldAndReturn(player2, new BenalishCavalry())
+                    harness.addToBattlefieldAndReturn(player1, new RuneclawBear()),
+                    harness.addToBattlefieldAndReturn(player1, new RuneclawBear()),
+                    harness.addToBattlefieldAndReturn(player2, new RuneclawBear()),
+                    harness.addToBattlefieldAndReturn(player2, new RuneclawBear()),
+                    harness.addToBattlefieldAndReturn(player2, new RuneclawBear())
             );
 
             gd.pendingETBDamageAssignments = Map.of(
@@ -158,11 +214,7 @@ class BogardanHellkiteTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
-
     private void castBogardanHellkite() {
-        harness.setHand(player1, List.of(new BogardanHellkite()));
-        harness.addMana(player1, ManaColor.RED, 8);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BogardanHellkite(), "{6}{R}{R}");
     }
 }

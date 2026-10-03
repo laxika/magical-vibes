@@ -55,10 +55,8 @@ class BlindingPowderTest extends BaseCardTest {
 
         assertThat(powder.getAttachedTo()).isNull();
 
-        Permanent attacker = new Permanent(new GnarledMass());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GnarledMass());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
@@ -87,10 +85,55 @@ class BlindingPowderTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
     }
 
+    @Test
+    @DisplayName("A tapped summoning-sick creature can unattach Powder as an immediate cost")
+    void unattachIsImmediateAndRequiresNoTap() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+        creature.setSummoningSick(true);
+        creature.tap();
+        Permanent powder = addPowderReady(player1);
+        powder.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(powder.getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(powder);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(creature.isTapped()).isTrue();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Re-equipping Powder leaves prevention on the original creature only")
+    void reequippingDoesNotMovePrevention() {
+        Permanent original = addCreatureReady(player1, new GnarledMass());
+        Permanent replacement = addCreatureReady(player1, new GnarledMass());
+        Permanent powder = addPowderReady(player1);
+        powder.setAttachedTo(original.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 2, null, replacement.getId());
+        harness.passBothPriorities();
+        assertThat(powder.getAttachedTo()).isEqualTo(replacement.getId());
+
+        Permanent firstAttacker = addCreatureReady(player2, new GnarledMass());
+        Permanent secondAttacker = addCreatureReady(player2, new GnarledMass());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original).doesNotContain(replacement);
+        assertThat(original.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(firstAttacker, secondAttacker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(powder);
+        assertThat(powder.getAttachedTo()).isNull();
+    }
+
     private Permanent addPowderReady(Player player) {
-        Permanent powder = new Permanent(new BlindingPowder());
-        powder.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(powder);
-        return powder;
+        return addCreatureReady(player, new BlindingPowder());
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IntoTheRoil;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BladeOfTheBloodchief.class, GrizzlyBears.class, LightningBolt.class, VampireHexmage.class,
+        IntoTheRoil.class})
 class BladeOfTheBloodchiefTest extends BaseCardTest {
 
     @Test
@@ -69,11 +73,56 @@ class BladeOfTheBloodchiefTest extends BaseCardTest {
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("A sacrificed allied creature triggers the Blade")
+    void alliedSacrificeGivesVampireTwoCounters() {
+        Permanent host = addCreatureReady(player1, new VampireHexmage());
+        Permanent blade = addBladeReady();
+        blade.setAttachedTo(host.getId());
+        addCreatureReady(player1, new VampireHexmage());
+
+        harness.activateAbility(player1, 2, null, blade.getId());
+        resolveAllTriggers();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A pending trigger still gives a Vampire two counters after the Blade leaves")
+    void vampireGetsTwoCountersAfterBladeLeaves() {
+        Permanent host = addCreatureReady(player1, new VampireHexmage());
+        Permanent blade = addBladeReady();
+        blade.setAttachedTo(host.getId());
+        addCreatureReady(player1, new VampireHexmage());
+        harness.setHand(player1, List.of(new IntoTheRoil()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, null, blade.getId());
+        harness.castAndResolveInstant(player1, 0, blade.getId());
+        harness.assertInHand(player1, "Blade of the Bloodchief");
+        resolveAllTriggers();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The equipped creature dying does not transfer counters to another creature")
+    void equippedCreatureDiesWithoutGivingAnotherCreatureCounters() {
+        Permanent host = addCreatureReady(player1, new VampireHexmage());
+        Permanent blade = addBladeReady();
+        blade.setAttachedTo(host.getId());
+        Permanent survivor = addCreatureReady(player1, new VampireHexmage());
+
+        harness.activateAbility(player1, 0, null, blade.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(host);
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addBladeReady() {
-        Permanent blade = new Permanent(new BladeOfTheBloodchief());
-        blade.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(blade);
-        return blade;
+        return addCreatureReady(player1, new BladeOfTheBloodchief());
     }
 
     private void destroyWithLightningBolt(Permanent victim) {
@@ -82,8 +131,7 @@ class BladeOfTheBloodchiefTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, victim.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, victim.getId());
         harness.passBothPriorities();
     }
 }

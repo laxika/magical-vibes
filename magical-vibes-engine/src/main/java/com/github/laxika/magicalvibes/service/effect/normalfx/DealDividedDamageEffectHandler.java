@@ -59,6 +59,10 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
         switch (e.mode()) {
             case CHOSEN -> {
                 if (e.etbAssignments()) {
+                    if (!entry.getDamageAssignments().isEmpty()) {
+                        dealToAssignments(gameData, entry, e, entry.getDamageAssignments());
+                        return;
+                    }
                     if (e.targetRestriction() != null) {
                         resolveResolutionTimeAssignments(gameData, entry, e);
                         return;

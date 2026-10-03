@@ -38,8 +38,20 @@ class BarbarianGeneralTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new ShuCavalry());
         addCreatureReady(player1, new BarbarianGeneral());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Barbarian General can block a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        addCreatureReady(player1, new ShuFootSoldiers());
+        Permanent blocker = addCreatureReady(player2, new BarbarianGeneral());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

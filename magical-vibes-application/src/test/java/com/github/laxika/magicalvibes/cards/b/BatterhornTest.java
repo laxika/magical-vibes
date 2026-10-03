@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,15 +15,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Batterhorn.class, LeoninScimitar.class, GrizzlyBears.class, Boomerang.class})
 class BatterhornTest extends BaseCardTest {
 
     private void castAndAcceptMay(UUID artifactId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Batterhorn()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Batterhorn(), "{4}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, artifactId);
         harness.passBothPriorities();
@@ -48,10 +47,7 @@ class BatterhornTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Batterhorn()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Batterhorn(), "{4}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
@@ -66,10 +62,7 @@ class BatterhornTest extends BaseCardTest {
     @DisplayName("No may prompt when no artifact is on the battlefield")
     void noMayPromptWithoutArtifact() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Batterhorn()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Batterhorn(), "{4}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -83,10 +76,7 @@ class BatterhornTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Batterhorn()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Batterhorn(), "{4}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
@@ -102,5 +92,66 @@ class BatterhornTest extends BaseCardTest {
         castAndAcceptMay(artifactId);
 
         harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("Only the chosen artifact is destroyed when multiple artifacts are present")
+    void onlyChosenArtifactIsDestroyed() {
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player2, new LeoninScimitar());
+
+        castAndAcceptMay(harness.getPermanentId(player2, "Leonin Scimitar"));
+
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertNotInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("An artifact returned to hand in response makes the trigger fail without a may choice")
+    void removedTargetDoesNotPromptForMay() {
+        harness.addToBattlefield(player2, new LeoninScimitar());
+        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new Batterhorn(), "{4}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifactId);
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, artifactId);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Leonin Scimitar");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInGraveyard(player2, "Leonin Scimitar");
+        harness.assertOnBattlefield(player1, "Batterhorn");
+    }
+
+    @Test
+    @DisplayName("The trigger still destroys its target after Batterhorn leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new LeoninScimitar());
+        UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new Batterhorn(), "{4}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifactId);
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Batterhorn"));
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Batterhorn");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Batterhorn");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 }

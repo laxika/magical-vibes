@@ -104,6 +104,44 @@ class ArnjlotsAscentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("One blue mana cannot pay the second cumulative upkeep even with generic mana available")
+    void cannotPartiallyPaySecondUpkeep() {
+        Permanent ascent = harness.addToBattlefieldAndReturn(player1, new ArnjlotsAscent());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ascent.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ascent);
+        harness.assertInGraveyard(player1, "Arnjlot's Ascent");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The flying ability can be activated while Arnjlot's Ascent is tapped")
+    void tappedSourceCanGrantFlying() {
+        Permanent ascent = harness.addToBattlefieldAndReturn(player1, new ArnjlotsAscent());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        ascent.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
     @DisplayName("{1} can grant flying to a creature an opponent controls")
     void grantsFlyingToOpponentCreature() {
         harness.addToBattlefield(player1, new ArnjlotsAscent());

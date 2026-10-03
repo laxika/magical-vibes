@@ -21,8 +21,9 @@ class CessationTest extends BaseCardTest {
     void returnsToOwnersHandWhenControlledByOpponent() {
         Cessation card = new Cessation();
         card.setOwnerId(player1.getId());
-        Permanent cessation = new Permanent(card);
-        gd.playerBattlefields.get(player2.getId()).add(cessation);
+        Permanent creature = addCreatureReady(player2, new GiantCockroach());
+        Permanent cessation = harness.addToBattlefieldAndReturn(player2, card);
+        cessation.setAttachedTo(creature.getId());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cessation));
         harness.passBothPriorities();
@@ -32,6 +33,69 @@ class CessationTest extends BaseCardTest {
                 .toList()).containsExactly(card);
         assertThat(gd.playerHands.get(player2.getId()).stream()
                 .noneMatch(handCard -> handCard.getId().equals(card.getId()))).isTrue();
+    }
+
+    @Test
+    void graveyardTriggerIsControlledByLastBattlefieldController() {
+        Permanent creature = addCreatureReady(player2, new GiantCockroach());
+        Cessation card = new Cessation();
+        card.setOwnerId(player1.getId());
+        Permanent cessation = harness.addToBattlefieldAndReturn(player2, card);
+        cessation.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cessation));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void doesNotReturnWhenItsSpellLosesItsTarget() {
+        Permanent creature = addCreatureReady(player2, new GiantCockroach());
+        harness.setHand(player1, List.of(new Cessation()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cessation");
+        harness.assertNotInHand(player1, "Cessation");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void returnsOnlyTheCessationThatLeftTheBattlefield() {
+        Cessation otherCopy = new Cessation();
+        harness.setGraveyard(player1, List.of(otherCopy));
+        Permanent creature = addCreatureReady(player1, new GiantCockroach());
+        Cessation card = new Cessation();
+        Permanent cessation = harness.addToBattlefieldAndReturn(player1, card);
+        cessation.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cessation));
+        harness.assertNotInHand(player1, "Cessation");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card).doesNotContain(otherCopy);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCopy).doesNotContain(card);
+    }
+
+    @Test
+    void doesNotReturnIfRemovedFromGraveyardBeforeTriggerResolves() {
+        Permanent creature = addCreatureReady(player1, new GiantCockroach());
+        Cessation card = new Cessation();
+        Permanent cessation = harness.addToBattlefieldAndReturn(player1, card);
+        cessation.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cessation));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(card));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Cessation");
+        harness.assertNotInGraveyard(player1, "Cessation");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -56,9 +120,8 @@ class CessationTest extends BaseCardTest {
     @DisplayName("Cessation does not prevent the enchanted creature from blocking")
     void enchantedCreatureCanBlock() {
         Permanent blocker = addCreatureReady(player2, new GiantCockroach());
-        Permanent cessation = new Permanent(new Cessation());
+        Permanent cessation = harness.addToBattlefieldAndReturn(player1, new Cessation());
         cessation.setAttachedTo(blocker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(cessation);
 
         Permanent attacker = addCreatureReady(player1, new GiantCockroach());
         attacker.setAttacking(true);
@@ -74,9 +137,8 @@ class CessationTest extends BaseCardTest {
     @DisplayName("Cessation returns to its owner's hand when put into a graveyard from the battlefield")
     void returnsToHandAfterLeavingBattlefieldForGraveyard() {
         Permanent creature = addCreatureReady(player1, new GiantCockroach());
-        Permanent cessation = new Permanent(new Cessation());
+        Permanent cessation = harness.addToBattlefieldAndReturn(player1, new Cessation());
         cessation.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(cessation);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cessation));
         harness.passBothPriorities();
@@ -101,9 +163,8 @@ class CessationTest extends BaseCardTest {
     @Test
     void returnsWhenEnchantedCreatureLeavesBattlefield() {
         Permanent creature = addCreatureReady(player1, new GiantCockroach());
-        Permanent cessation = new Permanent(new Cessation());
+        Permanent cessation = harness.addToBattlefieldAndReturn(player1, new Cessation());
         cessation.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(cessation);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, creature));

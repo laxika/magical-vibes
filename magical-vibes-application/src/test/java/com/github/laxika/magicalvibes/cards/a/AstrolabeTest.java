@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -71,5 +73,66 @@ class AstrolabeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Both mana are produced in the chosen color")
+    void producesTwoManaOfAnyOneColor(ManaColor color) {
+        harness.addToBattlefield(player1, new Astrolabe());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(2);
+        for (ManaColor other : ManaColor.values()) {
+            if (other != color) {
+                assertThat(gd.playerManaPools.get(player1.getId()).get(other)).isZero();
+            }
+        }
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Astrolabe");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying the generic mana cost")
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new Astrolabe());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanent(player1, "Astrolabe").isTapped()).isFalse();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Draw waits for the next turn and happens only once")
+    void delayedDrawWaitsForNextTurnAndDoesNotRepeat() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new Astrolabe());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Astrolabe(), new Astrolabe()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

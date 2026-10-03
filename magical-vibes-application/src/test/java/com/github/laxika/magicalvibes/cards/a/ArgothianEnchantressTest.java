@@ -83,4 +83,60 @@ class ArgothianEnchantressTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
+
+    @Test
+    @DisplayName("Draw trigger resolves before the enchantment spell")
+    void drawsBeforeEnchantmentResolves() {
+        harness.addToBattlefield(player1, new ArgothianEnchantress());
+        harness.setHand(player1, List.of(new Exploration()));
+        harness.setLibrary(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Humble");
+        harness.assertNotOnBattlefield(player1, "Exploration");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Exploration");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Enchantress draws once for the same enchantment spell")
+    void eachEnchantressDrawsACard() {
+        harness.addToBattlefield(player1, new ArgothianEnchantress());
+        harness.addToBattlefield(player1, new ArgothianEnchantress());
+        harness.setHand(player1, List.of(new Exploration()));
+        harness.setLibrary(player1, List.of(new Humble(), new ArgothianEnchantress()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Humble", "Argothian Enchantress");
+        harness.assertOnBattlefield(player1, "Exploration");
+    }
+
+    @Test
+    @DisplayName("Putting an enchantment onto the battlefield without casting does not trigger")
+    void doesNotTriggerForEnchantmentEnteringWithoutCast() {
+        harness.addToBattlefield(player1, new ArgothianEnchantress());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Humble()));
+
+        harness.addToBattlefield(player1, new Exploration());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
 }

@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BarbedLightning.class, DarksteelGargoyle.class})
+@CardUsed({BarbedLightning.class, DarksteelGargoyle.class, ElspethKnightErrant.class})
 class BarbedLightningTest extends BaseCardTest {
 
     @Test
@@ -92,6 +92,35 @@ class BarbedLightningTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstantWithModes(
                 player1, 0, 1, 2, new int[]{0, 1}, List.of(giant.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Player or planeswalker mode rejects a creature target")
+    void playerModeRejectsCreatureTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new BarbedLightning()));
+        addMana(0);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{1}, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Entwined spell still damages the player when its creature target leaves")
+    void entwinedResolvesWithOnlyPlayerTargetLegal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new BarbedLightning()));
+        addMana(2);
+        harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(creature.getId(), player2.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 
     private void cast(int[] modes, List<UUID> targets) {

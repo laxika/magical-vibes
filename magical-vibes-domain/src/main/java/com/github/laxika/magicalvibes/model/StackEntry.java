@@ -258,6 +258,11 @@ public class StackEntry {
     @Setter private boolean spellDamageContinuation;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
+    /** Exile incarnation watched by a delayed return; entering exile again advances this version. */
+    @Setter private long triggeringCardExileEntryVersion = -1L;
+    /** Creatures whose declared attack caused this ability, retained for last-known information. */
+    private List<Permanent> attackingPermanentSnapshots = List.of();
+    /** Defending player captured while the attacked object still exists. */
     @Setter private UUID defendingPlayerId;
     /** Whether this spell or ability has already been counted for a pile grouping or guess this turn. */
     @Setter private boolean causedPileGroupingOrGuessThisTurn;
@@ -801,6 +806,8 @@ public class StackEntry {
         this.spellDamageContinuation = source.spellDamageContinuation;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
+        this.triggeringCardExileEntryVersion = source.triggeringCardExileEntryVersion;
+        this.attackingPermanentSnapshots = source.attackingPermanentSnapshots.stream().map(Permanent::new).toList();
         this.defendingPlayerId = source.defendingPlayerId;
         this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
         this.eventValue = source.eventValue;
@@ -1084,6 +1091,8 @@ public class StackEntry {
         this.stateTriggerEffectIndex = -1;
         this.attackedTargetId = null;
         this.defendingPlayerId = null;
+        this.triggeringCardExileEntryVersion = -1L;
+        this.attackingPermanentSnapshots = List.of();
         this.ownerIdOverride = null;
         this.sourceZone = Zone.HAND;
         this.spellDispositionHandled = false;
@@ -1196,6 +1205,11 @@ public class StackEntry {
     public void setChosenCostPermanentSnapshots(List<Permanent> chosenCostPermanentSnapshots) {
         this.chosenCostPermanentSnapshots = chosenCostPermanentSnapshots == null
                 ? List.of() : chosenCostPermanentSnapshots.stream().map(Permanent::new).toList();
+    }
+
+    public void setAttackingPermanentSnapshots(List<Permanent> snapshots) {
+        attackingPermanentSnapshots = snapshots == null ? List.of()
+                : snapshots.stream().map(Permanent::new).toList();
     }
 
     public void setTargetCardIdsByEffect(Map<CardEffect, List<UUID>> targetCardIdsByEffect) {

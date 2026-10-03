@@ -56,6 +56,61 @@ class ClericOfChillDepthsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Multiple Clerics blocking the same attacker only prevent its next untap")
+    void overlappingTriggersDoNotSkipAdditionalUntapSteps() {
+        addReadyBlocker(player2);
+        addReadyBlocker(player2);
+        Permanent attacker = addCreatureReady(player1, new ClericOfChillDepths());
+        attacker.setAttacking(true);
+        attacker.tap();
+
+        declareBlockers(List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The block trigger resolves even after the Cleric dies")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        Permanent blocker = addReadyBlocker(player2);
+        Permanent attacker = addCreatureReady(player1, new ClericOfChillDepths());
+        attacker.setAttacking(true);
+        attacker.tap();
+
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        blocker.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        resolveAllTriggers();
+
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped blocked creature is not tapped and consumes the restriction next untap")
+    void untappedAttackerConsumesRestrictionWithoutBeingTapped() {
+        addReadyBlocker(player2);
+        Permanent attacker = addCreatureReady(player1, new ClericOfChillDepths());
+        attacker.setAttacking(true);
+
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        assertThat(attacker.isTapped()).isFalse();
+
+        harness.performUntapStep(player1);
+        attacker.tap();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
     private Permanent addReadyBlocker(Player player) {
         return addCreatureReady(player, new ClericOfChillDepths());
     }

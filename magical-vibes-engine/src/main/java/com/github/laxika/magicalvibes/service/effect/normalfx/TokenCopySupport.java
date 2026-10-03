@@ -88,6 +88,8 @@ public class TokenCopySupport {
 
         List<Permanent> tokens = new ArrayList<>();
         Card artifactTokenTemplate = null;
+        CreateTokenEffect manufactorOriginal = null;
+        int manufactorAmount = 0;
         for (Card sourceCard : sourceCards) {
             Card tokenTemplate = buildTokenCopyCard(
                     sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
@@ -96,6 +98,17 @@ public class TokenCopySupport {
             }
             int tokenMultiplier = gameQueryService.getTokenCreationAmount(
                     gameData, tokenControllerId, 1, tokenTemplate.getSubtypes(), tokenTemplate.hasType(CardType.CREATURE));
+            CreateTokenEffect replacementOriginal = CreateTokenEffect.ofArtifactToken(
+                    1, tokenTemplate.getName(), tokenTemplate.getSubtypes(), List.of());
+            if (!TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                    gameData, tokenControllerId, replacementOriginal, 1).isEmpty()) {
+                if (artifactTokenTemplate == null && tokenTemplate.hasType(CardType.ARTIFACT)) {
+                    artifactTokenTemplate = tokenTemplate;
+                }
+                manufactorOriginal = replacementOriginal;
+                manufactorAmount += tokenMultiplier;
+                continue;
+            }
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 Card tokenCard = copy == 0
                         ? tokenTemplate
@@ -110,6 +123,13 @@ public class TokenCopySupport {
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
                 tokens.add(new Permanent(tokenCard));
+            }
+        }
+        if (manufactorOriginal != null) {
+            for (CreateTokenEffect blueprint : TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                    gameData, tokenControllerId, manufactorOriginal, manufactorAmount)) {
+                tokens.add(new Permanent(TokenCardFactory.create(blueprint, 0, 0,
+                        entry.getCard() == null ? null : entry.getCard().getSetCode())));
             }
         }
         boolean creatureTokenEvent = tokens.stream()
@@ -348,7 +368,8 @@ public class TokenCopySupport {
         }
         if (effect.additionalSlotEffects() != null) {
             effect.additionalSlotEffects().forEach((slot, effects) ->
-                    effects.forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect)));
+                    effects.forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect,
+                            com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)));
         }
         for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
             tokenCard.addActivatedAbility(ability);

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
+import com.github.laxika.magicalvibes.cards.v.VoicelessSpirit;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,16 +12,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BattlegroundGeist.class, AbbeyGriffin.class, VoicelessSpirit.class})
 class BattlegroundGeistTest extends BaseCardTest {
-
-    // ===== Static effect: buffs other Spirits you control =====
 
     @Test
     @DisplayName("Battleground Geist does not buff itself")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new BattlegroundGeist());
-
-        Permanent geist = findPermanent(player1, "Battleground Geist");
+        Permanent geist = harness.addToBattlefieldAndReturn(player1, new BattlegroundGeist());
 
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
@@ -29,9 +28,7 @@ class BattlegroundGeistTest extends BaseCardTest {
     @DisplayName("Does not buff non-Spirit creatures")
     void doesNotBuffNonSpirits() {
         harness.addToBattlefield(player1, new BattlegroundGeist());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new AbbeyGriffin());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -41,16 +38,12 @@ class BattlegroundGeistTest extends BaseCardTest {
     @DisplayName("Does not buff opponent's Spirit creatures")
     void doesNotBuffOpponentSpirits() {
         harness.addToBattlefield(player1, new BattlegroundGeist());
-        harness.addToBattlefield(player2, new BattlegroundGeist());
-
-        Permanent opponentGeist = findPermanent(player2, "Battleground Geist");
+        Permanent opponentGeist = harness.addToBattlefieldAndReturn(player2, new BattlegroundGeist());
 
         // Opponent's Geist should have base 3/3, no buff from player1's Geist
         assertThat(gqs.getEffectivePower(gd, opponentGeist)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, opponentGeist)).isEqualTo(3);
     }
-
-    // ===== Multiple Battleground Geists =====
 
     @Test
     @DisplayName("Two Battleground Geists buff each other with +1/+0")
@@ -67,8 +60,6 @@ class BattlegroundGeistTest extends BaseCardTest {
             assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
         }
     }
-
-    // ===== Bonus gone when source leaves =====
 
     @Test
     @DisplayName("Bonus is removed when Battleground Geist leaves the battlefield")
@@ -89,4 +80,33 @@ class BattlegroundGeistTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, geists.get(0))).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("A Spirit entering after Battleground Geist immediately gets +1/+0")
+    void buffsSpiritEnteringLater() {
+        harness.addToBattlefield(player1, new BattlegroundGeist());
+
+        Permanent spirit = harness.enterBattlefieldAndReturn(player1, new VoicelessSpirit());
+
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bonuses stack on an existing Spirit and disappear as sources leave")
+    void bonusesStackOnOtherSpirit() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new VoicelessSpirit());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BattlegroundGeist());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BattlegroundGeist());
+
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
+    }
 }

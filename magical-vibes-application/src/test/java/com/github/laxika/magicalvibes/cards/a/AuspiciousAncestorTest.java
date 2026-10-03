@@ -33,8 +33,7 @@ class AuspiciousAncestorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Auspicious Ancestor"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Auspicious Ancestor"));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 3);
@@ -107,5 +106,46 @@ class AuspiciousAncestorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
+    }
+
+    @Test
+    @DisplayName("Payment is chosen during resolution and life is gained without another response window")
+    void paymentAndLifeGainOccurDuringResolution() {
+        harness.addToBattlefield(player1, new AuspiciousAncestor());
+        setUpOpponentTurn();
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player2, new FemerefScouts(), "{2}{W}");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertNotOnBattlefield(player2, "Femeref Scouts");
+    }
+
+    @Test
+    @DisplayName("Two Ancestors each require a separate payment for the same white spell")
+    void multipleAncestorsRequireSeparatePayments() {
+        harness.addToBattlefield(player1, new AuspiciousAncestor());
+        harness.addToBattlefield(player1, new AuspiciousAncestor());
+        setUpOpponentTurn();
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player2, new FemerefScouts(), "{2}{W}");
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

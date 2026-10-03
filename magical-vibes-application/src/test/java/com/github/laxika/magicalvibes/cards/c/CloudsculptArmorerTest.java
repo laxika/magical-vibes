@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.FieryConfluence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CloudsculptArmorer.class, GrizzlyBears.class, Plains.class, Shock.class})
+@CardUsed({CloudsculptArmorer.class, FieryConfluence.class, GrizzlyBears.class, Plains.class,
+        Shock.class, Spellbook.class})
 class CloudsculptArmorerTest extends BaseCardTest {
 
     @Test
@@ -75,6 +79,82 @@ class CloudsculptArmorerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canPutAShieldCounterOnANoncreatureArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        castArmorer(target);
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+    }
+
+    @Test
+    void canPutAShieldCounterOnAnOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castArmorer(target);
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+    }
+
+    @Test
+    void seeksWhenItsOwnShieldCounterIsRemoved() {
+        Permanent armorer = harness.addToBattlefieldAndReturn(player1, new CloudsculptArmorer());
+        armorer.setCounterCount(CounterType.SHIELD, 1);
+        Card sought = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(sought));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, armorer.getId());
+        resolveAllTriggers();
+
+        assertThat(armorer.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(armorer.getMarkedDamage()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sought);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void seekingWithOnlyLandsLeavesTheLibraryUnchanged() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card land = new Plains();
+        harness.setLibrary(player1, List.of(land));
+        castArmorer(target);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    void separateShieldRemovalsDuringOneSpellEachSeekACard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.SHIELD, 3);
+        harness.addToBattlefield(player1, new CloudsculptArmorer());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new FieryConfluence()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0,
+                ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 0, 0));
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void castArmorer(Permanent target) {
