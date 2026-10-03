@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -87,7 +89,7 @@ class DwarvenDrillerTest extends BaseCardTest {
 
     @Test
     void targetsItsControllersOwnLand() {
-        Permanent driller = addReadyDrillerForJudReview();
+        Permanent driller = addCreatureReady(player1, new DwarvenDriller());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new KrosanVerge());
 
         harness.activateAbility(player1, battlefieldIndex(player1, driller), 0, null, land.getId());
@@ -101,9 +103,36 @@ class DwarvenDrillerTest extends BaseCardTest {
         assertThat(driller.isTapped()).isTrue();
     }
 
-    private Permanent addReadyDrillerForJudReview() {
-        Permanent driller = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
-        driller.setSummoningSick(false);
-        return driller;
+    @Test
+    void abilityStillDealsDamageAfterDrillerLeavesBattlefield() {
+        Permanent driller = addCreatureReady(player1, new DwarvenDriller());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RiftstonePortal());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, driller), 0, null, land.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(driller);
+        harness.setGraveyard(player1, List.of(driller.getCard()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player1, "Dwarven Driller");
+        harness.assertOnBattlefield(player2, "Riftstone Portal");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void missingTargetDoesNotAskControllerToTakeDamage() {
+        Permanent driller = addCreatureReady(player1, new DwarvenDriller());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RiftstonePortal());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, driller), 0, null, land.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        harness.setGraveyard(player2, List.of(land.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Riftstone Portal");
+        harness.assertLife(player2, 20);
+        assertThat(driller.isTapped()).isTrue();
     }
 }
