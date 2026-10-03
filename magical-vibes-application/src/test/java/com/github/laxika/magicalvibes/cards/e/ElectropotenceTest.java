@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantScorpion;
+import com.github.laxika.magicalvibes.cards.h.HagraCrocodile;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Electropotence.class, HillGiant.class, GrizzlyBears.class, GiantScorpion.class,
+        HagraCrocodile.class, Panharmonicon.class})
 class ElectropotenceTest extends BaseCardTest {
 
     private void resolveUntilInputOrEmpty() {
@@ -89,5 +96,61 @@ class ElectropotenceTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void usesPowerAtResolution() {
+        harness.addToBattlefield(player1, new Electropotence());
+        harness.setHand(player1, List.of(new HagraCrocodile()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castCreature(player1, 0);
+        resolveUntilInputOrEmpty();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent creature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof HagraCrocodile).findFirst().orElseThrow();
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        resolveUntilInputOrEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void enteringCreatureDeathtouchAppliesToDamage() {
+        harness.addToBattlefield(player1, new Electropotence());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HagraCrocodile());
+        victim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new GiantScorpion()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        resolveUntilInputOrEmpty();
+        harness.handlePermanentChosen(player1, victim.getId());
+        resolveUntilInputOrEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInGraveyard(player2, "Hagra Crocodile");
+    }
+
+    @Test
+    void panharmoniconCreatesTwoIndependentlyPayableTriggers() {
+        harness.addToBattlefield(player1, new Electropotence());
+        harness.addToBattlefield(player1, new Panharmonicon());
+        harness.setHand(player1, List.of(new HagraCrocodile()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.castCreature(player1, 0);
+        resolveUntilInputOrEmpty();
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveUntilInputOrEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveUntilInputOrEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 14);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
