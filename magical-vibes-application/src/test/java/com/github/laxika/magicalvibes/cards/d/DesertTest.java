@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -116,6 +117,33 @@ class DesertTest extends BaseCardTest {
                 player1, indexOf(player1, desert), 1, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Finishes off a blocked attacker wounded by combat damage")
+    void finishesOffAttackerAfterCombatDamage() {
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        Permanent blocker = addCreatureReady(player1, new Squire());
+        Permanent attacker = addCreatureReady(player2, new Squire());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            gs.declareBlockers(gd, player1,
+                    List.of(new BlockerAssignment(indexOf(player1, blocker), 0)));
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        });
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+
+        harness.activateAbility(player1, indexOf(player1, desert), 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Squire");
+        harness.assertInGraveyard(player2, "Squire");
+        harness.assertOnBattlefield(player1, "Squire");
+        harness.assertLife(player1, 20);
     }
 
     private int indexOf(Player player, Permanent permanent) {
