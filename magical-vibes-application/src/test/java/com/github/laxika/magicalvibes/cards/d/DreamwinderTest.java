@@ -119,6 +119,48 @@ class DreamwinderTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
+    @Test
+    @DisplayName("The converted land produces blue mana instead of green")
+    void convertedLandProducesBlueMana() {
+        Permanent forest = activateOnForest();
+
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("The targeted Island can itself be sacrificed to pay the cost")
+    void canSacrificeTargetedIsland() {
+        harness.addToBattlefield(player1, new Dreamwinder());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, island.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(island.getCard());
+        assertThat(gqs.findPermanentById(gd, island.getId())).isNull();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(island.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's Island cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsIsland() {
+        harness.addToBattlefield(player1, new Dreamwinder());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent activateOnForest() {
         harness.addToBattlefield(player1, new Dreamwinder());
         harness.addToBattlefield(player1, new Island());
