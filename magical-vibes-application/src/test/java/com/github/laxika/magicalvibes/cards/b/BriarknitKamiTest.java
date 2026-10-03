@@ -88,6 +88,49 @@ class BriarknitKamiTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Briarknit Kami can target itself with its cast trigger")
+    void castTriggerCanTargetItself() {
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new BriarknitKami());
+
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.handlePermanentChosen(player1, kami.getId());
+        harness.passBothPriorities();
+
+        assertThat(kami.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each qualifying spell triggers separately in the same turn")
+    void repeatedCastsEachPutACounter() {
+        addBriarknitKami();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArabaMothrider());
+
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new DeathknellKami(), "{1}{B}");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Casting Briarknit Kami does not trigger its own ability")
+    void castingKamiDoesNotTriggerItself() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArabaMothrider());
+
+        harness.castFromHand(player1, new BriarknitKami(), "{3}{G}{G}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Briarknit Kami");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void addBriarknitKami() {
         harness.addToBattlefield(player1, new BriarknitKami());
     }

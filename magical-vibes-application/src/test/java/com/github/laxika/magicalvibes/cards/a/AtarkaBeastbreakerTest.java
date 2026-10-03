@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AtarkaBeastbreaker.class, GrizzlyBears.class})
+@CardUsed({AtarkaBeastbreaker.class, GrizzlyBears.class, UltimatePrice.class})
 class AtarkaBeastbreakerTest extends BaseCardTest {
 
     @Test
@@ -46,6 +49,69 @@ class AtarkaBeastbreakerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, beastbreaker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, beastbreaker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Losing formidable after activation does not stop the boost")
+    void boostResolvesAfterTotalPowerFallsBelowEight() {
+        Permanent beastbreaker = addBeastbreakerReady();
+        Permanent support = addBeastbreakerReady();
+        addBeastbreakerReady();
+        addBeastbreakerReady();
+        addFormidableMana();
+        harness.setHand(player2, List.of(new UltimatePrice()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, support.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, beastbreaker)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, beastbreaker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, beastbreaker)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Opposing creatures do not contribute to formidable")
+    void opposingCreaturesDoNotEnableActivation() {
+        addBeastbreakerReady();
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player2, new AtarkaBeastbreaker());
+        }
+        addFormidableMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("total power");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost stacks and counts toward subsequent formidable activations")
+    void repeatedActivationsUseBoostedPower() {
+        Permanent beastbreaker = addBeastbreakerReady();
+        addBeastbreakerReady();
+        Permanent support = addBeastbreakerReady();
+        addBeastbreakerReady();
+        addFormidableMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new UltimatePrice()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, support.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+
+        addFormidableMana();
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, beastbreaker)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, beastbreaker)).isEqualTo(10);
     }
 
     private Permanent addBeastbreakerReady() {

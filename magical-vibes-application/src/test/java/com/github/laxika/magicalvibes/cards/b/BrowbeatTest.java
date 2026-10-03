@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FlyingMen;
+import com.github.laxika.magicalvibes.cards.h.HonorablePassage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Browbeat.class, FlyingMen.class})
+@CardUsed({Browbeat.class, FlyingMen.class, HonorablePassage.class})
 class BrowbeatTest extends BaseCardTest {
 
     private void castAndResolveToChoice() {
@@ -45,6 +46,7 @@ class BrowbeatTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
@@ -57,6 +59,7 @@ class BrowbeatTest extends BaseCardTest {
         int targetHandBefore = gd.playerHands.get(player2.getId()).size();
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(targetHandBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -79,7 +82,7 @@ class BrowbeatTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The first player to accept takes the damage and stops the choices")
+    @DisplayName("The opponent can accept after the active player declines")
     void opponentAcceptsAfterActivePlayerDeclines() {
         castAndResolveToChoice();
 
@@ -88,6 +91,53 @@ class BrowbeatTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Every player can accept and damage waits until all choices are made")
+    void bothPlayersCanAcceptDamage() {
+        castAndResolveToChoice();
+        int targetHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 15);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(targetHandBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Preventing accepted damage still skips the draw and preserves the spell's controller")
+    void preventedDamageDoesNotCauseFallbackDraw() {
+        Browbeat browbeat = new Browbeat();
+        harness.setHand(player1, List.of(browbeat));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+
+        harness.castFromHand(player2, new HonorablePassage(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, browbeat.getId());
+        harness.passBothPriorities();
+        int targetHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(targetHandBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

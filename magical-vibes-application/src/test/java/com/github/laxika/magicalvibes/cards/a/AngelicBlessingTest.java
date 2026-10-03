@@ -86,6 +86,26 @@ class AngelicBlessingTest extends BaseCardTest {
         return target;
     }
 
+    @Test
+    @DisplayName("Repeated blessings stack their boosts and both expire at end of turn")
+    void repeatedBlessingsStackAndExpire() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        castAngelicBlessing(target);
+        castAngelicBlessing(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

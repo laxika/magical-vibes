@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Convolute.class, Watchwolf.class, Char.class})
+@CardUsed({Convolute.class, Watchwolf.class, Char.class, Forest.class})
 class ConvoluteTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class ConvoluteTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, watchwolf.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, watchwolf.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -54,8 +54,7 @@ class ConvoluteTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, watchwolf.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, watchwolf.getId());
 
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -78,8 +77,7 @@ class ConvoluteTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, charSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, charSpell.getId());
 
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Char");
@@ -109,6 +107,74 @@ class ConvoluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Convolute");
+    }
+
+    @Test
+    @DisplayName("Three available mana is insufficient to save the spell")
+    void countersWhenControllerHasOnlyThreeMana() {
+        Watchwolf watchwolf = new Watchwolf();
+        harness.setHand(player1, List.of(watchwolf));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new Convolute()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, watchwolf.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Watchwolf");
+        harness.assertNotOnBattlefield(player1, "Watchwolf");
+        harness.assertInGraveyard(player2, "Convolute");
+    }
+
+    @Test
+    @DisplayName("Can counter a spell controlled by its own controller")
+    void canCounterOwnSpell() {
+        Watchwolf watchwolf = new Watchwolf();
+        harness.setHand(player1, List.of(watchwolf, new Convolute()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, watchwolf.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Watchwolf");
+        harness.assertNotOnBattlefield(player1, "Watchwolf");
+        harness.assertInGraveyard(player1, "Convolute");
+    }
+
+    @Test
+    @DisplayName("Can activate mana abilities during resolution to pay the four mana")
+    void canTapLandsDuringResolutionToPay() {
+        Watchwolf watchwolf = new Watchwolf();
+        harness.setHand(player1, List.of(watchwolf));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        harness.setHand(player2, List.of(new Convolute()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, watchwolf.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertNotInGraveyard(player1, "Watchwolf");
+        for (int i = 0; i < 4; i++) {
+            harness.tapPermanent(player1, i);
+        }
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Watchwolf");
+        harness.assertNotInGraveyard(player1, "Watchwolf");
         harness.assertInGraveyard(player2, "Convolute");
     }
 }

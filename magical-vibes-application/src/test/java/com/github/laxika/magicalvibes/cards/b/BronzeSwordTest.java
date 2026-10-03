@@ -82,6 +82,61 @@ class BronzeSwordTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    void reequippingMovesTheBoostOnlyWhenTheAbilityResolves() {
+        Permanent sword = addReadySword(player1);
+        Permanent firstBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, firstBear.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, secondBear.getId());
+
+        assertThat(sword.getAttachedTo()).isEqualTo(firstBear.getId());
+        assertThat(gqs.getEffectivePower(gd, firstBear)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondBear)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(secondBear.getId());
+        assertThat(gqs.getEffectivePower(gd, firstBear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondBear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondBear)).isEqualTo(2);
+    }
+
+    @Test
+    void losingTheNewEquipTargetKeepsTheExistingAttachment() {
+        Permanent sword = addReadySword(player1);
+        Permanent firstBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, firstBear.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, secondBear.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, secondBear));
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(firstBear.getId());
+        assertThat(gqs.getEffectivePower(gd, firstBear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstBear)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipDoesNotRequireTheEquipmentOrCreatureToHaveBeenUnderControlSinceTurnBegan() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new BronzeSword());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(bear.getId());
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+    }
     private Permanent addReadySword(Player player) {
         Permanent sword = harness.addToBattlefieldAndReturn(player, new BronzeSword());
         sword.setSummoningSick(false);

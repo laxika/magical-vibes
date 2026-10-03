@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GideonJura;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,11 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AssassinsBlade.class, BogImp.class, GrizzlyBears.class})
+@CardUsed({AssassinsBlade.class, BogImp.class, GrizzlyBears.class, GideonJura.class})
 class AssassinsBladeTest extends BaseCardTest {
 
     @Test
@@ -107,6 +110,49 @@ class AssassinsBladeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target gains black before resolution")
+    void fizzlesIfTargetGainsBlack() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new AssassinsBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castInstant(player2, 0, attacker.getId());
+        attacker.getGrantedColors().add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        harness.assertInGraveyard(player2, "Assassin's Blade");
+    }
+
+    @Test
+    @CardUsed(GideonJura.class)
+    @DisplayName("Can target a planeswalker attacker after the creature that attacked you leaves combat")
+    void canCastAfterLastDirectAttackerLeavesCombat() {
+        Permanent directAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent planeswalkerAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent gideon = harness.enterBattlefieldAndReturn(player2, new GideonJura());
+        harness.setHand(player2, List.of(new AssassinsBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0, 1),
+                        Map.of(0, player2.getId(), 1, gideon.getId())));
+
+        directAttacker.setAttacking(false);
+
+        harness.castAndResolveInstant(player2, 0, planeswalkerAttacker.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(directAttacker)
+                .doesNotContain(planeswalkerAttacker);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {

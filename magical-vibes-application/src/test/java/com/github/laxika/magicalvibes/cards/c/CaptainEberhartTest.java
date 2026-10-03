@@ -49,10 +49,77 @@ class CaptainEberhartTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A drawn opponent spell can be cast by paying exactly the extra generic mana")
+    void opponentPaysExactlyOneExtraMana() {
+        harness.addToBattlefield(player1, new CaptainEberhart());
+        drawCard(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Opponent cards that were not drawn this turn retain their normal cost")
+    void doesNotIncreaseUndrawnOpponentCards() {
+        harness.addToBattlefield(player1, new CaptainEberhart());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The discount cannot pay the spell's colored mana requirement")
+    void discountDoesNotReduceColoredMana() {
+        harness.addToBattlefield(player1, new CaptainEberhart());
+        drawCard(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Captains controlled by opposing players have cancelling cost modifiers")
+    void opposingCaptainsCancelDiscountAndTax() {
+        harness.addToBattlefield(player1, new CaptainEberhart());
+        harness.addToBattlefield(player2, new CaptainEberhart());
+        drawCard(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Double strike deals damage in both combat damage steps")
+    void dealsCombatDamageTwice() {
+        addCreatureReady(player1, new CaptainEberhart());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
     }
 
     private void drawCard(Player player, GrizzlyBears card) {

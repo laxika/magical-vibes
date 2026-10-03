@@ -82,6 +82,65 @@ class BirchloreRangersTest extends BaseCardTest {
     }
 
     @Test
+    void canTapSummoningSickElvesIncludingSource() {
+        Permanent source = addCreatureReady(player1, new BirchloreRangers());
+        Permanent elf = addCreatureReady(player1, new ElvishWarrior());
+        source.setSummoningSick(true);
+        elf.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotUseOpponentsElfToPayCost() {
+        Permanent source = addCreatureReady(player1, new BirchloreRangers());
+        Permanent opposingElf = addCreatureReady(player2, new ElvishWarrior());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(opposingElf.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void faceDownRangersCannotActivateManaAbilityOrCountAsAnElf() {
+        harness.setHand(player1, List.of(new BirchloreRangers()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent faceDown = findPermanent(player1, "Birchlore Rangers");
+        Permanent faceUp = addCreatureReady(player1, new BirchloreRangers());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(faceDown.isTapped()).isFalse();
+        assertThat(faceUp.isTapped()).isFalse();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.turnFaceUp(player1, 0);
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(faceDown.isFaceDown()).isFalse();
+        assertThat(faceDown.isTapped()).isTrue();
+        assertThat(faceUp.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
     void canBeCastFaceDownAndTurnedFaceUpForMorphCost() {
         harness.setHand(player1, List.of(new BirchloreRangers()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

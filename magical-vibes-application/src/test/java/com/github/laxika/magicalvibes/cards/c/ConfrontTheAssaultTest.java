@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SanctuaryCat;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConfrontTheAssault.class, GrizzlyBears.class})
+@CardUsed({ConfrontTheAssault.class, SanctuaryCat.class})
 class ConfrontTheAssaultTest extends BaseCardTest {
 
     @Test
@@ -46,10 +46,44 @@ class ConfrontTheAssaultTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("Cannot cast when your creature is attacking the other player")
+    void cannotCastWhenAttackingOpponent() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new SanctuaryCat());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new ConfrontTheAssault(), "{4}{W}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Cannot cast after the creature stops attacking")
+    void cannotCastAfterAttackerLeavesCombat() {
+        attackPlayer1();
+        gd.playerBattlefields.get(player2.getId()).getFirst().setAttacking(false);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new ConfrontTheAssault(), "{4}{W}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Creates tokens even if the attacker leaves before resolution")
+    void resolvesAfterAttackerLeavesBattlefield() {
+        attackPlayer1();
+        harness.castFromHand(player1, new ConfrontTheAssault(), "{4}{W}");
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(3);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        harness.assertInGraveyard(player1, "Confront the Assault");
+    }
+
     private void castAndResolveConfrontTheAssault() {
-        harness.setHand(player1, List.of(new ConfrontTheAssault()));
-        addManaForConfrontTheAssault();
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ConfrontTheAssault(), "{4}{W}");
         harness.passBothPriorities();
     }
 
@@ -59,7 +93,7 @@ class ConfrontTheAssaultTest extends BaseCardTest {
     }
 
     private void attackPlayer1() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new SanctuaryCat());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
     }

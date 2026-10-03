@@ -58,11 +58,10 @@ class CatapultSquadTest extends BaseCardTest {
     void damagesBlockingCreature() {
         Permanent squad = addCreatureReady(player1, new CatapultSquad());
         Permanent soldier = addCreatureReady(player1, new CatapultMaster());
-        Permanent attacker = addCreatureReady(player1, new CatapultMaster());
+        addCreatureReady(player1, new CatapultMaster());
         Permanent blocker = addCreatureReady(player2, new CatapultMaster());
 
-        declareAttackers(List.of(2));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(2));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
 
         harness.activateAbility(player1, battlefieldIndex(squad), null, blocker.getId());
@@ -87,6 +86,80 @@ class CatapultSquadTest extends BaseCardTest {
         assertThat(squad.isTapped()).isFalse();
         assertThat(opponentSoldier.isTapped()).isFalse();
         assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void summoningSickSoldiersCanPayTheCost() {
+        Permanent squad = harness.addToBattlefieldAndReturn(player1, new CatapultSquad());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new CatapultMaster());
+        Permanent attacker = addAttackingCreature(player2);
+
+        harness.activateAbility(player1, battlefieldIndex(squad), null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(squad.isTapped()).isTrue();
+        assertThat(soldier.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void tappedSquadCanActivateUsingOtherSoldiers() {
+        Permanent squad = addCreatureReady(player1, new CatapultSquad());
+        squad.tap();
+        Permanent first = addCreatureReady(player1, new CatapultMaster());
+        Permanent second = addCreatureReady(player1, new CatapultMaster());
+        Permanent attacker = addAttackingCreature(player2);
+
+        harness.activateAbility(player1, battlefieldIndex(squad), null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void tappedSoldierCannotPayTheCost() {
+        Permanent squad = addCreatureReady(player1, new CatapultSquad());
+        Permanent soldier = addCreatureReady(player1, new CatapultMaster());
+        soldier.tap();
+        Permanent attacker = addAttackingCreature(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(squad), null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(squad.isTapped()).isFalse();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void canDamageAnAttackingCreatureYouControl() {
+        Permanent squad = addCreatureReady(player1, new CatapultSquad());
+        Permanent soldier = addCreatureReady(player1, new CatapultMaster());
+        Permanent attacker = addAttackingCreature(player1);
+        attacker.tap();
+
+        harness.activateAbility(player1, battlefieldIndex(squad), null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(squad.isTapped()).isTrue();
+        assertThat(soldier.isTapped()).isTrue();
+    }
+
+    @Test
+    void targetMustStillBeInCombatAtResolution() {
+        Permanent squad = addCreatureReady(player1, new CatapultSquad());
+        Permanent soldier = addCreatureReady(player1, new CatapultMaster());
+        Permanent attacker = addAttackingCreature(player2);
+
+        harness.activateAbility(player1, battlefieldIndex(squad), null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(squad.isTapped()).isTrue();
+        assertThat(soldier.isTapped()).isTrue();
     }
 
     private Permanent addAttackingCreature(Player player) {

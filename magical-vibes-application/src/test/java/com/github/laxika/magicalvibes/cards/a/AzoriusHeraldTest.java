@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(AzoriusHerald.class)
+@CardUsed({AzoriusHerald.class})
 class AzoriusHeraldTest extends BaseCardTest {
 
     @Test
@@ -24,8 +24,7 @@ class AzoriusHeraldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
         harness.assertOnBattlefield(player1, "Azorius Herald");
@@ -38,8 +37,7 @@ class AzoriusHeraldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
         harness.assertNotOnBattlefield(player1, "Azorius Herald");
@@ -54,13 +52,55 @@ class AzoriusHeraldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
         harness.assertNotOnBattlefield(player1, "Azorius Herald");
         harness.assertInGraveyard(player1, "Azorius Herald");
+    }
+
+    @Test
+    @DisplayName("Life gain and sacrifice are separate triggered abilities")
+    void entersAbilitiesResolveSeparately() {
+        harness.setHand(player1, List.of(new AzoriusHerald()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Azorius Herald");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        boolean lifeGainResolved = gd.playerLifeTotals.get(player1.getId()) == 24;
+        boolean sacrificeResolved = gd.playerGraveyards.get(player1.getId()).stream()
+                .anyMatch(card -> card instanceof AzoriusHerald);
+        assertThat(lifeGainResolved ^ sacrificeResolved).isTrue();
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertNotOnBattlefield(player1, "Azorius Herald");
+        harness.assertInGraveyard(player1, "Azorius Herald");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast gains life and sacrifices the Herald despite available blue mana")
+    void enteringWithoutCastingGainsLifeAndSacrifices() {
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.enterBattlefieldAndReturn(player2, new AzoriusHerald());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 24);
+        harness.assertNotOnBattlefield(player2, "Azorius Herald");
+        harness.assertInGraveyard(player2, "Azorius Herald");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
     @Test

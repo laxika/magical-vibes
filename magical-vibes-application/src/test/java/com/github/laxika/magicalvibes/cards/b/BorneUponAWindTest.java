@@ -22,8 +22,7 @@ class BorneUponAWindTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BorneUponAWind()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     @Test
@@ -86,5 +85,66 @@ class BorneUponAWindTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Permission applies during an opponent's turn")
+    void grantsFlashDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        resolveBorneUponAWind();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Permission does not let the opponent cast creatures at instant speed")
+    void doesNotGrantFlashToOpponent() {
+        resolveBorneUponAWind();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Permission applies to multiple spells even with another spell on the stack")
+    void grantsFlashToMultipleSpells() {
+        resolveBorneUponAWind();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Permission begins only when Borne Upon a Wind resolves")
+    void doesNotGrantFlashBeforeResolution() {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new BorneUponAWind(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).hasSize(1);
     }
 }

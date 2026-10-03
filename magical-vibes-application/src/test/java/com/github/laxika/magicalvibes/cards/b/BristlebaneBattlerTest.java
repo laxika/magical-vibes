@@ -2,27 +2,22 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BristlebaneBattler.class, BristlebaneOutrider.class})
 class BristlebaneBattlerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with five -1/-1 counters")
     void entersWithFiveMinusCounters() {
         harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new BristlebaneBattler()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BristlebaneBattler(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -36,7 +31,7 @@ class BristlebaneBattlerTest extends BaseCardTest {
     void allyCreatureEnteringRemovesCounter() {
         Permanent battler = addBattlerWithCounters(2);
 
-        castGrizzlyBears(player1);
+        castOutrider(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -48,7 +43,7 @@ class BristlebaneBattlerTest extends BaseCardTest {
     void doesNotTriggerWithoutCounters() {
         Permanent battler = addBattlerWithCounters(0);
 
-        castGrizzlyBears(player1);
+        castOutrider(player1);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -60,7 +55,7 @@ class BristlebaneBattlerTest extends BaseCardTest {
     void triggerDoesNothingAfterCounterIsRemoved() {
         Permanent battler = addBattlerWithCounters(1);
 
-        castGrizzlyBears(player1);
+        castOutrider(player1);
         harness.passBothPriorities();
         battler.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
         harness.passBothPriorities();
@@ -73,7 +68,7 @@ class BristlebaneBattlerTest extends BaseCardTest {
     void opponentCreatureEnteringDoesNotTrigger() {
         Permanent battler = addBattlerWithCounters(1);
 
-        castGrizzlyBears(player2);
+        castOutrider(player2);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -86,10 +81,34 @@ class BristlebaneBattlerTest extends BaseCardTest {
         return battler;
     }
 
-    private void castGrizzlyBears(com.github.laxika.magicalvibes.model.Player player) {
+    private void castOutrider(com.github.laxika.magicalvibes.model.Player player) {
         harness.forceActivePlayer(player);
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new BristlebaneOutrider(), "{3}{G}");
+    }
+
+    @Test
+    @DisplayName("Entry counters are present immediately and its own entry does not trigger")
+    void ownEntryDoesNotRemoveCounter() {
+        Permanent battler = harness.enterBattlefieldAndReturn(player1, new BristlebaneBattler());
+
+        assertThat(battler.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each existing Battler removes its own counter when another Battler enters")
+    void multipleBattlersRemoveTheirOwnCounters() {
+        Permanent first = addBattlerWithCounters(2);
+        Permanent second = addBattlerWithCounters(1);
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new BristlebaneBattler());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(entering.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
     }
 }

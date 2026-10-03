@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,7 +9,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BalefulForce.class, GrizzlyBears.class})
+@CardUsed({BalefulForce.class})
 class BalefulForceTest extends BaseCardTest {
 
     @Test
@@ -18,7 +17,7 @@ class BalefulForceTest extends BaseCardTest {
     void yourUpkeepDrawsAndLosesLife() {
         harness.addToBattlefield(player1, new BalefulForce());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BalefulForce()));
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
@@ -34,9 +33,9 @@ class BalefulForceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BalefulForce());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        GrizzlyBears drawn = new GrizzlyBears();
+        BalefulForce drawn = new BalefulForce();
         harness.setLibrary(player1, List.of(drawn));
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new BalefulForce()));
         int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -49,4 +48,46 @@ class BalefulForceTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
+    @Test
+    @DisplayName("Each Force contributes a separate upkeep trigger")
+    void multipleForcesEachDrawAndLoseLife() {
+        harness.addToBattlefield(player1, new BalefulForce());
+        harness.addToBattlefield(player1, new BalefulForce());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new BalefulForce(), new BalefulForce()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, lifeBefore - 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("A Force controlled by the opponent affects only that opponent")
+    void opponentControlledForceAffectsItsController() {
+        harness.addToBattlefield(player2, new BalefulForce());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new BalefulForce()));
+        int playerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertLife(player1, playerLifeBefore);
+        harness.assertLife(player2, opponentLifeBefore - 1);
+    }
 }

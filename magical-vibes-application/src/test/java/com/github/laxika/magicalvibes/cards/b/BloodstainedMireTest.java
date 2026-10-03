@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SmolderingMarsh;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BloodstainedMire.class, GlorySeeker.class, Mountain.class, Plains.class, Swamp.class})
+@CardUsed({BloodstainedMire.class, GlorySeeker.class, Mountain.class, Plains.class, Swamp.class, SmolderingMarsh.class})
 class BloodstainedMireTest extends BaseCardTest {
 
     @Test
@@ -90,6 +91,85 @@ class BloodstainedMireTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().hasType(CardType.LAND));
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library containing only a Mountain can supply the searched land")
+    void findsMountainWithoutSwamp() {
+        Mountain mountain = new Mountain();
+        activateSearchWithLibrary(List.of(mountain));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(mountain);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A library containing only a Swamp can supply the searched land")
+    void findsSwampWithoutMountain() {
+        Swamp swamp = new Swamp();
+        activateSearchWithLibrary(List.of(swamp));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(swamp);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A nonbasic Swamp Mountain is eligible and obeys its own enters-tapped ability")
+    void findsNonbasicLandAndAppliesEntryReplacement() {
+        SmolderingMarsh marsh = new SmolderingMarsh();
+        activateSearchWithLibrary(List.of(marsh));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Smoldering Marsh");
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(marsh);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent paying the activation costs")
+    void emptyLibraryStillPaysCostsAndResolves() {
+        activateSearchWithLibrary(List.of());
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Bloodstained Mire");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unpaid life cost leaves the source untapped and unsacrificed")
+    void cannotActivateWithoutLifeToPay() {
+        Permanent mire = harness.addToBattlefieldAndReturn(player1, new BloodstainedMire());
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(mire);
+        assertThat(mire.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Bloodstained Mire");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void activateSearch() {

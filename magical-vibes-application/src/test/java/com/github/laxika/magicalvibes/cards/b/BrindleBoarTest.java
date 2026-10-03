@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BrindleBoar.class})
 class BrindleBoarTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Brindle Boar puts it on the stack")
@@ -28,7 +28,7 @@ class BrindleBoarTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Brindle Boar");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(BrindleBoar.class);
     }
 
     @Test
@@ -42,8 +42,6 @@ class BrindleBoarTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Brindle Boar");
     }
-
-    // ===== Sacrifice ability =====
 
     @Test
     @DisplayName("Sacrificing Brindle Boar puts ability on stack and moves it to graveyard")
@@ -61,7 +59,7 @@ class BrindleBoarTest extends BaseCardTest {
         // Ability should be on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Brindle Boar");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(BrindleBoar.class);
     }
 
     @Test
@@ -102,13 +100,46 @@ class BrindleBoarTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Summoning sickness does not prevent sacrificing Brindle Boar")
+    void canActivateWhileSummoningSick() {
+        Permanent boar = harness.addToBattlefieldAndReturn(player1, new BrindleBoar());
+        boar.setSummoningSick(true);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Brindle Boar");
+        harness.assertInGraveyard(player1, "Brindle Boar");
+        harness.assertLife(player1, startingLife);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, startingLife + 4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the activating player gains life")
+    void secondPlayerGainsLifeOnResolution() {
+        harness.addToBattlefield(player2, new BrindleBoar());
+        int firstPlayerLife = gd.playerLifeTotals.get(player1.getId());
+        int secondPlayerLife = gd.playerLifeTotals.get(player2.getId());
+        harness.ensurePriority(player2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.assertLife(player2, secondPlayerLife);
+        harness.assertInGraveyard(player2, "Brindle Boar");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, secondPlayerLife + 4);
+        harness.assertLife(player1, firstPlayerLife);
+    }
 
     private Permanent addBrindleBoarReady(Player player) {
-        BrindleBoar card = new BrindleBoar();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BrindleBoar());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

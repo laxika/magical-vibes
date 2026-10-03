@@ -132,6 +132,85 @@ class AlongTheCrookedWayTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, orc, Keyword.MENACE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Its own ETB return triggers amass")
+    void ownEtbReturnTriggersAmass() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new AlongTheCrookedWay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Goblin Army")).hasSize(1);
+        assertThat(findPermanent(player1, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("With multiple Armies, only the chosen Army gets the counter and Goblin subtype")
+    void choosesOneOfMultipleArmies() {
+        addAlongTheCrookedWay();
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Goblins entering after the activation resolves do not gain menace")
+    void activationDoesNotAffectLaterGoblins() {
+        addAlongTheCrookedWay();
+        Permanent existing = addCreatureReady(player1, new GoblinAssailant());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature leaving an opponent's graveyard does not trigger amass")
+    void opponentGraveyardDoesNotTriggerAmass() {
+        addAlongTheCrookedWay();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player2, List.of(new Disentomb()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player2, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+        assertThat(findPermanents(player2, "Goblin Army")).isEmpty();
+    }
+
     private void addAlongTheCrookedWay() {
         harness.addToBattlefield(player1, new AlongTheCrookedWay());
     }

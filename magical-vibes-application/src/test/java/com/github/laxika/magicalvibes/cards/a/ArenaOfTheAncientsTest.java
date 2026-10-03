@@ -27,8 +27,7 @@ class ArenaOfTheAncientsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArenaOfTheAncients()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ownLegendary.isTapped()).isTrue();
         assertThat(opponentLegendary.isTapped()).isTrue();
@@ -49,5 +48,58 @@ class ArenaOfTheAncientsTest extends BaseCardTest {
 
         assertThat(opponentLegendary.isTapped()).isTrue();
         assertThat(opponentNonlegendary.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The controller's legendary creatures stay tapped but legendary lands untap")
+    void controllerLegendaryCreaturesDoNotUntap() {
+        Permanent arena = harness.addToBattlefieldAndReturn(player1, new ArenaOfTheAncients());
+        Permanent legendary = harness.addToBattlefieldAndReturn(player1, new Johan());
+        Permanent nonlegendary = harness.addToBattlefieldAndReturn(player1, new ZephyrFalcon());
+        Permanent legendaryLand = harness.addToBattlefieldAndReturn(player1, new Karakas());
+        arena.tap();
+        legendary.tap();
+        nonlegendary.tap();
+        legendaryLand.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(legendary.isTapped()).isTrue();
+        assertThat(nonlegendary.isTapped()).isFalse();
+        assertThat(legendaryLand.isTapped()).isFalse();
+        assertThat(arena.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Arena still prevents opposing legendary creatures from untapping")
+    void tappedArenaStillPreventsUntapping() {
+        Permanent arena = harness.addToBattlefieldAndReturn(player1, new ArenaOfTheAncients());
+        Permanent legendary = harness.addToBattlefieldAndReturn(player2, new Johan());
+        arena.tap();
+        legendary.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(arena.isTapped()).isTrue();
+        assertThat(legendary.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Legendary creatures entering after Arena are not tapped on entry but cannot untap later")
+    void laterLegendaryCreatureIsNotTappedOnEntry() {
+        harness.setHand(player1, List.of(new ArenaOfTheAncients()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        Permanent legendary = harness.enterBattlefieldAndReturn(player2, new Johan());
+        resolveAllTriggers();
+
+        assertThat(legendary.isTapped()).isFalse();
+
+        legendary.tap();
+        advanceToUpkeep(player2);
+
+        assertThat(legendary.isTapped()).isTrue();
     }
 }

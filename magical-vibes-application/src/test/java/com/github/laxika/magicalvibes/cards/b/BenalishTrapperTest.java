@@ -88,4 +88,53 @@ class BenalishTrapperTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Ability can target Benalish Trapper itself")
+    void canTargetItself() {
+        Permanent trapper = addCreatureReady(player1, new BenalishTrapper());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, trapper.getId());
+
+        assertThat(trapper.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(trapper.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability can target an already tapped creature")
+    void canTargetTappedCreature() {
+        Permanent trapper = addCreatureReady(player1, new BenalishTrapper());
+        Permanent target = addCreatureReady(player2, new ArdentSoldier());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(trapper.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the white activation cost")
+    void cannotActivateWithOnlyColorlessMana() {
+        Permanent trapper = addCreatureReady(player1, new BenalishTrapper());
+        Permanent target = addCreatureReady(player2, new ArdentSoldier());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(trapper.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

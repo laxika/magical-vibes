@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,6 +17,46 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AetherMembrane.class, GiantDustwasp.class})
 class AetherMembraneTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The end-of-combat return uses the stack before moving the attacker")
+    void endOfCombatReturnAllowsResponses() {
+        addCreatureReady(player1, new GiantDustwasp());
+        addCreatureReady(player2, new AetherMembrane());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Giant Dustwasp");
+        harness.assertNotInHand(player1, "Giant Dustwasp");
+        assertThat(gd.stack).anyMatch(entry ->
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
+        harness.assertInHand(player1, "Giant Dustwasp");
+    }
+
+    @Test
+    @DisplayName("A blocked creature returns to its owner rather than its controller")
+    void borrowedAttackerReturnsToOwner() {
+        GiantDustwasp dustwasp = new GiantDustwasp();
+        dustwasp.setOwnerId(player2.getId());
+        addCreatureReady(player1, dustwasp);
+        addCreatureReady(player2, new AetherMembrane());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
+        harness.assertNotInHand(player1, "Giant Dustwasp");
+        harness.assertInHand(player2, "Giant Dustwasp");
+    }
 
     @Test
     @DisplayName("Blocking a creature schedules that attacker for an end-of-combat bounce")
@@ -32,8 +73,8 @@ class AetherMembraneTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInHand(player1, "Giant Dustwasp");
     }
 
     @Test
@@ -46,7 +87,7 @@ class AetherMembraneTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
         harness.assertInHand(player1, "Giant Dustwasp");
@@ -62,7 +103,7 @@ class AetherMembraneTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(membrane.getMarkedDamage()).isEqualTo(3);
         harness.assertInHand(player1, "Giant Dustwasp");
@@ -96,7 +137,7 @@ class AetherMembraneTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(membrane.getId()));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertInHand(player1, "Giant Dustwasp");
     }

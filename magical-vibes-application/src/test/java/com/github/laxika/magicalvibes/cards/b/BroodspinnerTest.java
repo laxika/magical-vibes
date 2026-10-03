@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WickerfolkThresher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Broodspinner.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Broodspinner.class, Forest.class, GrizzlyBears.class, Shock.class, WickerfolkThresher.class})
 class BroodspinnerTest extends BaseCardTest {
 
     @Test
@@ -36,8 +37,7 @@ class BroodspinnerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
@@ -72,5 +72,124 @@ class BroodspinnerTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
         assertThat(insect.getCard().getSubtypes()).contains(CardSubtype.INSECT);
         assertThat(insect.getCard().getKeywords()).contains(Keyword.FLYING);
+    }
+
+    @Test
+    void sacrificedSpiderContributesCreatureTypeAndOpponentTypesAreIgnored() {
+        Permanent spider = addCreatureReady(player1, new Broodspinner());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new WickerfolkThresher(), new Forest()));
+        payActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spider.getCard());
+        assertThat(countPermanents(player1, "Insect")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Insect")).isZero();
+    }
+
+    @Test
+    void countsDistinctTypesIncludingBothTypesOfArtifactCreature() {
+        addCreatureReady(player1, new Broodspinner());
+        harness.setGraveyard(player1, List.of(new WickerfolkThresher(), new WickerfolkThresher(), new Forest()));
+        payActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(3);
+    }
+
+    @Test
+    void countsGraveyardTypesAtResolution() {
+        Permanent spider = addCreatureReady(player1, new Broodspinner());
+        harness.setGraveyard(player1, List.of(new WickerfolkThresher(), new Forest()));
+        payActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setGraveyard(player1, List.of(spider.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+    }
+
+    @Test
+    void createsNoTokensIfGraveyardIsEmptyAtResolution() {
+        addCreatureReady(player1, new Broodspinner());
+        payActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isZero();
+    }
+
+    @Test
+    void surveilCanKeepBothCardsInReverseOrder() {
+        Card topCard = new Broodspinner();
+        Card secondCard = new Forest();
+        castWithLibrary(List.of(topCard, secondCard));
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void surveilCanPutBothCardsIntoGraveyard() {
+        Card topCard = new Broodspinner();
+        Card secondCard = new Forest();
+        castWithLibrary(List.of(topCard, secondCard));
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(topCard, secondCard);
+    }
+
+    @Test
+    void surveilWithOneCardUsesOnlyAvailableCard() {
+        Card onlyCard = new Forest();
+        castWithLibrary(List.of(onlyCard));
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil).isNotNull();
+        assertThat(surveil.cards()).containsExactly(onlyCard);
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    void surveilWithEmptyLibraryFinishesWithoutChoice() {
+        castWithLibrary(List.of());
+
+        harness.assertOnBattlefield(player1, "Broodspinner");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void payActivationMana() {
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+    }
+
+    private void castWithLibrary(List<Card> library) {
+        harness.setLibrary(player1, library);
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Broodspinner()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
     }
 }

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "17")
+@CardRegistration(set = "ONC", collectorNumber = "74")
 public class HarmoniousArchon extends Card {
 
     public HarmoniousArchon() {

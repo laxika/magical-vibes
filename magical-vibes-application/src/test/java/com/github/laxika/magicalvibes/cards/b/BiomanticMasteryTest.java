@@ -64,4 +64,46 @@ class BiomanticMasteryTest extends BaseCardTest {
                 List.of(player1.getId(), player1.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Draws for the second target even when the first controls no creatures")
+    void drawsWhenOnlySecondTargetControlsCreatures() {
+        prepare();
+        harness.addToBattlefield(player1, new IndrikStomphowler());
+        harness.addToBattlefield(player1, new IndrikStomphowler());
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Draws no cards when neither target controls a creature")
+    void drawsNothingWhenBothTargetsHaveNoCreatures() {
+        prepare();
+        harness.addToBattlefield(player1, new BreedingPool());
+        harness.addToBattlefield(player2, new BreedingPool());
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        harness.assertInGraveyard(player1, "Biomantic Mastery");
+    }
+
+    @Test
+    @DisplayName("Counts creatures at resolution rather than when cast")
+    void countsCreaturesAtResolution() {
+        prepare();
+        harness.addToBattlefield(player1, new IndrikStomphowler());
+        harness.castSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
+
+        harness.addToBattlefield(player1, new IndrikStomphowler());
+        harness.addToBattlefield(player2, new IndrikStomphowler());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
 }

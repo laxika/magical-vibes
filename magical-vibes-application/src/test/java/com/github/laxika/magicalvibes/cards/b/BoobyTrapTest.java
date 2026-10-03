@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.c.CavesOfKoilos;
+import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoobyTrap.class, CavesOfKoilos.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BoobyTrap.class, CavesOfKoilos.class, Confiscate.class, Forest.class, GrizzlyBears.class, Naturalize.class})
 class BoobyTrapTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -138,5 +141,82 @@ class BoobyTrapTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("reveals") && log.contains("Forest") && log.contains("Booby Trap"));
+    }
+
+    @Test
+    @DisplayName("The originally chosen player remains chosen after Confiscate changes control")
+    void chosenPlayerRemainsChosenAfterControlChanges() {
+        harness.castFromHand(player1, new BoobyTrap(), "{6}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Grizzly Bears");
+        Permanent trap = findPermanent(player1, "Booby Trap");
+
+        harness.setHand(player2, List.of(new Confiscate()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player2);
+        harness.castEnchantment(player2, 0, trap.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Booby Trap");
+        harness.setLife(player2, 20);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
+
+        advanceToDraw(player2);
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
+                log.contains("reveals") && log.contains("Grizzly Bears") && log.contains("Booby Trap"));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 10);
+        harness.assertNotOnBattlefield(player2, "Booby Trap");
+        harness.assertInGraveyard(player1, "Booby Trap");
+    }
+
+    @Test
+    @DisplayName("Destroying the trap in response prevents the conditional damage")
+    void removedTrapDoesNotDealDamage() {
+        Permanent trap = addTrap(player1, "Grizzly Bears");
+        harness.setLife(player2, 20);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
+        advanceToDraw(player2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, trap.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Booby Trap");
+        harness.assertInGraveyard(player1, "Booby Trap");
+    }
+
+    @Test
+    @DisplayName("Two traps with the same chosen name each sacrifice and deal ten damage")
+    void twoTrapsEachDealDamage() {
+        addTrap(player1, "Grizzly Bears");
+        addTrap(player1, "Grizzly Bears");
+        harness.setLife(player2, 30);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
+
+        advanceToDraw(player2);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 10);
+        harness.assertNotOnBattlefield(player1, "Booby Trap");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Booby Trap")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still requires the card name choice")
+    void enteringWithoutCastingChoosesName() {
+        harness.enterBattlefieldAndReturn(player1, new BoobyTrap());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Booby Trap").getChosenName()).isEqualTo("Grizzly Bears");
     }
 }

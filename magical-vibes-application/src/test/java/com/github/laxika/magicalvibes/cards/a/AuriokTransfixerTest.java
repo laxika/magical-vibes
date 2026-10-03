@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AuriokTransfixer.class, AuriokBladewarden.class, Ornithopter.class})
+@CardUsed({AuriokTransfixer.class, AuriokBladewarden.class, Ornithopter.class, Bonesplitter.class})
 class AuriokTransfixerTest extends BaseCardTest {
 
     @Test
@@ -133,10 +134,37 @@ class AuriokTransfixerTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
+    @Test
+    @DisplayName("Can tap a noncreature artifact")
+    void tapsNoncreatureArtifact() {
+        addReadyTransfixer(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        assertThat(artifact.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activated ability resolves even if Auriok Transfixer leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent transfixer = addReadyTransfixer(player1);
+        Permanent artifact = addArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(transfixer);
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyTransfixer(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new AuriokTransfixer());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new AuriokTransfixer());
     }
 
     private Permanent addArtifact(Player player) {

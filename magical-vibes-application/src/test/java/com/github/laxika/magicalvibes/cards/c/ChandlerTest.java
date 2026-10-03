@@ -75,4 +75,65 @@ class ChandlerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can destroy an artifact creature you control")
+    void destroysOwnArtifactCreature() {
+        addCreatureReady(player1, new Chandler());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ClockworkGnomes());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Clockwork Gnomes");
+        harness.assertInGraveyard(player1, "Clockwork Gnomes");
+    }
+
+    @Test
+    @DisplayName("An artifact creature can regenerate from Chandler's destruction")
+    void allowsRegeneration() {
+        addCreatureReady(player1, new Chandler());
+        Permanent target = addCreatureReady(player2, new ClockworkGnomes());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Clockwork Gnomes");
+        harness.assertNotInGraveyard(player2, "Clockwork Gnomes");
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Chandler has summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new Chandler());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ClockworkGnomes());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Clockwork Gnomes");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while Chandler is already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent chandler = addCreatureReady(player1, new Chandler());
+        chandler.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ClockworkGnomes());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Clockwork Gnomes");
+    }
 }

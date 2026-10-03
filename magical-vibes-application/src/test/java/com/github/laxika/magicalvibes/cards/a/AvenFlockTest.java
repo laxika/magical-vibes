@@ -1,19 +1,70 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenFlock.class})
+@CardUsed({AvenFlock.class, GrizzlyBears.class})
 class AvenFlockTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Flying prevents a ground creature from blocking Aven Flock")
+    void groundCreatureCannotBlock() {
+        addCreatureReady(player1, new AvenFlock());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Another flying creature can block Aven Flock")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new AvenFlock());
+        Permanent blocker = addCreatureReady(player2, new AvenFlock());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activations on the stack boost toughness only as each resolves")
+    void stackedActivationsResolveSeparately() {
+        Permanent flock = addCreatureReady(player1, new AvenFlock());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(flock.getEffectiveToughness()).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(flock.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(flock.getEffectiveToughness()).isEqualTo(5);
+    }
 
     @Test
     @DisplayName("Resolving ability gives +0/+1 to Aven Flock")

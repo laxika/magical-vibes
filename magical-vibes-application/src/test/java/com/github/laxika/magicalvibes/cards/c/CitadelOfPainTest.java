@@ -95,4 +95,37 @@ class CitadelOfPainTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
     }
+
+    @Test
+    @DisplayName("Counts a land untapped in response even when no lands were untapped at triggering")
+    void countsLandUntappedInResponse() {
+        harness.addToBattlefield(player1, new CitadelOfPain());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        land.tap();
+        harness.setLife(player1, 20);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        land.untap();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Does not count another player's untapped lands")
+    void excludesOtherPlayersLands() {
+        harness.addToBattlefield(player1, new CitadelOfPain());
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToEndStepTrigger(player2);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }

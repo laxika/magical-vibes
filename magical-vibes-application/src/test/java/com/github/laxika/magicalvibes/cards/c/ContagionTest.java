@@ -118,4 +118,52 @@ class ContagionTest extends BaseCardTest {
                 List.of(creature1.getId(), creature2.getId(), creature3.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Does not redistribute a missing target's counter to the surviving target")
+    void doesNotRedistributeCountersWhenOneTargetLeaves() {
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        Permanent surviving = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        harness.setHand(player1, List.of(new Contagion()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castInstant(player1, 0, List.of(departed.getId(), surviving.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(departed);
+        gd.playerGraveyards.get(player2.getId()).add(departed.getCard());
+        harness.passBothPriorities();
+
+        assertThat(surviving.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)).isEqualTo(1);
+        assertThat(departed.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Contagion");
+    }
+
+    @Test
+    @DisplayName("Cannot exile the spell itself to pay its alternate cost")
+    void cannotExileItselfForAlternateCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        harness.setHand(player1, List.of(new Contagion()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, List.of(creature.getId()), 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can put counters on creatures controlled by different players")
+    void targetsCreaturesWithDifferentControllers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new ShieldSphere());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
+        harness.setHand(player1, List.of(new Contagion()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0, List.of(own.getId(), opposing.getId()));
+
+        assertThat(own.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)).isEqualTo(1);
+    }
 }

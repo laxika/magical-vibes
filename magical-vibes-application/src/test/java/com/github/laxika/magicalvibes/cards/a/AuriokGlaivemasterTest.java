@@ -60,4 +60,55 @@ class AuriokGlaivemasterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, glaivemaster)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, glaivemaster, Keyword.FIRST_STRIKE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Multiple equipment grant the bonus once until the last equipment detaches")
+    void multipleEquipmentGrantBonusOnlyOnce() {
+        Permanent glaivemaster = addCreatureReady(player1, new AuriokGlaivemaster());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LeoninBola());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LeoninBola());
+        first.setAttachedTo(glaivemaster.getId());
+        second.setAttachedTo(glaivemaster.getId());
+
+        assertThat(gqs.getEffectivePower(gd, glaivemaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glaivemaster)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, glaivemaster, Keyword.FIRST_STRIKE)).isTrue();
+
+        first.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, glaivemaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glaivemaster)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, glaivemaster, Keyword.FIRST_STRIKE)).isTrue();
+
+        second.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, glaivemaster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, glaivemaster)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, glaivemaster, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Equipment attached to another creature does not grant the bonus")
+    void equipmentOnAnotherCreatureDoesNotGrantBonus() {
+        Permanent glaivemaster = addCreatureReady(player1, new AuriokGlaivemaster());
+        Permanent other = addCreatureReady(player1, new AuriokGlaivemaster());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninBola());
+        equipment.setAttachedTo(glaivemaster.getId());
+
+        assertThat(gqs.getEffectivePower(gd, glaivemaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glaivemaster)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, glaivemaster, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+
+        equipment.setAttachedTo(other.getId());
+
+        assertThat(gqs.getEffectivePower(gd, glaivemaster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, glaivemaster)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, glaivemaster, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isTrue();
+    }
 }

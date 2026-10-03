@@ -55,4 +55,35 @@ class BorosSignetTest extends BaseCardTest {
         signet.setSummoningSick(false);
         return signet;
     }
+
+    @Test
+    @DisplayName("Boros Signet can activate on the turn it enters the battlefield")
+    void canActivateOnTurnItEnters() {
+        Permanent signet = harness.enterBattlefieldAndReturn(player1, new BorosSignet());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay Boros Signet's generic activation cost")
+    void canPayActivationCostWithColoredMana() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }

@@ -19,10 +19,10 @@ public class AkkiRonin extends Card {
 
     public AkkiRonin() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.SAMURAI),
-                                new CardSubtypePredicate(CardSubtype.WARRIOR))),
+                new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
+                        new com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate(List.of(
+                                new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
+                                new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.WARRIOR))),
                         new ConditionalEffect(new AttacksAlone(), new MayEffect(
                                 new DiscardAndDrawCardEffect(),
                                 "Discard a card to draw a card?"))));

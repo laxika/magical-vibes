@@ -68,4 +68,36 @@ class BeetlebackChiefTest extends BaseCardTest {
             assertThat(token.getEffectiveToughness()).isEqualTo(1);
         });
     }
+    @Test
+    void tokensAreCreatedOnlyWhenTheEnterTriggerResolves() {
+        harness.setHand(player1, List.of(new BeetlebackChief()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Beetleback Chief")).hasSize(1);
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Goblin")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void enteringWithoutBeingCastCreatesTokensForItsController() {
+        harness.enterBattlefieldAndReturn(player2, new BeetlebackChief());
+
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Goblin")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isSummoningSick()).isTrue();
+        });
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+    }
 }

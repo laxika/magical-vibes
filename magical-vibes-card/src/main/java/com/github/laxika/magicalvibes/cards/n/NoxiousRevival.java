@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 @CardRegistration(set = "SLD", collectorNumber = "1416")
 @CardRegistration(set = "SPG", collectorNumber = "73")
 @CardRegistration(set = "MB2", collectorNumber = "70")
+@CardRegistration(set = "ONC", collectorNumber = "110")
 public class NoxiousRevival extends Card {
 
     public NoxiousRevival() {

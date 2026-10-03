@@ -69,9 +69,7 @@ class AshnodsTransmograntTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isArtifact(target)).isTrue();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -107,5 +105,40 @@ class AshnodsTransmograntTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Can transform a creature controlled by the activating player")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new AshnodsTransmogrant());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        harness.assertInGraveyard(player1, "Ashnod's Transmogrant");
+    }
+
+    @Test
+    @DisplayName("An earlier activation does not resolve once another activation makes the target an artifact")
+    void targetBecomingArtifactStopsEarlierActivation() {
+        harness.addToBattlefield(player1, new AshnodsTransmogrant());
+        harness.addToBattlefield(player1, new AshnodsTransmogrant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

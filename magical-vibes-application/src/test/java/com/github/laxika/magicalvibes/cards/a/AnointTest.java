@@ -101,8 +101,7 @@ class AnointTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBlast()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
         harness.passBothPriorities();
 
         assertThat(playerHandNames(player1)).isEmpty();
@@ -140,8 +139,7 @@ class AnointTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBlast()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         assertThat(target.getDamagePreventionShield()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -161,8 +159,7 @@ class AnointTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBlast()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castInstant(player2, 0, unshielded.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, unshielded.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(shielded.getId()));
@@ -201,6 +198,32 @@ class AnointTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Multiple Anoints accumulate shields that are consumed across damage events")
+    void shieldsAccumulateAcrossDamageEvents() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+        harness.setHand(player1, List.of(new Anoint(), new Anoint()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.setHand(player2, List.of(new LightningBlast(), new LightningBlast()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Trained Armodon");
+        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Trained Armodon");
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
     private Permanent armodon(Player player) {
         return findPermanent(player, "Trained Armodon");
     }

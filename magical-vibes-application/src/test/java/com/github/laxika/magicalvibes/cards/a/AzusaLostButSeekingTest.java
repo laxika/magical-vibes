@@ -64,4 +64,59 @@ class AzusaLostButSeekingTest extends BaseCardTest {
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Azusa entering after the normal land play permits two more lands")
+    void enteringAfterFirstLandGrantsTwoMorePlays() {
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.addToBattlefield(player1, new AzusaLostButSeeking());
+
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(3);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Azusa leaving and returning does not reset lands already played")
+    void leavingAndReturningDoesNotResetLandPlays() {
+        var azusa = harness.addToBattlefieldAndReturn(player1, new AzusaLostButSeeking());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        gd.playerBattlefields.get(player1.getId()).remove(azusa);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addToBattlefield(player1, new AzusaLostButSeeking());
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(3);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Azusa does not permit land plays during an opponent's turn")
+    void cannotPlayLandDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new AzusaLostButSeeking());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(countPermanents(player1, "Forest")).isZero();
+        harness.assertInHand(player1, "Forest");
+    }
 }

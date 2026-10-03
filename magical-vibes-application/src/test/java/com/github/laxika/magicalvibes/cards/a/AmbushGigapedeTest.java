@@ -78,14 +78,65 @@ class AmbushGigapedeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during an opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player2, new HillGiant());
+        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        castGigapede(targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ambush Gigapede");
+        Permanent giant = findPermanent(player2, "Hill Giant");
+        assertThat(giant.getEffectivePower()).isEqualTo(1);
+        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can enter when no opponent controls a creature")
+    void canEnterWithoutLegalTarget() {
+        harness.setHand(player1, List.of(new AmbushGigapede()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ambush Gigapede");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the entry trigger's target does not affect another creature")
+    void removedTargetDoesNotAffectOtherCreature() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
+
+        castGigapede(targetId);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(targetId));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ambush Gigapede");
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castGigapede(UUID targetId) {
         harness.setHand(player1, List.of(new AmbushGigapede()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
     }
 }

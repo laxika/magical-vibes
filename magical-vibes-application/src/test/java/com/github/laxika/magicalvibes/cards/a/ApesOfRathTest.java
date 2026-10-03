@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.s.SeekerOfSkybreak;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ApesOfRath.class)
+@CardUsed({ApesOfRath.class, SeekerOfSkybreak.class})
 class ApesOfRathTest extends BaseCardTest {
 
     @Test
@@ -68,4 +69,43 @@ class ApesOfRathTest extends BaseCardTest {
 
         assertThat(apes.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("An opponent's untap step does not consume the attack restriction")
+    void opponentsUntapDoesNotConsumeRestriction() {
+        Permanent apes = addCreatureReady(player1, new ApesOfRath());
+        Permanent opposingApes = addCreatureReady(player2, new ApesOfRath());
+        opposingApes.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.performUntapStep(player2);
+
+        assertThat(opposingApes.isTapped()).isFalse();
+        assertThat(apes.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(apes.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(apes.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Other effects can untap Apes and its restriction expires while it is untapped")
+    void restrictionExpiresEvenWhenAlreadyUntapped() {
+        Permanent apes = addCreatureReady(player1, new ApesOfRath());
+        addCreatureReady(player1, new SeekerOfSkybreak());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, apes.getId());
+        harness.passBothPriorities();
+        assertThat(apes.isTapped()).isFalse();
+
+        harness.performUntapStep(player1);
+        apes.tap();
+        harness.performUntapStep(player1);
+        assertThat(apes.isTapped()).isFalse();
+    }
+
 }

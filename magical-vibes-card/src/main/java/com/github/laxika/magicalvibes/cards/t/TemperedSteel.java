@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "24")
 @CardRegistration(set = "2XM", collectorNumber = "34")
 @CardRegistration(set = "HA3", collectorNumber = "4")
+@CardRegistration(set = "BRC", collectorNumber = "76")
 public class TemperedSteel extends Card {
 
     public TemperedSteel() {

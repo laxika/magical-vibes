@@ -21,6 +21,56 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ArcanumWingsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting Arcanum Wings grants flying to an opponent's creature")
+    void castingGrantsFlyingToOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new FomoriNomad());
+        harness.setHand(player1, List.of(new ArcanumWings()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Arcanum Wings").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Aura swap does nothing with an empty hand")
+    void emptyHandLeavesSourceAttached() {
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
+        Permanent source = addAura(creature, new ArcanumWings());
+        harness.setHand(player1, List.of());
+        addAuraSwapMana();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Arcanum Wings")).isSameAs(source);
+        assertThat(source.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Aura swap cannot exchange a source that left the battlefield before resolution")
+    void departedSourceCannotSwap() {
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
+        Permanent source = addAura(creature, new ArcanumWings());
+        harness.setHand(player1, List.of(new GiftOfGranite()));
+        addAuraSwapMana();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, source));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Arcanum Wings");
+        harness.assertInHand(player1, "Gift of Granite");
+        harness.assertNotOnBattlefield(player1, "Gift of Granite");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Aura swap exchanges Arcanum Wings for an Aura from hand")
     void exchangesAuraForAuraFromHand() {
         Permanent creature = addCreatureReady(player1, new FomoriNomad());
@@ -35,10 +85,7 @@ class ArcanumWingsTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Arcanum Wings");
         harness.assertNotOnBattlefield(player1, "Arcanum Wings");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Gift of Granite")
-                        && permanent.isAttached()
-                        && creature.getId().equals(permanent.getAttachedTo()));
+        assertThat(findPermanent(player1, "Gift of Granite").getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
@@ -57,10 +104,7 @@ class ArcanumWingsTest extends BaseCardTest {
         harness.handleCardChosen(player1, -1);
 
         harness.assertInHand(player1, "Gift of Granite");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Arcanum Wings")
-                        && permanent.isAttached()
-                        && creature.getId().equals(permanent.getAttachedTo()));
+        assertThat(findPermanent(player1, "Arcanum Wings").getAttachedTo()).isEqualTo(creature.getId());
     }
 
     @Test
@@ -95,10 +139,7 @@ class ArcanumWingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Fertile Ground");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Arcanum Wings")
-                        && permanent.isAttached()
-                        && creature.getId().equals(permanent.getAttachedTo()));
+        assertThat(findPermanent(player1, "Arcanum Wings").getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

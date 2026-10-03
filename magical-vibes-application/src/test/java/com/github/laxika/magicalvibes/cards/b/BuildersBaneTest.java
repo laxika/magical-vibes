@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.s.SkyDiamond;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,9 +12,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BuildersBane.class, SkyDiamond.class, BayFalcon.class})
+@CardUsed({BuildersBane.class, SkyDiamond.class, BayFalcon.class, RestInPeace.class})
 class BuildersBaneTest extends BaseCardTest {
 
     @Test
@@ -45,8 +47,7 @@ class BuildersBaneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BuildersBane()));
         harness.addMana(player1, ManaColor.RED, 3); // X=1: {1}{1}{R}
 
-        harness.castSorcery(player1, 0, 1, List.of(a1.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, a1.getId());
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
@@ -72,20 +73,44 @@ class BuildersBaneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("May destroy fewer artifacts than X")
-    void mayDestroyFewerArtifactsThanX() {
+    @DisplayName("Must choose exactly X artifact targets")
+    void cannotChooseFewerArtifactsThanX() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SkyDiamond());
+        harness.setHand(player1, List.of(new BuildersBane()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Positive X cannot be cast without targets")
+    void cannotChooseNoTargetsForPositiveX() {
+        harness.setHand(player1, List.of(new BuildersBane()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Artifacts exiled instead of entering a graveyard do not cause damage")
+    @CardUsed({BuildersBane.class, SkyDiamond.class, RestInPeace.class})
+    void exiledArtifactsDoNotCauseDamage() {
+        harness.addToBattlefield(player1, new RestInPeace());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SkyDiamond());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new BuildersBane()));
-        harness.addMana(player1, ManaColor.RED, 5); // X=2: {2}{2}{R}
+        harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 2, List.of(artifact.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, artifact.getId());
 
-        harness.assertInGraveyard(player2, "Sky Diamond");
+        harness.assertNotOnBattlefield(player2, "Sky Diamond");
+        harness.assertNotInGraveyard(player2, "Sky Diamond");
+        assertThat(gd.findExiledCard(artifact.getCard().getId())).isNotNull();
         harness.assertLife(player1, 20);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -97,12 +122,30 @@ class BuildersBaneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BuildersBane()));
         harness.addMana(player1, ManaColor.RED, 1); // X=0: {R}
 
-        harness.castSorcery(player1, 0, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player2, "Sky Diamond");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A regenerated artifact survives and does not count toward damage")
+    void regeneratedArtifactDoesNotCauseDamage() {
+        Permanent regenerating = harness.addToBattlefieldAndReturn(player2, new SkyDiamond());
+        Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new SkyDiamond());
+        regenerating.setRegenerationShield(1);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BuildersBane()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, 2, List.of(regenerating.getId(), destroyed.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(regenerating).doesNotContain(destroyed);
+        assertThat(regenerating.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player2, "Sky Diamond");
+        harness.assertLife(player2, 19);
     }
 
     @Test

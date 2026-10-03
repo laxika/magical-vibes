@@ -19,6 +19,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BalduvianWarMakersTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Haste allows attacking on the turn it is cast")
+    void canAttackOnTheTurnItIsCast() {
+        harness.castFromHand(player1, new BalduvianWarMakers(), "{4}{R}");
+        harness.passBothPriorities();
+        Permanent warMakers = findPermanent(player1, "Balduvian War-Makers");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(warMakers.isAttacking()).isTrue();
+        assertThat(warMakers.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Rampage counts the remaining blockers when its trigger resolves")
+    void removingOneOfTwoBlockersBeforeResolutionGivesNoBonus() {
+        Permanent warMakers = addCreatureReady(player1, new BalduvianWarMakers());
+        warMakers.setAttacking(true);
+        addCreatureReady(player2, new IvoryGargoyle());
+        addCreatureReady(player2, new StormCrow());
+        harness.addMana(player2, ManaColor.WHITE, 5);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
+        harness.passBothPriorities();
+
+        assertThat(warMakers.getPowerModifier()).isZero();
+        assertThat(warMakers.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("With one blocker Rampage 1 grants no bonus")
     void oneBlockerGivesNothing() {
         Permanent warMakers = addCreatureReady(player1, new BalduvianWarMakers());

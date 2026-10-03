@@ -55,4 +55,45 @@ class BifurMelodicRiderTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
+    @Test
+    void canPutItsEntryCounterOnItself() {
+        Permanent bifur = harness.enterBattlefieldAndReturn(player1, new BifurMelodicRider());
+
+        harness.handlePermanentChosen(player1, bifur.getId());
+        resolveAllTriggers();
+
+        assertThat(bifur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canPutItsEntryCounterOnAnOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new BifurMelodicRider());
+
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void enduringStoryPersistsAfterQualifyingPermanentsLeave() {
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bifur = harness.enterBattlefieldAndReturn(player1, new BifurMelodicRider());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        gd.playerBattlefields.get(player1.getId()).removeAll(List.of(firstArtifact, secondArtifact));
+        gd.playerGraveyards.get(player1.getId()).addAll(List.of(firstArtifact.getCard(), secondArtifact.getCard()));
+        bifur.setSummoningSick(false);
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
 }

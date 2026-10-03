@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.a.AdantoVanguard;
+import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,11 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BishopOfTheBloodstained.class, AdantoVanguard.class, LightningStrike.class})
 class BishopOfTheBloodstainedTest extends BaseCardTest {
-
-    
-
-    
 
     @Test
     @DisplayName("ETB trigger targets opponent and goes on stack")
@@ -36,8 +33,7 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
     @DisplayName("ETB with only Bishop on battlefield causes 1 life loss (counts itself)")
     void etbWithOnlyBishopCausesOneLifeLoss() {
         castBishop();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         // Bishop is itself a Vampire, so opponent loses 1 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -52,8 +48,7 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AdantoVanguard());
 
         castBishop();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         // 2 Adanto Vanguards + Bishop itself = 3 Vampires, opponent loses 3 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -67,8 +62,7 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AdantoVanguard());
 
         castBishop();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         // Controller's life should stay at 10 (no gain)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
@@ -82,7 +76,7 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BishopOfTheBloodstained()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }
@@ -91,8 +85,7 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
     @DisplayName("Stack is empty after full resolution")
     void stackIsEmptyAfterResolution() {
         castBishop();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
     }
@@ -101,15 +94,77 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
     @DisplayName("Game log records life loss")
     void gameLogRecordsLifeLoss() {
         castBishop();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses 1 life"));
+        assertThat(gameLogContains("loses 1 life")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opposing Vampires do not contribute to life loss")
+    void opposingVampiresAreNotCounted() {
+        harness.addToBattlefield(player2, new AdantoVanguard());
+        harness.addToBattlefield(player2, new BishopOfTheBloodstained());
+
+        castBishop();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Vampires entering before resolution contribute to life loss")
+    void countsVampiresAtResolution() {
+        castBishop();
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new AdantoVanguard());
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Removing Bishop before resolution leaves its trigger counting remaining Vampires")
+    void triggerResolvesAfterBishopDies() {
+        harness.addToBattlefield(player1, new AdantoVanguard());
+        castBishop();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Bishop of the Bloodstained"));
+        harness.assertNotOnBattlefield(player1, "Bishop of the Bloodstained");
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Removing the only Vampire before resolution causes no life loss")
+    void noVampiresAtResolutionCausesNoLifeLoss() {
+        castBishop();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Bishop of the Bloodstained"));
+        harness.assertNotOnBattlefield(player1, "Bishop of the Bloodstained");
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castBishop() {
         harness.setHand(player1, List.of(new BishopOfTheBloodstained()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, player2.getId());
     }
 }

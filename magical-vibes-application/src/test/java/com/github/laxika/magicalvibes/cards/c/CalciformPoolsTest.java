@@ -54,6 +54,65 @@ class CalciformPoolsTest extends BaseCardTest {
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(pools.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(pools.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Stored mana can be withdrawn after tapping the land for colorless mana")
+    void withdrawsStorageCountersWhileTapped() {
+        Permanent pools = harness.addToBattlefieldAndReturn(player1, new CalciformPools());
+        pools.setCounterCount(CounterType.STORAGE, 2);
+        harness.tapPermanent(player1, 0);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(pools.getCounterCount(CounterType.STORAGE)).isZero();
         assertThat(pools.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Stored mana can be withdrawn repeatedly without tapping the land")
+    void withdrawsStorageCountersRepeatedly() {
+        Permanent pools = harness.addToBattlefieldAndReturn(player1, new CalciformPools());
+        pools.setCounterCount(CounterType.STORAGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "WHITE");
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(pools.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(pools.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing zero storage counters pays one mana without tapping or adding mana")
+    void canChooseZeroStorageCounters() {
+        Permanent pools = harness.addToBattlefieldAndReturn(player1, new CalciformPools());
+        pools.setCounterCount(CounterType.STORAGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "0");
+
+        assertThat(pools.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+        assertThat(pools.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.k.KitchenFinks;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed(BoonReflection.class)
+@CardUsed({BoonReflection.class, KitchenFinks.class})
 class BoonReflectionTest extends BaseCardTest {
 
     @Test
@@ -51,5 +52,39 @@ class BoonReflectionTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getLifeSupport().applySetLifeTotal(gd, player1.getId(), 25));
 
         harness.assertLife(player1, 30); // gaining 5 doubled to 10
+    }
+
+    @Test
+    @DisplayName("Life gain from a creature's enters ability is doubled")
+    void creatureEntryLifeGainDoubled() {
+        harness.addToBattlefield(player1, new BoonReflection());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new KitchenFinks());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("Gaining zero life does not change the life total")
+    void zeroLifeGainDoesNotChangeLife() {
+        harness.addToBattlefield(player1, new BoonReflection());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Setting life total lower does not double the life loss")
+    void setLifeTotalLowerNotDoubled() {
+        harness.addToBattlefield(player1, new BoonReflection());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applySetLifeTotal(gd, player1.getId(), 15));
+
+        harness.assertLife(player1, 15);
     }
 }

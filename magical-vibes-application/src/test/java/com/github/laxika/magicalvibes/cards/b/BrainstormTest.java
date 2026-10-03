@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.Abundance;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -14,8 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Brainstorm.class, Island.class})
+@CardUsed({Brainstorm.class, Island.class, Abundance.class})
 class BrainstormTest extends BaseCardTest {
 
     private List<Card> fiveCards() {
@@ -84,8 +86,7 @@ class BrainstormTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.handleMultipleCardsChosen(player1, List.of(alreadyInHand.getId(), library.get(0).getId()));
 
@@ -103,8 +104,7 @@ class BrainstormTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
@@ -151,5 +151,85 @@ class BrainstormTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can put the chosen cards on top in reverse draw order")
+    void putsCardsOnTopInChosenOrder() {
+        List<Card> library = fiveCards();
+        castBrainstorm(library);
+
+        harness.handleMultipleCardsChosen(player1, List.of(library.get(2).getId(), library.get(0).getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(1));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(library.get(2), library.get(0), library.get(3), library.get(4));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Drawing exactly the remaining three cards does not cause a loss")
+    void drawingExactlyThreeRemainingCardsDoesNotLose() {
+        List<Card> library = List.of(new Island(), new Island(), new Island());
+        castBrainstorm(library);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.handleMultipleCardsChosen(player1, List.of(library.get(1).getId(), library.get(0).getId()));
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(2));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(1), library.get(0));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot return the same card twice instead of two distinct cards")
+    void rejectsDuplicateCardSelection() {
+        List<Card> library = fiveCards();
+        castBrainstorm(library);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(library.get(0).getId(), library.get(0).getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(library.get(0), library.get(1), library.get(2));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(3), library.get(4));
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(library.get(0).getId(), library.get(1).getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(2));
+    }
+
+    @Test
+    @DisplayName("Finishes all optional draw replacements before choosing cards to return")
+    void completesDrawReplacementsBeforeReturningCards() {
+        List<Card> library = fiveCards();
+        Card alreadyInHand = new Island();
+        harness.addToBattlefield(player1, new Abundance());
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        for (int i = 0; i < 3; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(alreadyInHand, library.get(0), library.get(1), library.get(2));
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class, choice -> {
+                    assertThat(choice.minCount()).isEqualTo(2);
+                    assertThat(choice.maxCount()).isEqualTo(2);
+                });
+        harness.handleMultipleCardsChosen(player1, List.of(alreadyInHand.getId(), library.get(2).getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(0), library.get(1));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(alreadyInHand, library.get(2), library.get(3), library.get(4));
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

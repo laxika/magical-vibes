@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BattleMastery.class, DeeptreadMerrow.class, DolmenGate.class})
 class BattleMasteryTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Battle Mastery puts it on the stack")
@@ -54,8 +53,6 @@ class BattleMasteryTest extends BaseCardTest {
                         && p.getAttachedTo().equals(creature.getId()));
     }
 
-    // ===== Grants double strike =====
-
     @Test
     @DisplayName("Enchanted creature has double strike")
     void enchantedCreatureHasDoubleStrike() {
@@ -82,7 +79,39 @@ class BattleMasteryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
-    // ===== Effects stop when removed =====
+    @Test
+    @DisplayName("A blocked double striker kills its blocker before retaliation without damaging the player")
+    void blockedDoubleStrikerDoesNotDamagePlayerAfterKillingBlocker() {
+        Permanent attacker = addCreatureReady(player1, new DeeptreadMerrow());
+        addCreatureReady(player2, new DeeptreadMerrow());
+        attachBattleMastery(attacker);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Deeptread Merrow");
+        harness.assertInGraveyard(player2, "Deeptread Merrow");
+        harness.assertLife(player2, 20);
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Battle Mastery gives an opposing blocker first-strike combat damage")
+    void enchantedOpposingBlockerKillsAttackerBeforeRetaliation() {
+        addCreatureReady(player1, new DeeptreadMerrow());
+        Permanent blocker = addCreatureReady(player2, new DeeptreadMerrow());
+        attachBattleMastery(blocker);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Deeptread Merrow");
+        harness.assertOnBattlefield(player2, "Deeptread Merrow");
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
 
     @Test
     @DisplayName("Creature loses double strike when Battle Mastery is removed")
@@ -98,8 +127,6 @@ class BattleMasteryTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
-    // ===== Does not affect other creatures =====
-
     @Test
     @DisplayName("Battle Mastery does not affect other creatures")
     void doesNotAffectOtherCreatures() {
@@ -110,8 +137,6 @@ class BattleMasteryTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Battle Mastery fizzles if target creature is removed before resolution")
@@ -130,8 +155,6 @@ class BattleMasteryTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Battle Mastery");
         harness.assertNotOnBattlefield(player1, "Battle Mastery");
     }
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Can target a creature with Battle Mastery")
@@ -166,11 +189,9 @@ class BattleMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Battle Mastery")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new DolmenGate());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DolmenGate());
         harness.setHand(player1, List.of(new BattleMastery()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-
-        Permanent artifact = findPermanent(player1, "Dolmen Gate");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

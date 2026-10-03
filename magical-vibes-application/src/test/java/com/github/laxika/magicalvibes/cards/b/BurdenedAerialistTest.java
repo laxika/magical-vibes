@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AcademyManufactor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BurdenedAerialist.class)
+@CardUsed({BurdenedAerialist.class, AcademyManufactor.class})
 class BurdenedAerialistTest extends BaseCardTest {
 
     @Test
@@ -31,8 +32,7 @@ class BurdenedAerialistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -60,6 +60,59 @@ class BurdenedAerialistTest extends BaseCardTest {
         assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    void gainsFlyingWhenFoodTokenIsSacrificed() {
+        createManufactorTokens();
+        Permanent aerialist = findPermanent(player1, "Burdened Aerialist");
+        Permanent food = findPermanent(player1, "Food");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(food), null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+        harness.assertLife(player1, 23);
+        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void gainsFlyingWhenClueTokenIsSacrificed() {
+        createManufactorTokens();
+        Permanent aerialist = findPermanent(player1, "Burdened Aerialist");
+        Permanent clue = findPermanent(player1, "Clue");
+        harness.setLibrary(player1, List.of(new BurdenedAerialist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(clue), null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void doesNotGainFlyingWhenOpponentSacrificesTreasure() {
+        Permanent aerialist = addCreatureReady(player1, new BurdenedAerialist());
+        Permanent treasure = addTreasureToken(player2);
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(treasure), null, null);
+        harness.handleListChoice(player2, "RED");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    private void createManufactorTokens() {
+        harness.addToBattlefield(player1, new AcademyManufactor());
+        harness.setHand(player1, List.of(new BurdenedAerialist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+    }
+
     private Permanent addTreasureToken(Player player) {
         Card treasureCard = new Card();
         treasureCard.setName("Treasure");
@@ -73,9 +126,6 @@ class BurdenedAerialistTest extends BaseCardTest {
                 List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                 "{T}, Sacrifice this artifact: Add one mana of any color."
         ));
-        Permanent treasure = new Permanent(treasureCard);
-        treasure.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(treasure);
-        return treasure;
+        return addCreatureReady(player, treasureCard);
     }
 }

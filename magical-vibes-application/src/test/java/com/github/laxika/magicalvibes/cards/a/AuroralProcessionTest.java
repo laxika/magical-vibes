@@ -28,8 +28,7 @@ class AuroralProcessionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, card.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, card.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(card.getId()));
@@ -67,5 +66,38 @@ class AuroralProcessionTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Returns only the targeted noncreature card")
+    void returnsOnlyTargetedNoncreatureCard() {
+        Card target = new AuroralProcession();
+        Card other = new AuroralProcession();
+        Card spell = new AuroralProcession();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(target.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(other.getId(), spell.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot cast without choosing a graveyard target")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of(new AuroralProcession()));
+        harness.setHand(player1, List.of(new AuroralProcession()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Auroral Procession");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }

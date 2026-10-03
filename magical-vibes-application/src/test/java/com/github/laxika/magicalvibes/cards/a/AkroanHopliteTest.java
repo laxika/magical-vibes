@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.l.LightningStrike;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AkroanHoplite.class, LightningStrike.class})
 class AkroanHopliteTest extends BaseCardTest {
 
     @Test
@@ -40,6 +44,63 @@ class AkroanHopliteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hoplite.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacking Hoplite counts itself and the other attackers, but not nonattackers")
+    void eachAttackingHopliteCountsOnlyAttackers() {
+        Permanent first = addCreatureReady(player1, new AkroanHoplite());
+        Permanent second = addCreatureReady(player1, new AkroanHoplite());
+        Permanent nonattacker = addCreatureReady(player1, new AkroanHoplite());
+        addCreatureReady(player2, new AkroanHoplite());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(nonattacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts attacking creatures when the ability resolves, after another attacker dies")
+    void countsAttackersAtResolution() {
+        Permanent survivor = addCreatureReady(player1, new AkroanHoplite());
+        Permanent removed = addCreatureReady(player1, new AkroanHoplite());
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        declareAttackers(List.of(0, 1));
+        assertThat(gd.stack).hasSize(2);
+        harness.castInstant(player2, 0, removed.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor).doesNotContain(removed);
+        assertThat(survivor.getPowerModifier()).isEqualTo(1);
+        assertThat(survivor.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Hoplite that dies before its attack trigger resolves cannot boost another Hoplite")
+    void removedSourceDoesNotBoostNonattackingHoplite() {
+        Permanent attacker = addCreatureReady(player1, new AkroanHoplite());
+        Permanent nonattacker = addCreatureReady(player1, new AkroanHoplite());
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.castInstant(player2, 0, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonattacker).doesNotContain(attacker);
+        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(nonattacker.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     private com.github.laxika.magicalvibes.model.Card createCreatureCard(String name) {

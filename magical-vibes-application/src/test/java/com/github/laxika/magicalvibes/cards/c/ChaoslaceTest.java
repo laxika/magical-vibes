@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Chaoslace.class, GrizzlyBears.class, Forest.class, DarkRitual.class})
+@CardUsed({Chaoslace.class, GrizzlyBears.class, Forest.class, DarkRitual.class, Unsummon.class})
 class ChaoslaceTest extends BaseCardTest {
 
     @Test
@@ -73,8 +74,7 @@ class ChaoslaceTest extends BaseCardTest {
         harness.castCreature(player1, 1);
         UUID bearsSpellId = gd.stack.getFirst().getCard().getId();
 
-        harness.castInstant(player1, 0, bearsSpellId);
-        harness.passBothPriorities(); // resolve Chaoslace on the spell
+        harness.castAndResolveInstant(player1, 0, bearsSpellId);
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
@@ -92,8 +92,7 @@ class ChaoslaceTest extends BaseCardTest {
         harness.castInstant(player1, 1);
         UUID targetSpellId = gd.stack.getFirst().getCard().getId();
 
-        harness.castInstant(player1, 0, targetSpellId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetSpellId);
 
         assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.RED);
 
@@ -106,5 +105,63 @@ class ChaoslaceTest extends BaseCardTest {
         assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLACK);
 
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An opponent's spell becomes red while on the stack")
+    void opponentSpellBecomesRed() {
+        DarkRitual ritual = new DarkRitual();
+        harness.setHand(player2, List.of(ritual));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0);
+        harness.setHand(player1, List.of(new Chaoslace()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, ritual.getId());
+
+        assertThat(gqs.getEffectiveCardColors(gd, ritual)).containsExactly(CardColor.RED);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Dark Ritual");
+        assertThat(gqs.getEffectiveCardColors(gd, ritual)).containsExactly(CardColor.BLACK);
+    }
+
+    @Test
+    @DisplayName("A returned creature loses the color change when cast again")
+    void returnedCreatureDoesNotKeepColorChange() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Chaoslace(), new Unsummon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.RED);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, findPermanent(player1, "Grizzly Bears")))
+                .containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Chaoslace does not change a creature that leaves before resolution")
+    void removedTargetIsNotChanged() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Chaoslace()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Chaoslace");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectiveCardColors(gd, bears.getCard())).containsExactly(CardColor.GREEN);
     }
 }

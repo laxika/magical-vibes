@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AshcoatBear.class)
+@CardUsed({AshcoatBear.class})
 class AshcoatBearTest extends BaseCardTest {
 
     @Test
@@ -45,5 +45,32 @@ class AshcoatBearTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof AshcoatBear);
+    }
+
+    @Test
+    @DisplayName("Can respond to an opponent's spell and resolves before it")
+    void canRespondToOpponentsSpell() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        AshcoatBear opponentsBear = new AshcoatBear();
+        AshcoatBear respondingBear = new AshcoatBear();
+        harness.castFromHand(player2, opponentsBear, "{1}{G}");
+        harness.castFromHand(player1, respondingBear, "{1}{G}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(respondingBear);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(opponentsBear);
+        harness.assertOnBattlefield(player1, "Ashcoat Bear");
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
     }
 }

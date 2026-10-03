@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AvenTrailblazer.class, Plains.class, Island.class, Swamp.class, Mountain.class, Forest.class})
 class AvenTrailblazerTest extends BaseCardTest {
 
     @Test
@@ -65,10 +67,38 @@ class AvenTrailblazerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, trailblazer)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("With no lands, zero toughness sends Trailblazer to the graveyard")
+    void diesWithoutBasicLandTypes() {
+        Permanent trailblazer = addReady(player1);
+
+        assertThat(gqs.getEffectiveToughness(gd, trailblazer)).isZero();
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(trailblazer);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(trailblazer.getCard());
+    }
+
+    @Test
+    @DisplayName("All five basic land types give five toughness")
+    void countsAllFiveBasicLandTypes() {
+        Permanent trailblazer = addReady(player1);
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectiveToughness(gd, trailblazer)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, trailblazer)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(trailblazer);
+    }
+
     private Permanent addReady(Player player) {
-        Permanent permanent = new Permanent(new AvenTrailblazer());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new AvenTrailblazer());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TirelessTracker;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AvengingDruid.class, Shock.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed({AvengingDruid.class, Shock.class, Forest.class, Island.class, GrizzlyBears.class,
+        TirelessTracker.class, HermeticStudy.class})
 class AvengingDruidTest extends BaseCardTest {
 
     @Test
@@ -64,7 +66,6 @@ class AvengingDruidTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(TirelessTracker.class)
     @DisplayName("Putting the revealed land onto the battlefield triggers landfall")
     void revealedLandTriggersLandfall() {
         addCreatureReady(player1, new TirelessTracker());
@@ -76,6 +77,70 @@ class AvengingDruidTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A land on top enters untapped without revealing the next card")
+    void landOnTopStopsRevealingImmediately() {
+        Card forest = new Forest();
+        Card shock = new Shock();
+        attackAndResolveTrigger(List.of(forest, shock));
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(forest, shock);
+    }
+
+    @Test
+    @DisplayName("Accepting with an empty library does nothing")
+    void emptyLibraryDoesNothing() {
+        attackAndResolveTrigger(List.of());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opponent triggers the reveal ability")
+    void noncombatDamageToOpponentTriggers() {
+        addDruidWithDamageAbility();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to its controller does not trigger the reveal ability")
+    void noncombatDamageToControllerDoesNotTrigger() {
+        addDruidWithDamageAbility();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    private void addDruidWithDamageAbility() {
+        Permanent druid = addCreatureReady(player1, new AvengingDruid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
+        aura.setAttachedTo(druid.getId());
     }
 
     private void attackAndResolveTrigger(List<Card> library) {

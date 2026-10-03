@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "59")
 @CardRegistration(set = "2X2", collectorNumber = "34")
 @CardRegistration(set = "LTC", collectorNumber = "183")
+@CardRegistration(set = "SLD", collectorNumber = "2126")
 public class WeatheredWayfarer extends Card {
 
     public WeatheredWayfarer() {

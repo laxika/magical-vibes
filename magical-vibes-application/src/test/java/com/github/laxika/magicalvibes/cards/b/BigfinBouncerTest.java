@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BigfinBouncer.class, GrizzlyBears.class})
 class BigfinBouncerTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,46 @@ class BigfinBouncerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownCreatureId, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can enter when no opponent controls a creature")
+    void entersWithoutLegalTarget() {
+        harness.castFromHand(player1, new BigfinBouncer(), "{3}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bigfin Bouncer");
+        harness.assertNotInHand(player1, "Bigfin Bouncer");
+    }
+
+    @Test
+    @DisplayName("Returns an opponent-controlled creature to its owner rather than its controller")
+    void returnsStolenCreatureToOwner() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gd.stolenCreatures.put(targetId, player1.getId());
+        castBigfinBouncer(targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("ETB still resolves after Bigfin Bouncer leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castBigfinBouncer(harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToHand(
+                gd, gd.playerBattlefields.get(player1.getId()).getFirst());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Bigfin Bouncer");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     private void castBigfinBouncer(UUID targetId) {

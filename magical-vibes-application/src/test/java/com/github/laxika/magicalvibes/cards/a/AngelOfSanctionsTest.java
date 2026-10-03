@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AngelOfSanctions.class, Forest.class, GrizzlyBears.class, Unsummon.class})
 class AngelOfSanctionsTest extends BaseCardTest {
-
-    // ===== Embalm =====
 
     private void setUpEmbalm() {
         harness.forceActivePlayer(player1);
@@ -79,8 +79,6 @@ class AngelOfSanctionsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Angel of Sanctions");
     }
 
-    // ===== ETB exile (O-ring) =====
-
     private UUID castAngelAndExile(UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -125,8 +123,7 @@ class AngelOfSanctionsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         UUID angelId = harness.getPermanentId(player1, "Angel of Sanctions");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, angelId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, angelId);
 
         // Grizzly Bears returns under its owner's control.
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -136,7 +133,7 @@ class AngelOfSanctionsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB never triggers when the only permanent an opponent controls is a land")
+    @DisplayName("ETB cannot be put on the stack when the only opposing permanent is a land")
     void etbSkipsLandTargets() {
         harness.addToBattlefield(player2, new Forest());
         harness.forceActivePlayer(player1);
@@ -152,5 +149,87 @@ class AngelOfSanctionsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may decline to exile the chosen target")
+    void mayDeclineExile() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new AngelOfSanctions()).getId();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AngelOfSanctions()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(harness.getPermanentId(player2, "Angel of Sanctions")).isEqualTo(targetId);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exile ability cannot target a permanent its controller controls")
+    void cannotTargetOwnPermanent() {
+        harness.addToBattlefield(player1, new AngelOfSanctions());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AngelOfSanctions()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Embalmed Angel exiles a permanent and returns it when the token leaves")
+    void embalmedTokenRetainsExileAbility() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        setUpEmbalm();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        UUID tokenId = harness.getPermanentId(player1, "Angel of Sanctions");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, tokenId);
+
+        harness.assertNotOnBattlefield(player1, "Angel of Sanctions");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isNotEqualTo(targetId);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Nothing is exiled if Angel leaves before its enter ability resolves")
+    void sourceLeavesBeforeExileResolves() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AngelOfSanctions()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        UUID angelId = harness.getPermanentId(player1, "Angel of Sanctions");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, angelId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Angel of Sanctions");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isEqualTo(targetId);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }

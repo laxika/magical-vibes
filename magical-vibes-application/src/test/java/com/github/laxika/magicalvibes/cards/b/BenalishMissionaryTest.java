@@ -25,8 +25,7 @@ class BenalishMissionaryTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         addCreatureReady(player2, new BenalishKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
@@ -49,8 +48,7 @@ class BenalishMissionaryTest extends BaseCardTest {
         Permanent missionary = addCreatureReady(player2, new BenalishMissionary());
         Permanent attacker = addCreatureReady(player1, new BenalishKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.addMana(player2, ManaColor.WHITE, 2);
 
@@ -67,8 +65,7 @@ class BenalishMissionaryTest extends BaseCardTest {
         addCreatureReady(player1, new BenalishKnight());
         Permanent blocker = addCreatureReady(player2, new BenalishKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
@@ -84,8 +81,7 @@ class BenalishMissionaryTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         Permanent blocker = addCreatureReady(player2, new BenalishKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
@@ -94,6 +90,110 @@ class BenalishMissionaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Can prevent combat damage from a blocked creature you control")
+    void canTargetOwnBlockedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        Permanent missionary = addCreatureReady(player1, new BenalishMissionary());
+        addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, battlefieldIndex(player1, missionary), null, attacker.getId());
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(countPermanents(player1, "Benalish Knight")).isZero();
+        assertThat(countPermanents(player2, "Benalish Knight")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can target an attacker after its last blocker has left combat")
+    void canActivateAfterLastBlockerLeaves() {
+        Permanent missionary = addCreatureReady(player2, new BenalishMissionary());
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        Permanent blocker = addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, blocker));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.activateAbility(player2, battlefieldIndex(player2, missionary), null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent missionary = addCreatureReady(player2, new BenalishMissionary());
+        missionary.setSummoningSick(true);
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2,
+                battlefieldIndex(player2, missionary), null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only one white mana")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent missionary = addCreatureReady(player2, new BenalishMissionary());
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2,
+                battlefieldIndex(player2, missionary), null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent missionary = addCreatureReady(player2, new BenalishMissionary());
+        missionary.setTapped(true);
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2,
+                battlefieldIndex(player2, missionary), null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves even if the Missionary leaves the battlefield")
+    void abilityResolvesAfterMissionaryLeaves() {
+        Permanent missionary = addCreatureReady(player2, new BenalishMissionary());
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.activateAbility(player2, battlefieldIndex(player2, missionary), null, attacker.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, missionary));
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(countPermanents(player2, "Benalish Knight")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Benalish Knight")).isZero();
     }
 
     private int battlefieldIndex(Player owner, Permanent permanent) {

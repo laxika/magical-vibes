@@ -2,10 +2,15 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GideonChampionOfJustice;
+import com.github.laxika.magicalvibes.cards.s.SafePassage;
+import com.github.laxika.magicalvibes.cards.s.ShieldedPassage;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +19,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AureliasFury.class, GiantGrowth.class, GrizzlyBears.class,
+        GideonChampionOfJustice.class, SafePassage.class, ShieldedPassage.class})
 class AureliasFuryTest extends BaseCardTest {
 
     /** Index 0 is a noncreature spell (Giant Growth), index 1 a creature spell (Grizzly Bears). */
@@ -48,7 +56,7 @@ class AureliasFuryTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -83,5 +91,64 @@ class AureliasFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(player2Playable()).contains(0);
+    }
+
+    @Test
+    void preventedCreatureDamageDoesNotTapCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new ShieldedPassage()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        castFuryForX(1, Map.of(bears.getId(), 1));
+
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void preventedPlayerDamageDoesNotRestrictCasting() {
+        harness.setHand(player2, List.of(new SafePassage()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0);
+
+        castFuryForX(1, Map.of(player2.getId(), 1));
+
+        harness.assertLife(player2, 20);
+        assertThat(player2Playable()).contains(0, 1);
+    }
+
+    @Test
+    void damagedNoncreaturePlaneswalkerIsNotTapped() {
+        Permanent gideon = harness.addToBattlefieldAndReturn(player2, new GideonChampionOfJustice());
+        gideon.setCounterCount(CounterType.LOYALTY, 4);
+
+        castFuryForX(1, Map.of(gideon.getId(), 1));
+
+        assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gideon.isTapped()).isFalse();
+        assertThat(player2Playable()).contains(0);
+    }
+
+    @Test
+    void zeroXCanBeCastWithoutTargets() {
+        castFuryForX(0, Map.of());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Aurelia's Fury");
+        assertThat(player2Playable()).contains(0);
+    }
+
+    @Test
+    void eachChosenTargetMustReceivePositiveDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AureliasFury()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1,
+                Map.of(bears.getId(), 0, player2.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

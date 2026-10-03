@@ -63,6 +63,60 @@ class ArashinSovereignTest extends BaseCardTest {
                 .contains(sovereignCard.getId());
     }
 
+    @Test
+    void mayBePutOnBottomOfAnEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        Card sovereignCard = addSovereign();
+
+        destroySovereign();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Bottom");
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(sovereignCard.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(sovereignCard.getId()));
+    }
+
+    @Test
+    void controllerChoosesButCardReturnsToOwnersLibrary() {
+        Card topCard = new Plains();
+        harness.setLibrary(player2, List.of(topCard));
+        Card sovereignCard = new ArashinSovereign();
+        sovereignCard.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, sovereignCard);
+
+        destroySovereign();
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .contains(sovereignCard.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Top");
+
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(sovereignCard.getId(), topCard.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).noneMatch(card -> card.getId().equals(sovereignCard.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(card -> card.getId().equals(sovereignCard.getId()));
+    }
+
+    @Test
+    void doesNotMoveSourceThatIsNoLongerInGraveyard() {
+        Card topCard = new Plains();
+        harness.setLibrary(player1, List.of(topCard));
+        Card sovereignCard = addSovereign();
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        gd.playerGraveyards.get(player1.getId()).removeIf(card -> card.getId().equals(sovereignCard.getId()));
+        harness.setExile(player1, List.of(sovereignCard));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Top");
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(topCard.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(sovereignCard.getId()));
+    }
+
     private Card addSovereign() {
         Permanent sovereign = harness.addToBattlefieldAndReturn(player1, new ArashinSovereign());
         return sovereign.getCard();
@@ -71,8 +125,7 @@ class ArashinSovereignTest extends BaseCardTest {
     private void destroySovereign() {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }

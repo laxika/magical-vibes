@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChorusOfTheTides.class, Forest.class, GiantGrowth.class, Shock.class})
 class ChorusOfTheTidesTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class ChorusOfTheTidesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID chorusId = harness.getPermanentId(player1, "Chorus of the Tides");
-        harness.castInstant(player1, 0, chorusId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, chorusId);
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -48,8 +49,7 @@ class ChorusOfTheTidesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
@@ -63,9 +63,76 @@ class ChorusOfTheTidesTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         UUID chorusId = harness.getPermanentId(player1, "Chorus of the Tides");
-        harness.castInstant(player2, 0, chorusId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, chorusId);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Heroic can put the top card on the bottom before the targeting spell resolves")
+    void heroicCanBottomTopCard() {
+        harness.addToBattlefield(player1, new ChorusOfTheTides());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        Forest top = new Forest();
+        Forest next = new Forest();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Chorus of the Tides"));
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(top);
+        assertThat(gd.stack).hasSize(1);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Heroic with an empty library does not require a scry choice")
+    void heroicWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new ChorusOfTheTides());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Chorus of the Tides"));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Heroic still scries after an opponent kills Chorus in response")
+    void heroicResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new ChorusOfTheTides());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.setHand(player2, List.of(new Shock()));
+        Forest top = new Forest();
+        harness.setLibrary(player1, List.of(top));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        UUID chorusId = harness.getPermanentId(player1, "Chorus of the Tides");
+
+        harness.castInstant(player1, 0, chorusId);
+        harness.castAndResolveInstant(player2, 0, chorusId);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.stack).isEmpty();
     }
 }

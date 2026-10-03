@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AkkiAvalanchers;
 import com.github.laxika.magicalvibes.cards.k.KokushoTheEveningStar;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -45,8 +44,7 @@ class BenBenAkkiHermitTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Kokusho, the Evening Star");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("deals 1 damage"));
+        assertThat(gameLogContains("deals 1 damage")).isTrue();
     }
 
     @Test
@@ -121,6 +119,54 @@ class BenBenAkkiHermitTest extends BaseCardTest {
                 player1, battlefieldIndex(player1, benBen), 0, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
+    }
+
+    @Test
+    @DisplayName("Can activate with no untapped Mountains and deals no damage")
+    void zeroUntappedMountainsDealsNoDamage() {
+        Permanent benBen = addBenBen(player1);
+        addMountains(player1, 2, true);
+        Permanent attacker = addAttackingKokusho(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(benBen.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Kokusho, the Evening Star");
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Ben-Ben leaves and still counts Mountains at resolution")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent benBen = addBenBen(player1);
+        Permanent mountain = addMountain(player1, true);
+        Permanent attacker = addAttackingKokusho(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 0, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(benBen);
+        gd.playerGraveyards.get(player1.getId()).add(benBen.getCard());
+        mountain.untap();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Ben-Ben, Akki Hermit");
+    }
+
+    @Test
+    @DisplayName("Can target an attacking creature controlled by Ben-Ben's controller")
+    void canTargetOwnAttackingCreature() {
+        addBenBen(player1);
+        addMountains(player1, 1, false);
+        Permanent attacker = addAttackingKokusho(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 
     private Permanent addBenBen(Player player) {

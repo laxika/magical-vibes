@@ -17,6 +17,10 @@ public record DungeonProgress(Dungeon dungeon, int roomIndex) {
         if (isBottomRoom()) {
             throw new IllegalStateException("Cannot advance beyond the bottom room");
         }
-        return new DungeonProgress(dungeon, roomIndex + 1);
+        java.util.List<Integer> choices = dungeon.nextRooms(roomIndex);
+        if (choices.size() != 1) {
+            throw new IllegalStateException("The controller must choose the next dungeon room");
+        }
+        return new DungeonProgress(dungeon, choices.getFirst());
     }
 }

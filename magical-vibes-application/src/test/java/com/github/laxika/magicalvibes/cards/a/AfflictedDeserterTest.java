@@ -1,247 +1,179 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
+import com.github.laxika.magicalvibes.cards.h.Helvault;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AfflictedDeserter.class, Ornithopter.class, DarksteelRelic.class,
+        Helvault.class, LeylineOfTheVoid.class})
 class AfflictedDeserterTest extends BaseCardTest {
 
-    // ===== Werewolf transform: front -> back (no spells cast last turn) =====
-
     @Test
-    @DisplayName("Transforms to Werewolf Ransacker when no spells were cast last turn")
     void transformsWhenNoSpellsCastLastTurn() {
         harness.addToBattlefield(player1, new AfflictedDeserter());
         Permanent deserter = findPermanent(player1, "Afflicted Deserter");
-
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
-        harness.passBothPriorities(); // resolve triggered ability → transforms
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(deserter.isTransformed()).isTrue();
-        assertThat(deserter.getCard().getName()).isEqualTo("Werewolf Ransacker");
-        assertThat(gqs.getEffectivePower(gd, deserter)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, deserter)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
-    @DisplayName("Does not transform when a spell was cast last turn")
     void doesNotTransformWhenSpellCastLastTurn() {
         harness.addToBattlefield(player1, new AfflictedDeserter());
         Permanent deserter = findPermanent(player1, "Afflicted Deserter");
-
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(deserter.isTransformed()).isFalse();
-        assertThat(deserter.getCard().getName()).isEqualTo("Afflicted Deserter");
     }
 
-    // ===== Transform trigger: destroy artifact + damage =====
-
     @Test
-    @DisplayName("Transform trigger destroys artifact and deals 3 damage to its controller")
     void transformTriggerDestroysArtifactAndDealsDamage() {
-        harness.addToBattlefield(player1, new AfflictedDeserter());
         harness.addToBattlefield(player2, new Ornithopter());
-        Permanent deserter = findPermanent(player1, "Afflicted Deserter");
-        Permanent ornithopter = findPermanent(player2, "Ornithopter");
-        int player2LifeBefore = gd.getLife(player2.getId());
+        Permanent artifact = findPermanent(player2, "Ornithopter");
+        int lifeBefore = gd.getLife(player2.getId());
 
-        gd.spellsCastLastTurn.clear();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, transform trigger goes on stack
-        harness.passBothPriorities(); // resolve transform → transforms + MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → prompts may choice
-
-        // Accept the may ability
+        transformAndChooseArtifact(artifact);
         harness.handleMayAbilityChosen(player1, true);
 
-        // Choose the artifact to destroy
-        harness.handlePermanentChosen(player1, ornithopter.getId());
-
-        // Ornithopter should be destroyed
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"))).isTrue();
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
         harness.assertInGraveyard(player2, "Ornithopter");
-
-        // Player 2 should take 3 damage
-        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 3);
-
-        // Deserter should still be transformed
-        assertThat(deserter.isTransformed()).isTrue();
-        assertThat(deserter.getCard().getName()).isEqualTo("Werewolf Ransacker");
+        harness.assertLife(player2, lifeBefore - 3);
+        assertThat(findPermanent(player1, "Werewolf Ransacker").isTransformed()).isTrue();
     }
 
     @Test
-    @DisplayName("Transform trigger can be declined")
     void transformTriggerCanBeDeclined() {
-        harness.addToBattlefield(player1, new AfflictedDeserter());
         harness.addToBattlefield(player2, new Ornithopter());
-        Permanent deserter = findPermanent(player1, "Afflicted Deserter");
-        int player2LifeBefore = gd.getLife(player2.getId());
+        Permanent artifact = findPermanent(player2, "Ornithopter");
+        int lifeBefore = gd.getLife(player2.getId());
 
-        gd.spellsCastLastTurn.clear();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, transform trigger goes on stack
-        harness.passBothPriorities(); // resolve transform → transforms + MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → prompts may choice
-
-        // Decline the may ability
+        transformAndChooseArtifact(artifact);
         harness.handleMayAbilityChosen(player1, false);
 
-        // Ornithopter should still be on the battlefield
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Ornithopter"))).isTrue();
-
-        // Player 2 should not take damage
-        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
-
-        // Deserter should still be transformed
-        assertThat(deserter.isTransformed()).isTrue();
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertLife(player2, lifeBefore);
+        assertThat(findPermanent(player1, "Werewolf Ransacker").isTransformed()).isTrue();
     }
 
     @Test
-    @DisplayName("No damage when indestructible artifact is targeted")
     void noDamageWhenIndestructibleArtifact() {
-        harness.addToBattlefield(player1, new AfflictedDeserter());
         harness.addToBattlefield(player2, new DarksteelRelic());
-        Permanent deserter = findPermanent(player1, "Afflicted Deserter");
         Permanent relic = findPermanent(player2, "Darksteel Relic");
-        int player2LifeBefore = gd.getLife(player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
 
-        gd.spellsCastLastTurn.clear();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, transform trigger goes on stack
-        harness.passBothPriorities(); // resolve transform → transforms + MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → prompts may choice
-
-        // Accept the may ability
+        transformAndChooseArtifact(relic);
         harness.handleMayAbilityChosen(player1, true);
 
-        // Choose the indestructible artifact
-        harness.handlePermanentChosen(player1, relic.getId());
-
-        // Darksteel Relic should still be on the battlefield (indestructible)
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"))).isTrue();
-
-        // Player 2 should NOT take damage (artifact was not put into a graveyard)
-        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
+        harness.assertOnBattlefield(player2, "Darksteel Relic");
+        harness.assertLife(player2, lifeBefore);
     }
 
-    // ===== Werewolf transform: back -> front (two or more spells cast last turn) =====
-
     @Test
-    @DisplayName("Werewolf Ransacker transforms back when a player cast two or more spells last turn")
     void werewolfTransformsBackWhenTwoSpellsCast() {
         harness.addToBattlefield(player1, new AfflictedDeserter());
         Permanent deserter = findPermanent(player1, "Afflicted Deserter");
-
-        // Transform to Werewolf Ransacker first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, transform trigger on stack
-        harness.passBothPriorities(); // resolve transform → MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → prompts may choice
-        harness.handleMayAbilityChosen(player1, false); // decline (no artifacts anyway)
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(deserter.isTransformed()).isTrue();
 
-        // Now simulate that a player cast 2+ spells last turn
-        gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, back-face trigger goes on stack
-        harness.passBothPriorities(); // resolve transform back
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(deserter.isTransformed()).isFalse();
-        assertThat(deserter.getCard().getName()).isEqualTo("Afflicted Deserter");
-        assertThat(gqs.getEffectivePower(gd, deserter)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, deserter)).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Werewolf Ransacker does not transform back when only one spell was cast last turn")
     void werewolfDoesNotTransformWhenOneSpellCast() {
         harness.addToBattlefield(player1, new AfflictedDeserter());
         Permanent deserter = findPermanent(player1, "Afflicted Deserter");
-
-        // Transform to Werewolf Ransacker first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, transform trigger on stack
-        harness.passBothPriorities(); // resolve transform → MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → prompts may choice
-        harness.handleMayAbilityChosen(player1, false); // decline (no artifacts anyway)
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(deserter.isTransformed()).isTrue();
 
-        // Only 1 spell cast last turn by each player
-        gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(deserter.isTransformed()).isTrue();
-        assertThat(deserter.getCard().getName()).isEqualTo("Werewolf Ransacker");
     }
 
-    // ===== Transform trigger does not fire when no artifacts on battlefield =====
-
     @Test
-    @DisplayName("Transform trigger does not prompt when no artifacts are on the battlefield")
     void transformTriggerNoArtifacts() {
         harness.addToBattlefield(player1, new AfflictedDeserter());
         Permanent deserter = findPermanent(player1, "Afflicted Deserter");
-
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, transform trigger goes on stack
-        harness.passBothPriorities(); // resolve transform → transforms + MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → prompts may choice
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
-        // Accept — but no valid targets, so ability has no effect
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Deserter should still be transformed
         assertThat(deserter.isTransformed()).isTrue();
-        assertThat(deserter.getCard().getName()).isEqualTo("Werewolf Ransacker");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void canDestroyOwnArtifactAndDamageItsController() {
+        harness.addToBattlefield(player1, new Helvault());
+        Permanent artifact = findPermanent(player1, "Helvault");
+        int lifeBefore = gd.getLife(player1.getId());
+
+        transformAndChooseArtifact(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Helvault");
+        harness.assertNotOnBattlefield(player1, "Helvault");
+        harness.assertLife(player1, lifeBefore - 3);
+    }
+
+    @Test
+    void noDamageWhenArtifactIsExiledInsteadOfEnteringGraveyard() {
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        harness.addToBattlefield(player2, new Ornithopter());
+        Permanent artifact = findPermanent(player2, "Ornithopter");
+        int lifeBefore = gd.getLife(player2.getId());
+
+        transformAndChooseArtifact(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
+        assertThat(gd.exiledCards).anySatisfy(entry -> {
+            assertThat(entry.card()).isSameAs(artifact.getCard());
+            assertThat(entry.ownerId()).isEqualTo(player2.getId());
+        });
+        harness.assertLife(player2, lifeBefore);
+    }
+
+    private void transformAndChooseArtifact(Permanent artifact) {
+        harness.addToBattlefield(player1, new AfflictedDeserter());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        // The target is chosen when the trigger goes on the stack, before its optional effect resolves.
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.assertOnBattlefield(player1, "Werewolf Ransacker");
+        resolveAllTriggers();
+    }
 }

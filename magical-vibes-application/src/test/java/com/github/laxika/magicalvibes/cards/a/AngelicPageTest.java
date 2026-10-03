@@ -114,7 +114,7 @@ class AngelicPageTest extends BaseCardTest {
     @DisplayName("Cannot activate before Angelic Page has lost summoning sickness")
     void cannotActivateWithSummoningSickness() {
         harness.addToBattlefield(player1, new AngelicPage());
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -142,6 +142,52 @@ class AngelicPageTest extends BaseCardTest {
 
     private Permanent addAngelicPage() {
         return addCreatureReady(player1, new AngelicPage());
+    }
+
+    @Test
+    @DisplayName("Can tap to boost itself while blocking")
+    void boostsItselfWhileBlocking() {
+        Permanent page = addAngelicPage();
+        page.setBlocking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, page.getId());
+        harness.passBothPriorities();
+
+        assertThat(page.isTapped()).isTrue();
+        assertThat(page.isBlocking()).isTrue();
+        assertThat(page.getPowerModifier()).isEqualTo(1);
+        assertThat(page.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activated ability resolves after Angelic Page leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent attacker = addAngelicPageAndCombatCreature(true, false, player1);
+        Permanent page = findPermanent(player1, "Angelic Page");
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(page);
+        gd.playerGraveyards.get(player1.getId()).add(page.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Resolved boost persists when the creature stops attacking")
+    void resolvedBoostPersistsAfterCombat() {
+        Permanent attacker = addAngelicPageAndCombatCreature(true, false, player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
     }
 
     private Permanent addAngelicPageAndCombatCreature(boolean attacking, boolean blocking, Player controller) {

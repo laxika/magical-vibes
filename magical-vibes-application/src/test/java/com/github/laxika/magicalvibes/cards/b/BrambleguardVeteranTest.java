@@ -34,8 +34,7 @@ class BrambleguardVeteranTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent veteran = findPermanent(player1, "Brambleguard Veteran");
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(veteran.getPowerModifier()).isEqualTo(1);
         assertThat(veteran.getToughnessModifier()).isEqualTo(1);
@@ -57,8 +56,7 @@ class BrambleguardVeteranTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(veteran.getPowerModifier()).isZero();
         assertThat(veteran.getToughnessModifier()).isZero();
@@ -75,8 +73,7 @@ class BrambleguardVeteranTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         for (int i = 0; i < 4; i++) {
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
         assertThat(veteran.getPowerModifier()).isEqualTo(1);
@@ -90,5 +87,84 @@ class BrambleguardVeteranTest extends BaseCardTest {
         assertThat(veteran.getPowerModifier()).isZero();
         assertThat(veteran.getToughnessModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @CardUsed({BrambleguardVeteran.class, RaccoonRallier.class})
+    void triggersOnlyOnceAndDoesNotBoostOpposingOrLaterRaccoons() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, new BrambleguardVeteran());
+        Permanent opposingRaccoon = harness.addToBattlefieldAndReturn(player2, new RaccoonRallier());
+        harness.setHand(player1, List.of(new RaccoonRallier(), new RaccoonRallier(), new RaccoonRallier()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        Permanent firstRaccoon = findPermanent(player1, "Raccoon Rallier");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(veteran.getPowerModifier()).isEqualTo(1);
+        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, veteran, Keyword.VIGILANCE)).isTrue();
+        assertThat(firstRaccoon.getPowerModifier()).isEqualTo(1);
+        assertThat(firstRaccoon.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, firstRaccoon, Keyword.VIGILANCE)).isTrue();
+        assertThat(opposingRaccoon.getPowerModifier()).isZero();
+        assertThat(opposingRaccoon.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, opposingRaccoon, Keyword.VIGILANCE)).isFalse();
+        for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
+            if (permanent != veteran && permanent != firstRaccoon) {
+                assertThat(permanent.getPowerModifier()).isZero();
+                assertThat(permanent.getToughnessModifier()).isZero();
+                assertThat(gqs.hasKeyword(gd, permanent, Keyword.VIGILANCE)).isFalse();
+            }
+        }
+    }
+
+    @Test
+    @CardUsed({BrambleguardVeteran.class})
+    void crossingThresholdWithOneSpellTriggersBeforeThatCreatureEnters() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BrambleguardVeteran(), new BrambleguardVeteran()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        Permanent firstVeteran = findPermanent(player1, "Brambleguard Veteran");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(firstVeteran.getPowerModifier()).isEqualTo(1);
+        assertThat(firstVeteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, firstVeteran, Keyword.VIGILANCE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        Permanent secondVeteran = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != firstVeteran)
+                .findFirst().orElseThrow();
+        assertThat(secondVeteran.getPowerModifier()).isZero();
+        assertThat(secondVeteran.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, secondVeteran, Keyword.VIGILANCE)).isFalse();
     }
 }

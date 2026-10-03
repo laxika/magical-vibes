@@ -99,11 +99,49 @@ class ChoMannosBlessingTest extends BaseCardTest {
     }
 
     @Test
-    void cannotEnchantNonCreaturePermanent() {
-        harness.addToBattlefield(player1, new CreditVoucher());
+    void canEnchantOpponentsCreatureAndRemainAttachedAfterChoosingWhite() {
+        Permanent creature = addCreatureReady(player2, new FreshVolunteers());
         harness.setHand(player1, List.of(new ChoMannosBlessing()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        Permanent artifact = findPermanent(player1, "Credit Voucher");
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        Permanent blessing = findPermanent(player1, "Cho-Manno's Blessing");
+        assertThat(blessing.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.WHITE)).isTrue();
+        assertThat(harness.getPermanentRemovalService().enforceAttachmentLegality(gd)).isFalse();
+        harness.assertOnBattlefield(player1, "Cho-Manno's Blessing");
+    }
+
+    @Test
+    void protectionFromAnotherBlessingRemovesTheFirstBlessing() {
+        Permanent creature = addCreatureReady(player1, new FreshVolunteers());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ChoMannosBlessing());
+        first.setAttachedTo(creature.getId());
+        first.setChosenColor(CardColor.BLACK);
+        harness.setHand(player1, List.of(new ChoMannosBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.getPermanentRemovalService().enforceAttachmentLegality(gd);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(first.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard());
+        harness.assertOnBattlefield(player1, "Cho-Manno's Blessing");
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.BLACK)).isFalse();
+    }
+
+    @Test
+    void cannotEnchantNonCreaturePermanent() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CreditVoucher());
+        harness.setHand(player1, List.of(new ChoMannosBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

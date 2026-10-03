@@ -15,7 +15,7 @@ public class AcceleratedEvolution extends Card {
     public AcceleratedEvolution() {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
+                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC,
                         new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.d.DarksteelPendant;
 import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,10 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChromescaleDrakeTest extends BaseCardTest {
 
     private void castDrake() {
-        harness.setHand(player1, List.of(new ChromescaleDrake()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChromescaleDrake(), "{6}{U}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -95,5 +91,64 @@ class ChromescaleDrakeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All three revealed artifacts must go to hand")
+    void allArtifactsGoToHand() {
+        DarksteelIngot first = new DarksteelIngot();
+        DarksteelPendant second = new DarksteelPendant();
+        DarksteelIngot third = new DarksteelIngot();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castDrake();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All revealed non-artifacts go to the graveyard without a choice")
+    void noArtifactsGoToHand() {
+        EchoingTruth first = new EchoingTruth();
+        CrazedGoblin second = new CrazedGoblin();
+        EchoingTruth third = new EchoingTruth();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castDrake();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Affinity reduces the generic cost for each artifact controlled")
+    void affinityReducesGenericCost() {
+        harness.addToBattlefield(player1, new DarksteelIngot());
+        harness.addToBattlefield(player1, new DarksteelPendant());
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new ChromescaleDrake(), "{4}{U}{U}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chromescale Drake");
+    }
+
+    @Test
+    @DisplayName("Affinity can remove all generic mana but leaves the blue cost")
+    void affinityCanRemoveEntireGenericCost() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new DarksteelPendant());
+        }
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new ChromescaleDrake(), "{U}{U}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chromescale Drake");
     }
 }

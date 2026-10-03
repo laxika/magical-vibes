@@ -76,6 +76,107 @@ class BreakDownTheDoorTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(graveyardCard.getId()));
     }
 
+    @Test
+    void enchantmentModeRejectsArtifactTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GildedLotus());
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canManifestTheSecondCardEvenWhenItIsALand() {
+        Card graveyardCard = new BreakDownTheDoor();
+        Card manifestedCard = new Forest();
+        Card untouchedCard = new Forest();
+        harness.setLibrary(player1, List.of(graveyardCard, manifestedCard, untouchedCard));
+
+        cast(2, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anySatisfy(permanent -> {
+            assertThat(permanent.getCard().getId()).isEqualTo(manifestedCard.getId());
+            assertThat(permanent.isManifested()).isTrue();
+            assertThat(permanent.isFaceDown()).isTrue();
+        });
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(graveyardCard.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouchedCard);
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void manifestsTheOnlyCardInLibrary() {
+        Card manifestedCard = new Forest();
+        harness.setLibrary(player1, List.of(manifestedCard));
+
+        cast(2, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isManifested()
+                        && permanent.getCard().getId().equals(manifestedCard.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(manifestedCard.getId()));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void emptyLibraryDoesNotRequireAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        cast(2, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Break Down the Door");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void manifestedCreatureCanBeTurnedFaceUpForItsManaCost() {
+        Card manifestedCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(manifestedCard, new Forest()));
+
+        cast(2, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anySatisfy(permanent -> {
+            assertThat(permanent.getCard().getId()).isEqualTo(manifestedCard.getId());
+            assertThat(permanent.isFaceDown()).isFalse();
+        });
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void artifactModeDoesNotManifestWhenItsTargetLeavesTheBattlefield() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GildedLotus());
+        Card libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        cast(0, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerGraveyards.get(player2.getId()).add(artifact.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Break Down the Door");
+    }
+
     private void cast(int mode, java.util.UUID targetId) {
         prepareSpell();
         harness.castInstant(player1, 0, mode, targetId);

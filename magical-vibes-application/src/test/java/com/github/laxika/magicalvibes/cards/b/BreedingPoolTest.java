@@ -62,6 +62,32 @@ class BreedingPoolTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Putting Breeding Pool onto the battlefield lets its controller pay life")
+    void enteringWithoutLandPlayChargesController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+
+        Permanent pool = harness.enterBattlefieldAndReturn(player2, new BreedingPool());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(8);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(pool.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining payment when Breeding Pool is put onto the battlefield makes it enter tapped")
+    void enteringWithoutLandPlayCanDeclinePayment() {
+        harness.setLife(player2, 10);
+
+        Permanent pool = harness.enterBattlefieldAndReturn(player2, new BreedingPool());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+        assertThat(pool.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Breeding Pool produces green mana")
     void producesGreenMana() {
         Permanent pool = addPoolReady(player1);

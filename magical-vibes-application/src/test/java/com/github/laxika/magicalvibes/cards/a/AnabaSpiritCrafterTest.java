@@ -108,4 +108,35 @@ class AnabaSpiritCrafterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bodyguard)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bodyguard)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Copies controlled by opposing players buff each other and both players' Minotaurs")
+    void opposingCopiesStack() {
+        Permanent ownCrafter = harness.addToBattlefieldAndReturn(player1, new AnabaSpiritCrafter());
+        Permanent opposingCrafter = harness.addToBattlefieldAndReturn(player2, new AnabaSpiritCrafter());
+        Permanent ownBodyguard = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
+        Permanent opposingBodyguard = harness.addToBattlefieldAndReturn(player2, new AnabaBodyguard());
+
+        for (Permanent crafter : List.of(ownCrafter, opposingCrafter)) {
+            assertThat(gqs.getEffectivePower(gd, crafter)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, crafter)).isEqualTo(3);
+        }
+        for (Permanent bodyguard : List.of(ownBodyguard, opposingBodyguard)) {
+            assertThat(gqs.getEffectivePower(gd, bodyguard)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, bodyguard)).isEqualTo(3);
+        }
+    }
+
+    @Test
+    @DisplayName("A tapped Anaba Spirit Crafter still buffs itself and opposing Minotaurs")
+    void tappedSourceStillGrantsBonus() {
+        Permanent crafter = harness.addToBattlefieldAndReturn(player1, new AnabaSpiritCrafter());
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player2, new AnabaBodyguard());
+        crafter.tap();
+
+        assertThat(gqs.getEffectivePower(gd, crafter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, crafter)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bodyguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bodyguard)).isEqualTo(3);
+    }
 }

@@ -40,6 +40,7 @@ class BehemothOfVault0Test extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        resolveAllTriggers();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -89,19 +90,82 @@ class BehemothOfVault0Test extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Entering adds energy to the controller's existing counters")
+    void enteringAddsToExistingEnergy() {
+        gd.playerEnergyCounters.put(player1.getId(), 3);
+        gd.playerEnergyCounters.put(player2.getId(), 5);
+
+        castBehemoth();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(7);
+        assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Paying energy leaves destruction on the stack for players to respond")
+    void paymentQueuesSeparateDestructionTrigger() {
+        Permanent behemoth = castBehemoth();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyBehemoth(behemoth);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The death ability may destroy its controller's own nonland permanent")
+    void deathTriggerCanDestroyOwnPermanent() {
+        Permanent behemoth = castBehemoth();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        destroyBehemoth(behemoth);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A target destroyed before the death ability resolves costs no energy")
+    void removedTargetDoesNotCostEnergy() {
+        Permanent behemoth = castBehemoth();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyBehemoth(behemoth);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
     private Permanent castBehemoth() {
-        harness.setHand(player1, List.of(new BehemothOfVault0()));
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BehemothOfVault0(), "{6}");
         resolveAllTriggers();
         return findPermanent(player1, "Behemoth of Vault 0");
     }
 
     private void destroyBehemoth(Permanent behemoth) {
         harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castInstant(player2, 0, behemoth.getId());
-        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, behemoth.getId());
     }
 }

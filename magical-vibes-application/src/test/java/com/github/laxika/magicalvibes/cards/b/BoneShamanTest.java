@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishCannoneers;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.w.WallOfShields;
 import com.github.laxika.magicalvibes.cards.y.YavimayaGnats;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BoneShaman.class, YavimayaGnats.class, WallOfShields.class,
-        OrcishCannoneers.class, BalduvianBears.class})
+        OrcishCannoneers.class, BalduvianBears.class, TurnToFrog.class})
 class BoneShamanTest extends BaseCardTest {
 
     @Test
@@ -114,6 +115,33 @@ class BoneShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Yavimaya Gnats");
+    }
+
+    @Test
+    @DisplayName("Losing the granted ability lets creatures damaged earlier this turn regenerate")
+    void losingGrantedAbilityAllowsRegeneration() {
+        Permanent shaman = addCreatureReady(player1, new BoneShaman());
+        shaman.setAttacking(true);
+        addCreatureReady(player1, new OrcishCannoneers());
+        Permanent wall = addCreatureReady(player2, new WallOfShields());
+
+        activateAbility();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new TurnToFrog()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, shaman.getId());
+
+        wall.setRegenerationShield(1);
+        harness.activateAbility(player1, 1, null, wall.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Wall of Shields");
+        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(wall.getMarkedDamage()).isZero();
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BorosGuildgate.class})
 class BorosGuildgateTest extends BaseCardTest {
 
     @Test
@@ -67,9 +70,47 @@ class BorosGuildgateTest extends BaseCardTest {
     }
 
     private Permanent addGuildgateReady(Player player) {
-        Permanent perm = new Permanent(new BorosGuildgate());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BorosGuildgate());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Boros Guildgate enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new BorosGuildgate());
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Boros Guildgate cannot produce mana")
+    void tappedGuildgateCannotProduceMana() {
+        harness.enterBattlefieldAndReturn(player1, new BorosGuildgate());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped noncreature Guildgate can produce mana on the turn it enters")
+    void canProduceManaOnTurnItEntersAfterUntapping() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new BorosGuildgate());
+        guildgate.setTapped(false);
+        guildgate.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

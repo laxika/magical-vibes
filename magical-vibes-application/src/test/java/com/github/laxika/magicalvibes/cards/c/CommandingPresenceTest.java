@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CommandingPresence.class, GrizzlyBears.class})
+@CardUsed({CommandingPresence.class, NyxbornCourser.class})
 class CommandingPresenceTest extends BaseCardTest {
 
     @Test
@@ -19,7 +20,7 @@ class CommandingPresenceTest extends BaseCardTest {
         Permanent creature = addEnchantedCreature();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -42,7 +43,7 @@ class CommandingPresenceTest extends BaseCardTest {
         Permanent creature = addEnchantedCreature();
         creature.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new NyxbornCourser());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -54,17 +55,47 @@ class CommandingPresenceTest extends BaseCardTest {
     }
 
     private Permanent addEnchantedCreature() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent aura = new Permanent(new CommandingPresence());
+        Permanent creature = addCreatureReady(player1, new NyxbornCourser());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CommandingPresence());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return creature;
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    @DisplayName("Combat damage creates a Human Soldier token")
+    void createsHumanSoldier() {
+        Permanent creature = addEnchantedCreature();
+        creature.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(token.getCard().getSubtypes())
+                            .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+                    assertThat(token.isTapped()).isFalse();
+                });
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller creates the token when the Aura has a different controller")
+    void enchantedCreatureControllerCreatesToken() {
+        Permanent creature = addCreatureReady(player2, new NyxbornCourser());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CommandingPresence());
+        aura.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().isToken());
     }
 }

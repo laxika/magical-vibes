@@ -38,10 +38,8 @@ class AmbassadorOfEvendoTest extends BaseCardTest {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, modifiedLand);
         int handSizeBeforeTap = gd.playerHands.get(player1.getId()).size();
 
-        permanent.tap();
-        harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(permanent));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .hasSize(handSizeBeforeTap + 1)
@@ -64,5 +62,96 @@ class AmbassadorOfEvendoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Each landfall adds another independent draw trigger to the only library land")
+    void repeatedLandfallGrantsMultipleDrawTriggers() {
+        Card targetLand = new Forest();
+        Card firstDraw = new GrizzlyBears();
+        Card secondDraw = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(targetLand, firstDraw, secondDraw));
+        addCreatureReady(player1, new AmbassadorOfEvendo());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1));
+        Card modifiedLand = gd.playerHands.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, modifiedLand);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(permanent));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+    }
+
+    @Test
+    @DisplayName("An opponent's land entering does not grant an ability")
+    void opponentLandDoesNotTriggerLandfall() {
+        Card targetLand = new Forest();
+        harness.setLibrary(player1, List.of(targetLand));
+        addCreatureReady(player1, new AmbassadorOfEvendo());
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(targetLand);
+    }
+
+    @Test
+    @DisplayName("Tapping another land does not draw a card")
+    void grantedAbilityOnlyTriggersForModifiedLand() {
+        Card targetLand = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(targetLand, new GrizzlyBears()));
+        addCreatureReady(player1, new AmbassadorOfEvendo());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent unmodifiedLand = harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1));
+        Card modifiedLand = gd.playerHands.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, modifiedLand);
+
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(unmodifiedLand));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The granted ability draws for the land's current controller without the Ambassador")
+    void grantedAbilityWorksForNewControllerWithoutAmbassador() {
+        Card targetLand = new Forest();
+        Card drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(targetLand));
+        harness.setLibrary(player2, List.of(drawn));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        addCreatureReady(player1, new AmbassadorOfEvendo());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1));
+        Card modifiedLand = gd.playerHands.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addToBattlefield(player2, modifiedLand);
+
+        harness.tapPermanent(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

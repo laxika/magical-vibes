@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.DevourInShadow;
 import com.github.laxika.magicalvibes.cards.m.MagmaJet;
 import com.github.laxika.magicalvibes.cards.m.MyrServitor;
+import com.github.laxika.magicalvibes.cards.n.NimGrotesque;
+import com.github.laxika.magicalvibes.cards.v.VulshokSorcerer;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,13 +15,16 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AuriokChampion.class, MyrServitor.class, DevourInShadow.class, MagmaJet.class})
+@CardUsed({AuriokChampion.class, MyrServitor.class, DevourInShadow.class, MagmaJet.class,
+        AvariceTotem.class, NimGrotesque.class, VulshokSorcerer.class})
 class AuriokChampionTest extends BaseCardTest {
 
     @Test
@@ -105,5 +112,82 @@ class AuriokChampionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, champion.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    void anotherChampionTriggersOnlyTheChampionAlreadyOnTheBattlefield() {
+        harness.addToBattlefield(player1, new AuriokChampion());
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new AuriokChampion(), "{W}{W}");
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void noncreatureEnteringDoesNotTriggerLifeGain() {
+        harness.addToBattlefield(player1, new AuriokChampion());
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new AvariceTotem(), "{1}");
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void blackAndRedCreaturesCannotBlockChampion(boolean red) {
+        addCreatureReady(player1, new AuriokChampion());
+        Card blocker = red ? new VulshokSorcerer() : new NimGrotesque();
+        addCreatureReady(player2, blocker);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void championCanBlockBlackAndRedCreaturesAndPreventsTheirDamage(boolean red) {
+        Card attacker = red ? new VulshokSorcerer() : new NimGrotesque();
+        addCreatureReady(player1, attacker);
+        Permanent champion = addCreatureReady(player2, new AuriokChampion());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Auriok Champion");
+        assertThat(champion.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+        if (red) {
+            harness.assertInGraveyard(player1, "Vulshok Sorcerer");
+        } else {
+            harness.assertOnBattlefield(player1, "Nim Grotesque");
+        }
+    }
+
+    @Test
+    void protectionDoesNotPreventDamageFromColorlessCreatures() {
+        addCreatureReady(player1, new MyrServitor());
+        addCreatureReady(player2, new AuriokChampion());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Myr Servitor");
+        harness.assertInGraveyard(player2, "Auriok Champion");
     }
 }

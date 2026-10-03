@@ -98,4 +98,44 @@ class AuraExtractionTest extends BaseCardTest {
         harness.assertInHand(player1, "Aura Extraction");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Cycling discards and pays mana before the draw resolves")
+    void cyclingPaysCostsBeforeDrawing() {
+        harness.setHand(player1, List.of(new AuraExtraction()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Aura Extraction");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Glory Seeker");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can put your own enchantment on top of an empty library")
+    void canTargetOwnEnchantmentWithEmptyLibrary() {
+        OverwhelmingInstinct enchantment = new OverwhelmingInstinct();
+        harness.addToBattlefield(player1, enchantment);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new AuraExtraction()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Overwhelming Instinct"));
+
+        harness.assertNotOnBattlefield(player1, "Overwhelming Instinct");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(enchantment);
+        harness.assertNotInGraveyard(player1, "Overwhelming Instinct");
+        harness.assertInGraveyard(player1, "Aura Extraction");
+    }
 }

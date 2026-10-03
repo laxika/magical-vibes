@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "BLC", collectorNumber = "265")
 @CardRegistration(set = "NEC", collectorNumber = "145")
 @CardRegistration(set = "KHC", collectorNumber = "97")
+@CardRegistration(set = "BRC", collectorNumber = "133")
 public class AzoriusSignet extends Card {
 
     public AzoriusSignet() {

@@ -143,6 +143,55 @@ class CaoCaoLordOfWeiTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("Can activate during upkeep without a sorcery timing restriction")
+    void canActivateDuringUpkeep() {
+        setupCaoCaoOnMyTurn(TurnStep.UPKEEP);
+        harness.setHand(player2, List.of(new Forest(), new ForestBear()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase")
+    void cannotActivateDuringPostcombatMain() {
+        setupCaoCaoOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+        assertThat(findPermanent(player1, "Cao Cao, Lord of Wei").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability still resolves after Cao Cao leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        setupCaoCaoOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        var forest = new Forest();
+        var bear = new ForestBear();
+        var controllersCard = new Forest();
+        harness.setHand(player1, List.of(controllersCard));
+        harness.setHand(player2, List.of(forest, bear, new ForestBear()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        var caoCao = findPermanent(player1, "Cao Cao, Lord of Wei");
+        gd.playerBattlefields.get(player1.getId()).remove(caoCao);
+        gd.playerGraveyards.get(player1.getId()).add(caoCao.getCard());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2).contains(bear);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllersCard);
+    }
     private void setupCaoCaoOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new CaoCaoLordOfWei());
         harness.forceActivePlayer(player1);

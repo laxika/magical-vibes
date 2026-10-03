@@ -121,6 +121,29 @@ public class LibraryRevealSupport {
         return collectCardNamesInGame(gameData, card -> !matchesCardTypes(card, excluded));
     }
 
+    /** Validates a name outside the current game against implemented printings and type restrictions. */
+    public boolean isCatalogCardNameAllowed(String name, List<CardType> excludedTypes) {
+        if (cardCatalog == null) {
+            return false;
+        }
+        String identifier = name.replaceAll("[^\\p{L}\\p{N}]", "");
+        Set<String> checkedClasses = new java.util.HashSet<>();
+        for (CardSet set : CardSet.values()) {
+            for (var printing : cardCatalog.getPrintings(set)) {
+                if (!printing.simpleCardClassName().equalsIgnoreCase(identifier)
+                        || !checkedClasses.add(printing.cardClassName())) {
+                    continue;
+                }
+                Card candidate = printing.createCard();
+                if (name.equalsIgnoreCase(candidate.getName())
+                        && excludedTypes.stream().noneMatch(candidate::hasType)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Every distinct card name in the game with the required card type. */
     public List<String> collectCardNamesInGameOfType(GameData gameData, CardType requiredType) {
         if (requiredType == CardType.CREATURE) {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.PyromancersSwath;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CoordinatedClobbering.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({CoordinatedClobbering.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class,
+        PyromancersSwath.class})
 class CoordinatedClobberingTest extends BaseCardTest {
 
     @Test
@@ -72,6 +74,64 @@ class CoordinatedClobberingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(
                 ownVictim.getId(), source.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A source tapped in response deals no damage while the other source still does")
+    void excludesSourceTappedBeforeResolution() {
+        Permanent firstSource = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondSource = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        cast(List.of(victim.getId(), firstSource.getId(), secondSource.getId()));
+        firstSource.tap();
+        harness.passBothPriorities();
+
+        assertThat(secondSource.isTapped()).isTrue();
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An illegal victim does not stop the legal sources from being tapped")
+    void tapsSourcesWhenVictimLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        cast(List.of(victim.getId(), source.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("No damage is dealt if every source becomes tapped before resolution")
+    void dealsNoDamageWhenOnlySourceBecomesIllegal() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        cast(List.of(victim.getId(), source.getId()));
+        source.tap();
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coordinated Clobbering");
+    }
+
+    @Test
+    @DisplayName("Spell damage bonuses do not apply to damage dealt by the chosen creatures")
+    void doesNotApplySorceryDamageBonusToCreatureDamage() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        cast(List.of(victim.getId(), source.getId()));
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
     }
 
     private void cast(List<java.util.UUID> targets) {

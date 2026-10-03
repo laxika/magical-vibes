@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,10 +21,7 @@ class BruseTarlBoorishHerderTest extends BaseCardTest {
     @DisplayName("Enters and grants target creature double strike and lifelink")
     void entersAndGrantsKeywords() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BruseTarlBoorishHerder()));
-        addBruseMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BruseTarlBoorishHerder(), "{2}{R}{W}");
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, target.getId());
@@ -78,9 +74,35 @@ class BruseTarlBoorishHerderTest extends BaseCardTest {
         assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
     }
 
-    private void addBruseMana() {
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+    @Test
+    @DisplayName("Bruse can target himself with his entry trigger")
+    void entryTriggerCanTargetBruseHimself() {
+        harness.castFromHand(player1, new BruseTarlBoorishHerder(), "{2}{R}{W}");
+        harness.passBothPriorities();
+
+        Permanent bruse = findPermanent(player1, "Bruse Tarl, Boorish Herder");
+        harness.handlePermanentChosen(player1, bruse.getId());
+        harness.passBothPriorities();
+
+        assertThat(bruse.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(bruse.hasKeyword(Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attack trigger does not grant keywords to a target that leaves the battlefield")
+    void removedTargetDoesNotGainKeywords() {
+        Permanent bruse = addCreatureReady(player1, new BruseTarlBoorishHerder());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(bruse.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(bruse.hasKeyword(Keyword.LIFELINK)).isFalse();
     }
 }

@@ -43,8 +43,7 @@ class BlackMarketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, otherMarket.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, otherMarket.getId());
 
         assertThat(market.getCounterCount(CounterType.CHARGE)).isZero();
         harness.assertNotOnBattlefield(player2, "Black Market");
@@ -87,6 +86,76 @@ class BlackMarketTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Black Market gains a counter when its controller's creature dies")
+    void ownCreatureDeathTriggersBothMarkets() {
+        Permanent first = addBlackMarket(player1);
+        Permanent second = addBlackMarket(player2);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        killCreature(player1);
+
+        assertThat(first.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Adds no mana with zero charge counters")
+    void addsNoManaWithoutCounters() {
+        addBlackMarket(player1);
+
+        advanceToPrecombatMain(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Keeps its charge counters after producing mana")
+    void manaProductionDoesNotConsumeCounters() {
+        Permanent market = addBlackMarket(player1);
+        market.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToPrecombatMain(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(market.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not produce mana at the beginning of the second main phase")
+    void doesNotTriggerDuringPostcombatMain() {
+        Permanent market = addBlackMarket(player1);
+        market.setCounterCount(CounterType.CHARGE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("A pending mana trigger uses the counters present when Black Market leaves")
+    void manaTriggerUsesLastKnownCountersAfterDestruction() {
+        Permanent market = addBlackMarket(player1);
+        market.setCounterCount(CounterType.CHARGE, 3);
+        harness.setHand(player1, List.of(new Disenchant()));
+
+        advanceToPrecombatMain(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        market.setCounterCount(CounterType.CHARGE, 2);
+        harness.castAndResolveInstant(player1, 0, market.getId());
+        harness.assertInGraveyard(player1, "Black Market");
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
     }
 
     private Permanent addBlackMarket(Player player) {

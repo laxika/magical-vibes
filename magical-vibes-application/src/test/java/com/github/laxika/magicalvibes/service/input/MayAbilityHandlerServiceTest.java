@@ -233,7 +233,7 @@ class MayAbilityHandlerServiceTest {
         creature.setName("Creature");
         creature.setType(CardType.CREATURE);
         gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>(List.of(enchantment, creature)));
-        when(gameQueryService.cardHasType(enchantment, CardType.ENCHANTMENT, null, null)).thenReturn(true);
+        when(gameQueryService.cardHasType(enchantment, CardType.ENCHANTMENT, gd, PLAYER1_ID)).thenReturn(true);
 
         CardEffect effect = new AllowCastTargetCardFromGraveyardThisTurnEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT),

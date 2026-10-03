@@ -64,18 +64,86 @@ class BarbedServitorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Barbed Servitor");
     }
 
+    @Test
+    void damageTargetsOpponentOfServitorsControllerEvenWhenControllerDealsDamage() {
+        Permanent servitor = addReadyServitor(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, servitor.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(player1.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Barbed Servitor");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void separateDamageEventsEachCauseLifeLossDespiteAlreadyLethalMarkedDamage() {
+        Permanent servitor = addReadyServitor(player1);
+        for (int i = 0; i < 2; i++) {
+            harness.setHand(player2, List.of(new Shock()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castInstant(player2, 0, servitor.getId());
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, player2.getId());
+            resolveAllTriggers();
+        }
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Barbed Servitor");
+    }
+
+    @Test
+    void combatDamageReceivedTriggersLifeLossWithoutDrawingWhenCombatIsBlocked() {
+        Permanent attacker = addReadyServitor(player1);
+        attacker.setAttacking(true);
+        Permanent blocker = addReadyServitor(player2);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        int firstHandSize = gd.playerHands.get(player1.getId()).size();
+        int secondHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        for (int i = 0; i < 2; i++) {
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            if (choice.validIds().contains(player2.getId())) {
+                harness.handlePermanentChosen(player1, player2.getId());
+            } else {
+                assertThat(choice.validIds()).containsExactly(player1.getId());
+                harness.handlePermanentChosen(player2, player1.getId());
+            }
+        }
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Barbed Servitor");
+        harness.assertOnBattlefield(player2, "Barbed Servitor");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(firstHandSize);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(secondHandSize);
+    }
+
     private Permanent castServitor(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new BarbedServitor()));
-        harness.addMana(player, ManaColor.BLACK, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 3);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new BarbedServitor(), "{3}{B}");
         resolveAllTriggers();
         return findPermanent(player, "Barbed Servitor");
     }
 
     private Permanent addReadyServitor(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent servitor = harness.addToBattlefieldAndReturn(player, new BarbedServitor());
-        servitor.setSummoningSick(false);
-        return servitor;
+        return addCreatureReady(player, new BarbedServitor());
     }
 }

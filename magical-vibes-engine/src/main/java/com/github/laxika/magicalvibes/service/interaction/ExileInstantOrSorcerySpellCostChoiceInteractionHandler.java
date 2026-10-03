@@ -34,7 +34,9 @@ public class ExileInstantOrSorcerySpellCostChoiceInteractionHandler
                              InteractionAnswer answer) {
         List<UUID> chosen = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (chosen == null || chosen.size() != 1 || !interaction.validCardIds().contains(chosen.getFirst())) {
-            throw new IllegalStateException("Choose exactly one instant or sorcery spell you control");
+            throw new IllegalStateException(interaction.anySpell()
+                    ? "Choose exactly one spell you control"
+                    : "Choose exactly one instant or sorcery spell you control");
         }
 
         abilityActivationService.handleActivatedAbilityExileInstantOrSorcerySpellCostChosen(

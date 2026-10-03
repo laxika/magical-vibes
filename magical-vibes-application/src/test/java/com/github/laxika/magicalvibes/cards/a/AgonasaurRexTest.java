@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AgonasaurRex.class, DuskLegionDreadnought.class, Forest.class, GrizzlyBears.class})
 class AgonasaurRexTest extends BaseCardTest {
 
     @Test
@@ -63,10 +65,12 @@ class AgonasaurRexTest extends BaseCardTest {
     @DisplayName("Cycling cannot target a noncreature non-Vehicle permanent")
     void cyclingCannotTargetLand() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new AgonasaurRex()));
         addCyclingMana();
 
-        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, forest.getId()))
+        harness.activateHandAbility(player1, 0, null);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -76,13 +80,61 @@ class AgonasaurRexTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         cycleAgonasaurRex(bears);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
         assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The cycling trigger resolves before the separate cycling draw")
+    void cyclingTriggerResolvesBeforeDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AgonasaurRex());
+        harness.setHand(player1, List.of(new AgonasaurRex()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An illegal cycling-trigger target does not prevent the cycling draw")
+    void cyclingStillDrawsWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AgonasaurRex());
+        harness.setHand(player1, List.of(new AgonasaurRex()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, target));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Agonasaur Rex");
+        harness.assertInHand(player1, "Forest");
     }
 
     private void cycleAgonasaurRex(Permanent target) {
@@ -90,7 +142,12 @@ class AgonasaurRexTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 

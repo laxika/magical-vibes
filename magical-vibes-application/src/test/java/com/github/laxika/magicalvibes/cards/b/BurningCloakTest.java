@@ -31,12 +31,8 @@ class BurningCloakTest extends BaseCardTest {
     @DisplayName("Grants +2/+0 and deals 2 damage to the surviving target")
     void boostsAndDamages() {
         prepare();
-        harness.addToBattlefield(player1, new HillGiant()); // 3/3
-
-        UUID targetId = harness.getPermanentId(player1, "Hill Giant");
-        harness.castAndResolveSorcery(player1, 0, 0, targetId);
-
-        Permanent target = findPermanent(player1, "Hill Giant");
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
         assertThat(target.getMarkedDamage()).isEqualTo(2);
@@ -82,5 +78,23 @@ class BurningCloakTest extends BaseCardTest {
         UUID landId = harness.getPermanentId(player2, "Forest");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, landId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        prepare();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.castSorcery(player1, 0, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(other.getEffectivePower()).isEqualTo(3);
+        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(other.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Burning Cloak");
     }
 }

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArtisanOfKozilek.class, GrizzlyBears.class, Mountain.class, Spellbook.class})
 class ArtisanOfKozilekTest extends BaseCardTest {
 
     @Test
@@ -22,10 +23,7 @@ class ArtisanOfKozilekTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         ArtisanOfKozilek artisan = new ArtisanOfKozilek();
         harness.setGraveyard(player1, List.of(bears));
-        harness.setHand(player1, List.of(artisan));
-        harness.addMana(player1, ManaColor.COLORLESS, 9);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, artisan, "{9}");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
@@ -37,6 +35,11 @@ class ArtisanOfKozilekTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getId().equals(bears.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(bears.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(artisan.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(artisan.getId()));
     }
 
     @Test
@@ -45,10 +48,7 @@ class ArtisanOfKozilekTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         ArtisanOfKozilek artisan = new ArtisanOfKozilek();
         harness.setGraveyard(player1, List.of(bears));
-        harness.setHand(player1, List.of(artisan));
-        harness.addMana(player1, ManaColor.COLORLESS, 9);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, artisan, "{9}");
 
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
@@ -67,10 +67,7 @@ class ArtisanOfKozilekTest extends BaseCardTest {
         Spellbook spellbook = new Spellbook();
         ArtisanOfKozilek artisan = new ArtisanOfKozilek();
         harness.setGraveyard(player1, List.of(spellbook));
-        harness.setHand(player1, List.of(artisan));
-        harness.addMana(player1, ManaColor.COLORLESS, 9);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, artisan, "{9}");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
@@ -79,6 +76,71 @@ class ArtisanOfKozilekTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getId().equals(artisan.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(spellbook.getId()));
+    }
+
+    @Test
+    void castTriggerDoesNotReturnTargetThatLeftGraveyard() {
+        GrizzlyBears bears = new GrizzlyBears();
+        ArtisanOfKozilek artisan = new ArtisanOfKozilek();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.castFromHand(player1, artisan, "{9}");
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(bears));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(bears.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(artisan.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void enteringWithoutCastingDoesNotReturnCreature() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+
+        Permanent artisan = harness.enterBattlefieldAndReturn(player1, new ArtisanOfKozilek());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(artisan);
+    }
+
+    @Test
+    void opponentGraveyardIsNotEligibleForCastTrigger() {
+        GrizzlyBears bears = new GrizzlyBears();
+        ArtisanOfKozilek artisan = new ArtisanOfKozilek();
+        harness.setGraveyard(player2, List.of(bears));
+
+        harness.castFromHand(player1, artisan, "{9}");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(artisan.getId()));
+    }
+
+    @Test
+    void annihilatorSacrificesOnlyPermanentWhenDefenderHasOne() {
+        Permanent artisan = addCreatureReady(player1, new ArtisanOfKozilek());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(mountain.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artisan);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

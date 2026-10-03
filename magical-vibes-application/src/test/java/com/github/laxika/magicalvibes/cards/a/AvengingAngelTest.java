@@ -70,6 +70,20 @@ class AvengingAngelTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(angelCard.getId()));
     }
 
+    @Test
+    void diesAndReturnsToAnEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new AvengingAngel());
+        Card angelCard = angel.getCard();
+
+        destroyAngelWithExtinction(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(angelCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(angelCard);
+        harness.assertNotOnBattlefield(player1, "Avenging Angel");
+    }
+
     private void destroyAngelWithExtinction(Player caster) {
         harness.castFromHand(caster, new Extinction(), "{4}{B}");
         harness.passBothPriorities();

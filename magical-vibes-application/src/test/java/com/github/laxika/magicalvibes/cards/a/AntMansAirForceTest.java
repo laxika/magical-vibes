@@ -80,4 +80,44 @@ class AntMansAirForceTest extends BaseCardTest {
         assertThat(other.getPowerModifier()).isZero();
     }
 
+    @Test
+    void canTargetItself() {
+        Permanent attacker = addCreatureReady(player1, new AntMansAirForce());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void canTargetAnotherCreatureYouControl() {
+        Permanent attacker = addCreatureReady(player1, new AntMansAirForce());
+        Permanent target = addCreatureReady(player1, new AntMansAirForce());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(attacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void triggerStillResolvesAfterSourceLeavesBattlefield() {
+        Permanent attacker = addCreatureReady(player1, new AntMansAirForce());
+        Permanent target = addCreatureReady(player2, new AntMansAirForce());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        resolveAllTriggers();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isZero();
+    }
 }

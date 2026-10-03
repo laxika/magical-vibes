@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.v.ViridianLongbow;
 import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -85,5 +87,74 @@ class BansheesBladeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(blade.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void reEquippingTransfersBonusAndPreservesChargeCounters() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BansheesBlade());
+        Permanent first = addCreatureReady(player1, new YotianSoldier());
+        Permanent second = addCreatureReady(player1, new YotianSoldier());
+        blade.setCounterCount(CounterType.CHARGE, 2);
+        blade.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(blade.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed(ViridianLongbow.class)
+    void noncombatDamageDoesNotAddChargeCounter() {
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BansheesBlade());
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        blade.setAttachedTo(creature.getId());
+        longbow.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(blade.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void equipCannotBeActivatedDuringCombat() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BansheesBlade());
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("main phase");
+        assertThat(blade.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void onlyChargeCountersOnBladeContributeToBonus() {
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BansheesBlade());
+        blade.setAttachedTo(creature.getId());
+        creature.setCounterCount(CounterType.CHARGE, 3);
+        blade.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        blade.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 }

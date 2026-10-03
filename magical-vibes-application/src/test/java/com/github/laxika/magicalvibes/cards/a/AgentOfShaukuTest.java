@@ -51,7 +51,6 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.passUntil(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -148,7 +147,6 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, target));
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -156,6 +154,75 @@ class AgentOfShaukuTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(land.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.hasType(CardType.LAND));
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Agent can target itself")
+    void tappedSummoningSickAgentCanTargetItself() {
+        Permanent agent = harness.addToBattlefieldAndReturn(player1, new AgentOfShauku());
+        harness.inMutationScope(() -> {
+            agent.tap();
+            agent.setSummoningSick(true);
+        });
+        harness.addToBattlefield(player1, new WintermoonMesa());
+        prepareForActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, agent.getId());
+        harness.passBothPriorities();
+
+        assertThat(agent.getPowerModifier()).isEqualTo(2);
+        assertThat(agent.getToughnessModifier()).isEqualTo(0);
+        assertThat(agent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and each consumes a land")
+    void repeatedActivationsStack() {
+        harness.addToBattlefield(player1, new AgentOfShauku());
+        harness.addToBattlefield(player1, new WintermoonMesa());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ZerapaMinotaur());
+        prepareForActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new WintermoonMesa());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof WintermoonMesa)
+                .hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().hasType(CardType.LAND));
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Agent leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent agent = harness.addToBattlefieldAndReturn(player1, new AgentOfShauku());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ZerapaMinotaur());
+        prepareForActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(land.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, agent));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        harness.assertInGraveyard(player1, "Agent of Shauku");
     }
 
     private void prepareForActivation() {

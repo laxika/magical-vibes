@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalTerrain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AspectOfWolf.class, Forest.class, GrizzlyBears.class, SolRing.class})
+@CardUsed({AspectOfWolf.class, Forest.class, GrizzlyBears.class, SolRing.class, PhantasmalTerrain.class})
 class AspectOfWolfTest extends BaseCardTest {
 
     @Test
@@ -113,5 +114,47 @@ class AspectOfWolfTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Counts current Forest types after a land type changing Aura resolves")
+    void updatesWhenForestBecomesIsland() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new AspectOfWolf());
+        aura.setAttachedTo(bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Aspect of Wolf can resolve on an opponent's creature")
+    void resolvesOnOpponentCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new AspectOfWolf()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Aspect of Wolf")
+                        && bears.getId().equals(p.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }

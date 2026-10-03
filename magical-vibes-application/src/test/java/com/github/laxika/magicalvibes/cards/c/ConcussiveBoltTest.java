@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.t.TezzeretAgentOfBolas;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +19,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ConcussiveBolt.class, GrizzlyBears.class, LeoninScimitar.class, Spellbook.class,
+        TezzeretAgentOfBolas.class})
 class ConcussiveBoltTest extends BaseCardTest {
 
-    // ===== Without metalcraft =====
 
     @Test
     @DisplayName("Deals 4 damage to target player without metalcraft")
@@ -49,7 +52,6 @@ class ConcussiveBoltTest extends BaseCardTest {
         assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
-    // ===== With metalcraft =====
 
     @Test
     @DisplayName("Deals 4 damage and prevents blocking with metalcraft")
@@ -89,7 +91,7 @@ class ConcussiveBoltTest extends BaseCardTest {
     @DisplayName("Metalcraft can't-block prevents declaring blockers")
     void metalcraftCantBlockPreventsDeclaringBlockers() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConcussiveBolt()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -99,10 +101,7 @@ class ConcussiveBoltTest extends BaseCardTest {
         harness.passBothPriorities();
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -123,7 +122,6 @@ class ConcussiveBoltTest extends BaseCardTest {
         assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
     }
 
-    // ===== Metalcraft lost before resolution =====
 
     @Test
     @DisplayName("Does not prevent blocking if metalcraft lost before resolution")
@@ -149,11 +147,57 @@ class ConcussiveBoltTest extends BaseCardTest {
         assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
-    // ===== Helpers =====
 
     private void addThreeArtifacts(Player player) {
         harness.addToBattlefield(player, new Spellbook());
         harness.addToBattlefield(player, new LeoninScimitar());
         harness.addToBattlefield(player, new Spellbook());
+    }
+
+    @Test
+    void canDamagePlaneswalkerAndRestrictItsControllersCreatures() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TezzeretAgentOfBolas());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addThreeArtifacts(player1);
+        harness.setHand(player1, List.of(new ConcussiveBolt()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionCannotBlock() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addThreeArtifacts(player1);
+        harness.setHand(player1, List.of(new ConcussiveBolt()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void metalcraftGainedBeforeResolutionPreventsBlocking() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ConcussiveBolt()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, player2.getId());
+        addThreeArtifacts(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
     }
 }

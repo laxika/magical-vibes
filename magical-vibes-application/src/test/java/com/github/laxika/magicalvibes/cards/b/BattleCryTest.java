@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
+import com.github.laxika.magicalvibes.cards.n.NobleOx;
 import com.github.laxika.magicalvibes.cards.p.PaleBears;
 import com.github.laxika.magicalvibes.cards.p.PalaceGuard;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BattleCry.class, CircleOfProtectionRed.class, KjeldoranWarrior.class, PaleBears.class,
-        PalaceGuard.class})
+        PalaceGuard.class, NobleOx.class})
 class BattleCryTest extends BaseCardTest {
 
     @Test
@@ -149,5 +150,87 @@ class BattleCryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blocker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("All blocking creatures get the boost, including nonwhite opposing creatures")
+    void boostsEveryBlockerRegardlessOfColorOrController() {
+        Permanent attacker = addCreatureReady(player1, new PaleBears());
+        Permanent whiteBlocker = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent greenBlocker = addCreatureReady(player2, new PaleBears());
+
+        harness.castFromHand(player1, new BattleCry(), "{2}{W}");
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(whiteBlocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(greenBlocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(whiteBlocker.getPowerModifier()).isZero();
+        assertThat(greenBlocker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting Battle Cry after blockers are declared does not boost existing blockers")
+    void doesNotRetroactivelyBoostBlockers() {
+        addCreatureReady(player1, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.castFromHand(player1, new BattleCry(), "{2}{W}");
+            harness.passBothPriorities();
+        });
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(blocker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The delayed blocker boost expires even when no creature blocked that turn")
+    void unusedDelayedBoostDoesNotCarryOverToNextTurn() {
+        harness.castFromHand(player1, new BattleCry(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        addCreatureReady(player1, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        resolveAllTriggers();
+
+        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(blocker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature made to block multiple attackers by an effect gets only one boost")
+    void effectCreatingMultipleBlocksTriggersOnlyOnce() {
+        Permanent firstAttacker = addCreatureReady(player1, new PaleBears());
+        Permanent secondAttacker = addCreatureReady(player1, new PaleBears());
+        addCreatureReady(player2, new KjeldoranWarrior());
+        harness.castFromHand(player1, new BattleCry(), "{2}{W}");
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            harness.castFromHand(player2, new NobleOx(), "{3}{W}");
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
+
+        Permanent blocker = findPermanent(player2, "Noble Ox");
+        assertThat(blocker.getBlockingTargetIds())
+                .containsExactlyInAnyOrder(firstAttacker.getId(), secondAttacker.getId());
+        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(blocker.getPowerModifier()).isZero();
     }
 }

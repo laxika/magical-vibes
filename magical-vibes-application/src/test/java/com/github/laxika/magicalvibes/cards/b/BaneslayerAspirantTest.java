@@ -49,4 +49,56 @@ class BaneslayerAspirantTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, aspirant)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("Multiple emblems grant the bonus only once")
+    void multipleEmblemsDoNotMultiplyBonus() {
+        Permanent aspirant = addCreatureReady(player1, new BaneslayerAspirant());
+        gd.emblems.add(new Emblem(player1.getId(), List.of(), null));
+        gd.emblems.add(new Emblem(player1.getId(), List.of(), null));
+
+        assertThat(gqs.getEffectivePower(gd, aspirant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, aspirant)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Aspirant grants its bonus only to itself")
+    void multipleAspirantsDoNotBoostEachOther() {
+        Permanent first = addCreatureReady(player1, new BaneslayerAspirant());
+        Permanent second = addCreatureReady(player1, new BaneslayerAspirant());
+        gd.emblems.add(new Emblem(player1.getId(), List.of(), null));
+
+        for (Permanent aspirant : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, aspirant)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, aspirant)).isEqualTo(5);
+        }
+    }
+
+    @Test
+    @DisplayName("The bonus follows the current controller's emblems")
+    void changingControllerReevaluatesBonus() {
+        Permanent aspirant = addCreatureReady(player1, new BaneslayerAspirant());
+        gd.emblems.add(new Emblem(player1.getId(), List.of(), null));
+        assertThat(gqs.getEffectivePower(gd, aspirant)).isEqualTo(5);
+
+        gd.playerBattlefields.get(player1.getId()).remove(aspirant);
+        gd.playerBattlefields.get(player2.getId()).add(aspirant);
+
+        assertThat(gqs.getEffectivePower(gd, aspirant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, aspirant)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.LIFELINK)).isFalse();
+
+        gd.emblems.add(new Emblem(player2.getId(), List.of(), null));
+
+        assertThat(gqs.getEffectivePower(gd, aspirant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, aspirant)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aspirant, Keyword.LIFELINK)).isTrue();
+    }
 }

@@ -23,6 +23,33 @@ class BorealDruidTest extends BaseCardTest {
     }
 
     @Test
+    void manaFromSnowCreatureIsAvailableImmediatelyWithoutUsingStack() {
+        addCreatureReady(player1, new BorealDruid());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowMana(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void manaGoesToControllerDuringOpponentsTurn() {
+        Permanent druid = addCreatureReady(player2, new BorealDruid());
+        harness.forceActivePlayer(player1);
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getSnowMana(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void alreadyTappedCannotTapForManaAgain() {
         Permanent druid = addCreatureReady(player1, new BorealDruid());
 

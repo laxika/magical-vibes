@@ -131,4 +131,71 @@ class ChainLightningTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    @DisplayName("Paying the mana still allows the player to decline creating a copy")
+    void mayDeclineCopyAfterPaying() {
+        harness.setHand(player1, List.of(new ChainLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A lethally damaged creature's controller can copy and retarget before it dies")
+    void lethallyDamagedCreatureControllerCanCopy() {
+        Permanent target = addCreatureReady(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new ChainLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.assertOnBattlefield(player2, "Barbary Apes");
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, player1.getId());
+
+        harness.assertInGraveyard(player2, "Barbary Apes");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A copy can itself be copied and sent back to the other player")
+    void copyCanContinueTheChain() {
+        harness.setHand(player1, List.of(new ChainLightning()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 14);
+        assertThat(gd.stack).isEmpty();
+    }
 }

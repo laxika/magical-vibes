@@ -68,4 +68,38 @@ class CallToGloryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(2);
     }
+
+    @Test
+    void repeatedCastsStackWithoutAffectingOpposingSamurai() {
+        Permanent samurai = addCreatureReady(player1, new MothriderSamurai());
+        Permanent opponent = addCreatureReady(player2, new MothriderSamurai());
+        opponent.tap();
+
+        harness.castFromHand(player1, new CallToGlory(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new CallToGlory(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(4);
+        assertThat(opponent.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+    }
+
+    @Test
+    void affectsCreaturesPresentAtResolutionButNotLaterEntrants() {
+        harness.castFromHand(player1, new CallToGlory(), "{1}{W}");
+        Permanent presentAtResolution = harness.enterBattlefieldAndReturn(player1, new MothriderSamurai());
+        presentAtResolution.tap();
+
+        harness.passBothPriorities();
+        Permanent laterEntrant = harness.enterBattlefieldAndReturn(player1, new MothriderSamurai());
+
+        assertThat(presentAtResolution.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, presentAtResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, presentAtResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterEntrant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterEntrant)).isEqualTo(2);
+    }
 }

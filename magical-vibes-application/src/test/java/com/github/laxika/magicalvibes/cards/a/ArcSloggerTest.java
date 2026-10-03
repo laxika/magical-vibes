@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -113,5 +115,69 @@ class ArcSloggerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can pay with exactly ten cards without losing for an empty library")
+    void canActivateWithExactlyTenCards() {
+        harness.addToBattlefield(player1, new ArcSlogger());
+        harness.setLibrary(player1, IntStream.range(0, 10).mapToObj(i -> new Island()).toList());
+        harness.setLife(player2, 20);
+        int exileBefore = gd.exiledCards.size();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).hasSize(exileBefore + 10);
+        harness.assertLife(player2, 18);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot partially pay the exile cost with nine cards")
+    void cannotActivateWithNineCards() {
+        harness.addToBattlefield(player1, new ArcSlogger());
+        var library = IntStream.range(0, 9).mapToObj(i -> new Island()).toList();
+        harness.setLibrary(player1, library);
+        harness.addMana(player1, ManaColor.RED, 1);
+        int exileBefore = gd.exiledCards.size();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough cards in library to exile");
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.exiledCards).hasSize(exileBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate a tapped Arc-Slogger twice before either ability resolves")
+    void canActivateRepeatedlyWhileTapped() {
+        var slogger = harness.addToBattlefieldAndReturn(player1, new ArcSlogger());
+        slogger.tap();
+        var library = IntStream.range(0, 21).mapToObj(i -> new Island()).toList();
+        harness.setLibrary(player1, library);
+        harness.setLife(player2, 20);
+        int exileBefore = gd.exiledCards.size();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(20));
+        assertThat(gd.exiledCards).hasSize(exileBefore + 20);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(slogger.isTapped()).isTrue();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.SimicRagworm;
+import com.github.laxika.magicalvibes.cards.t.TidespoutTyrant;
 import com.github.laxika.magicalvibes.cards.v.VisionSkeins;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,12 +11,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AzoriusGuildmage.class, AzoriusSignet.class, SimicRagworm.class, VisionSkeins.class})
+@CardUsed({AzoriusGuildmage.class, AzoriusSignet.class, SimicRagworm.class, TidespoutTyrant.class, VisionSkeins.class})
 class AzoriusGuildmageTest extends BaseCardTest {
 
     @Test
@@ -68,13 +67,10 @@ class AzoriusGuildmageTest extends BaseCardTest {
     void cannotTargetSpell() {
         addGuildmage(player1);
         VisionSkeins visionSkeins = new VisionSkeins();
-        harness.setHand(player2, List.of(visionSkeins));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.addMana(player2, ManaColor.BLUE, 1);
         addManaForBlueAbility(player1);
 
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, visionSkeins, "{1}{U}");
         harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, visionSkeins.getId()))
@@ -94,6 +90,68 @@ class AzoriusGuildmageTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 0, null, null);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, signet.getCard().getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick guildmage can activate its tap ability repeatedly")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new AzoriusGuildmage());
+        guildmage.setSummoningSick(true);
+        guildmage.tap();
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        addManaForWhiteAbility(player1);
+        addManaForWhiteAbility(player1);
+
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(guildmage.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Guildmage can counter its own most recent activation without countering an older one")
+    void countersMostRecentActivationFromSameSource() {
+        addGuildmage(player1);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SimicRagworm());
+        addManaForWhiteAbility(player1);
+        addManaForWhiteAbility(player1);
+        addManaForBlueAbility(player1);
+
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        var mostRecentActivation = gd.stack.getLast();
+        harness.activateAbility(player1, 0, 1, null, mostRecentActivation.getTargetableId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Azorius Guildmage");
+        harness.assertNotInGraveyard(player1, "Azorius Guildmage");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Second ability cannot target a triggered ability")
+    void cannotTargetTriggeredAbility() {
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new AzoriusGuildmage());
+        harness.addToBattlefield(player2, new TidespoutTyrant());
+        addManaForBlueAbility(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new AzoriusSignet(), "{2}");
+        harness.handlePermanentChosen(player2, guildmage.getId());
+        var trigger = gd.stack.getLast();
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, trigger.getTargetableId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

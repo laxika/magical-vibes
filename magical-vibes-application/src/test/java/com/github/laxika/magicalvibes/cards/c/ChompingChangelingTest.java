@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChompingChangeling.class, GrizzlyBears.class, Ornithopter.class, RuleOfLaw.class})
 class ChompingChangelingTest extends BaseCardTest {
 
     @Test
@@ -55,11 +57,33 @@ class ChompingChangelingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("ETB can decline a target even when an artifact is available")
+    void etbCanDeclineLegalTarget() {
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        castChompingChangeling(List.of());
+
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertOnBattlefield(player1, "Chomping Changeling");
+    }
+
+    @Test
+    @DisplayName("ETB can destroy its controller's artifact")
+    void etbDestroysOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        castChompingChangeling(List.of(artifact.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertOnBattlefield(player1, "Chomping Changeling");
+    }
+
     private void castChompingChangeling(List<UUID> targetIds) {
         prepareToCast();
         harness.castCreature(player1, 0, targetIds);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void prepareToCast() {

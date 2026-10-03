@@ -190,4 +190,88 @@ class CorrosionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(corrosion);
         harness.assertInGraveyard(player1, "Corrosion");
     }
+
+    @Test
+    @DisplayName("Existing rust counters count toward destruction after a new counter is added")
+    void addsToExistingRustBeforeCheckingManaValue() {
+        harness.addToBattlefield(player1, new Corrosion());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DiamondKaleidoscope());
+        artifact.setCounterCount(CounterType.RUST, 3);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        harness.assertInGraveyard(player2, "Diamond Kaleidoscope");
+    }
+
+    @Test
+    @DisplayName("Rust counters on a nonartifact neither increase nor cause destruction")
+    void nonartifactWithRustSurvives() {
+        harness.addToBattlefield(player1, new Corrosion());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CloudElemental());
+        creature.setCounterCount(CounterType.RUST, 4);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.getCounterCount(CounterType.RUST)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Sacrificing to cumulative upkeep removes rust but preserves other counters")
+    void cumulativeUpkeepSacrificeCleansUpOnlyRust() {
+        harness.addToBattlefield(player1, new Corrosion());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DiamondKaleidoscope());
+        artifact.setCounterCount(CounterType.PRESSURE, 2);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(artifact.getCounterCount(CounterType.RUST)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Corrosion");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(artifact.getCounterCount(CounterType.RUST)).isZero();
+        assertThat(artifact.getCounterCount(CounterType.PRESSURE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Paying the increased cumulative upkeep keeps Corrosion on the battlefield")
+    void paysForEveryAgeCounter() {
+        Permanent corrosion = harness.addToBattlefieldAndReturn(player1, new Corrosion());
+        corrosion.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(corrosion);
+        assertThat(corrosion.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Neither upkeep ability triggers on an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        Permanent corrosion = harness.addToBattlefieldAndReturn(player1, new Corrosion());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MagmaMine());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(corrosion.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(artifact.getCounterCount(CounterType.RUST)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+    }
 }

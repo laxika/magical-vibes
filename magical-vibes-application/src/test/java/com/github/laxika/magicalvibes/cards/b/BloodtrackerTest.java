@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Bloodtracker.class, GrizzlyBears.class})
+@CardUsed({Bloodtracker.class})
 class BloodtrackerTest extends BaseCardTest {
 
     @Test
@@ -27,14 +26,14 @@ class BloodtrackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodtracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
     @DisplayName("Draws one card for each +1/+1 counter when it leaves the battlefield")
     void leavesAndDrawsForEachCounter() {
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Bloodtracker(), new Bloodtracker(), new Bloodtracker()));
         Permanent bloodtracker = harness.addToBattlefieldAndReturn(player1, new Bloodtracker());
         bloodtracker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
@@ -47,5 +46,57 @@ class BloodtrackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Life is paid before the counter ability resolves")
+    void paysLifeImmediately() {
+        Permanent bloodtracker = harness.addToBattlefieldAndReturn(player1, new Bloodtracker());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(bloodtracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(bloodtracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Exiling Bloodtracker draws using its last battlefield counters")
+    void exileDrawsForCounters() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Bloodtracker(), new Bloodtracker(), new Bloodtracker()));
+        Permanent bloodtracker = harness.addToBattlefieldAndReturn(player1, new Bloodtracker());
+        bloodtracker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        bloodtracker.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, bloodtracker));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaving without +1/+1 counters draws no cards")
+    void noCountersDrawsNothing() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Bloodtracker()));
+        Permanent bloodtracker = harness.addToBattlefieldAndReturn(player1, new Bloodtracker());
+        bloodtracker.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bloodtracker));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

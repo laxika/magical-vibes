@@ -59,12 +59,44 @@ class ArcboundSlasherTest extends BaseCardTest {
         assertThat(ornithopter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
-    private Permanent castSlasher() {
-        harness.setHand(player1, List.of(new ArcboundSlasher()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @Test
+    void modularCanBeDeclinedAfterChoosingATarget() {
+        Permanent slasher = castSlasher();
+        harness.handleMayAbilityChosen(player1, false);
+        Permanent target = addCreatureReady(player1, new Ornithopter());
 
-        harness.castCreature(player1, 0);
+        destroySlasher(slasher);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof ArcboundSlasher);
+    }
+
+    @Test
+    void modularIncludesRiotCounterAndCanTargetOpponentsArtifactCreature() {
+        Permanent slasher = castSlasher();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent target = addCreatureReady(player2, new Ornithopter());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroySlasher(slasher);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof ArcboundSlasher);
+    }
+
+    private Permanent castSlasher() {
+        harness.castFromHand(player1, new ArcboundSlasher(), "{4}{R}");
         harness.passBothPriorities();
         return findPermanent(player1, "Arcbound Slasher");
     }
@@ -76,7 +108,7 @@ class ArcboundSlasherTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player2, 0, 0, slasher.getId(), null);
+        harness.castInstant(player2, 0, slasher.getId());
         harness.passBothPriorities();
     }
 }

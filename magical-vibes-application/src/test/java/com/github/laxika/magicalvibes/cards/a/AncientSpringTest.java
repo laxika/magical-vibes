@@ -15,6 +15,48 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(AncientSpring.class)
 class AncientSpringTest extends BaseCardTest {
+    @Test
+    @DisplayName("Enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent spring = harness.enterBattlefieldAndReturn(player1, new AncientSpring());
+
+        assertThat(spring.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Neither mana ability can be activated while newly entered and tapped")
+    void cannotActivateEitherAbilityWhileEnteredTapped() {
+        harness.enterBattlefieldAndReturn(player1, new AncientSpring());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.assertOnBattlefield(player1, "Ancient Spring");
+        harness.assertNotInGraveyard(player1, "Ancient Spring");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice mana is awarded only to the activating player")
+    void sacrificeAwardsManaToActivatingPlayer() {
+        harness.addToBattlefield(player2, new AncientSpring());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.assertNotOnBattlefield(player2, "Ancient Spring");
+        harness.assertInGraveyard(player2, "Ancient Spring");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Enters the battlefield tapped")

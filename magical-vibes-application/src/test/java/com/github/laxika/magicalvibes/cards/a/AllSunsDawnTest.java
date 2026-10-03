@@ -90,10 +90,8 @@ class AllSunsDawnTest extends BaseCardTest {
     void mayResolveWithNoTargetsAndLeaveOtherGraveyardCardsAlone() {
         Card unselectedCard = new AuriokChampion();
         harness.setGraveyard(player1, List.of(unselectedCard));
-        harness.setHand(player1, List.of(new AllSunsDawn()));
-        addMana();
-
-        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.castFromHand(player1, new AllSunsDawn(), "{4}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselectedCard);
         assertThat(gd.getPlayerExiledCards(player1.getId()).stream().map(Card::getName))
@@ -136,5 +134,53 @@ class AllSunsDawnTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(whiteCard.getId(), allSunsDawn.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()).stream().map(Card::getName))
                 .doesNotContain("All Suns' Dawn");
+    }
+
+    @Test
+    void cannotTargetCardsInAnOpponentsGraveyard() {
+        Card whiteCard = new AuriokChampion();
+        harness.setGraveyard(player2, List.of(whiteCard));
+        harness.setHand(player1, List.of(new AllSunsDawn()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(whiteCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnsRemainingLegalTargetWhenAnotherLeavesTheGraveyard() {
+        Card whiteCard = new AuriokChampion();
+        Card blueCard = new SerumVisions();
+        Card allSunsDawn = new AllSunsDawn();
+        harness.setGraveyard(player1, List.of(whiteCard, blueCard));
+        harness.setHand(player1, List.of(allSunsDawn));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of(whiteCard.getId(), blueCard.getId()));
+        harness.setGraveyard(player1, List.of(blueCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(blueCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()).stream().map(Card::getId))
+                .contains(allSunsDawn.getId());
+    }
+
+    @Test
+    void goesToGraveyardWithoutExilingItselfWhenItsOnlyTargetLeaves() {
+        Card whiteCard = new AuriokChampion();
+        Card allSunsDawn = new AllSunsDawn();
+        harness.setGraveyard(player1, List.of(whiteCard));
+        harness.setHand(player1, List.of(allSunsDawn));
+        addMana();
+
+        harness.castSorcery(player1, 0, List.of(whiteCard.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(allSunsDawn);
+        assertThat(gd.getPlayerExiledCards(player1.getId()).stream().map(Card::getId))
+                .doesNotContain(allSunsDawn.getId());
     }
 }

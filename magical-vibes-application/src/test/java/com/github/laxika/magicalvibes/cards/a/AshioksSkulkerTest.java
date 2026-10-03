@@ -51,6 +51,41 @@ class AshioksSkulkerTest extends BaseCardTest {
         assertThat(skulker.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Skulker can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent skulker = harness.addToBattlefieldAndReturn(player1, new AshioksSkulker());
+        skulker.setSummoningSick(true);
+        skulker.tap();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(skulker.isCantBeBlocked()).isTrue();
+        assertThat(skulker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the activating Skulker becomes unable to be blocked")
+    void onlyTheSourceCannotBeBlocked() {
+        Permanent source = addCreatureReady(player1, new AshioksSkulker());
+        Permanent other = addCreatureReady(player1, new AshioksSkulker());
+        Permanent blocker = addCreatureReady(player2, new AshioksSkulker());
+        addActivationMana();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, source,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, source,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, blocker, other,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+        assertThat(blocker.isCantBeBlocked()).isFalse();
+    }
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

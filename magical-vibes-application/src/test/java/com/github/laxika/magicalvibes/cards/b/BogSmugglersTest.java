@@ -38,6 +38,26 @@ class BogSmugglersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bog Smugglers cannot be blocked when the defending player's Swamp is tapped")
+    void cannotBeBlockedWhenDefenderControlsTappedSwamp() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        swamp.setTapped(true);
+
+        Permanent blockerPerm = addCreatureReady(player2, new FreshVolunteers());
+        Permanent atkPerm = addCreatureReady(player1, new BogSmugglers());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Bog Smugglers can be blocked when defending player does not control a Swamp")
     void canBeBlockedWhenDefenderDoesNotControlSwamp() {
         Permanent blockerPerm = addCreatureReady(player2, new FreshVolunteers());

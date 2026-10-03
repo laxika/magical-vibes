@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AcceleratedEvolution.class, GrizzlyBears.class})
+@CardUsed({AcceleratedEvolution.class, GrizzlyBears.class, AuraFinesse.class})
 class AcceleratedEvolutionTest extends BaseCardTest {
 
     @Test
@@ -48,7 +48,7 @@ class AcceleratedEvolutionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AcceleratedEvolution()));
         addCastingMana(player1);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
         harness.castEnchantment(player1, 0, bears.getId());
 
         assertThat(gd.stack).hasSize(1);
@@ -72,6 +72,52 @@ class AcceleratedEvolutionTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The boost applies immediately, but hexproof waits for the enter trigger")
+    void hexproofWaitsForTriggerResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AcceleratedEvolution()));
+        addCastingMana(player1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @CardUsed({AcceleratedEvolution.class, GrizzlyBears.class, AuraFinesse.class})
+    @DisplayName("The enter trigger grants hexproof to the creature enchanted when it resolves")
+    void movingAuraBeforeTriggerResolvesChangesHexproofRecipient() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent destination = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AcceleratedEvolution()));
+        addCastingMana(player1);
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new AuraFinesse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0,
+                List.of(harness.getPermanentId(player1, "Accelerated Evolution"), destination.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, destination)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, destination, Keyword.HEXPROOF)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, original, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, destination, Keyword.HEXPROOF)).isTrue();
     }
 
     private void addCastingMana(com.github.laxika.magicalvibes.model.Player player) {

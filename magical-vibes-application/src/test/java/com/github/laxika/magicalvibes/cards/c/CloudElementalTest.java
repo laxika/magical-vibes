@@ -80,10 +80,9 @@ class CloudElementalTest extends BaseCardTest {
     void canBlockFlyingCreature() {
         Permanent elementalPerm = addCreatureReady(player2, new CloudElemental());
 
-        Permanent atkPerm = addCreatureReady(player1, new AirElemental());
-        atkPerm.setAttacking(true);
+        addCreatureReady(player1, new AirElemental());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -97,10 +96,9 @@ class CloudElementalTest extends BaseCardTest {
     void flyingPreventsNonFlyingBlocker() {
         addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent atkPerm = addCreatureReady(player1, new CloudElemental());
-        atkPerm.setAttacking(true);
+        addCreatureReady(player1, new CloudElemental());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -112,10 +110,9 @@ class CloudElementalTest extends BaseCardTest {
     void cannotBlockNonFlyingCreature() {
         addCreatureReady(player2, new CloudElemental());
 
-        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
-        atkPerm.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -127,16 +124,27 @@ class CloudElementalTest extends BaseCardTest {
     void cannotBlockReachCreatureWithoutFlying() {
         addCreatureReady(player2, new CloudElemental());
 
-        Permanent atkPerm = addCreatureReady(player1, new GiantSpider());
-        atkPerm.setAttacking(true);
+        addCreatureReady(player1, new GiantSpider());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only block creatures with flying");
     }
 
+    @Test
+    @DisplayName("A creature with reach can block attacking Cloud Elemental")
+    void canBeBlockedByReachCreature() {
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player1, new CloudElemental());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(spider.isBlocking()).isTrue();
+    }
     // ===== Combat =====
 
     @Test

@@ -64,4 +64,84 @@ class ColossalSkyturtleTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.activateHandAbility(gd, player1, 0, 1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void channelReturnsLandFromGraveyard() {
+        Card target = new Forest();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new ColossalSkyturtle()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateHandAbilityWithGraveyardTargets(player1, 0, List.of(target.getId()));
+        harness.assertInGraveyard(player1, "Colossal Skyturtle");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void channelCannotReturnCardFromOpponentsGraveyard() {
+        Card target = new Forest();
+        Card source = new ColossalSkyturtle();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(source));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void channelCannotTargetTheCardDiscardedToPayItsOwnCost() {
+        Card source = new ColossalSkyturtle();
+        harness.setHand(player1, List.of(source));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(source);
+    }
+
+    @Test
+    void channelDoesNotReturnATargetThatLeftTheGraveyard() {
+        Card target = new Forest();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new ColossalSkyturtle()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateHandAbilityWithGraveyardTargets(player1, 0, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Colossal Skyturtle");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void channelCannotChooseMoreThanOneGraveyardTarget() {
+        Card firstTarget = new Forest();
+        Card secondTarget = new ColossalSkyturtle();
+        Card source = new ColossalSkyturtle();
+        harness.setGraveyard(player1, List.of(firstTarget, secondTarget));
+        harness.setHand(player1, List.of(source));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(firstTarget.getId(), secondTarget.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstTarget, secondTarget);
+        assertThat(gd.stack).isEmpty();
+    }
 }

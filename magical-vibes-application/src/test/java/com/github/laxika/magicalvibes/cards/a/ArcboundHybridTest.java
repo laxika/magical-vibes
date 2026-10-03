@@ -21,10 +21,7 @@ class ArcboundHybridTest extends BaseCardTest {
 
     @Test
     void entersWithTwoPlusOnePlusOneCounters() {
-        harness.setHand(player1, List.of(new ArcboundHybrid()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArcboundHybrid(), "{4}");
         harness.passBothPriorities();
 
         Permanent hybrid = findPermanent(player1, "Arcbound Hybrid");
@@ -67,6 +64,76 @@ class ArcboundHybridTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(drossGolem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canAttackOnTheTurnItEnters() {
+        harness.castFromHand(player1, new ArcboundHybrid(), "{4}");
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void modularUsesTheActualCounterCountAndAddsToExistingCounters() {
+        Permanent hybrid = addCreatureReady(player1, new ArcboundHybrid());
+        hybrid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent golem = addCreatureReady(player1, new DrossGolem());
+        golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyHybrid(hybrid);
+        harness.handlePermanentChosen(player1, golem.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void modularCanGiveCountersToAnOpponentsArtifactCreature() {
+        Permanent hybrid = addCreatureReady(player1, new ArcboundHybrid());
+        hybrid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent golem = addCreatureReady(player2, new DrossGolem());
+
+        destroyHybrid(hybrid);
+        harness.handlePermanentChosen(player1, golem.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void modularDoesNothingWhenNoArtifactCreatureRemains() {
+        Permanent hybrid = addCreatureReady(player1, new ArcboundHybrid());
+        hybrid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent ogre = addCreatureReady(player1, new DroolingOgre());
+
+        destroyHybrid(hybrid);
+
+        harness.assertInGraveyard(player1, "Arcbound Hybrid");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modularChoiceDescribesPlusOnePlusOneCounters() {
+        Permanent hybrid = addCreatureReady(player1, new ArcboundHybrid());
+        hybrid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent golem = addCreatureReady(player1, new DrossGolem());
+
+        destroyHybrid(hybrid);
+        harness.handlePermanentChosen(player1, golem.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice.description()).contains("+1/+1").doesNotContain("-1/-1");
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     private void destroyHybrid(Permanent hybrid) {

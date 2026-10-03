@@ -73,4 +73,103 @@ class BastPantherGoddessTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
     }
+
+    @Test
+    void triggersEvenWhenBastCannotAttack() {
+        addCreatureReady(player1, new BastPantherGoddess());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
+    void multipleAttackersProduceOnlyOneBoost() {
+        addCreatureReady(player1, new BastPantherGoddess());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void creatureCountIsDeterminedWhenTriggerResolves() {
+        addCreatureReady(player1, new BastPantherGoddess());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
+    }
+
+    @Test
+    void nonattackingCreatureCannotBeChosen() {
+        Permanent bast = addCreatureReady(player1, new BastPantherGoddess());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bast.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bast)).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotTriggerForOpponentsAttack() {
+        addCreatureReady(player1, new BastPantherGoddess());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void twoControlledCreaturesAreInsufficientEvenWithOpposingCreatures() {
+        addCreatureReady(player1, new BastPantherGoddess());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void triggerStillResolvesAfterBastLeavesAndCountsOnlyRemainingCreatures() {
+        Permanent bast = addCreatureReady(player1, new BastPantherGoddess());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        gd.playerBattlefields.get(player1.getId()).remove(bast);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
 }

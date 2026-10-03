@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(BygoneColossus.class)
 class BygoneColossusTest extends BaseCardTest {
@@ -26,10 +27,88 @@ class BygoneColossusTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(colossus.getId()));
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(colossus.getId())).isNotNull();
+    }
+
+    @Test
+    void warpExileWaitsForItsDelayedTriggerToResolve() {
+        harness.setHand(player1, List.of(new BygoneColossus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Bygone Colossus");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bygone Colossus");
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card() instanceof BygoneColossus);
+    }
+
+    @Test
+    void payingNormalManaCostDoesNotScheduleWarpExile() {
+        harness.castFromHand(player1, new BygoneColossus(), "{9}");
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Bygone Colossus");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void genericWarpCostCanBePaidWithColoredMana() {
+        harness.setHand(player1, List.of(new BygoneColossus()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bygone Colossus");
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Bygone Colossus");
+    }
+
+    @Test
+    void warpedCardCanBeCastOnALaterTurnForItsNormalCostAndStaysOnBattlefield() {
+        BygoneColossus colossus = new BygoneColossus();
+        harness.setHand(player1, List.of(colossus));
+        harness.setLibrary(player1, List.of(new BygoneColossus(), new BygoneColossus()));
+        harness.setLibrary(player2, List.of(new BygoneColossus(), new BygoneColossus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.findExiledCard(colossus.getId())).isNotNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        assertThatThrownBy(() -> harness.castFromExile(player1, colossus.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        assertThatThrownBy(() -> harness.castFromExile(player1, colossus.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(colossus.getId())).isNotNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castFromExile(player1, colossus.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bygone Colossus");
+        assertThat(gd.findExiledCard(colossus.getId())).isNull();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Bygone Colossus");
+        assertThat(gd.stack).isEmpty();
     }
 }

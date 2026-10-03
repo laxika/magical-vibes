@@ -66,6 +66,59 @@ class AeromoebaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, aeromoeba)).isEqualTo(2);
     }
 
+    @Test
+    void discardIsPaidBeforeTheSwitchResolves() {
+        Permanent aeromoeba = addReadyAeromoeba();
+        harness.setHand(player1, List.of(new Aeromoeba()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Aeromoeba");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, aeromoeba)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, aeromoeba)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, aeromoeba)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, aeromoeba)).isEqualTo(2);
+    }
+
+    @Test
+    void successiveActivationsSwitchBackAndThenSwitchAgain() {
+        Permanent aeromoeba = addReadyAeromoeba();
+        harness.setHand(player1, List.of(new Aeromoeba(), new Aeromoeba(), new Aeromoeba()));
+
+        activateAndDiscard();
+        activateAndDiscard();
+
+        assertThat(gqs.getEffectivePower(gd, aeromoeba)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, aeromoeba)).isEqualTo(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+
+        activateAndDiscard();
+
+        assertThat(gqs.getEffectivePower(gd, aeromoeba)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, aeromoeba)).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void canActivateWhileTappedOnOpponentsTurn() {
+        Permanent aeromoeba = addReadyAeromoeba();
+        aeromoeba.tap();
+        harness.setHand(player1, List.of(new Aeromoeba()));
+        harness.forceActivePlayer(player2);
+
+        activateAndDiscard();
+
+        assertThat(gqs.getEffectivePower(gd, aeromoeba)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, aeromoeba)).isEqualTo(2);
+        assertThat(aeromoeba.isTapped()).isTrue();
+    }
+
     private Permanent addReadyAeromoeba() {
         prepareAeromoebaActivation();
         return addCreatureReady(player1, new Aeromoeba());

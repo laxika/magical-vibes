@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,6 +73,8 @@ class ClairvoyanceTest extends BaseCardTest {
     @Test
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Clairvoyance()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -83,13 +84,60 @@ class ClairvoyanceTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty target hand does not prevent the delayed draw")
+    void emptyTargetHandStillDraws() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new Clairvoyance()));
+        harness.setLibrary(player1, List.of(new BalduvianBears(), new Clairvoyance()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Balduvian Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting during upkeep waits until the next turn and triggers only once")
+    void castDuringUpkeepWaitsUntilNextTurnAndDrawsOnlyOnce() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new Clairvoyance()));
+        harness.setLibrary(player1, List.of(new BalduvianBears(), new Clairvoyance(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }

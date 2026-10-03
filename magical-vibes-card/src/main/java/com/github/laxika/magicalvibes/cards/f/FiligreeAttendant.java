@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "95")
 @CardRegistration(set = "MH2", collectorNumber = "41")
+@CardRegistration(set = "BRC", collectorNumber = "85")
 public class FiligreeAttendant extends Card {
 
     public FiligreeAttendant() {

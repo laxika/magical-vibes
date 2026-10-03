@@ -49,8 +49,7 @@ class BrokersVeteranTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         assertThat(bears.getCounterCount(CounterType.SHIELD)).isZero();
@@ -69,6 +68,62 @@ class BrokersVeteranTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The shield counter prevents one destruction event but not a second")
+    void shieldCounterPreventsOneDestruction() {
+        Permanent veteran = addCreatureReady(player1, new BrokersVeteran());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        destroyWithMurder(player2, veteran.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        destroyWithMurder(player2, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(bears.getCounterCount(CounterType.SHIELD)).isZero();
+
+        destroyWithMurder(player2, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A death trigger does not put a counter on a target destroyed in response")
+    void targetDestroyedInResponseDoesNotReceiveCounter() {
+        Permanent veteran = addCreatureReady(player1, new BrokersVeteran());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        destroyWithMurder(player2, veteran.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        destroyWithMurder(player2, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(bears.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lethal damage also triggers Brokers Veteran's shield counter ability")
+    void lethalDamageTriggersShieldCounter() {
+        Permanent veteran = addCreatureReady(player1, new BrokersVeteran());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, veteran.getId());
+
+        harness.assertInGraveyard(player1, "Brokers Veteran");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+    }
+
     private void destroyWithMurder(Player caster, UUID targetId) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -76,7 +131,6 @@ class BrokersVeteranTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Murder()));
         harness.addMana(caster, ManaColor.BLACK, 3);
 
-        gs.playCard(gd, caster, 0, 0, targetId, null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }

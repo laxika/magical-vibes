@@ -60,12 +60,14 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AttackedWithTokenThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCommanderThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesGreaterThanSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent;
+import com.github.laxika.magicalvibes.model.condition.AttackedPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
 import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
@@ -776,6 +778,9 @@ public class ConditionEvaluationService {
                             && gameData.creaturesAttackedCountBySubtypeThisTurn
                             .getOrDefault(ctx.controllerId(), Map.of())
                             .getOrDefault(c.subtype(), 0) >= c.minimum();
+            case AttackedWithTokenThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoAttackedWithTokenThisTurn.contains(ctx.controllerId());
             case AttackedWithCommanderThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoAttackedWithCommanderThisTurn.contains(ctx.controllerId());
@@ -911,8 +916,11 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.initiativePlayerId);
             case ControllerHasEnduringStory ignored ->
                     ctx.controllerId() != null && gameData.playersWithEnduringStory.contains(ctx.controllerId());
-            case ControllerHasCompletedDungeon ignored ->
-                    ctx.controllerId() != null && gameData.playersWhoCompletedDungeon.contains(ctx.controllerId());
+            case ControllerHasCompletedDungeon completed ->
+                    ctx.controllerId() != null && (completed.dungeon() == null
+                            ? gameData.playersWhoCompletedDungeon.contains(ctx.controllerId())
+                            : gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of())
+                            .contains(completed.dungeon()));
             case ControllerHasBoon ignored ->
                     ctx.controllerId() != null
                             && gameData.boons.stream()
@@ -1151,6 +1159,8 @@ public class ConditionEvaluationService {
             case AttackedTargetIsMonarch ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
                             && ctx.targetId().equals(gameData.monarchPlayerId);
+            case AttackedPlayerPoisoned ignored ->
+                    attackedPlayerPoisoned(gameData, ctx);
             case AttacksEnchantedPlayer ignored -> attacksEnchantedPlayer(gameData, ctx);
             case AttackingPlayerIsOpponent ignored ->
                     ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
@@ -3755,6 +3765,19 @@ public class ConditionEvaluationService {
                 .map(Permanent::getAttackTarget)
                 .filter(gameData.playerIds::contains)
                 .anyMatch(targetId -> !controllerId.equals(targetId));
+    }
+
+    private boolean attackedPlayerPoisoned(GameData gameData, ConditionContext ctx) {
+        UUID attackingPlayerId = ctx.targetId();
+        if (attackingPlayerId == null) {
+            return false;
+        }
+
+        return gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
+                .filter(Permanent::isAttacking)
+                .map(Permanent::getAttackTarget)
+                .filter(gameData.playerIds::contains)
+                .anyMatch(targetId -> gameData.playerPoisonCounters.getOrDefault(targetId, 0) > 0);
     }
 
     private boolean playerAttacksNotController(GameData gameData, ConditionContext ctx) {

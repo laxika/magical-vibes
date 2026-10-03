@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BalduvianHorde.class, StormCrow.class})
+@CardUsed({BalduvianHorde.class, StormCrow.class, Unsummon.class})
 class BalduvianHordeTest extends BaseCardTest {
 
     // ===== ETB prompt =====
@@ -108,5 +110,48 @@ class BalduvianHordeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB → may ability prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("The controller may still discard after the Horde leaves the battlefield")
+    void canDiscardAfterHordeLeavesBattlefield() {
+        bounceHordeBeforeTriggerResolves();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Horde");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining after the Horde leaves does not sacrifice or discard the returned card")
+    void canDeclineAfterHordeLeavesBattlefield() {
+        bounceHordeBeforeTriggerResolves();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Balduvian Horde");
+        harness.assertInHand(player1, "Storm Crow");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void bounceHordeBeforeTriggerResolves() {
+        harness.castFromHand(player1, new BalduvianHorde(), "{2}{R}{R}");
+        harness.setHand(player1, List.of(new StormCrow()));
+        harness.passBothPriorities();
+
+        var horde = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, horde.getId());
+        harness.assertInHand(player1, "Balduvian Horde");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
     }
 }

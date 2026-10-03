@@ -66,6 +66,7 @@ public class MayCopyHandlerService {
     private final ValidTargetService validTargetService;
     private final LandCopyOnEnterService landCopyOnEnterService;
     private final TargetRedirectionSupport targetRedirectionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport psychicBattleSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCopyPermanentOnEnterChoice(GameData gameData, Player player, boolean accepted,
@@ -591,6 +592,16 @@ public class MayCopyHandlerService {
         }
 
         Card spellCard = targetSpellEntry.getCard();
+        boolean requireAllChanges = ability.effects().stream().anyMatch(effect ->
+                effect instanceof ChooseNewTargetsForTargetSpellEffect retarget && retarget.mustChangeAllTargets());
+        if (!requireAllChanges) {
+            psychicBattleSupport.beginPermanentChoice(gameData, ability.sourceCard(), ability.controllerId(),
+                    targetSpellEntry.getTargetableId(), 0);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         List<UUID> validTargets = new ArrayList<>();
 
         if (targetSpellEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY

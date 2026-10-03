@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.e.EnsouledScimitar;
+import com.github.laxika.magicalvibes.cards.p.ParadiseMantle;
 import com.github.laxika.magicalvibes.cards.s.SparkElemental;
 import com.github.laxika.magicalvibes.cards.w.WayfarersBauble;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArtificersIntuition.class, ConjurersBauble.class, EnsouledScimitar.class,
-        SparkElemental.class, WayfarersBauble.class})
+        ParadiseMantle.class, SparkElemental.class, WayfarersBauble.class})
 class ArtificersIntuitionTest extends BaseCardTest {
 
     @Test
@@ -75,6 +76,52 @@ class ArtificersIntuitionTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactlyInAnyOrder(expensiveArtifact, nonArtifact);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can discard an expensive artifact to find a zero-mana artifact")
+    void discardsExpensiveArtifactToFindZeroManaArtifact() {
+        Card artifactToDiscard = new EnsouledScimitar();
+        Card zeroManaArtifact = new ParadiseMantle();
+        harness.addToBattlefield(player1, new ArtificersIntuition());
+        harness.setHand(player1, List.of(artifactToDiscard));
+        harness.setLibrary(player1, List.of(zeroManaArtifact));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifactToDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zeroManaArtifact);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(zeroManaArtifact);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May fail to find even when a matching artifact is available")
+    void mayDeclineMatchingArtifact() {
+        Card artifactToDiscard = new ConjurersBauble();
+        Card cheapArtifact = new WayfarersBauble();
+        harness.addToBattlefield(player1, new ArtificersIntuition());
+        harness.setHand(player1, List.of(artifactToDiscard));
+        harness.setLibrary(player1, List.of(cheapArtifact));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifactToDiscard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cheapArtifact);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 

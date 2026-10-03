@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -59,5 +61,36 @@ class ArgivianPhalanxTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(phalanx.isTapped()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 2, 7})
+    @DisplayName("Affinity counts tapped creatures and reduces only the generic cost")
+    void affinityCountsTappedCreaturesAndStopsAtZeroGenericCost(int creatureCount) {
+        for (int i = 0; i < creatureCount; i++) {
+            harness.addToBattlefieldAndReturn(player1, new ArgivianPhalanx()).tap();
+        }
+        harness.setHand(player1, List.of(new ArgivianPhalanx()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, Math.max(0, 5 - creatureCount));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Affinity cannot pay the white mana requirement even with excess creatures")
+    void affinityDoesNotReduceWhiteManaCost() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new ArgivianPhalanx());
+        }
+        harness.setHand(player1, List.of(new ArgivianPhalanx()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }

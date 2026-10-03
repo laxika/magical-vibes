@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -36,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         HolyStrength.class,
         KjeldoranRoyalGuard.class,
         UnholyStrength.class,
-        WhiteKnight.class
+        WhiteKnight.class,
+        WrathOfGod.class
 })
 class BlackKnightTest extends BaseCardTest {
 
@@ -91,7 +93,7 @@ class BlackKnightTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BlackKnight());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new WhiteKnight());
+        addCreatureReady(player2, new WhiteKnight());
 
         prepareDeclareBlockers();
 
@@ -223,5 +225,47 @@ class BlackKnightTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isInstanceOf(UnholyStrength.class);
+    }
+
+    @Test
+    @DisplayName("First strike kills a 2/2 attacker before it damages Black Knight")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent knight = addCreatureReady(player2, new BlackKnight());
+        knight.setBlocking(true);
+        knight.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Black Knight");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Black Knight deals damage only once")
+    void unblockedFirstStrikerDoesNotDealRegularDamage() {
+        harness.setLife(player2, 20);
+        Permanent knight = addCreatureReady(player1, new BlackKnight());
+        knight.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Black Knight");
+    }
+
+    @Test
+    @DisplayName("Protection from white does not stop untargeted destruction")
+    void whiteBoardWipeDestroysBlackKnight() {
+        addCreatureReady(player2, new BlackKnight());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player2, "Black Knight");
+        harness.assertInGraveyard(player2, "Black Knight");
     }
 }

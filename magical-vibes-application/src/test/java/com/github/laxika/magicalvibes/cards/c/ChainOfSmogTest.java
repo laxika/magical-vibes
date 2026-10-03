@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,8 +19,8 @@ class ChainOfSmogTest extends BaseCardTest {
     @Test
     @DisplayName("Target player discards two cards")
     void targetPlayerDiscardsTwoCards() {
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior())));
+        harness.setHand(player2, List.of(
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
         castAtPlayer2();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
@@ -38,8 +37,8 @@ class ChainOfSmogTest extends BaseCardTest {
     @Test
     @DisplayName("The target player may copy the spell")
     void targetPlayerMayCopySpell() {
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior())));
+        harness.setHand(player2, List.of(
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
         castAtPlayer2();
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -52,8 +51,8 @@ class ChainOfSmogTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the copy ends the spell")
     void decliningCopyEndsSpell() {
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior())));
+        harness.setHand(player2, List.of(
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
         castAtPlayer2();
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -67,11 +66,11 @@ class ChainOfSmogTest extends BaseCardTest {
     @Test
     @DisplayName("The target player may retarget the copy and the copy resolves for the new target")
     void copyMayBeRetargetedToAnotherPlayer() {
-        harness.setHand(player1, new ArrayList<>(List.of(
+        harness.setHand(player1, List.of(
                 new ChainOfSmog(), new ElvishWarrior(), new ElvishWarrior(),
-                new ElvishWarrior(), new ElvishWarrior())));
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior())));
+                new ElvishWarrior(), new ElvishWarrior()));
+        harness.setHand(player2, List.of(
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
@@ -107,6 +106,63 @@ class ChainOfSmogTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A player with one card discards it and may still copy")
+    void oneCardHandStillAllowsCopy() {
+        harness.setHand(player2, List.of(new ElvishWarrior()));
+        castAtPlayer2();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Copies keep their target and can be copied repeatedly with an empty hand")
+    void emptyHandCanContinueCopyingWithoutRetargeting() {
+        harness.setHand(player2, List.of());
+        castAtPlayer2();
+
+        for (int i = 0; i < 3; i++) {
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            harness.handleMayAbilityChosen(player2, true);
+            harness.handleMayAbilityChosen(player2, false);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
+            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Chain of Smog");
+    }
+
+    @Test
+    @DisplayName("The caster can target themselves and makes the copy decision")
+    void casterCanTargetThemselves() {
+        harness.setHand(player1, List.of(new ChainOfSmog(), new ElvishWarrior(), new ElvishWarrior()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 
     private void castAtPlayer2() {

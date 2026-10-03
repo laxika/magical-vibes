@@ -138,6 +138,51 @@ class BrainwashTest extends BaseCardTest {
     }
 
     @Test
+    void auraControllersManaCannotPayForOpponentsAttack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        enchant(bears, player2);
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bears.isAttacking()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void insufficientManaForTwoTaxedAttackersDoesNotSpendManaOrTapEither() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        enchant(first, player2);
+        enchant(second, player2);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(first.isAttacking()).isFalse();
+        assertThat(second.isAttacking()).isFalse();
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    void controllerMayDeclineToAttackWithEnchantedCreature() {
+        harness.setLife(player2, 20);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        enchant(bears, player2);
+
+        declareAttackers(List.of());
+
+        assertThat(bears.isAttacking()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     void cannotEnchantNonCreature() {
         addCreatureReady(player2, new GrizzlyBears());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());

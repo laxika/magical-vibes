@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,19 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Chromanticore.class, GrizzlyBears.class, FountainOfYouth.class})
 class ChromanticoreTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chromanticore can be cast normally as a creature")
     void castsNormallyAsCreature() {
-        harness.setHand(player1, List.of(new Chromanticore()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Chromanticore(), "{W}{U}{B}{R}{G}");
         harness.passBothPriorities();
 
         Permanent chromanticore = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -99,5 +94,72 @@ class ChromanticoreTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Bestow resolves as a creature if its target leaves before resolution")
+    void resolvesAsCreatureWhenTargetLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareBestow();
+        harness.castWithAlternateCost(player1, 0, bear.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bear));
+        harness.passBothPriorities();
+
+        Permanent chromanticore = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.isCreature(gd, chromanticore)).isTrue();
+        assertThat(chromanticore.isAttached()).isFalse();
+        harness.assertNotInGraveyard(player1, "Chromanticore");
+    }
+
+    @Test
+    @DisplayName("Chromanticore can bestow onto an opponent's creature without changing control")
+    void bestowsOntoOpponentsCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareBestow();
+        harness.castWithAlternateCost(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        Permanent chromanticore = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.isCreature(gd, chromanticore)).isFalse();
+        assertThat(chromanticore.getAttachedTo()).isEqualTo(bear.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The host loses Chromanticore's bonuses when the Aura leaves")
+    void bonusesEndWhenAuraLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareBestow();
+        harness.castWithAlternateCost(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        Permanent chromanticore = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != bear)
+                .findFirst()
+                .orElseThrow();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, chromanticore));
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.VIGILANCE,
+                Keyword.TRAMPLE, Keyword.LIFELINK)) {
+            assertThat(gqs.hasKeyword(gd, bear, keyword)).isFalse();
+        }
+        harness.assertInGraveyard(player1, "Chromanticore");
+    }
+
+    private void prepareBestow() {
+        harness.setHand(player1, List.of(new Chromanticore()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 }

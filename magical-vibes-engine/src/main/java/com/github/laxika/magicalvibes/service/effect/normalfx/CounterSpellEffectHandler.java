@@ -38,6 +38,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
                 .orElse(null);
         if (targetOnStack != null) {
             entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
+            entry.setEventValue(targetOnStack.getTargetingCard().getManaValue() + targetOnStack.getXValue());
         }
 
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);

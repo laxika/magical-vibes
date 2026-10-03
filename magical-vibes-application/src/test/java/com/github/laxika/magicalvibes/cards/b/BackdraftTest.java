@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ChainLightning;
 import com.github.laxika.magicalvibes.cards.c.Cleanse;
+import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Backdraft.class, ChainLightning.class, Cleanse.class})
+@CardUsed({Backdraft.class, ChainLightning.class, Cleanse.class, DAvenantArcher.class})
 class BackdraftTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class BackdraftTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
         harness.handlePermanentChosen(player2, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
@@ -47,8 +47,7 @@ class BackdraftTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -70,10 +69,73 @@ class BackdraftTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
         harness.handlePermanentChosen(player2, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void resolvesWithoutDamageWhenNoPlayerCastASorcery() {
+        harness.setHand(player1, List.of(new Backdraft()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Backdraft");
+    }
+
+    @Test
+    void canChooseItsOwnController() {
+        harness.setHand(player1, List.of(new ChainLightning(), new Backdraft()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.castAndResolveInstant(player1, 0);
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void countsDamageDealtToACreatureIncludingExcessDamage() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new DAvenantArcher());
+        harness.setHand(player1, List.of(new ChainLightning()));
+        harness.setHand(player2, List.of(new Backdraft()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0);
+        harness.handlePermanentChosen(player2, player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void controllerChoosesWhichSorceryDeterminesDamage() {
+        harness.setHand(player1, List.of(new ChainLightning(), new Cleanse()));
+        harness.setHand(player2, List.of(new Backdraft()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0);
+        harness.handlePermanentChosen(player2, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player1, 20);
     }
 }

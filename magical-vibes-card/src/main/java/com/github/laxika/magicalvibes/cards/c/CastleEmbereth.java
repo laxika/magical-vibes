@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "239")
 @CardRegistration(set = "TDC", collectorNumber = "347")
+@CardRegistration(set = "ONC", collectorNumber = "150")
 public class CastleEmbereth extends Card {
 
     public CastleEmbereth() {

@@ -21,11 +21,7 @@ class ArcboundPrototypeTest extends BaseCardTest {
 
     @Test
     void entersWithTwoPlusOnePlusOneCounters() {
-        harness.setHand(player1, List.of(new ArcboundPrototype()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArcboundPrototype(), "{1}{W}");
         harness.passBothPriorities();
 
         Permanent prototype = findPermanent(player1, "Arcbound Prototype");
@@ -73,6 +69,75 @@ class ArcboundPrototypeTest extends BaseCardTest {
         assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void modularChoiceDescribesPlusOnePlusOneCounters() {
+        Permanent prototype = addCreatureReady(player1, new ArcboundPrototype());
+        prototype.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        prototype.tap();
+        Permanent recipient = harness.enterBattlefieldAndReturn(player1, new ArcboundPrototype());
+
+        destroyPrototype(prototype.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        String description = choice.description();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(description).contains("+1/+1").doesNotContain("-1/-1");
+    }
+
+    @Test
+    void modularTransfersAllCountersToOpponentsArtifactCreature() {
+        Permanent prototype = addCreatureReady(player1, new ArcboundPrototype());
+        prototype.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        prototype.tap();
+        Permanent recipient = harness.enterBattlefieldAndReturn(player2, new ArcboundPrototype());
+
+        destroyPrototype(prototype.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(recipient.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+        harness.assertInGraveyard(player1, "Arcbound Prototype");
+    }
+
+    @Test
+    void modularWithNoCountersDoesNotAddCountersToRecipient() {
+        addCreatureReady(player1, new ArcboundPrototype());
+        Permanent recipient = harness.enterBattlefieldAndReturn(player1, new ArcboundPrototype());
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Arcbound Prototype");
+    }
+
+    @Test
+    void deathWithoutLegalArtifactCreatureTargetDoesNotRequireChoice() {
+        addCreatureReady(player1, new ArcboundPrototype());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Arcbound Prototype");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingInteractions).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void destroyPrototype(UUID prototypeId) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -80,7 +145,6 @@ class ArcboundPrototypeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, prototypeId, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, prototypeId);
     }
 }

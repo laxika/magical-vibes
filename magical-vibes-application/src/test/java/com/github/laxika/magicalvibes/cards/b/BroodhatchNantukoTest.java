@@ -23,8 +23,7 @@ class BroodhatchNantukoTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Broodhatch Nantuko"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Broodhatch Nantuko"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -41,8 +40,7 @@ class BroodhatchNantukoTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Broodhatch Nantuko"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Broodhatch Nantuko"));
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player2, false);
@@ -90,5 +88,71 @@ class BroodhatchNantukoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(nantuko.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Spell damage does not trigger the printed ability while face down")
+    void faceDownSpellDamageDoesNotTrigger() {
+        harness.setHand(player1, List.of(new BroodhatchNantuko()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        var nantuko = findPermanent(player1, "Broodhatch Nantuko");
+        assertThat(nantuko.isFaceDown()).isTrue();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, nantuko.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+        harness.assertInGraveyard(player1, "Broodhatch Nantuko");
+    }
+
+    @Test
+    @DisplayName("Combat damage does not trigger the printed ability while face down")
+    void faceDownCombatDamageDoesNotTrigger() {
+        harness.setHand(player2, List.of(new BroodhatchNantuko()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.castCreatureWithMorph(player2, 0);
+        resolveAllTriggers();
+        var nantuko = findPermanent(player2, "Broodhatch Nantuko");
+        assertThat(nantuko.isFaceDown()).isTrue();
+        var attacker = addCreatureReady(player1, new ElvishWarrior());
+        attacker.setAttacking(true);
+        nantuko.setBlocking(true);
+        nantuko.addBlockingTarget(0);
+
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(findPermanents(player2, "Insect")).isEmpty();
+        harness.assertInGraveyard(player2, "Broodhatch Nantuko");
+    }
+
+    @Test
+    @DisplayName("Turning face up in response to Shock enables the damage trigger")
+    void turningFaceUpBeforeDamageEnablesTrigger() {
+        harness.setHand(player1, List.of(new BroodhatchNantuko()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        var nantuko = findPermanent(player1, "Broodhatch Nantuko");
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, nantuko.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(nantuko));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(findPermanents(player1, "Insect")).hasSize(2);
+        harness.assertInGraveyard(player1, "Broodhatch Nantuko");
     }
 }

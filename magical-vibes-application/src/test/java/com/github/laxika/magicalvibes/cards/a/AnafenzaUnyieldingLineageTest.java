@@ -89,6 +89,70 @@ class AnafenzaUnyieldingLineageTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("Anafenza dying alone does not trigger its own ability")
+    void ownDeathDoesNotTrigger() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaUnyieldingLineage());
+
+        anafenza.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's nontoken creature dying does not trigger Anafenza")
+    void opponentsCreatureDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AnafenzaUnyieldingLineage());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        bear.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each simultaneously dying allied nontoken creature triggers endure separately")
+    void multipleDeathsTriggerSeparately() {
+        Permanent anafenza = addAnafenzaAndBear();
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        findPermanent(player1, "Grizzly Bears").setMarkedDamage(2);
+        secondBear.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, COUNTERS);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, SPIRIT);
+
+        assertThat(anafenza.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Anafenza dying simultaneously with two allies creates two Spirits")
+    void simultaneousSourceAndAlliesDeathStillEnduresForEachAlly() {
+        Permanent anafenza = addAnafenzaAndBear();
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        anafenza.setMarkedDamage(2);
+        findPermanent(player1, "Grizzly Bears").setMarkedDamage(2);
+        secondBear.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addAnafenzaAndBear() {
         Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaUnyieldingLineage());
         harness.addToBattlefield(player1, new GrizzlyBears());

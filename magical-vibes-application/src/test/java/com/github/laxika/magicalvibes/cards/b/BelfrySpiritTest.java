@@ -95,6 +95,46 @@ class BelfrySpiritTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void canHauntItsOwnBatToken() {
+        castBelfrySpirit();
+        UUID batId = batTokens().getFirst().getId();
+        UUID spiritId = harness.getPermanentId(player1, "Belfry Spirit");
+
+        destroyWithDouseInGloom(spiritId);
+        harness.handlePermanentChosen(player1, batId);
+        harness.passBothPriorities();
+
+        assertThat(batTokens()).hasSize(2);
+        destroyWithDouseInGloom(batId);
+        harness.passBothPriorities();
+
+        assertThat(batTokens()).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .contains("Belfry Spirit");
+    }
+
+    @Test
+    void staysInGraveyardWhenHauntTargetDiesBeforeResolution() {
+        harness.addToBattlefield(player2, new Gristleback());
+        UUID creatureId = harness.getPermanentId(player2, "Gristleback");
+        castBelfrySpirit();
+        UUID spiritId = harness.getPermanentId(player1, "Belfry Spirit");
+
+        destroyWithDouseInGloom(spiritId);
+        harness.handlePermanentChosen(player1, creatureId);
+        destroyWithDouseInGloom(creatureId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Belfry Spirit");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Belfry Spirit");
+        assertThat(batTokens()).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castBelfrySpirit() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

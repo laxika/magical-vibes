@@ -28,6 +28,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,8 +53,11 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", snapshot.getCard(), "'s ability is created."));
         log.info("Game {} - copy of {}'s ability created for controller", gameData.id, snapshot.getCard().getName());
 
-        // "You may choose new targets for the copy." Only single-target abilities are retargetable here;
-        // a copy with no target, or a multi-target ability, keeps the original targets.
+        if (!snapshot.isNonTargeting() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
+            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), copyControllerId,
+                    copyEntry.getTargetableId(), 0);
+            return;
+        }
         boolean singleTarget = snapshot.getTargetId() != null
                 && (snapshot.getTargetIds() == null || snapshot.getTargetIds().size() <= 1)
                 && !snapshot.isNonTargeting()

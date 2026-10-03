@@ -98,4 +98,58 @@ class CinderhazeWretchTest extends BaseCardTest {
 
         assertThat(wretch.isTapped()).isFalse();
     }
+    @Test
+    @DisplayName("Discard ability resolves harmlessly when the target has an empty hand")
+    void discardFromEmptyHand() {
+        Permanent wretch = addCreatureReady(player1, new CinderhazeWretch());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(wretch.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents the tap ability")
+    void summoningSicknessPreventsDiscard() {
+        harness.addToBattlefield(player1, new CinderhazeWretch());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent the counter-cost untap ability")
+    void summoningSicknessDoesNotPreventUntap() {
+        Permanent wretch = harness.addToBattlefieldAndReturn(player1, new CinderhazeWretch());
+        wretch.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(wretch.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(wretch.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(wretch.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A lethal counter cost is legal and the creature dies before untapping")
+    void lethalCounterCostKillsBeforeUntap() {
+        Permanent wretch = addCreatureReady(player1, new CinderhazeWretch());
+        wretch.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        wretch.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Cinderhaze Wretch");
+        harness.assertInGraveyard(player1, "Cinderhaze Wretch");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
 }

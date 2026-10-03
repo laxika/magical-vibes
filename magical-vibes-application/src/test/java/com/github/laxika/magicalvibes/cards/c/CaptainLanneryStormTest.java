@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.s.SailorOfMeans;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CaptainLanneryStorm.class, CostlyPlunder.class, SailorOfMeans.class})
 class CaptainLanneryStormTest extends BaseCardTest {
-
-    // ===== ON_ATTACK — creates Treasure token =====
 
     @Test
     @DisplayName("Attacking creates a Treasure artifact token")
@@ -26,7 +28,8 @@ class CaptainLanneryStormTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        // Should have a Treasure token on the battlefield
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Treasure")
                         && p.getCard().getType() == CardType.ARTIFACT
@@ -44,12 +47,15 @@ class CaptainLanneryStormTest extends BaseCardTest {
 
         Permanent treasure = findPermanent(player1, "Treasure");
 
-        assertThat(treasure.getCard().getActivatedAbilities()).hasSize(1);
-        assertThat(treasure.getCard().getActivatedAbilities().getFirst().getDescription())
-                .contains("Add one mana of any color");
-    }
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(treasure), null, null);
+        harness.handleListChoice(player1, "BLUE");
 
-    // ===== ON_ALLY_PERMANENT_SACRIFICED — +1/+0 when Treasure sacrificed =====
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        resolveAllTriggers();
+    }
 
     @Test
     @DisplayName("Gets +1/+0 when a Treasure is sacrificed")
@@ -60,16 +66,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        // Find the Treasure token index on the battlefield
-        int treasureIndex = -1;
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < bf.size(); i++) {
-            if (bf.get(i).getCard().getName().equals("Treasure")) {
-                treasureIndex = i;
-                break;
-            }
-        }
-        assertThat(treasureIndex).isGreaterThanOrEqualTo(0);
+        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
 
         // Move to main phase so we can activate abilities
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -95,15 +92,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
         addTreasureToken(player1);
         addTreasureToken(player1);
 
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        int firstTreasure = -1;
-        int secondTreasure = -1;
-        for (int i = 0; i < bf.size(); i++) {
-            if (bf.get(i).getCard().getName().equals("Treasure")) {
-                if (firstTreasure == -1) firstTreasure = i;
-                else secondTreasure = i;
-            }
-        }
+        int firstTreasure = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
 
         // Sacrifice first treasure
         harness.activateAbility(player1, firstTreasure, null, null);
@@ -112,16 +101,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
 
         assertThat(captain.getPowerModifier()).isEqualTo(1);
 
-        // Sacrifice second treasure (index shifted after first was removed)
-        // Re-find the remaining treasure
-        int remainingTreasure = -1;
-        bf = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < bf.size(); i++) {
-            if (bf.get(i).getCard().getName().equals("Treasure")) {
-                remainingTreasure = i;
-                break;
-            }
-        }
+        int remainingTreasure = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
         harness.activateAbility(player1, remainingTreasure, null, null);
         harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
@@ -133,27 +113,14 @@ class CaptainLanneryStormTest extends BaseCardTest {
     @DisplayName("Sacrificing a non-Treasure does not trigger +1/+0")
     void nonTreasureSacrificeDoesNotTrigger() {
         Permanent captain = addCreatureReady(player1, new CaptainLanneryStorm());
-
-        // Add a creature that can sacrifice itself (like a generic creature)
-        Card creature = new Card();
-        creature.setName("Goblin Token");
-        creature.setType(CardType.CREATURE);
-        creature.setSubtypes(List.of(CardSubtype.GOBLIN));
-        creature.setPower(1);
-        creature.setToughness(1);
-        creature.setToken(true);
-        Permanent goblin = new Permanent(creature);
-        goblin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(goblin);
-
-        // Simulate sacrificing the goblin manually (remove from battlefield, fire trigger)
-        gd.playerBattlefields.get(player1.getId()).remove(goblin);
-        gd.playerGraveyards.get(player1.getId()).add(goblin.getCard());
-        harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), goblin.getCard());
+        Permanent sailor = addCreatureReady(player1, new SailorOfMeans());
+        harness.setHand(player1, List.of(new CostlyPlunder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstantWithSacrifice(player1, 0, null, sailor.getId());
+        assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        // Captain should NOT get +1/+0 because a Goblin was sacrificed, not a Treasure
+        // Sacrificing a creature does not satisfy the Treasure condition.
         assertThat(captain.getPowerModifier()).isEqualTo(0);
     }
 
@@ -164,14 +131,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
 
         addTreasureToken(player1);
 
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        int treasureIndex = -1;
-        for (int i = 0; i < bf.size(); i++) {
-            if (bf.get(i).getCard().getName().equals("Treasure")) {
-                treasureIndex = i;
-                break;
-            }
-        }
+        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
 
         harness.activateAbility(player1, treasureIndex, null, null);
         harness.handleListChoice(player1, "RED");
@@ -186,7 +146,41 @@ class CaptainLanneryStormTest extends BaseCardTest {
         assertThat(captain.getPowerModifier()).isEqualTo(0);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("An opponent sacrificing a Treasure does not boost Captain")
+    void opponentTreasureDoesNotBoostCaptain() {
+        Permanent captain = addCreatureReady(player1, new CaptainLanneryStorm());
+        addTreasureToken(player2);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "RED");
+        resolveAllTriggers();
+
+        assertThat(captain.getPowerModifier()).isZero();
+        assertThat(captain.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing Treasure as a spell cost also boosts Captain")
+    void treasureSacrificedAsSpellCostBoostsCaptain() {
+        Permanent captain = addCreatureReady(player1, new CaptainLanneryStorm());
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        Permanent treasure = findPermanent(player1, "Treasure");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new CostlyPlunder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstantWithSacrifice(player1, 0, null, treasure.getId());
+        assertThat(captain.getPowerModifier()).isZero();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        assertThat(captain.getPowerModifier()).isEqualTo(1);
+        assertThat(captain.getToughnessModifier()).isZero();
+    }
 
     private void addTreasureToken(Player player) {
         Card treasureCard = new Card();

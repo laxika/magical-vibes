@@ -157,15 +157,51 @@ class AnimateWallTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, wall.getId());
         harness.passBothPriorities();
 
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof AnimateWall)
-                .findFirst()
-                .orElseThrow();
+        Permanent aura = findPermanent(player1, "Animate Wall");
         assertThat(aura.getAttachedTo()).isEqualTo(wall.getId());
 
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
         declareAttackers(List.of(wallIndex));
 
         assertThat(wall.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animate Wall does not let a summoning-sick Wall attack")
+    void enchantedSummoningSickWallCannotAttack() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfStone());
+        attachAnimateWall(wall);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Animate Wall does not let a tapped Wall attack")
+    void enchantedTappedWallCannotAttack() {
+        Permanent wall = addWall();
+        attachAnimateWall(wall);
+        wall.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Animate Wall goes to the graveyard if its target leaves before resolution")
+    void targetLeavingBeforeResolutionMakesAuraFailToResolve() {
+        Permanent wall = addWall();
+        harness.setHand(player1, List.of(new AnimateWall()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, wall.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(wall);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Animate Wall");
+        harness.assertInGraveyard(player1, "Animate Wall");
     }
 }

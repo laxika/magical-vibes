@@ -84,7 +84,7 @@ class BlightwingBanditTest extends BaseCardTest {
     void castsExiledSpellWithAnyManaType() {
         harness.addToBattlefield(player1, new BlightwingBandit());
         Card topCard = new Divination();
-        harness.setLibrary(player1, List.of(topCard, new Island(), new Island()));
+        harness.setLibrary(player1, List.of(topCard, new Island(), new Island(), new Island()));
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
@@ -92,6 +92,7 @@ class BlightwingBanditTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

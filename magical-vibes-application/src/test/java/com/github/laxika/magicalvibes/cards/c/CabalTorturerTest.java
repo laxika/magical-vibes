@@ -48,7 +48,6 @@ class CabalTorturerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
@@ -122,6 +121,72 @@ class CabalTorturerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, coffers.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(torturer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The threshold ability still resolves after its controller loses threshold")
+    void thresholdAbilityResolvesAfterGraveyardDropsBelowSeven() {
+        addCreatureReady(player1, new CabalTorturer());
+        Permanent vampire = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, vampire.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The threshold ability's -2/-2 expires at cleanup")
+    void thresholdAbilityShrinksTargetOnlyUntilEndOfTurn() {
+        addCreatureReady(player1, new CabalTorturer());
+        Permanent vampire = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, vampire.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The first ability can target itself and put it into the graveyard at zero toughness")
+    void firstAbilityCanTargetItself() {
+        Permanent torturer = addCreatureReady(player1, new CabalTorturer());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, torturer.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cabal Torturer");
+        harness.assertInGraveyard(player1, "Cabal Torturer");
+    }
+
+    @Test
+    @DisplayName("The first ability remains available with threshold")
+    void firstAbilityRemainsAvailableWithSevenGraveyardCards() {
+        addCreatureReady(player1, new CabalTorturer());
+        Permanent vampire = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, vampire.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(3);
     }
 
     private List<Card> graveyardWithSevenCards() {

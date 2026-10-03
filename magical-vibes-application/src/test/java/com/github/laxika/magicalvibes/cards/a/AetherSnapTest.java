@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AetherSnap.class, DarksteelCitadel.class, DrossGolem.class})
+@CardUsed({AetherSnap.class, ArcboundWorker.class, DarksteelCitadel.class, DrossGolem.class})
 class AetherSnapTest extends BaseCardTest {
 
     @Test
@@ -47,6 +47,30 @@ class AetherSnapTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentPermanent);
         assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(Card::isToken);
         assertThat(gd.getPlayerExiledCards(player2.getId())).noneMatch(Card::isToken);
+    }
+
+    @Test
+    @DisplayName("Exiles a token reduced to zero toughness before it can die")
+    void exilesZeroToughnessTokenBeforeStateBasedActions() {
+        Permanent worker = harness.addToBattlefieldAndReturn(player2, token(new ArcboundWorker()));
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player2, new DrossGolem());
+
+        castAetherSnap();
+
+        assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(worker);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield without targets")
+    void resolvesOnEmptyBattlefield() {
+        castAetherSnap();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Aether Snap");
     }
 
     private void castAetherSnap() {

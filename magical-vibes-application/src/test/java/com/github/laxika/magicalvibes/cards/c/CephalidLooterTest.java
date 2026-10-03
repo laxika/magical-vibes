@@ -87,4 +87,63 @@ class CephalidLooterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new CephalidLooter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent looter = readyLooter();
+        looter.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Target may discard the drawn card instead of a card already in hand")
+    void targetCanChooseDrawnCardWithNonemptyHand() {
+        readyLooter();
+        Forest original = new Forest();
+        Forest drawn = new Forest();
+        harness.setHand(player2, List.of(original));
+        harness.setLibrary(player2, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(original, drawn);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(original);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent looter = readyLooter();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(looter);
+        harness.setGraveyard(player1, List.of(looter.getCard()));
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+    }
 }

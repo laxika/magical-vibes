@@ -50,6 +50,54 @@ class ChocoCometTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
     }
 
+    @Test
+    void zeroDamageStillCreatesExactlyOneBird() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ChocoComet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, birdToken())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, birdToken())).isEqualTo(2);
+    }
+
+    @Test
+    void opponentLandDoesNotBoostBird() {
+        harness.setHand(player1, List.of(new ChocoComet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        Permanent bird = birdToken();
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
+    }
+
+    @Test
+    void eachLandEntryAddsAnotherBoost() {
+        harness.setHand(player1, List.of(new ChocoComet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        Permanent bird = birdToken();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
+    }
+
     private Permanent birdToken() {
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())

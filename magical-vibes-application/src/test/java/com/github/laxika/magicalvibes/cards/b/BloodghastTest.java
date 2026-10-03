@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.Disfigure;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Bloodghast.class, Forest.class, Disfigure.class})
 class BloodghastTest extends BaseCardTest {
 
     @Test
@@ -79,6 +83,69 @@ class BloodghastTest extends BaseCardTest {
 
         harness.castCreature(player2, 0);
 
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Low controller life does not grant haste while the opponent is above ten")
+    void controllersLifeDoesNotGrantHaste() {
+        Permanent bloodghast = harness.addToBattlefieldAndReturn(player1, new Bloodghast());
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 11);
+
+        assertThat(gqs.hasKeyword(gd, bloodghast, Keyword.HASTE)).isFalse();
+        harness.setLife(player2, 9);
+        assertThat(gqs.hasKeyword(gd, bloodghast, Keyword.HASTE)).isTrue();
+        assertThat(bls.canBlock(gd, bloodghast)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each graveyard copy has an independent optional return")
+    void graveyardCopiesReturnIndependently() {
+        Bloodghast first = new Bloodghast();
+        Bloodghast second = new Bloodghast();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Bloodghast")).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Bloodghast")).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A pending landfall ability cannot return Bloodghast after it returns and dies again")
+    void oldLandfallDoesNotReturnNewGraveyardObject() {
+        harness.setGraveyard(player1, List.of(new Bloodghast()));
+        harness.setHand(player1, List.of(new Disfigure()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Bloodghast");
+
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Bloodghast").getId());
+        harness.assertInGraveyard(player1, "Bloodghast");
+        harness.assertNotOnBattlefield(player1, "Bloodghast");
+
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player1, "Bloodghast");
+        harness.assertNotOnBattlefield(player1, "Bloodghast");
         assertThat(gd.stack).isEmpty();
     }
 }

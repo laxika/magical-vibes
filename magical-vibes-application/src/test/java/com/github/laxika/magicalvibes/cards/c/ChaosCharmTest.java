@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ChaosCharmTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({ChaosCharm.class, WallOfRoots.class, FeralShadow.class})
     @DisplayName("Mode 0: Destroy target Wall")
     class DestroyWallMode {
 
@@ -57,6 +58,7 @@ class ChaosCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({ChaosCharm.class, BayFalcon.class, FemerefKnight.class, Forest.class})
     @DisplayName("Mode 1: Deals 1 damage to target creature")
     class DamageMode {
 
@@ -103,8 +105,62 @@ class ChaosCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({ChaosCharm.class, FeralShadow.class, Forest.class, BayFalcon.class})
     @DisplayName("Mode 2: Target creature gains haste until end of turn")
     class HasteMode {
+
+        @Test
+        @DisplayName("Haste lets a summoning-sick creature attack")
+        void hasteAllowsImmediateAttack() {
+            harness.addToBattlefield(player1, new FeralShadow());
+            findPermanent(player1, "Feral Shadow").setSummoningSick(true);
+            harness.addToBattlefield(player2, new BayFalcon());
+            harness.setHand(player1, List.of(new ChaosCharm()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            UUID targetId = harness.getPermanentId(player1, "Feral Shadow");
+            harness.castInstant(player1, 0, 2, targetId);
+            harness.passBothPriorities();
+            declareAttackersAndPrepareBlockers(List.of(0));
+
+            assertThat(findPermanent(player1, "Feral Shadow").isAttacking()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Can grant haste to an opponent's creature without affecting other creatures")
+        void grantsHasteToOpponentsCreatureOnly() {
+            harness.addToBattlefield(player2, new FeralShadow());
+            harness.addToBattlefield(player1, new BayFalcon());
+            harness.setHand(player1, List.of(new ChaosCharm()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            UUID targetId = harness.getPermanentId(player2, "Feral Shadow");
+            harness.castInstant(player1, 0, 2, targetId);
+            harness.passBothPriorities();
+
+            assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Feral Shadow"), Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Bay Falcon"), Keyword.HASTE)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Does not grant haste to another creature when its target leaves the battlefield")
+        void targetLeavesBeforeResolution() {
+            harness.addToBattlefield(player2, new FeralShadow());
+            harness.addToBattlefield(player2, new BayFalcon());
+            harness.setHand(player1, List.of(new ChaosCharm(), new ChaosCharm()));
+            harness.addMana(player1, ManaColor.RED, 2);
+
+            UUID targetId = harness.getPermanentId(player2, "Feral Shadow");
+            harness.castInstant(player1, 0, 2, targetId);
+            harness.castInstant(player1, 0, 1, targetId);
+            harness.passBothPriorities();
+            harness.assertInGraveyard(player2, "Feral Shadow");
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Bay Falcon"), Keyword.HASTE)).isFalse();
+            harness.assertInGraveyard(player1, "Chaos Charm");
+        }
 
         @Test
         @DisplayName("Grants haste to the target creature")

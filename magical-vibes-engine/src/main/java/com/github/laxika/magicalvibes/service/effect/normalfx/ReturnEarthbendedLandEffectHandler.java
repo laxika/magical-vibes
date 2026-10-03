@@ -37,7 +37,7 @@ public class ReturnEarthbendedLandEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ReturnEarthbendedLandEffect returnEffect = (ReturnEarthbendedLandEffect) effect;
-        UUID cardId = entry.getCard().getId();
+        UUID cardId = entry.getTriggeringCardId() != null ? entry.getTriggeringCardId() : entry.getCard().getId();
         UUID controllerId = returnEffect.returnControllerId();
         if (returnEffect.fromExile()) {
             returnFromExile(gameData, entry, cardId, controllerId);
@@ -49,7 +49,9 @@ public class ReturnEarthbendedLandEffectHandler implements NormalEffectHandlerBe
     private void returnFromExile(GameData gameData, StackEntry entry, UUID cardId,
                                  UUID controllerId) {
         ExiledCardEntry exiled = gameData.findExiledCard(cardId);
-        if (exiled == null || !gameData.removeFromExile(cardId)) {
+        if (exiled == null || exiled.card().isToken()
+                || gameData.exileEntryVersions.getOrDefault(cardId, 0L) != entry.getTriggeringCardExileEntryVersion()
+                || !gameData.removeFromExile(cardId)) {
             return;
         }
 
@@ -69,7 +71,8 @@ public class ReturnEarthbendedLandEffectHandler implements NormalEffectHandlerBe
                                      UUID controllerId) {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-        if (card == null || graveyardOwnerId == null
+        if (card == null || card.isToken() || graveyardOwnerId == null
+                || gameData.graveyardEntryVersion(cardId) != entry.getTriggeringCardGraveyardEntryVersion()
                 || graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             return;
         }

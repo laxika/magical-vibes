@@ -33,8 +33,7 @@ class BlessingOfLeechesTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Blessing of Leeches attaches it to the target creature")
     void resolvesAndAttaches() {
-        harness.addToBattlefield(player2, new BileUrchin());
-        Permanent creature = findPermanent(player2, "Bile Urchin");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BileUrchin());
         harness.setHand(player1, List.of(new BlessingOfLeeches()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -44,6 +43,55 @@ class BlessingOfLeechesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Blessing of Leeches")
                         && creature.getId().equals(p.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BileUrchin());
+        harness.setHand(player1, List.of(new BlessingOfLeeches()));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.ensurePriority(player1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Blessing of Leeches").getAttachedTo())
+                .isEqualTo(creature.getId());
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Upkeep life loss belongs to the Aura controller, not the enchanted creature's controller")
+    void auraControllerLosesLifeWhenEnchantingOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new BileUrchin());
+        attachBlessing(player1, creature);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A regeneration shield does not prevent sacrificing the enchanted creature")
+    void regenerationDoesNotPreventSacrifice() {
+        Permanent creature = addCreatureReady(player1, new BileUrchin());
+        Permanent aura = attachBlessing(player1, creature);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(creature),
+                null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bile Urchin");
+        harness.assertInGraveyard(player1, "Bile Urchin");
+        harness.assertNotOnBattlefield(player1, "Blessing of Leeches");
+        harness.assertInGraveyard(player1, "Blessing of Leeches");
+        harness.assertLife(player2, 19);
     }
 
     @Test

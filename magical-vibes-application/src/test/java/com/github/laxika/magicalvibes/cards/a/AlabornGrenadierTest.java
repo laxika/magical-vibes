@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AlabornGrenadier.class})
 class AlabornGrenadierTest extends BaseCardTest {
@@ -18,6 +19,41 @@ class AlabornGrenadierTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
+        assertThat(grenadier.isTapped()).isFalse();
+    }
+
+    @Test
+    void vigilanceKeepsOpponentControlledAttackerUntapped() {
+        Permanent grenadier = addCreatureReady(player2, new AlabornGrenadier());
+        addCreatureReady(player1, new AlabornGrenadier());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThat(grenadier.isAttacking()).isTrue();
+        assertThat(grenadier.isTapped()).isFalse();
+    }
+
+    @Test
+    void vigilanceDoesNotAllowTappedCreatureToAttack() {
+        Permanent grenadier = addCreatureReady(player1, new AlabornGrenadier());
+        grenadier.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(grenadier.isAttacking()).isFalse();
+        assertThat(grenadier.isTapped()).isTrue();
+    }
+
+    @Test
+    void vigilanceDoesNotBypassSummoningSickness() {
+        Permanent grenadier = addCreatureReady(player1, new AlabornGrenadier());
+        grenadier.setSummoningSick(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(grenadier.isAttacking()).isFalse();
         assertThat(grenadier.isTapped()).isFalse();
     }
 }

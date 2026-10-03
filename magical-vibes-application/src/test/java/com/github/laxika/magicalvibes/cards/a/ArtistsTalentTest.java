@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BarkformHarvester;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArtistsTalent.class, Forest.class, GrizzlyBears.class, LightningStrike.class})
+@CardUsed({ArtistsTalent.class, Forest.class, BarkformHarvester.class, LightningStrike.class})
 class ArtistsTalentTest extends BaseCardTest {
 
     @Test
@@ -80,12 +81,146 @@ class ArtistsTalentTest extends BaseCardTest {
         levelUp(talent, 0);
         levelUp(talent, 1);
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BarkformHarvester());
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void levelCountersDoNotGrantClassAbilities() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ArtistsTalent());
+        talent.setCounterCount(CounterType.LEVEL, 2);
+        harness.setHand(player1, List.of(new LightningStrike(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void removingLevelCountersDoesNotRemoveClassAbilities() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ArtistsTalent());
+        levelUp(talent, 0);
+        levelUp(talent, 1);
+        talent.setCounterCount(CounterType.LEVEL, 0);
+        harness.setHand(player1, List.of(new LightningStrike(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void doesNotRummageOnCreatureSpellCast() {
+        harness.addToBattlefield(player1, new ArtistsTalent());
+        harness.setHand(player1, List.of(new BarkformHarvester(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void acceptingRummageWithEmptyHandDoesNotDraw() {
+        harness.addToBattlefield(player1, new ArtistsTalent());
+        Card drawn = new Forest();
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(drawn);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void damageToControllerIsNotIncreased() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ArtistsTalent());
+        levelUp(talent, 0);
+        levelUp(talent, 1);
+        harness.setHand(player1, List.of(new LightningStrike(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void damageToOpponentsPermanentIsIncreased() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ArtistsTalent());
+        levelUp(talent, 0);
+        levelUp(talent, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BarkformHarvester());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new LightningStrike(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void damageToOwnPermanentIsNotIncreased() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ArtistsTalent());
+        levelUp(talent, 0);
+        levelUp(talent, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BarkformHarvester());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new LightningStrike(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void opponentsSpellDoesNotRummageOrGainDamageBonus() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ArtistsTalent());
+        levelUp(talent, 0);
+        levelUp(talent, 1);
+        harness.setHand(player2, List.of(new LightningStrike(), new Forest()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     private void levelUp(Permanent talent, int abilityIndex) {

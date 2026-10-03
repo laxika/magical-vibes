@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -18,7 +18,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BallLightning.class, GrizzlyBears.class})
+@CardUsed({BallLightning.class, RuneclawBear.class})
 class BallLightningTest extends BaseCardTest {
 
     @Test
@@ -42,7 +42,7 @@ class BallLightningTest extends BaseCardTest {
         Permanent ballLightning = addCreatureReady(player1, new BallLightning());
         ballLightning.setAttacking(true);
 
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new RuneclawBear());
 
         prepareDeclareBlockers();
 
@@ -57,7 +57,7 @@ class BallLightningTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         harness.assertInGraveyard(player1, "Ball Lightning");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
     }
 
     @Test
@@ -144,5 +144,50 @@ class BallLightningTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Ball Lightning");
         harness.assertInGraveyard(player1, "Ball Lightning");
+    }
+
+    @Test
+    @DisplayName("End-step trigger sacrifices only its source, not a copy entering later")
+    void endStepTriggerDoesNotSacrificeCopyEnteringLater() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new BallLightning());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(original.getId());
+
+        Permanent lateArrival = harness.enterBattlefieldAndReturn(player1, new BallLightning());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).containsExactly(lateArrival.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(original.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each player's Ball Lightning is sacrificed in the same end step")
+    void sacrificesBothPlayersBallLightningsAtEndStep() {
+        harness.addToBattlefield(player1, new BallLightning());
+        harness.addToBattlefield(player2, new BallLightning());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Ball Lightning");
+        harness.assertNotOnBattlefield(player2, "Ball Lightning");
+        harness.assertInGraveyard(player1, "Ball Lightning");
+        harness.assertInGraveyard(player2, "Ball Lightning");
     }
 }

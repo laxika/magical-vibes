@@ -72,8 +72,7 @@ class ClockworkCondorTest extends BaseCardTest {
         Permanent condor = addCreatureReady(player2, new ClockworkCondor());
         condor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -92,14 +91,44 @@ class ClockworkCondorTest extends BaseCardTest {
 
         declareAttackers(player1, List.of());
         harness.passBothPriorities();
-        leaveEndOfCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
-    private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("End-of-combat counter removal uses the stack before shrinking the creature")
+    void counterRemovalWaitsForDelayedTriggerToResolve() {
+        Permanent condor = addCreatureReady(player1, new ClockworkCondor());
+        condor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        addCreatureReady(player2, new Ornithopter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("An unblocked Condor deals damage before losing its last counter and dying")
+    void lastCounterIsRemovedAfterCombatDamage() {
+        Permanent condor = addCreatureReady(player1, new ClockworkCondor());
+        condor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(condor);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(condor.getCard());
+    }
+
 }

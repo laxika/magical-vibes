@@ -107,9 +107,60 @@ class BullseyeDeathDealerTest extends BaseCardTest {
     }
 
     private Permanent addReadyBullseye() {
-        Permanent bullseye = new Permanent(new BullseyeDeathDealer());
+        Permanent bullseye = harness.addToBattlefieldAndReturn(player1, new BullseyeDeathDealer());
         bullseye.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bullseye);
         return bullseye;
+    }
+
+    @Test
+    @DisplayName("Declining Bullseye's enters ability preserves both available payments")
+    void decliningEntersAbilityPreservesResources() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new BullseyeDeathDealer(), new GrizzlyBears()));
+        int lifeBefore = gd.getLife(player2.getId());
+        castBullseyeToMayPrompt();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bullseye's discard entry trigger can kill a creature after choosing its target")
+    void discardEntryTriggerDealsDamageToCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BullseyeDeathDealer(), new Ornithopter()));
+        castBullseyeToMayPrompt();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Discard a nonland card");
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Bullseye's sacrifice activation pays its artifact and tap costs before dealing damage")
+    void sacrificeActivationPaysCostsBeforeResolution() {
+        Permanent bullseye = addReadyBullseye();
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(bullseye.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

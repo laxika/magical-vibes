@@ -60,4 +60,58 @@ class BloodfireKavuTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Bloodfire Kavu");
         harness.assertNotInGraveyard(player1, "Bloodfire Kavu");
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        var kavu = harness.addToBattlefieldAndReturn(player1, new BloodfireKavu());
+        kavu.tap();
+        kavu.setSummoningSick(true);
+        harness.addToBattlefield(player2, new GaeasSkyfolk());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bloodfire Kavu");
+        harness.assertInGraveyard(player2, "Gaea's Skyfolk");
+    }
+
+    @Test
+    @DisplayName("Damage waits for resolution and affects creatures entering in response")
+    void damagesCreaturesPresentAtResolution() {
+        harness.addToBattlefield(player1, new BloodfireKavu());
+        harness.addToBattlefield(player1, new GaeasSkyfolk());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Bloodfire Kavu");
+        harness.assertOnBattlefield(player1, "Gaea's Skyfolk");
+        harness.addToBattlefield(player2, new GaeasSkyfolk());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gaea's Skyfolk");
+        harness.assertInGraveyard(player2, "Gaea's Skyfolk");
+    }
+
+    @Test
+    @DisplayName("Damage from two activations accumulates on surviving creatures")
+    void damageFromTwoActivationsAccumulates() {
+        harness.addToBattlefield(player1, new BloodfireKavu());
+        harness.addToBattlefield(player1, new BloodfireKavu());
+        harness.addToBattlefield(player2, new CoalitionHonorGuard());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Coalition Honor Guard");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Coalition Honor Guard");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }

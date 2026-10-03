@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.j.JeweledTorque;
+import com.github.laxika.magicalvibes.cards.v.Vendetta;
 import com.github.laxika.magicalvibes.cards.w.Warmonger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CharmPeddler.class, Warmonger.class, JeweledTorque.class})
+@CardUsed({CharmPeddler.class, Warmonger.class, JeweledTorque.class, Vendetta.class})
 class CharmPeddlerTest extends BaseCardTest {
 
     @Test
@@ -94,5 +95,54 @@ class CharmPeddlerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, torque.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can choose a departed source whose damage ability is still on the stack")
+    void canChooseDepartedAbilitySource() {
+        addCreatureReady(player1, new CharmPeddler());
+        Permanent source = addCreatureReady(player1, new Warmonger());
+        Permanent target = addCreatureReady(player2, new Warmonger());
+        harness.setHand(player1, List.of(new Vendetta(), new Warmonger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.castAndResolveInstant(player1, 0, source.getId());
+        harness.assertNotOnBattlefield(player1, "Warmonger");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can protect its controller's creature without protecting players")
+    void protectsOwnCreatureOnly() {
+        addCreatureReady(player1, new CharmPeddler());
+        Permanent source = addCreatureReady(player2, new Warmonger());
+        Permanent target = addCreatureReady(player1, new Warmonger());
+        harness.setHand(player1, List.of(new Warmonger()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(source.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }

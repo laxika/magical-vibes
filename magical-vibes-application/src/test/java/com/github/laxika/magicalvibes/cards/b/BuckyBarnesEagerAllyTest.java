@@ -70,14 +70,78 @@ class BuckyBarnesEagerAllyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 
+    @Test
+    @CardUsed({BuckyBarnesEagerAlly.class, Shock.class})
+    @DisplayName("Only the top four cards are considered and the rest go below untouched cards")
+    void deathTriggerLeavesDeeperCardsOnTop() {
+        BuckyBarnesEagerAlly chosen = new BuckyBarnesEagerAlly();
+        Shock first = new Shock();
+        Shock second = new Shock();
+        Shock third = new Shock();
+        BuckyBarnesEagerAlly fifth = new BuckyBarnesEagerAlly();
+        Shock sixth = new Shock();
+        setupAndKillBucky(List.of(chosen, first, second, third, fifth, sixth));
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(chosen.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen).doesNotContain(fifth);
+        assertThat(gd.playerDecks.get(player1.getId())).startsWith(fifth, sixth);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 5))
+                .containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({BuckyBarnesEagerAlly.class, Shock.class})
+    @DisplayName("A short library still allows taking its only eligible card")
+    void deathTriggerWithShortLibrary() {
+        BuckyBarnesEagerAlly eligible = new BuckyBarnesEagerAlly();
+        Shock other = new Shock();
+        setupAndKillBucky(List.of(eligible, other));
+
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eligible);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({BuckyBarnesEagerAlly.class, Shock.class})
+    @DisplayName("Even the only card in the library may be declined")
+    void deathTriggerMayDeclineOnlyCard() {
+        BuckyBarnesEagerAlly eligible = new BuckyBarnesEagerAlly();
+        setupAndKillBucky(List.of(eligible));
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(eligible);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eligible);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({BuckyBarnesEagerAlly.class, Shock.class})
+    @DisplayName("An empty library finishes the death trigger without a choice or a draw")
+    void deathTriggerWithEmptyLibrary() {
+        setupAndKillBucky(List.of());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void setupAndKillBucky(List<Card> library) {
         harness.setLibrary(player1, library);
         Permanent bucky = harness.addToBattlefieldAndReturn(player1, new BuckyBarnesEagerAlly());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, bucky.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bucky.getId());
         harness.passBothPriorities();
     }
 }

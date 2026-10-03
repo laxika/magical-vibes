@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Apathy.class, BenalishInfantry.class, MindStone.class})
+@CardUsed({Apathy.class, AuraOfSilence.class, BenalishInfantry.class, MindStone.class})
 class ApathyTest extends BaseCardTest {
 
     @Test
@@ -99,6 +99,57 @@ class ApathyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing Apathy in response does not prevent its triggered ability from untapping the creature")
+    void removingAuraDoesNotPreventUntap() {
+        Permanent creature = enchantOpponentBears();
+        creature.tap();
+        harness.setHand(player2, List.of(new BenalishInfantry()));
+        harness.addToBattlefield(player2, new AuraOfSilence());
+
+        advanceToUpkeep(player2);
+        harness.sacrificePermanent(player2, 1, findPermanent(player1, "Apathy").getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Apathy");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Benalish Infantry");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Apathy does not trigger during its own controller's upkeep for an opposing creature")
+    void auraControllersUpkeepDoesNotOfferDiscard() {
+        Permanent creature = enchantOpponentBears();
+        creature.tap();
+        harness.setHand(player2, List.of(new BenalishInfantry()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting Apathy discards exactly one card from a multi-card hand without choosing it")
+    void randomDiscardRemovesExactlyOneCard() {
+        Permanent creature = enchantOpponentBears();
+        creature.tap();
+        harness.setHand(player2, List.of(new BenalishInfantry(), new MindStone()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(creature.isTapped()).isFalse();
     }
 
     private Permanent enchantOpponentBears() {

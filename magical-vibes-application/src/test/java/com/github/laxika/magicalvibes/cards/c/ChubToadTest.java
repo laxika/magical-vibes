@@ -18,6 +18,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChubToadTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Both Chub Toads trigger when one blocks the other, and boost only on resolution")
+    void bothToadsReceiveTheirOwnBoostsOnResolution() {
+        Permanent attackingToad = addCreatureReady(player1, new ChubToad());
+        attackingToad.setAttacking(true);
+        Permanent blockingToad = addCreatureReady(player2, new ChubToad());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(attackingToad.getPowerModifier()).isZero();
+        assertThat(attackingToad.getToughnessModifier()).isZero();
+        assertThat(blockingToad.getPowerModifier()).isZero();
+        assertThat(blockingToad.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(attackingToad.getPowerModifier()).isEqualTo(2);
+        assertThat(attackingToad.getToughnessModifier()).isEqualTo(2);
+        assertThat(blockingToad.getPowerModifier()).isEqualTo(2);
+        assertThat(blockingToad.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("When Chub Toad becomes blocked, it gets +2/+2 until end of turn")
     void becomesBlockedGetsBoost() {
         Permanent toad = addCreatureReady(player1, new ChubToad());

@@ -20,11 +20,14 @@ class BirninZanaPlazaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BirninZanaPlaza()));
 
         harness.playLand(player1, 0);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         Permanent plaza = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(plaza.isTapped()).isTrue();
         harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -51,10 +54,25 @@ class BirninZanaPlazaTest extends BaseCardTest {
         assertThat(plaza.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Entering without being played gains life even after the land leaves")
+    void entryTriggerResolvesAfterSourceLeaves() {
+        Permanent plaza = harness.enterBattlefieldAndReturn(player1, new BirninZanaPlaza());
+
+        assertThat(plaza.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(plaza);
+        gd.playerGraveyards.get(player1.getId()).add(plaza.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addPlazaReady() {
-        Permanent plaza = new Permanent(new BirninZanaPlaza());
-        plaza.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(plaza);
-        return plaza;
+        return harness.addToBattlefieldAndReturn(player1, new BirninZanaPlaza());
     }
 }

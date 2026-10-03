@@ -10,11 +10,14 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AutochthonWurm.class, ElvesOfDeepShadow.class, GrayscaledGharial.class})
 class AutochthonWurmTest extends BaseCardTest {
@@ -49,8 +52,7 @@ class AutochthonWurmTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new AutochthonWurm());
         Permanent blocker = addCreatureReady(player2, new GrayscaledGharial());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -65,5 +67,69 @@ class AutochthonWurmTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
+    }
+
+    @Test
+    @DisplayName("A blue creature can convoke the generic portion of the cost")
+    void offColorCreaturePaysGenericCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrayscaledGharial());
+        harness.setHand(player1, List.of(new AutochthonWurm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Autochthon Wurm");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"GREEN", "WHITE"})
+    @DisplayName("A multicolored creature can convoke either of its colors as needed")
+    void multicoloredCreaturePaysMissingColor(ManaColor missingColor) {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AutochthonWurm());
+        harness.setHand(player1, List.of(new AutochthonWurm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.GREEN, missingColor == ManaColor.GREEN ? 2 : 3);
+        harness.addMana(player1, ManaColor.WHITE, missingColor == ManaColor.WHITE ? 1 : 2);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Autochthon Wurm")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Convoke availability requires creatures of the missing mana color")
+    void unavailableWhenConvokeCannotPayMissingWhiteMana() {
+        harness.addToBattlefield(player1, new GrayscaledGharial());
+        harness.setHand(player1, List.of(new AutochthonWurm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player1.getId())).doesNotContain(0);
+    }
+
+    @Test
+    @DisplayName("Trample requires lethal damage to the blocker before damage to the player")
+    void cannotTrampleWithoutAssigningLethalDamage() {
+        addCreatureReady(player1, new AutochthonWurm());
+        Permanent blocker = addCreatureReady(player2, new GrayscaledGharial());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 0, player2.getId(), 9)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 1, player2.getId(), 8));
+        harness.assertLife(player2, 12);
     }
 }

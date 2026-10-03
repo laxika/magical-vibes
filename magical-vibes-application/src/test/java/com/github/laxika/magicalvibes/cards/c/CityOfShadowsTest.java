@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -67,10 +65,7 @@ class CityOfShadowsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new NaturalAffinity()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, city)).isTrue();
@@ -90,6 +85,55 @@ class CityOfShadowsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exile is paid immediately, but the storage counter waits for resolution")
+    void exileCostIsPaidBeforeCounterIsAdded() {
+        Permanent city = addReadyCity();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setTapped(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(city.isTapped()).isTrue();
+        assertThat(city.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(creature.getCard().getId());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(city.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the exile cost")
+    void cannotExileOpponentsCreature() {
+        Permanent city = addReadyCity();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(city.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The mana ability resolves immediately and counts only storage counters")
+    void manaAbilityDoesNotUseStackOrCountOtherCounters() {
+        Permanent city = addReadyCity();
+        city.setCounterCount(CounterType.STORAGE, 2);
+        city.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(city.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+        assertThat(city.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
     private Permanent addReadyCity() {

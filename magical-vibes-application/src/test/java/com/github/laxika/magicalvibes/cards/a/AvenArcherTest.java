@@ -117,6 +117,47 @@ class AvenArcherTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
+    @Test
+    @DisplayName("Does not damage a target that stops blocking before resolution")
+    void doesNotDamageTargetThatStopsBlockingBeforeResolution() {
+        addReadyArcher(player1);
+        Permanent blocker = addBlockingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Woodland Druid");
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after Aven Archer leaves the battlefield")
+    void dealsDamageAfterSourceLeavesBattlefield() {
+        Permanent archer = addReadyArcher(player1);
+        archer.setBlocking(true);
+        Permanent opposingArcher = addReadyArcher(player2);
+        Permanent attacker = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.activateAbility(player2, 0, null, archer.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aven Archer");
+        harness.assertOnBattlefield(player2, "Woodland Druid");
+        assertThat(opposingArcher.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Woodland Druid");
+        harness.assertInGraveyard(player2, "Woodland Druid");
+    }
+
     private Permanent addReadyArcher(Player player) {
         return addCreatureReady(player, new AvenArcher());
     }

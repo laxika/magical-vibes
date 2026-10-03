@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CodespellCleric.class, GrizzlyBears.class, LightningBolt.class})
 class CodespellClericTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class CodespellClericTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -36,8 +37,7 @@ class CodespellClericTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -56,10 +56,58 @@ class CodespellClericTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canTargetItselfAndStillResolvesAfterThirdSpell() {
+        harness.setHand(player1, List.of(new LightningBolt(), new CodespellCleric(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent cleric = findPermanent(player1, "Codespell Cleric");
+        harness.handlePermanentChosen(player1, cleric.getId());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(cleric.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerWhenItWasThirdSpell() {
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(), new CodespellCleric()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Codespell Cleric")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerWhenEnteringWithoutBeingCastAfterTwoSpells() {
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        Permanent cleric = harness.enterBattlefieldAndReturn(player1, new CodespellCleric());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(cleric.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

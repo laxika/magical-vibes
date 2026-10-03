@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.a.AvenSquire;
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
+import com.github.laxika.magicalvibes.cards.f.FaerieMechanist;
+import com.github.laxika.magicalvibes.cards.e.EmberWeaver;
+import com.github.laxika.magicalvibes.cards.h.HellsparkElemental;
+import com.github.laxika.magicalvibes.cards.r.RottingRats;
+import com.github.laxika.magicalvibes.cards.p.Progenitus;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +25,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Conflux.class, AvenSquire.class, FaerieMechanist.class, RottingRats.class,
+        HellsparkElemental.class, EmberWeaver.class, Progenitus.class,
+        AvenMindcensor.class, ObNixilisUnshackled.class})
 class ConfluxTest extends BaseCardTest {
-
-    // ===== First pick is a white-restricted, revealed search =====
 
     @Test
     @DisplayName("Resolving Conflux first offers only white cards, revealed, to hand")
@@ -37,7 +41,7 @@ class ConfluxTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Elite Vanguard");
+        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Aven Squire");
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
         assertThat(search.params().reveals()).isTrue();
         assertThat(search.params().canFailToFind()).isTrue();
@@ -45,8 +49,6 @@ class ConfluxTest extends BaseCardTest {
                 .extracting(LibrarySearchFollowUp.ToHandPick::color)
                 .containsExactly(CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
     }
-
-    // ===== Full flow: one card of each colour to hand =====
 
     @Test
     @DisplayName("Picking each colour puts one card of every colour into hand and shuffles")
@@ -59,12 +61,12 @@ class ConfluxTest extends BaseCardTest {
 
         // White, then blue, then black, then red, then green — one card each.
         for (int i = 0; i < 5; i++) {
-            harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
-                .contains("Elite Vanguard", "Fugitive Wizard", "Scathe Zombies", "Hill Giant", "Grizzly Bears");
+                .contains("Aven Squire", "Faerie Mechanist", "Rotting Rats", "Hellspark Elemental", "Ember Weaver");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("shuffled"));
     }
 
@@ -77,40 +79,35 @@ class ConfluxTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Fugitive Wizard");
+        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Faerie Mechanist");
         assertThat(search.params().followUp().remainingToHandPicks())
                 .extracting(LibrarySearchFollowUp.ToHandPick::color)
                 .containsExactly(CardColor.BLACK, CardColor.RED, CardColor.GREEN);
     }
-
-    // ===== A colour with no matching card is skipped =====
 
     @Test
     @DisplayName("A colour absent from the library is skipped without a pick")
     void absentColorIsSkipped() {
         setupAndCast();
         // No black card in the library.
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new EliteVanguard(), new FugitiveWizard(), new HillGiant(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AvenSquire(), new FaerieMechanist(),
+                new HellsparkElemental(), new EmberWeaver()));
 
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
         // White, then blue — the next pick should skip black straight to red.
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Hill Giant");
+        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Hellspark Elemental");
     }
-
-    // ===== May fail to find a colour =====
 
     @Test
     @DisplayName("Failing to find a colour takes no card and continues to the next colour")
@@ -122,24 +119,22 @@ class ConfluxTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Decline the white pick, then take the remaining four colours.
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
         for (int i = 0; i < 4; i++) {
-            harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
-                .doesNotContain("Elite Vanguard")
-                .contains("Fugitive Wizard", "Scathe Zombies", "Hill Giant", "Grizzly Bears");
+                .doesNotContain("Aven Squire")
+                .contains("Faerie Mechanist", "Rotting Rats", "Hellspark Elemental", "Ember Weaver");
     }
-
-    // ===== Edge case: empty library =====
 
     @Test
     @DisplayName("Empty library resolves without a search interaction")
     void emptyLibrary() {
         setupAndCast();
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -148,7 +143,130 @@ class ConfluxTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("it is empty"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Five different multicolored cards can fill the five color choices")
+    void findsFiveMulticoloredCards() {
+        setupAndCast();
+        List<Card> cards = List.of(new Progenitus(), new Progenitus(), new Progenitus(),
+                new Progenitus(), new Conflux());
+        harness.setLibrary(player1, cards);
+
+        harness.passBothPriorities();
+        for (int i = 0; i < 5; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A multicolored card can fill a later color after declining earlier colors")
+    void findsMulticoloredCardForLaterColor() {
+        setupAndCast();
+        Progenitus card = new Progenitus();
+        harness.setLibrary(player1, List.of(card));
+
+        harness.passBothPriorities();
+        for (int i = 0; i < 4; i++) {
+            harness.handleCardChosen(player1, -1);
+        }
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining every color leaves the cards in the library and still shuffles")
+    void mayFailToFindEveryColor() {
+        setupAndCast();
+        setupFullColorLibrary();
+        GameData gd = harness.getGameData();
+        List<Card> original = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        harness.passBothPriorities();
+        for (int i = 0; i < 5; i++) {
+            harness.handleCardChosen(player1, -1);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(original);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .filter(e -> e.contains("shuffled")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Conflux is one library search and triggers Ob Nixilis only once")
+    void triggersOnceForTheWholeSearch() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setLife(player1, 100);
+        setupAndCast();
+        setupFullColorLibrary();
+
+        harness.passBothPriorities();
+        for (int i = 0; i < 5; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().getLife(player1.getId())).isEqualTo(90);
+    }
+
+    @Test
+    @DisplayName("Mindcensor does not end the search when the top four contain no white card")
+    void continuesToOtherColorsWithinMindcensorLimit() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        setupAndCast();
+        List<Card> searchable = List.of(new FaerieMechanist(), new RottingRats(),
+                new HellsparkElemental(), new EmberWeaver());
+        AvenSquire outsideLimit = new AvenSquire();
+        harness.setLibrary(player1, List.of(searchable.get(0), searchable.get(1),
+                searchable.get(2), searchable.get(3), outsideLimit));
+
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.LibrarySearch.class))
+                .isNotNull();
+        for (int i = 0; i < 4; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(searchable);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(outsideLimit);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(e -> e.contains("shuffled"));
+    }
+
+    @Test
+    @DisplayName("Mindcensor restricts the entire search to the original top four cards")
+    void doesNotExposeDeeperCardsAfterEarlierPicks() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        setupAndCast();
+        AvenSquire white = new AvenSquire();
+        FaerieMechanist blue = new FaerieMechanist();
+        RottingRats black = new RottingRats();
+        HellsparkElemental red = new HellsparkElemental();
+        EmberWeaver outsideLimit = new EmberWeaver();
+        harness.setLibrary(player1, List.of(white, blue, black, red, outsideLimit));
+
+        harness.passBothPriorities();
+        for (int i = 0; i < 4; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(white, blue, black, red);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(outsideLimit);
+    }
 
     private void setupAndCast() {
         harness.setHand(player1, List.of(new Conflux()));
@@ -162,9 +280,7 @@ class ConfluxTest extends BaseCardTest {
     }
 
     private void setupFullColorLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new EliteVanguard(), new FugitiveWizard(), new ScatheZombies(),
-                new HillGiant(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AvenSquire(), new FaerieMechanist(), new RottingRats(),
+                new HellsparkElemental(), new EmberWeaver()));
     }
 }

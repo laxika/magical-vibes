@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,22 +13,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChillOfForeboding.class})
 class ChillOfForebodingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
     @Test
-    @DisplayName("Has flashback cost {7}{U}")
-    void hasFlashbackCost() {
-        ChillOfForeboding card = new ChillOfForeboding();
+    @DisplayName("Flashback requires all seven generic mana in addition to blue")
+    void flashbackRequiresSevenGenericMana() {
+        harness.setGraveyard(player1, List.of(new ChillOfForeboding()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{7}{U}");
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Chill of Foreboding");
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Casting normally =====
 
     @Test
     @DisplayName("Both players mill five cards when cast")
@@ -41,8 +39,7 @@ class ChillOfForebodingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(p1DeckBefore - 5);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore - 5);
@@ -57,8 +54,7 @@ class ChillOfForebodingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Chill of Foreboding");
         assertThat(gd.stack).isEmpty();
@@ -67,27 +63,20 @@ class ChillOfForebodingTest extends BaseCardTest {
     @Test
     @DisplayName("Does not crash when caster's library has fewer than five cards")
     void doesNotCrashWhenCasterLibrarySmall() {
-        // Leave only 2 cards in caster's library
-        List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player1.getId());
-        while (deck.size() > 2) {
-            deck.removeLast();
-        }
+        harness.setLibrary(player1, gd.playerDecks.get(player1.getId()).subList(0, 2));
         int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
 
         harness.setHand(player1, List.of(new ChillOfForeboding()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2 + 1); // 2 milled + the spell
         // Opponent should still mill 5
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore - 5);
     }
-
-    // ===== Flashback =====
 
     @Test
     @DisplayName("Flashback mills both players five cards")
@@ -99,8 +88,7 @@ class ChillOfForebodingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(p1DeckBefore - 5);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore - 5);
@@ -113,8 +101,7 @@ class ChillOfForebodingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         harness.assertNotInGraveyard(player1, "Chill of Foreboding");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -147,4 +134,52 @@ class ChillOfForebodingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Opponent with fewer than five cards mills the remaining library")
+    void millsAllOfShortOpponentLibrary() {
+        harness.setLibrary(player2, gd.playerDecks.get(player2.getId()).subList(0, 2));
+        int p1DeckBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.setHand(player1, List.of(new ChillOfForeboding()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(p1DeckBefore - 5);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("Flashback resolves and exiles the spell with both libraries empty")
+    void flashbackResolvesWithEmptyLibraries() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        ChillOfForeboding spell = new ChillOfForeboding();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot pay its blue requirement with colorless mana")
+    void flashbackRequiresBlueMana() {
+        harness.setGraveyard(player1, List.of(new ChillOfForeboding()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Chill of Foreboding");
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

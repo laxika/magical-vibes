@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
+import com.github.laxika.magicalvibes.cards.s.SealOfDoom;
 import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
 import com.github.laxika.magicalvibes.cards.s.SimicGrowthChamber;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CoilingOracle.class, GhostQuarter.class, SimicInitiate.class, SimicGrowthChamber.class})
+@CardUsed({CoilingOracle.class, GhostQuarter.class, SimicInitiate.class, SimicGrowthChamber.class,
+        SealOfDoom.class})
 class CoilingOracleTest extends BaseCardTest {
 
     @Test
@@ -80,5 +82,83 @@ class CoilingOracleTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard() == chamber)
                 .anyMatch(permanent -> permanent.getCard() == oracle);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(chamber);
+    }
+
+    @Test
+    @DisplayName("ETB uses the top card when the trigger resolves")
+    void usesLibraryAtResolution() {
+        Card oracle = new CoilingOracle();
+        Card originalTop = new GhostQuarter();
+        Card newTop = new SimicInitiate();
+        harness.setLibrary(player1, List.of(originalTop));
+
+        harness.castFromHand(player1, oracle, "{G}{U}");
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.setLibrary(player1, List.of(newTop, originalTop));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(newTop);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop);
+    }
+
+    @Test
+    @DisplayName("ETB still resolves after Coiling Oracle is destroyed")
+    void triggerResolvesAfterSourceLeaves() {
+        Card oracle = new CoilingOracle();
+        Card nonland = new SimicInitiate();
+        harness.addToBattlefield(player2, new SealOfDoom());
+        harness.setLibrary(player1, List.of(nonland));
+
+        harness.castFromHand(player1, oracle, "{G}{U}");
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, findPermanent(player1, oracle.getName()).getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, oracle.getName());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonland);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast uses the entering controller's library")
+    void enteringWithoutCastingUsesControllersLibrary() {
+        Card oracle = new CoilingOracle();
+        Card land = new GhostQuarter();
+        Card opponentTop = new SimicInitiate();
+        harness.setLibrary(player1, List.of(opponentTop));
+        harness.setLibrary(player2, List.of(land));
+
+        harness.enterBattlefieldAndReturn(player2, oracle);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == land && !permanent.isTapped());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentTop);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A revealed land obeys its enters-tapped ability")
+    void revealedLandEntersTapped() {
+        Card oracle = new CoilingOracle();
+        Card chamber = new SimicGrowthChamber();
+        Card otherLand = new GhostQuarter();
+        harness.addToBattlefield(player1, otherLand);
+        harness.setLibrary(player1, List.of(chamber));
+
+        harness.castFromHand(player1, oracle, "{G}{U}");
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, chamber.getName()).isTapped()).isTrue();
+        harness.handlePermanentChosen(player1, findPermanent(player1, otherLand.getName()).getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, chamber.getName()).isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherLand);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }

@@ -23,8 +23,7 @@ class CausticRainTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CausticRain()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Godless Shrine"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Godless Shrine"));
 
         assertThat(harness.getGameData().getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Godless Shrine"));
@@ -39,8 +38,7 @@ class CausticRainTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CausticRain()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Godless Shrine"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Godless Shrine"));
 
         assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Godless Shrine"));
@@ -56,5 +54,26 @@ class CausticRainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(
                 player1, 0, harness.getPermanentId(player2, "Mourning Thrull")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not exile another land when the target leaves before resolution")
+    void doesNothingWhenTargetLeavesBattlefield() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GodlessShrine());
+        harness.addToBattlefield(player1, new GodlessShrine());
+        harness.setHand(player1, List.of(new CausticRain()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Godless Shrine");
+        harness.assertOnBattlefield(player1, "Godless Shrine");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Caustic Rain");
+        assertThat(gd.stack).isEmpty();
     }
 }

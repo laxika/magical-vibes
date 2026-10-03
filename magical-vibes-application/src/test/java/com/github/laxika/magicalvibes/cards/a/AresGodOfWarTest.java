@@ -73,11 +73,97 @@ class AresGodOfWarTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature.getCard());
     }
 
+    @Test
+    void doesNotReturnNonattackingAres() {
+        Permanent ares = addReady(new AresGodOfWar(), player1);
+
+        putIntoGraveyard(ares);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ares.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(ares.getCard());
+    }
+
+    @Test
+    void doesNotReturnOpponentsAttackingCreature() {
+        addReady(new AresGodOfWar(), player1);
+        Permanent attacker = addReady(new GrizzlyBears(), player2);
+        attacker.setAttacking(true);
+
+        putIntoGraveyard(attacker);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(attacker.getCard());
+    }
+
+    @Test
+    void returnsStolenAttackingCreatureToItsOwner() {
+        addReady(new AresGodOfWar(), player1);
+        Permanent attacker = addReady(new GrizzlyBears(), player1);
+        gd.stolenCreatures.put(attacker.getId(), player2.getId());
+        attacker.setAttacking(true);
+
+        putIntoGraveyard(attacker);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(attacker.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(attacker.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(attacker.getCard());
+    }
+
+    @Test
+    void doesNotReturnAttackerThatLeavesGraveyardBeforeResolution() {
+        addReady(new AresGodOfWar(), player1);
+        Permanent attacker = addReady(new GrizzlyBears(), player1);
+        attacker.setAttacking(true);
+        putIntoGraveyard(attacker);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(attacker.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(attacker.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(attacker.getCard());
+    }
+
     private Permanent addReady(Card card, Player player) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    void oldAllyTriggerDoesNotReturnCardThatDiedAgainWithoutAttacking() {
+        addReady(new AresGodOfWar(), player1);
+        Permanent attacker = addReady(new GrizzlyBears(), player1);
+        attacker.setAttacking(true);
+        putIntoGraveyard(attacker);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardById(gd, attacker.getCard().getId()));
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, attacker.getCard());
+        putIntoGraveyard(returned);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(attacker.getCard());
+    }
+
+    @Test
+    void oldSelfTriggerDoesNotReturnAresThatDiedAgainWithoutAttacking() {
+        Permanent ares = addReady(new AresGodOfWar(), player1);
+        ares.setAttacking(true);
+        putIntoGraveyard(ares);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardById(gd, ares.getCard().getId()));
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, ares.getCard());
+        putIntoGraveyard(returned);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ares.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(ares.getCard());
     }
 
     private void putIntoGraveyard(Permanent permanent) {

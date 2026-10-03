@@ -35,8 +35,7 @@ class CorruptionOfTowashiTest extends BaseCardTest {
         Permanent incubator = findPermanent(player1, "Incubator");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -53,8 +52,7 @@ class CorruptionOfTowashiTest extends BaseCardTest {
         Permanent incubator = findPermanent(player1, "Incubator");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.setGraveyard(player1, List.of(new StartledAwake()));
@@ -68,12 +66,64 @@ class CorruptionOfTowashiTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Persistent Nightmare").isTransformed()).isTrue();
     }
 
+    @Test
+    void decliningADrawAllowsDrawingForALaterTransformation() {
+        castCorruption();
+        harness.setLibrary(player1, List.of(new CorruptionOfTowashi()));
+        harness.setGraveyard(player1, List.of(new StartledAwake()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void drawsWhenAPermanentEntersTransformedWithoutAnEarlierTransformation() {
+        castCorruption();
+        harness.setLibrary(player1, List.of(new CorruptionOfTowashi()));
+        harness.setGraveyard(player1, List.of(new StartledAwake()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Persistent Nightmare").isTransformed()).isTrue();
+    }
+
+    @Test
+    void anOpponentsTransformedPermanentDoesNotOfferADraw() {
+        castCorruption();
+        harness.setLibrary(player1, List.of(new CorruptionOfTowashi()));
+        harness.setGraveyard(player2, List.of(new StartledAwake()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.activateGraveyardAbility(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findPermanent(player2, "Persistent Nightmare").isTransformed()).isTrue();
+    }
+
     private void castCorruption() {
-        harness.setHand(player1, List.of(new CorruptionOfTowashi()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new CorruptionOfTowashi(), "{4}{U}");
+        resolveAllTriggers();
     }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.Resurrection;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreathkeeperSeraph.class, GrizzlyBears.class})
+@CardUsed({BreathkeeperSeraph.class, GrizzlyBears.class, Resurrection.class})
 class BreathkeeperSeraphTest extends BaseCardTest {
 
     @Test
@@ -79,6 +81,100 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
+    @Test
+    void stolenPartnerReturnsAtDeathControllersUpkeepUnderOwnersControl() {
+        Permanent bears = castAndPairWithBears();
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        runUpkeepOf(player1);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void stolenPartnerDoesNotReturnAtOwnersEarlierUpkeep() {
+        Permanent bears = castAndPairWithBears();
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        runUpkeepOf(player2);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void simultaneousDeathsTriggerForBothCreatures() {
+        Permanent bears = castAndPairWithBears();
+        Permanent seraph = findPermanent(player1, "Breathkeeper Seraph");
+        bears.setMarkedDamage(2);
+        seraph.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Breathkeeper Seraph");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    void delayedReturnDoesNotFollowCardThatLeftAndReenteredGraveyard() {
+        Permanent bears = castAndPairWithBears();
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, java.util.List.of(new Resurrection()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castSorcery(player1, 0, bears.getCard().getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        Permanent returnedBears = findPermanent(player1, "Grizzly Bears");
+        returnedBears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        runUpkeepOf(player1);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void unpairedSeraphCanPairWithAnotherEnteringCreature() {
+        Permanent seraph = harness.addToBattlefieldAndReturn(player1, new BreathkeeperSeraph());
+        harness.setHand(player1, java.util.List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(seraph.getPairedWithId()).isEqualTo(bears.getId());
+        assertThat(bears.getPairedWithId()).isEqualTo(seraph.getId());
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        runUpkeepOf(player1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
     private Permanent castAndPairWithBears() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, java.util.List.of(new BreathkeeperSeraph()));
@@ -92,10 +188,7 @@ class BreathkeeperSeraphTest extends BaseCardTest {
     }
 
     private void runUpkeepOf(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player);
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

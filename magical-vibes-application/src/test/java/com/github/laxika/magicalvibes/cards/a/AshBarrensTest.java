@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,9 +44,67 @@ class AshBarrensTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Forest");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Forest");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cyclingPaysCostsBeforeResolutionAndExcludesNonbasicLands() {
+        harness.setHand(player1, List.of(new AshBarrens()));
+        harness.setLibrary(player1, List.of(new AshBarrens(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Ash Barrens");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Forest");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).containsExactly("Ash Barrens");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cyclingCanFailToFindWithBasicLandAvailable() {
+        harness.setHand(player1, List.of(new AshBarrens()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
+        harness.assertInGraveyard(player1, "Ash Barrens");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cyclingWithNoBasicLandsDoesNotDraw() {
+        harness.setHand(player1, List.of(new AshBarrens()));
+        harness.setLibrary(player1, List.of(new AshBarrens()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Ash Barrens");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.cards.d.DelugeOfTheDead;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -21,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BeeSting.class, DelugeOfTheDead.class, ChandraNalaar.class, GrizzlyBears.class, InvasionOfInnistrad.class, SerraAngel.class})
+@CardUsed({BeeSting.class, ChandraNalaar.class, GrizzlyBears.class, InvasionOfInnistrad.class, SerraAngel.class})
 class BeeStingTest extends BaseCardTest {
 
     @Test
@@ -125,9 +124,54 @@ class BeeStingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeeSting()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, battle.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, battle.getId());
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Bee Sting can target its controller")
+    void canDamageItsController() {
+        harness.setHand(player1, List.of(new BeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Bee Sting can target a creature its controller controls")
+    void canDamageOwnCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Bee Sting does not damage a new object when its target leaves and returns")
+    void doesNotDamageReturnedCreature() {
+        GrizzlyBears card = new GrizzlyBears();
+        Permanent original = harness.addToBattlefieldAndReturn(player2, card);
+        harness.setHand(player1, List.of(new BeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, original.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player2, card);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(returned.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Bee Sting");
+        assertThat(gd.stack).isEmpty();
     }
 }

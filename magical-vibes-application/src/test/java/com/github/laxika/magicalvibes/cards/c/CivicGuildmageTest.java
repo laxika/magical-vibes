@@ -42,7 +42,6 @@ class CivicGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(guildmage.isTapped()).isTrue();
@@ -105,5 +104,84 @@ class CivicGuildmageTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(guildmage.getId()));
         assertThat(gd.playerDecks.get(player1.getId()).get(0).getId())
                 .isEqualTo(guildmage.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("A controlled creature owned by an opponent goes to that opponent's library")
+    void tucksStolenCreatureToOwnersLibrary() {
+        addCreatureReady(player1, new CivicGuildmage());
+        Permanent target = addCreatureReady(player1, new CivicGuildmage());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId())
+                .isEqualTo(target.getCard().getId());
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(target.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("The boost resolves after its source leaves the battlefield")
+    void boostResolvesAfterSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new CivicGuildmage());
+        addCreatureReady(player1, new CivicGuildmage());
+        Permanent target = addCreatureReady(player2, new CivicGuildmage());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 1, 1, null, source.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost does not follow a target that leaves the battlefield")
+    void boostFizzlesWhenTargetLeaves() {
+        Permanent source = addCreatureReady(player1, new CivicGuildmage());
+        Permanent target = addCreatureReady(player1, new CivicGuildmage());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId())
+                .isEqualTo(target.getCard().getId());
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The tuck fails if the target changes controller before resolution")
+    void tuckFizzlesWhenTargetChangesController() {
+        addCreatureReady(player1, new CivicGuildmage());
+        Permanent target = addCreatureReady(player1, new CivicGuildmage());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(target.getCard().getId()));
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .noneMatch(card -> card.getId().equals(target.getCard().getId()));
+        assertThat(gd.stack).isEmpty();
     }
 }

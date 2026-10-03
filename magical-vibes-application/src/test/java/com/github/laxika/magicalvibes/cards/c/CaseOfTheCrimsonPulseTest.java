@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinMaskmaker;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.u.UnauthorizedExit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,13 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CaseOfTheCrimsonPulse.class, GrizzlyBears.class, Island.class, Mountain.class})
+@CardUsed({CaseOfTheCrimsonPulse.class, GoblinMaskmaker.class, Island.class, Mountain.class, UnauthorizedExit.class})
 class CaseOfTheCrimsonPulseTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it enters, discards a card and draws two cards")
     void entersAndDiscardsThenDraws() {
-        GrizzlyBears discarded = new GrizzlyBears();
+        GoblinMaskmaker discarded = new GoblinMaskmaker();
         Island firstDraw = new Island();
         Mountain secondDraw = new Mountain();
         harness.setHand(player1, List.of(new CaseOfTheCrimsonPulse(), discarded));
@@ -37,7 +38,7 @@ class CaseOfTheCrimsonPulseTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Goblin Maskmaker");
     }
 
     @Test
@@ -45,11 +46,8 @@ class CaseOfTheCrimsonPulseTest extends BaseCardTest {
     void entersAndDrawsWithEmptyHand() {
         Island firstDraw = new Island();
         Mountain secondDraw = new Mountain();
-        harness.setHand(player1, List.of(new CaseOfTheCrimsonPulse()));
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
-        addCastMana();
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new CaseOfTheCrimsonPulse(), "{2}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -76,7 +74,7 @@ class CaseOfTheCrimsonPulseTest extends BaseCardTest {
         resolveEndStepTriggers();
         assertThat(pulse.isSolved()).isTrue();
 
-        GrizzlyBears discarded = new GrizzlyBears();
+        GoblinMaskmaker discarded = new GoblinMaskmaker();
         Island firstDraw = new Island();
         Mountain secondDraw = new Mountain();
         harness.setHand(player1, List.of(discarded));
@@ -87,7 +85,140 @@ class CaseOfTheCrimsonPulseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Goblin Maskmaker");
+    }
+
+    @Test
+    void doesNotSolveWithCardsInHand() {
+        Permanent pulse = harness.addToBattlefieldAndReturn(player1, new CaseOfTheCrimsonPulse());
+        harness.setHand(player1, List.of(new Island()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(pulse.isSolved()).isFalse();
+    }
+
+    @Test
+    void solveConditionIsRecheckedOnResolution() {
+        Permanent pulse = harness.addToBattlefieldAndReturn(player1, new CaseOfTheCrimsonPulse());
+        harness.setHand(player1, List.of());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new Island()));
+
+        harness.passBothPriorities();
+
+        assertThat(pulse.isSolved()).isFalse();
+    }
+
+    @Test
+    void doesNotSolveDuringOpponentsEndStep() {
+        Permanent pulse = harness.addToBattlefieldAndReturn(player1, new CaseOfTheCrimsonPulse());
+        harness.setHand(player1, List.of());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(pulse.isSolved()).isFalse();
+    }
+
+    @Test
+    void unsolvedCaseDoesNotTriggerAtUpkeep() {
+        harness.addToBattlefield(player1, new CaseOfTheCrimsonPulse());
+        Island held = new Island();
+        harness.setHand(player1, List.of(held));
+        harness.setLibrary(player1, List.of(new Mountain(), new Island()));
+        gd.turnNumber = 2;
+
+        advanceToUpkeep();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held);
+    }
+
+    @Test
+    void solvedUpkeepDrawsWithEmptyHand() {
+        harness.addToBattlefield(player1, new CaseOfTheCrimsonPulse());
+        harness.setHand(player1, List.of());
+        resolveEndStepTriggers();
+        Island firstDraw = new Island();
+        Mountain secondDraw = new Mountain();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        gd.turnNumber = 2;
+
+        advanceToUpkeep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+    }
+
+    @Test
+    void solvedUpkeepDiscardsEveryCardInHand() {
+        harness.addToBattlefield(player1, new CaseOfTheCrimsonPulse());
+        harness.setHand(player1, List.of());
+        resolveEndStepTriggers();
+        Island heldLand = new Island();
+        GoblinMaskmaker heldCreature = new GoblinMaskmaker();
+        Mountain firstDraw = new Mountain();
+        Island secondDraw = new Island();
+        harness.setHand(player1, List.of(heldLand, heldCreature));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        gd.turnNumber = 2;
+
+        advanceToUpkeep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(heldLand, heldCreature);
+    }
+
+    @Test
+    void solvedCaseDoesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new CaseOfTheCrimsonPulse());
+        harness.setHand(player1, List.of());
+        resolveEndStepTriggers();
+        Island held = new Island();
+        harness.setHand(player1, List.of(held));
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held);
+    }
+
+    @Test
+    void solvedUpkeepResolvesAfterCaseLeavesBattlefield() {
+        Permanent pulse = harness.addToBattlefieldAndReturn(player1, new CaseOfTheCrimsonPulse());
+        harness.setHand(player1, List.of());
+        resolveEndStepTriggers();
+        Island held = new Island();
+        Island firstDraw = new Island();
+        Mountain secondDraw = new Mountain();
+        harness.setHand(player1, List.of(held));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setLibrary(player2, List.of());
+        gd.turnNumber = 2;
+        advanceToUpkeep();
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new UnauthorizedExit()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, pulse.getId());
+        harness.assertNotOnBattlefield(player1, "Case of the Crimson Pulse");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        harness.assertInGraveyard(player1, "Case of the Crimson Pulse");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(held);
     }
 
     private void addCastMana() {
@@ -98,8 +229,7 @@ class CaseOfTheCrimsonPulseTest extends BaseCardTest {
     private void resolveEndStepTriggers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 

@@ -20,10 +20,7 @@ class BenalishSleeperTest extends BaseCardTest {
     @Test
     void withoutKickerDoesNotMakePlayersSacrifice() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BenalishSleeper()));
-        addBaseMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BenalishSleeper(), "{1}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Benalish Sleeper");
@@ -68,6 +65,67 @@ class BenalishSleeperTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    void sacrificesWaitUntilBothPlayersHaveChosen() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new BenalishSleeper()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Benalish Sleeper");
+        harness.assertNotInGraveyard(player1, "Benalish Sleeper");
+
+        harness.handlePermanentChosen(player2, spider.getId());
+
+        harness.assertInGraveyard(player1, "Benalish Sleeper");
+        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void bothPlayersChooseInTurnOrderBeforeEitherCreatureIsSacrificed() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new BenalishSleeper()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handlePermanentChosen(player2, spider.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertOnBattlefield(player1, "Benalish Sleeper");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void opponentWithNoCreaturesDoesNotPreventControllerSacrificing() {
+        harness.setHand(player1, List.of(new BenalishSleeper()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Benalish Sleeper");
+        harness.assertInGraveyard(player1, "Benalish Sleeper");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addBaseMana() {

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArmsScavenger.class, BootsOfSpeed.class, CliffhavenKitesail.class,
         ColossusHammer.class, DuelingRapier.class, SpareDagger.class, TormentorsHelm.class,
@@ -121,6 +122,86 @@ class ArmsScavengerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Multiple Arms Scavengers reduce generic equip costs but not colored mana")
+    void stackedReductionsPreserveColoredEquipCost() {
+        Permanent creature = addCreatureReady(player1, new ArmsScavenger());
+        addCreatureReady(player1, new ArmsScavenger());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ScavengedBlade());
+        int bladeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blade);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, bladeIndex, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, bladeIndex, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Arms Scavenger does not reduce an opponent's equip costs")
+    void doesNotReduceOpponentsEquipCost() {
+        addCreatureReady(player1, new ArmsScavenger());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int scimitarIndex = gd.playerBattlefields.get(player2.getId()).indexOf(scimitar);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, scimitarIndex, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, scimitarIndex, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Arms Scavenger does not draft during an opponent's upkeep")
+    void doesNotDraftDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new ArmsScavenger());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A draft offers three distinct spellbook cards and exiles only the selection")
+    void offersThreeDistinctCardsAndExilesOnlyChosenCard() {
+        addCreatureReady(player1, new ArmsScavenger());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards().stream().map(Card::getName).toList())
+                .doesNotHaveDuplicates()
+                .isSubsetOf("Boots of Speed", "Cliffhaven Kitesail", "Colossus Hammer",
+                        "Dueling Rapier", "Spare Dagger", "Tormentor's Helm", "Goldvein Pick",
+                        "Jousting Lance", "Mask of Immolation", "Mirror Shield", "Relic Axe",
+                        "Rogue's Gloves", "Scavenged Blade", "Shield of the Realm", "Ceremonial Knife");
+        Card drafted = choice.cards().getFirst();
+
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(drafted);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContainAnyElementsOf(choice.cards());
+        for (Card unchosen : choice.cards().subList(1, 3)) {
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(unchosen.getId());
+        }
     }
 
     private static final Set<String> TARGETED_ON_ENTRY = Set.of(

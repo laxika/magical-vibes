@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Contamination.class, ArgothianSwine.class, Forest.class, Island.class, Mountain.class,
-        PriestOfTitania.class, TolarianAcademy.class, WornPowerstone.class})
+        PriestOfTitania.class, TolarianAcademy.class, WornPowerstone.class, DeepFreeze.class, Opalescence.class})
 class ContaminationTest extends BaseCardTest {
 
     @Test
@@ -59,8 +59,7 @@ class ContaminationTest extends BaseCardTest {
     @DisplayName("Does not replace mana from nonland permanents")
     void doesNotReplaceNonlandMana() {
         harness.addToBattlefield(player1, new Contamination());
-        Permanent priest = harness.addToBattlefieldAndReturn(player1, new PriestOfTitania());
-        priest.setSummoningSick(false);
+        addCreatureReady(player1, new PriestOfTitania());
 
         harness.activateAbility(player1, 1, null, null);
 
@@ -69,8 +68,8 @@ class ContaminationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Preserves the amount of mana produced by a land")
-    void preservesMultipleManaProducedByLand() {
+    @DisplayName("Replaces multiple mana produced by a land with one black mana")
+    void replacesMultipleManaProducedByLand() {
         harness.addToBattlefield(player1, new Contamination());
         harness.addToBattlefield(player1, new TolarianAcademy());
         harness.addToBattlefield(player1, new WornPowerstone());
@@ -78,7 +77,7 @@ class ContaminationTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
@@ -147,7 +146,6 @@ class ContaminationTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({DeepFreeze.class, Opalescence.class})
     @DisplayName("Its land-mana replacement is lost when Contamination loses all abilities")
     void losesStaticManaReplacementWhenItsAbilitiesAreRemoved() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -163,7 +161,6 @@ class ContaminationTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({DeepFreeze.class, Opalescence.class})
     @DisplayName("Its upkeep ability is lost when Contamination loses all abilities")
     void losesUpkeepAbilityWhenItsAbilitiesAreRemoved() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -176,5 +173,46 @@ class ContaminationTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Contamination");
+    }
+
+    @Test
+    @DisplayName("Contamination does not trigger during its opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new Contamination());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Contamination");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An artifact still produces its full amount of colorless mana")
+    void doesNotReplaceArtifactMana() {
+        harness.addToBattlefield(player1, new Contamination());
+        harness.addToBattlefield(player1, new WornPowerstone());
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("An animated Contamination can itself be sacrificed as the creature")
+    void canSacrificeItselfWhenAnimated() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent contamination = harness.addToBattlefieldAndReturn(player1, new Contamination());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, contamination.getId());
+
+        harness.assertNotOnBattlefield(player1, "Contamination");
+        harness.assertInGraveyard(player1, "Contamination");
+        harness.assertOnBattlefield(player1, "Opalescence");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "17")
+@CardRegistration(set = "ONC", collectorNumber = "83")
 public class NornsAnnex extends Card {
 
     public NornsAnnex() {

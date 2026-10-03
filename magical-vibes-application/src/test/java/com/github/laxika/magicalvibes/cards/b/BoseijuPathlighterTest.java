@@ -45,4 +45,69 @@ class BoseijuPathlighterTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
     }
+
+    @Test
+    void castingCreatesOnlyTheChosenSpellbookCardInHand() {
+        harness.castFromHand(player1, new BoseijuPathlighter(), "{2}{G}");
+        resolveAllTriggers();
+
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards().stream().map(Card::getName)).doesNotHaveDuplicates()
+                .allMatch(List.of("Field of Ruin", "Bonders' Enclave", "Radiant Fountain",
+                        "Thriving Grove", "Treasure Vault", "Gingerbread Cabin", "Memorial to Unity",
+                        "Boseiju, Who Endures", "Secluded Courtyard", "Roadside Reliquary",
+                        "Scavenger Grounds", "Emergence Zone", "Khalni Garden",
+                        "Mobilized District", "Hall of Oracles")::contains);
+        Card drafted = choice.cards().getLast();
+        int librarySize = gd.playerDecks.get(player1.getId()).size();
+
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drafted);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySize);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard()).noneMatch(card -> card == drafted);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentReceivesTheirOwnDraftedCard() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.enterBattlefieldAndReturn(player2, new BoseijuPathlighter());
+        resolveAllTriggers();
+
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        Card drafted = choice.cards().getFirst();
+
+        harness.handleMultipleCardsChosen(player2, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drafted);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void triggerStillDraftsAfterSourceLeavesBattlefield() {
+        var permanent = harness.enterBattlefieldAndReturn(player1, new BoseijuPathlighter());
+        gd.playerBattlefields.get(player1.getId()).remove(permanent);
+        gd.playerGraveyards.get(player1.getId()).add(permanent.getCard());
+        resolveAllTriggers();
+
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        Card drafted = choice.cards().getFirst();
+
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(permanent.getCard());
+    }
 }

@@ -37,8 +37,7 @@ class AggressionTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 
@@ -90,11 +89,10 @@ class AggressionTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(TurnStep.END_STEP);
 
         aura.setAttachedTo(newCreature.getId());
 
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(originalCreature);
@@ -112,6 +110,68 @@ class AggressionTest extends BaseCardTest {
 
         runEndStep(player2);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("A creature that attacked before Aggression was attached survives")
+    void sparesCreatureThatAttackedBeforeAttachment() {
+        Permanent bears = addCreature(player1);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
+        resolveCombat();
+        attach(player1, bears);
+
+        runEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent Aggression from destroying a nonattacker")
+    void destroysSummoningSickCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        attach(player1, bears);
+
+        runEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
+    }
+
+    @Test
+    @DisplayName("Aggression's controller controls its trigger on an opponent's creature")
+    void auraControllerControlsEndStepTrigger() {
+        Permanent bears = addCreature(player2);
+        attach(player1, bears);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("Removing Aggression after it triggers does not save the creature")
+    void triggerResolvesAfterAuraLeaves() {
+        Permanent bears = addCreature(player1);
+        Permanent aura = attach(player1, bears);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
     }
 
     @Test

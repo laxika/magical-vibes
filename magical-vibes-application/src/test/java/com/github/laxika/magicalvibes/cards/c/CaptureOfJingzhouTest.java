@@ -78,6 +78,52 @@ class CaptureOfJingzhouTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two resolved copies grant two consecutive extra turns before the opponent's turn")
+    void multipleCopiesGrantConsecutiveExtraTurns() {
+        int turnBefore = gd.turnNumber;
+        cast();
+        cast();
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
+        assertThat(gd.extraTurns).isEmpty();
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Casting during an extra turn grants another extra turn before normal order resumes")
+    void castingDuringExtraTurnGrantsAnotherExtraTurn() {
+        int turnBefore = gd.turnNumber;
+        cast();
+        advanceTurn();
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
+
+        cast();
+        advanceTurn();
+
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
+        assertThat(gd.extraTurns).isEmpty();
+
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+    }
+
+    @Test
     @DisplayName("Capture of Jingzhou goes to the graveyard after resolution")
     void goesToGraveyardAfterResolution() {
         CaptureOfJingzhou capture = cast();

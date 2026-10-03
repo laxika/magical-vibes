@@ -25,8 +25,7 @@ class BeamsawProspectorTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, prospector.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, prospector.getId());
 
         harness.assertInGraveyard(player1, "Beamsaw Prospector");
         assertThat(findPermanents(player1, "Lander")).isEmpty();
@@ -43,9 +42,8 @@ class BeamsawProspectorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BeamsawProspector());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0,
-                harness.getGameData().playerBattlefields.get(player1.getId()).getFirst().getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Beamsaw Prospector"));
         harness.passBothPriorities();
 
         Card forest = new Forest();
@@ -59,5 +57,80 @@ class BeamsawProspectorTest extends BaseCardTest {
 
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.LibrarySearch.class);
+    }
+
+    @Test
+    @DisplayName("Lander is sacrificed as a cost and puts only a basic land onto the battlefield tapped")
+    void landerSacrificeAndSearchResolveCompletely() {
+        Permanent lander = createLander();
+        Card forest = new Forest();
+        Card creature = new BeamsawProspector();
+        harness.setLibrary(player1, List.of(creature, forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lander),
+                0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Lander");
+        assertThat(lander.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lander can fail to find even when a basic land is available")
+    void landerCanFailToFind() {
+        Permanent lander = createLander();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lander),
+                0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Lander");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lander resolves with an empty library without requesting a choice")
+    void landerSearchesEmptyLibrary() {
+        Permanent lander = createLander();
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lander),
+                0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lander");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private Permanent createLander() {
+        Permanent prospector = harness.addToBattlefieldAndReturn(player1, new BeamsawProspector());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, prospector.getId());
+        harness.passBothPriorities();
+        return findPermanent(player1, "Lander");
     }
 }

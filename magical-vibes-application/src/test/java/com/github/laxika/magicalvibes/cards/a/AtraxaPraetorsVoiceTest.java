@@ -25,7 +25,7 @@ class AtraxaPraetorsVoiceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
@@ -42,9 +42,93 @@ class AtraxaPraetorsVoiceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({AtraxaPraetorsVoice.class})
+    void canChooseNoPermanentsOrPlayers() {
+        Permanent atraxa = harness.addToBattlefieldAndReturn(player1, new AtraxaPraetorsVoice());
+        atraxa.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        gd.playerPoisonCounters.put(player2.getId(), 1);
+
+        resolveEndStepTrigger();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(atraxa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({AtraxaPraetorsVoice.class})
+    void addsEachExistingCounterKindToSelectedOpposingPermanentAndPlayer() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new AtraxaPraetorsVoice());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new AtraxaPraetorsVoice());
+        own.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        opposing.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        opposing.setCounterCount(CounterType.CHARGE, 3);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+        gd.playerRadCounters.put(player2.getId(), 3);
+
+        resolveEndStepTrigger();
+        harness.handleMultiplePermanentsChosen(player1, List.of(opposing.getId(), player2.getId()));
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(opposing.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(opposing.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({AtraxaPraetorsVoice.class})
+    void resolvesWithoutAChoiceWhenNobodyHasCounters() {
+        harness.addToBattlefield(player1, new AtraxaPraetorsVoice());
+
+        resolveEndStepTrigger();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({AtraxaPraetorsVoice.class})
+    void canProliferatePlayerWithOnlyEnergyCounters() {
+        harness.addToBattlefield(player1, new AtraxaPraetorsVoice());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+
+        resolveEndStepTrigger();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({AtraxaPraetorsVoice.class})
+    void addsEveryCounterKindToSelectedPlayer() {
+        harness.addToBattlefield(player1, new AtraxaPraetorsVoice());
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+        gd.playerExperienceCounters.put(player1.getId(), 3);
+
+        resolveEndStepTrigger();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(4);
+    }
+
+    private void resolveEndStepTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
     }
 }

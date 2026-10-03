@@ -56,6 +56,7 @@ public class PermanentCopierService {
         copy.setSupertypes(target.getSupertypes());
         copy.setSubtypes(target.getSubtypes());
         copy.setCardText(target.getCardText());
+        copy.copyTargetingFrom(target);
         copy.setPower(powerOverride != null ? powerOverride : target.getPower());
         copy.setToughness(toughnessOverride != null ? toughnessOverride : target.getToughness());
         copy.setLoyalty(target.getLoyalty());

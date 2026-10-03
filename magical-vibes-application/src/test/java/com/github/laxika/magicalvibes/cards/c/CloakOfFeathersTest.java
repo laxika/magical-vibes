@@ -61,10 +61,46 @@ class CloakOfFeathersTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can give an opponent's creature flying while the caster draws")
+    void targetsOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of(new CloakOfFeathers()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Cloak of Feathers");
+    }
+
+    @Test
+    @DisplayName("Does not draw when the only target leaves before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.setHand(player1, List.of(new CloakOfFeathers()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, bears.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerGraveyards.get(player2.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        harness.assertInGraveyard(player1, "Cloak of Feathers");
+        assertThat(gd.stack).isEmpty();
     }
 }

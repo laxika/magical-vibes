@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.s.StoneworkPackbeast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AlliedAssault.class, BoggartBrute.class, FaerieMiscreant.class, FountainOfYouth.class,
-        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class})
+        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class, StoneworkPackbeast.class})
 class AlliedAssaultTest extends BaseCardTest {
 
     @Test
@@ -87,6 +88,127 @@ class AlliedAssaultTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Can resolve without choosing any targets")
+    void canChooseZeroTargets() {
+        castAlliedAssault(List.of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Allied Assault");
+    }
+
+    @Test
+    @DisplayName("An opponent's full party does not increase the boost")
+    void ignoresOpponentsParty() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new StoneworkPackbeast());
+        }
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAlliedAssault(List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple creatures of the same party role count only once")
+    void duplicateRolesCountOnce() {
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castAlliedAssault(List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("One Packbeast fills only one role despite having all four types")
+    void packbeastFillsOneRole() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+
+        castAlliedAssault(List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Party size is determined at resolution and the boost then stays fixed")
+    void determinesPartySizeAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        harness.setHand(player1, List.of(new AlliedAssault()));
+        addManaForAlliedAssault();
+        harness.castInstant(player1, 0, List.of(target.getId()));
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Still boosts the remaining target when the other target leaves")
+    void resolvesForRemainingTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        harness.setHand(player1, List.of(new AlliedAssault()));
+        addManaForAlliedAssault();
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Allied Assault");
+    }
+
+    @Test
+    @DisplayName("Party size is capped at four even with five flexible party members")
+    void partySizeIsCappedAtFour() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new StoneworkPackbeast());
+        }
+
+        castAlliedAssault(List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two targets")
+    void cannotChooseThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        harness.setHand(player1, List.of(new AlliedAssault()));
+        addManaForAlliedAssault();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        harness.setHand(player1, List.of(new AlliedAssault()));
+        addManaForAlliedAssault();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addFullParty() {
         harness.addToBattlefield(player1, new SoulWarden());
         harness.addToBattlefield(player1, new FaerieMiscreant());
@@ -97,8 +219,7 @@ class AlliedAssaultTest extends BaseCardTest {
     private void castAlliedAssault(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new AlliedAssault()));
         addManaForAlliedAssault();
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 
     private void addManaForAlliedAssault() {

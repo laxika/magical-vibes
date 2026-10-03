@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.v.VulshokMorningstar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,10 +17,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Confiscate.class, DarkBanishing.class, Demystify.class, Forest.class, GrizzlyBears.class, Naturalize.class})
+@CardUsed({Confiscate.class, DarkBanishing.class, Demystify.class, Forest.class, GrizzlyBears.class, VulshokMorningstar.class})
 class ConfiscateTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Confiscate targeting a creature puts it on the stack")
@@ -51,8 +49,6 @@ class ConfiscateTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Resolving Confiscate steals opponent's creature")
@@ -276,5 +272,64 @@ class ConfiscateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.stolenCreatures).doesNotContainKey(bears.getId());
+    }
+    @Test
+    @DisplayName("Equipment stays attached when Confiscate is destroyed")
+    void equipmentStaysAttachedWhenControlReverts() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new VulshokMorningstar());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(equipment.getAttachedTo()).isEqualTo(bears.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Confiscate()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.castEnchantment(player2, 0, equipment.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Vulshok Morningstar");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(equipment.getAttachedTo()).isEqualTo(bears.getId());
+        Permanent aura = findPermanent(player2, "Confiscate");
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+
+        harness.assertOnBattlefield(player1, "Vulshok Morningstar");
+        harness.assertNotOnBattlefield(player2, "Vulshok Morningstar");
+        assertThat(equipment.getAttachedTo()).isEqualTo(bears.getId());
+        harness.assertInGraveyard(player2, "Confiscate");
+    }
+
+    @Test
+    @DisplayName("Removing the newest Confiscate restores control from the older Aura")
+    void olderControlAuraResumesAfterNewerAuraLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Confiscate()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Confiscate()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.castEnchantment(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        Permanent newerAura = findPermanent(player2, "Confiscate");
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, newerAura.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Confiscate").getAttachedTo()).isEqualTo(bears.getId());
     }
 }
