@@ -119,4 +119,49 @@ class BreedingPitTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Thrull");
     }
+
+    @Test
+    @DisplayName("The controller may decline the upkeep payment even with enough black mana")
+    void canDeclinePaymentWithEnoughMana() {
+        harness.addToBattlefield(player1, new BreedingPit());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
+
+        harness.assertNotOnBattlefield(player1, "Breeding Pit");
+        harness.assertInGraveyard(player1, "Breeding Pit");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Breeding Pit creates its own token when its end-step trigger resolves")
+    void multipleCopiesCreateSeparateTokensOnResolution() {
+        harness.addToBattlefield(player1, new BreedingPit());
+        harness.addToBattlefield(player1, new BreedingPit());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Thrull");
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
+
+        assertThat(findPermanents(player1, "Thrull")).hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Thrull");
+    }
+
+    @Test
+    @DisplayName("A Breeding Pit controlled by the second player creates the token for that player")
+    void secondPlayerCreatesTokenOnTheirEndStep() {
+        harness.addToBattlefield(player2, new BreedingPit());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
+
+        assertThat(findPermanents(player2, "Thrull")).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Thrull");
+    }
 }
