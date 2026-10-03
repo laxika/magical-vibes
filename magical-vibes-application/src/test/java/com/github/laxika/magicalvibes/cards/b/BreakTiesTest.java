@@ -44,11 +44,7 @@ class BreakTiesTest extends BaseCardTest {
         Card card = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(card));
 
-        harness.setHand(player1, List.of(new BreakTies()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castModalInstantWithModes(player1, 0, 1, new int[]{2}, card.getId(), List.of());
-        harness.passBothPriorities();
+        cast(2, card.getId());
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -65,6 +61,65 @@ class BreakTiesTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Break Ties");
+    }
+
+    @Test
+    void exilesOnlyTheChosenNoncreatureCardFromOwnGraveyard() {
+        Card target = new FountainOfYouth();
+        Card other = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, other));
+
+        cast(2, target.getId());
+
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Break Ties");
+    }
+
+    @Test
+    void reinforceCanTargetOpponentsCreatureAndDiscardsBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BreakTies()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+
+        harness.assertNotInHand(player1, "Break Ties");
+        harness.assertInGraveyard(player1, "Break Ties");
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void reinforceRejectsNoncreatureWithoutDiscarding() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new BreakTies()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Break Ties");
+        harness.assertNotInGraveyard(player1, "Break Ties");
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void reinforceRequiresWhiteManaWithoutDiscardingOnFailure() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BreakTies()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Break Ties");
+        harness.assertNotInGraveyard(player1, "Break Ties");
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
