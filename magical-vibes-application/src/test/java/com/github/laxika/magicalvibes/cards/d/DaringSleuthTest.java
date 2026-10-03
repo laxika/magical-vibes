@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DaringSleuth.class, GrizzlyBears.class, HolyDay.class, IzzetCluestone.class})
 class DaringSleuthTest extends BaseCardTest {
 
     @Test
@@ -36,9 +38,8 @@ class DaringSleuthTest extends BaseCardTest {
     @DisplayName("Does not transform when its controller sacrifices a non-Clue permanent")
     void doesNotTransformForNonClueSacrifice() {
         Permanent sleuth = addReadySleuth();
-        Permanent cluestone = new Permanent(new IzzetCluestone());
+        Permanent cluestone = harness.addToBattlefieldAndReturn(player1, new IzzetCluestone());
         cluestone.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cluestone);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -69,31 +70,121 @@ class DaringSleuthTest extends BaseCardTest {
         sacrificeClue(player1);
 
         int powerBefore = gqs.getEffectivePower(gd, sleuth);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, sleuth);
         harness.setHand(player1, List.of(new HolyDay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gqs.getEffectivePower(gd, sleuth)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, sleuth)).isEqualTo(toughnessBefore + 1);
+    }
 
+    @Test
+    @DisplayName("An opponent sacrificing a Clue does not transform Daring Sleuth")
+    void opponentClueSacrificeDoesNotTransform() {
+        Permanent sleuth = addReadySleuth();
+
+        sacrificeClue(player2);
+
+        assertThat(sleuth.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two pending Clue sacrifice triggers transform Daring Sleuth only once")
+    void pendingTransformTriggersDoNotTransformBack() {
+        Permanent sleuth = addReadySleuth();
+        addClueToken(player1);
+        addClueToken(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DaringSleuth(), new DaringSleuth()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        Permanent firstClue = findPermanents(player1, "Clue").getFirst();
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(firstClue), null, null);
+        harness.ensurePriority(player1);
+        Permanent secondClue = findPermanents(player1, "Clue").getFirst();
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(secondClue), null, null);
+
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(sleuth.isTransformed()).isTrue();
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing a Clue after transformation does not transform Bearer back")
+    void bearerDoesNotTransformForClueSacrifice() {
+        Permanent sleuth = addReadySleuth();
+        sacrificeClue(player1);
+
+        sacrificeClue(player1);
+
+        assertThat(sleuth.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Daring Sleuth does not have its back face's prowess")
+    void frontFaceDoesNotHaveProwess() {
+        Permanent sleuth = addReadySleuth();
+        int powerBefore = gqs.getEffectivePower(gd, sleuth);
+        harness.setHand(player1, List.of(new HolyDay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gqs.getEffectivePower(gd, sleuth)).isEqualTo(powerBefore);
+        assertThat(sleuth.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature spell does not trigger Bearer's prowess")
+    void creatureSpellDoesNotTriggerProwess() {
+        Permanent sleuth = addReadySleuth();
+        sacrificeClue(player1);
+        int powerBefore = gqs.getEffectivePower(gd, sleuth);
+        harness.setHand(player1, List.of(new DaringSleuth()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, sleuth)).isEqualTo(powerBefore);
+    }
+
+    @Test
+    @DisplayName("Bearer does not investigate when its combat damage is prevented")
+    void preventedCombatDamageDoesNotInvestigate() {
+        Permanent sleuth = addReadySleuth();
+        sacrificeClue(player1);
+        harness.setHand(player2, List.of(new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0);
+
+        sleuth.setAttacking(true);
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addReadySleuth() {
-        Permanent sleuth = new Permanent(new DaringSleuth());
-        sleuth.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sleuth);
-        return sleuth;
+        return addCreatureReady(player1, new DaringSleuth());
     }
 
     private void sacrificeClue(Player player) {
         addClueToken(player);
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
-        Permanent clue = battlefield.stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Clue"))
-                .findFirst()
-                .orElseThrow();
+        Permanent clue = findPermanent(player, "Clue");
         harness.setLibrary(player, List.of(new GrizzlyBears()));
         harness.addMana(player, ManaColor.COLORLESS, 2);
 
@@ -117,8 +208,7 @@ class DaringSleuthTest extends BaseCardTest {
                 List.of(new SacrificeSelfCost(), new DrawCardEffect()),
                 "{2}, Sacrifice this token: Draw a card."
         ));
-        Permanent clue = new Permanent(clueCard);
+        Permanent clue = harness.addToBattlefieldAndReturn(player, clueCard);
         clue.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(clue);
     }
 }
