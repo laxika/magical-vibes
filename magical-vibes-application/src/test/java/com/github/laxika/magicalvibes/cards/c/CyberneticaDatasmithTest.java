@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -62,6 +63,91 @@ class CyberneticaDatasmithTest extends BaseCardTest {
                 0,
                 0,
                 List.of(player1.getId(), player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canGiveTheControllerTheRobotAndTheOpponentTheCard() {
+        Permanent datasmith = addCreatureReady(player1, new CyberneticaDatasmith());
+        harness.setLibrary(player2, List.of(new CyberneticaDatasmith()));
+        int handSize = gd.playerHands.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player2.getId(), player1.getId()));
+        assertThat(datasmith.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize + 1);
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+        assertThat(findPermanents(player2, "Robot")).isEmpty();
+    }
+
+    @Test
+    void createdRobotCannotBlock() {
+        addCreatureReady(player1, new CyberneticaDatasmith());
+        harness.setLibrary(player1, List.of(new CyberneticaDatasmith()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player1, new CyberneticaDatasmith());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void protectionPreventsCombatDamageWhenBlockingCreatedRobot() {
+        Permanent datasmith = addCreatureReady(player1, new CyberneticaDatasmith());
+        harness.setLibrary(player1, List.of(new CyberneticaDatasmith()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+        datasmith.setTapped(false);
+        Permanent robot = findPermanent(player2, "Robot");
+        robot.setSummoningSick(false);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Cybernetica Datasmith");
+        assertThat(datasmith.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void summoningSickDatasmithCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new CyberneticaDatasmith());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void abilityCannotBeActivatedWithoutBlueMana() {
+        addCreatureReady(player1, new CyberneticaDatasmith());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tappedDatasmithCannotActivateAgain() {
+        Permanent datasmith = addCreatureReady(player1, new CyberneticaDatasmith());
+        datasmith.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
