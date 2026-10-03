@@ -75,10 +75,48 @@ class DawnOfANewAgeTest extends BaseCardTest {
         assertThat(dawn.getCounterCount(CounterType.HOPE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("With no creatures on entry, sacrifices at end step and gains life without drawing")
+    void zeroHopeCountersStillSacrificesAndGainsLife() {
+        Permanent dawn = harness.enterBattlefieldAndReturn(player1, new DawnOfANewAge());
+        DawnOfANewAge undrawn = new DawnOfANewAge();
+        harness.setLibrary(player1, List.of(undrawn));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        assertThat(dawn.getCounterCount(CounterType.HOPE)).isZero();
+        harness.assertOnBattlefield(player1, "Dawn of a New Age");
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Dawn of a New Age");
+        harness.assertInGraveyard(player1, "Dawn of a New Age");
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(undrawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
+    }
+
+    @Test
+    @DisplayName("Counter removal, draw, sacrifice, and life gain resolve as one ability")
+    void lastCounterResolvesWithoutAnAdditionalTrigger() {
+        Permanent dawn = harness.enterBattlefieldAndReturn(player1, new DawnOfANewAge());
+        dawn.setCounterCount(CounterType.HOPE, 1);
+        DawnOfANewAge drawn = new DawnOfANewAge();
+        harness.setLibrary(player1, List.of(drawn));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        harness.assertNotOnBattlefield(player1, "Dawn of a New Age");
+        harness.assertInGraveyard(player1, "Dawn of a New Age");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
