@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WaterwindScout;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DisturbedSlumber.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DisturbedSlumber.class, Forest.class, GrizzlyBears.class, ArmoredKincaller.class, WaterwindScout.class})
 class DisturbedSlumberTest extends BaseCardTest {
 
     @Test
@@ -85,17 +87,109 @@ class DisturbedSlumberTest extends BaseCardTest {
                 .hasMessageContaining("land you control");
     }
 
-    private void castDisturbedSlumber(Permanent land) {
+    @Test
+    @DisplayName("Cannot evade the blocking requirement by blocking another attacker")
+    void cannotAssignOnlyBlockerToAnotherAttacker() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent otherAttacker = readyCreature(player1, new ArmoredKincaller());
+        Permanent blocker = readyCreature(player2, new ArmoredKincaller());
+        castDisturbedSlumber(land);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(land),
+                gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker)));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker)))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Only one creature needs to block the animated land")
+    void oneBlockerSatisfiesRequirementWithOtherBlockersAvailable() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent blocker = readyCreature(player2, new ArmoredKincaller());
+        readyCreature(player2, new ArmoredKincaller());
+        castDisturbedSlumber(land);
+        declareLandAsAttacker(land);
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(land)))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A tapped creature does not force the land to be blocked")
+    void noBlockRequiredWhenOnlyPotentialBlockerIsTapped() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent blocker = readyCreature(player2, new ArmoredKincaller());
+        blocker.setTapped(true);
+        castDisturbedSlumber(land);
+        declareLandAsAttacker(land);
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Reach allows the animated land to block a flying creature")
+    void animatedLandCanBlockFlyingCreature() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent flyer = readyCreature(player2, new WaterwindScout());
+        castDisturbedSlumber(land);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of(
+                gd.playerBattlefields.get(player2.getId()).indexOf(flyer)));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(land),
+                gd.playerBattlefields.get(player2.getId()).indexOf(flyer)))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A land that changes controller before resolution is an illegal target")
+    void targetChangingControllerBeforeResolutionIsNotAnimated() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new DisturbedSlumber()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castInstant(player1, 0, land.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerBattlefields.get(player2.getId()).add(land);
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+        assertThat(land.isMustBeBlockedThisTurn()).isFalse();
+        harness.assertInGraveyard(player1, "Disturbed Slumber");
+    }
+
+    private void castDisturbedSlumber(Permanent land) {
+        harness.setHand(player1, List.of(new DisturbedSlumber()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, land.getId());
     }
 
     private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
