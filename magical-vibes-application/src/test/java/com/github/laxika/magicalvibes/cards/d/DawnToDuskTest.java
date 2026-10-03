@@ -78,11 +78,76 @@ class DawnToDuskTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DawnToDusk()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        gs.playCard(gd, player1, 0, 2, null, null,
-                List.of(pacifism.getId(), harness.getPermanentId(player2, "Glorious Anthem")), List.of());
+        harness.castSorcery(player1, 0, 2,
+                List.of(pacifism.getId(), harness.getPermanentId(player2, "Glorious Anthem")));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Pacifism");
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("The return mode cannot target an opponent's enchantment card")
+    void cannotReturnOpponentsEnchantment() {
+        Pacifism pacifism = new Pacifism();
+        harness.setGraveyard(player2, List.of(pacifism));
+        harness.setHand(player1, List.of(new DawnToDusk()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, pacifism.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The destroy mode can target your own enchantment")
+    void canDestroyOwnEnchantment() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setHand(player1, List.of(new DawnToDusk()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, 1, harness.getPermanentId(player1, "Glorious Anthem"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertInGraveyard(player1, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("Both modes still destroy the enchantment when the graveyard target disappears")
+    void destroysWhenGraveyardTargetDisappears() {
+        Pacifism pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new DawnToDusk()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, 2,
+                List.of(pacifism.getId(), harness.getPermanentId(player2, "Glorious Anthem")));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(pacifism));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("Both modes still return the enchantment when the battlefield target disappears")
+    void returnsWhenBattlefieldTargetDisappears() {
+        Pacifism pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.setHand(player1, List.of(new DawnToDusk()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, 2,
+                List.of(pacifism.getId(), harness.getPermanentId(player2, "Glorious Anthem")));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Pacifism");
+        harness.assertNotInGraveyard(player1, "Pacifism");
+        harness.assertInGraveyard(player1, "Dawn to Dusk");
     }
 }
