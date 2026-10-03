@@ -63,8 +63,7 @@ class CrookclawTransmuterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, trickster)).isEqualTo(2);
@@ -83,5 +82,64 @@ class CrookclawTransmuterTest extends BaseCardTest {
                 harness.getPermanentId(player1, "Prismatic Lens")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can enter an empty battlefield and target itself")
+    void canTargetItself() {
+        harness.setHand(player1, List.of(new CrookclawTransmuter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        var transmuterId = harness.getPermanentId(player1, "Crookclaw Transmuter");
+        harness.handlePermanentChosen(player1, transmuterId);
+        harness.passBothPriorities();
+
+        Permanent transmuter = gqs.findPermanentById(gd, transmuterId);
+        assertThat(gqs.getEffectivePower(gd, transmuter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, transmuter)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Two enters-the-battlefield switches cancel each other")
+    void twoSwitchesCancel() {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CoralTrickster());
+        harness.setHand(player1, List.of(new CrookclawTransmuter(), new CrookclawTransmuter()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0, trickster.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, trickster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, trickster)).isEqualTo(2);
+
+        harness.castCreature(player1, 0, trickster.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, trickster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, trickster)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flash allows the creature and its switch during an opponent's turn")
+    void canFlashInDuringOpponentsTurn() {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CoralTrickster());
+        harness.setHand(player1, List.of(new CrookclawTransmuter()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, trickster.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Crookclaw Transmuter");
+        assertThat(gqs.getEffectivePower(gd, trickster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, trickster)).isEqualTo(2);
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrimsonHellkite.class, GrizzlyBears.class, IronTuskElephant.class, Mountain.class})
+@CardUsed({CrimsonHellkite.class, GrizzlyBears.class, Mountain.class})
 class CrimsonHellkiteTest extends BaseCardTest {
 
     @Test
@@ -195,9 +194,7 @@ class CrimsonHellkiteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateSummoningSick() {
-        CrimsonHellkite card = new CrimsonHellkite();
-        Permanent perm = new Permanent(card); // summoningSick true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
+        harness.addToBattlefield(player1, new CrimsonHellkite());
         Permanent target = addTargetCreature(player2);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -209,6 +206,53 @@ class CrimsonHellkiteTest extends BaseCardTest {
 
     private Permanent addHellkiteReady(Player player) {
         return addCreatureReady(player, new CrimsonHellkite());
+    }
+
+    @Test
+    @DisplayName("Can deal damage to a creature its controller controls")
+    void canTargetOwnCreature() {
+        addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Can target itself with its damage ability")
+    void canTargetItself() {
+        Permanent hellkite = addHellkiteReady(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, hellkite.getId());
+        harness.passBothPriorities();
+
+        assertThat(hellkite.getMarkedDamage()).isEqualTo(1);
+        assertThat(hellkite.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Damage ability resolves after Crimson Hellkite leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent hellkite = addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(hellkite);
+        gd.playerGraveyards.get(player1.getId()).add(hellkite.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     private Permanent addTargetCreature(Player player) {

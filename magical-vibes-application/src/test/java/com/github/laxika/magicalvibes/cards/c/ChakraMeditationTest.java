@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.c;
+package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirbendingLesson;
 import com.github.laxika.magicalvibes.cards.f.Forest;

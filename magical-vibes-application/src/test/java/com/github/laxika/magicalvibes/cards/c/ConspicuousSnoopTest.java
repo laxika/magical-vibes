@@ -136,7 +136,7 @@ class ConspicuousSnoopTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GoblinFireslinger()));
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        findPermanent(player1, "Conspicuous Snoop").setTapped(false);
+        findPermanent(player1, "Conspicuous Snoop").untap();
         harness.setLibrary(player1, List.of());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -154,7 +154,7 @@ class ConspicuousSnoopTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        snoop.setTapped(false);
+        snoop.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

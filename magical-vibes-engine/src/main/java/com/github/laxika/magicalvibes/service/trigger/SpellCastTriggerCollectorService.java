@@ -1529,7 +1529,8 @@ public class SpellCastTriggerCollectorService {
                         trigger.additionalTypes(), trigger.removedSupertypes(), trigger.tokenCopy(),
                         trigger.mayChooseNewTargets(), trigger.grantHasteToPermanentSpell(),
                         markOnAcceptance, false, trigger.permanentSpellToken(),
-                        trigger.sacrificeAtEndStep());
+                        trigger.sacrificeAtEndStep(), trigger.additionalSubtypes(),
+                        trigger.powerOverride(), trigger.toughnessOverride());
         if (trigger.beforeCopyEffect() != null) {
             copyEffect = SequenceEffect.of(trigger.beforeCopyEffect(), copyEffect);
         }

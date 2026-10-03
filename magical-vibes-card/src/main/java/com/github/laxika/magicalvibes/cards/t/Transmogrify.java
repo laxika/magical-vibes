@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "167")
+@CardRegistration(set = "M21", collectorNumber = "370")
 public class Transmogrify extends Card {
 
     public Transmogrify() {

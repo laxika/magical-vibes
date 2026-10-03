@@ -3,18 +3,20 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.Mistwalker;
+import com.github.laxika.magicalvibes.cards.r.RavenousLindwurm;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CripplingFear.class, AvatarOfMight.class, AvianChangeling.class, GrizzlyBears.class,
+        Mistwalker.class, RavenousLindwurm.class})
 class CripplingFearTest extends BaseCardTest {
 
     @Test
@@ -69,11 +71,58 @@ class CripplingFearTest extends BaseCardTest {
         assertThat(avatar.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Creatures entering after resolution are not weakened")
+    void doesNotAffectLaterCreatures() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player2, new RavenousLindwurm());
+
+        castCripplingFear(player1);
+        harness.handleListChoice(player1, "GOBLIN");
+        Permanent later = harness.addToBattlefieldAndReturn(player2, new RavenousLindwurm());
+
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Each cast makes a fresh type choice and preserves changelings")
+    void repeatedCastsChooseIndependently() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new RavenousLindwurm());
+        Permanent changeling = harness.addToBattlefieldAndReturn(player2, new Mistwalker());
+
+        castCripplingFear(player1);
+        harness.handleListChoice(player1, "WURM");
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
+
+        castCripplingFear(player1);
+        harness.handleListChoice(player1, "GOBLIN");
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(4);
+
+        castCripplingFear(player1);
+        harness.handleListChoice(player1, "GOBLIN");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(changeling).doesNotContain(wurm);
+        harness.assertInGraveyard(player2, "Ravenous Lindwurm");
+    }
+
+    @Test
+    @DisplayName("Can resolve on an empty battlefield and does not affect later creatures")
+    void resolvesOnEmptyBattlefield() {
+        castCripplingFear(player1);
+        harness.handleListChoice(player1, "GOBLIN");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Crippling Fear");
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new RavenousLindwurm());
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
+    }
+
     private void castCripplingFear(Player player) {
-        harness.setHand(player, List.of(new CripplingFear()));
-        harness.addMana(player, ManaColor.BLACK, 2);
-        harness.addMana(player, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player, 0, 0);
+        harness.castFromHand(player, new CripplingFear(), "{2}{B}{B}");
         harness.passBothPriorities();
     }
 

@@ -28,6 +28,7 @@ public sealed interface DynamicAmount permits
         CardsDrawnThisTurn,
         CardsLookedAtWhileScrying,
         OpponentsWithAtLeastCardsDrawnThisTurn,
+        OpponentsControllingReturnedPermanents,
         DistinctCounterKindsAmongControlledPermanents,
         DistinctColorPairsAmongControlledPermanents,
         DistinctManaCostsAmongCardsInGraveyard,

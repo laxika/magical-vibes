@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "58")
+@CardRegistration(set = "VOC", collectorNumber = "116")
 public class VerityCircle extends Card {
 
     public VerityCircle() {

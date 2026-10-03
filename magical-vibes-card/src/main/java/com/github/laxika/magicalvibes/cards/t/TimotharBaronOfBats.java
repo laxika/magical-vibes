@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LCC", collectorNumber = "210")
+@CardRegistration(set = "VOC", collectorNumber = "4")
+@CardRegistration(set = "VOC", collectorNumber = "42")
 public class TimotharBaronOfBats extends Card {
 
     public TimotharBaronOfBats() {

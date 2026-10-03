@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BOK", collectorNumber = "18")
+@CardRegistration(set = "VOC", collectorNumber = "95")
 public class OyobiWhoSplitTheHeavens extends Card {
 
     public OyobiWhoSplitTheHeavens() {

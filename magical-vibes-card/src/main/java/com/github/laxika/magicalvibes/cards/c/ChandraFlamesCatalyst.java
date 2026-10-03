@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1420")
+@CardRegistration(set = "M21", collectorNumber = "332")
 public class ChandraFlamesCatalyst extends Card {
 
     public ChandraFlamesCatalyst() {

@@ -35,7 +35,9 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean sacrificeAtEndStep,
         int minTargets,
         int sacrificeAtEndStepIfManaValueAtLeast,
-        boolean attachToSourceHost
+        boolean attachToSourceHost,
+        boolean underOwnersControl,
+        boolean randomlyReturnTwoAndPutRestOnBottom
 ) implements AggregateManaValueTargetEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
@@ -137,6 +139,14 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, minTargets, 0);
     }
 
+    /** Creates Sinister Waltz's exact-three-target random return variant. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect sinisterWaltz(CardPredicate filter) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                filter, 3, false, false, null, 0, null, null, null, null, 0,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false,
+                3, 0, false, false, true);
+    }
+
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
                                                               boolean fromBattlefieldThisTurn,
                                                               boolean enterTapped,
@@ -172,7 +182,34 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean sacrificeAtEndStep,
                                                               int minTargets,
                                                               int sacrificeAtEndStepIfManaValueAtLeast,
-                                                              boolean attachToSourceHost) {
+                                                              boolean attachToSourceHost,
+                                                              boolean underOwnersControl) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets,
+                maxTotalManaValue, dynamicMaxTotalManaValue, grantColor, grantSubtype,
+                counterType, counterCount, source, singleGraveyard, grantHaste,
+                sacrificeAtEndStep, minTargets, sacrificeAtEndStepIfManaValueAtLeast,
+                attachToSourceHost, underOwnersControl, false);
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              DynamicAmount dynamicMaxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets,
+                                                              int sacrificeAtEndStepIfManaValueAtLeast,
+                                                              boolean attachToSourceHost,
+                                                              boolean underOwnersControl,
+                                                              boolean randomlyReturnTwoAndPutRestOnBottom) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -203,6 +240,32 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.minTargets = minTargets;
         this.sacrificeAtEndStepIfManaValueAtLeast = sacrificeAtEndStepIfManaValueAtLeast;
         this.attachToSourceHost = attachToSourceHost;
+        this.underOwnersControl = underOwnersControl;
+        this.randomlyReturnTwoAndPutRestOnBottom = randomlyReturnTwoAndPutRestOnBottom;
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              DynamicAmount dynamicMaxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets,
+                                                              int sacrificeAtEndStepIfManaValueAtLeast,
+                                                              boolean attachToSourceHost) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets,
+                maxTotalManaValue, dynamicMaxTotalManaValue, grantColor, grantSubtype,
+                counterType, counterCount, source, singleGraveyard, grantHaste,
+                sacrificeAtEndStep, minTargets, sacrificeAtEndStepIfManaValueAtLeast,
+                attachToSourceHost, false);
     }
 
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
@@ -284,6 +347,14 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false);
     }
 
+    /** Creates a bounded all-graveyards form that returns each card under its owner's control. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyardsUnderOwnersControl(
+            CardPredicate filter, int maxTargets, boolean fromBattlefieldThisTurn, boolean enterTapped) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                filter, maxTargets, fromBattlefieldThisTurn, enterTapped, null, 0, null, null, null, null, 0,
+                GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false, 0, 0, false, true);
+    }
+
     /** Creates an all-graveyards form that puts counters on each returned permanent. */
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyards(
             CardPredicate filter, CounterType counterType, int counterCount) {
@@ -339,7 +410,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return hasTotalManaValueCap()
+        return hasTotalManaValueCap() || maxTargets > 1 || minTargets > 1
                 ? TargetSpec.benign(TargetPredicates.graveyardCards(filter, source))
                 : TargetSpec.benign(TargetPredicates.graveyardCard(source));
     }

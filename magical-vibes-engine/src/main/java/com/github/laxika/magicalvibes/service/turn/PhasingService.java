@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -212,6 +213,20 @@ public class PhasingService {
         }
     }
 
+    /** Phases out permanents and holds them out through the end of the controller's next turn. */
+    public void phaseOutUntilEndOfNextTurn(GameData gameData, Collection<Permanent> permanents,
+                                           UUID controllerId) {
+        List<Permanent> directPermanents = permanents.stream()
+                .filter(permanent -> controllerOf(gameData, permanent) != null)
+                .filter(PhasingService::canPhaseOut)
+                .toList();
+        phaseOut(gameData, directPermanents);
+        directPermanents.stream()
+                .filter(permanent -> findPhasedOutPermanent(gameData, permanent.getId()) != null)
+                .forEach(permanent -> gameData.queueDelayedAction(new PhasedOutUntilEndOfNextTurn(
+                        permanent.getId(), controllerId, gameData.turnNumber)));
+    }
+
     /** Phases out a permanent and prevents its normal phase-in while the source remains controlled. */
     public void phaseOutWhileSourceControlled(GameData gameData, Permanent source, Permanent target,
                                               UUID sourceControllerId) {
@@ -360,6 +375,7 @@ public class PhasingService {
         gameData.phasedOutPermanents.forEach((controllerId, permanents) ->
                 List.copyOf(permanents).stream()
                         .filter(permanent -> targetIds.contains(permanent.getId()))
+                        .filter(permanent -> !isHeldUntilEndOfNextTurn(gameData, permanent))
                         .forEach(permanent -> {
                             phasingIn.put(permanent, controllerId);
                             pending.add(permanent);
@@ -399,7 +415,12 @@ public class PhasingService {
                         && sourceIsTapped(gameData, sourceEntry.getKey()))) {
             return true;
         }
-        return false;
+        return isHeldUntilEndOfNextTurn(gameData, permanent);
+    }
+
+    private boolean isHeldUntilEndOfNextTurn(GameData gameData, Permanent permanent) {
+        return gameData.hasDelayedAction(PhasedOutUntilEndOfNextTurn.class,
+                action -> permanent.getId().equals(action.permanentId()));
     }
 
     private boolean sourceIsTapped(GameData gameData, UUID sourceId) {
@@ -428,6 +449,8 @@ public class PhasingService {
                 .forEach(targetIds -> targetIds.removeAll(phasedInIds));
         gameData.phasedOutWhileSourceTapped.entrySet()
                 .removeIf(entry -> entry.getValue().isEmpty());
+        gameData.drainDelayedActions(PhasedOutUntilEndOfNextTurn.class,
+                action -> phasedInIds.contains(action.permanentId()));
     }
 
     private Permanent findPhasedOutPermanent(GameData gameData, UUID permanentId) {
@@ -489,6 +512,7 @@ public class PhasingService {
         Deque<Permanent> pending = new ArrayDeque<>();
         gameData.phasedOutPermanents.forEach((controllerId, permanents) -> List.copyOf(permanents).stream()
                 .filter(permanent -> !permanent.isPhasedOutIndirectly())
+                .filter(permanent -> !isHeldUntilEndOfNextTurn(gameData, permanent))
                 .filter(permanent -> isPhasedOutCreature(permanent))
                 .forEach(permanent -> {
                     phasingIn.put(permanent, controllerId);

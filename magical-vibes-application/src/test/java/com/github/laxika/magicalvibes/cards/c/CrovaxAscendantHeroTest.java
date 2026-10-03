@@ -1,17 +1,21 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.k.KavuPredator;
+import com.github.laxika.magicalvibes.cards.m.Moonlace;
 import com.github.laxika.magicalvibes.cards.s.SaltfieldRecluse;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrovaxAscendantHero.class, KavuPredator.class, SaltfieldRecluse.class})
+@CardUsed({CrovaxAscendantHero.class, KavuPredator.class, SaltfieldRecluse.class, Moonlace.class})
 @DisplayName("Crovax, Ascendant Hero")
 class CrovaxAscendantHeroTest extends BaseCardTest {
 
@@ -63,10 +67,10 @@ class CrovaxAscendantHeroTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot pay the ability's life cost from zero life")
+    @DisplayName("Cannot pay the ability's life cost from one life")
     void cannotActivateWithoutEnoughLife() {
         harness.addToBattlefield(player1, new CrovaxAscendantHero());
-        harness.setLife(player1, 0);
+        harness.setLife(player1, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -82,5 +86,54 @@ class CrovaxAscendantHeroTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 0);
+    }
+
+    @Test
+    @DisplayName("Crovax shrinks itself when it becomes colorless")
+    void shrinksItselfWhenNonwhite() {
+        Permanent crovax = harness.addToBattlefieldAndReturn(player1, new CrovaxAscendantHero());
+        harness.setHand(player1, List.of(new Moonlace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, crovax.getId());
+
+        assertThat(gqs.getEffectivePower(gd, crovax)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crovax)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Life is paid immediately and a tapped Crovax returns only on resolution")
+    void tappedCrovaxPaysLifeBeforeReturning() {
+        Permanent crovax = harness.addToBattlefieldAndReturn(player1, new CrovaxAscendantHero());
+        crovax.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        harness.assertOnBattlefield(player1, "Crovax, Ascendant Hero");
+        harness.assertNotInHand(player1, "Crovax, Ascendant Hero");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Crovax, Ascendant Hero");
+        harness.assertNotOnBattlefield(player1, "Crovax, Ascendant Hero");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Both creature modifiers end when Crovax returns to hand")
+    void modifiersEndWhenCrovaxLeaves() {
+        harness.addToBattlefield(player1, new CrovaxAscendantHero());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new SaltfieldRecluse());
+        Permanent nonwhiteCreature = harness.addToBattlefieldAndReturn(player2, new KavuPredator());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonwhiteCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonwhiteCreature)).isEqualTo(2);
     }
 }

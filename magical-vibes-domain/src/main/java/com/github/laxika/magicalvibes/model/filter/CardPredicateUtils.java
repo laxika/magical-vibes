@@ -159,6 +159,10 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueAtMostControlledLandsPredicate) {
             return "card with mana value at most the number of lands you control";
         }
+        if (predicate instanceof CardManaValueAtMostControlledCountPredicate p) {
+            return "card with mana value at most the number of matching permanents you control ("
+                    + describePermanentFilter(p.countFilter()) + ")";
+        }
         if (predicate instanceof CardManaValueLessThanSourceLoyaltyPredicate) {
             return "card with mana value less than this planeswalker's loyalty";
         }
@@ -273,5 +277,12 @@ public final class CardPredicateUtils {
             return String.join(" or ", parts);
         }
         return "card";
+    }
+
+    private static String describePermanentFilter(PermanentPredicate predicate) {
+        if (predicate instanceof PermanentHasSubtypePredicate p) {
+            return p.subtype().getDisplayName().toLowerCase();
+        }
+        return "matching";
     }
 }

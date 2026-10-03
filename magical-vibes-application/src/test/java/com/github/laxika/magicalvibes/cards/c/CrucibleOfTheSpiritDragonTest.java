@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.FlamewakePhoenix;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
+import com.github.laxika.magicalvibes.cards.s.ShockmawDragon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +23,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrucibleOfTheSpiritDragon.class, ShockmawDragon.class, FlamewakePhoenix.class, ShivanDragon.class})
 class CrucibleOfTheSpiritDragonTest extends BaseCardTest {
 
     @Test
@@ -116,10 +121,137 @@ class CrucibleOfTheSpiritDragonTest extends BaseCardTest {
         assertThat(manaPool().getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.RED)).isZero();
     }
 
+    @Test
+    void storageCounterIsAddedOnlyWhenAbilityResolves() {
+        Permanent land = addReadyLand();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(manaPool().getTotal()).isZero();
+        assertThat(land.getCounterCount(CounterType.STORAGE)).isZero();
+        harness.passBothPriorities();
+        assertThat(land.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+    }
+
+    @Test
+    void restrictedManaPaysColoredAndGenericCostsOfRealDragonSpell() {
+        Permanent land = addReadyLand();
+        land.setCounterCount(CounterType.STORAGE, 6);
+        harness.setHand(player1, List.of(new ShockmawDragon()));
+
+        harness.activateAbility(player1, 0, 2, 6, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+        harness.handleListChoice(player1, ManaColor.RED.name());
+        for (int i = 0; i < 4; i++) {
+            harness.handleListChoice(player1, ManaColor.BLUE.name());
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(land.getCounterCount(CounterType.STORAGE)).isZero();
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(manaPool().getTotal()).isZero();
+        assertThat(manaPool().getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.RED)).isZero();
+        assertThat(manaPool().getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void restrictedManaCannotPayColoredCostOfRealNonDragonSpell() {
+        Permanent land = addReadyLand();
+        land.setCounterCount(CounterType.STORAGE, 1);
+        harness.setHand(player1, List.of(new FlamewakePhoenix()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 2, 1, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(manaPool().getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.RED))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void restrictedManaCannotPayGenericCostOfNonDragonSpell() {
+        Permanent land = addReadyLand();
+        land.setCounterCount(CounterType.STORAGE, 1);
+        harness.setHand(player1, List.of(new FlamewakePhoenix()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 2, 1, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(manaPool().getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.BLUE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void restrictedManaCanPayForDragonActivatedAbility() {
+        Permanent land = addReadyLand();
+        land.setCounterCount(CounterType.STORAGE, 1);
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+
+        harness.activateAbility(player1, 0, 2, 1, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.getPowerModifier()).isEqualTo(1);
+        assertThat(manaPool().getTotal()).isZero();
+        assertThat(manaPool().getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void restrictedManaCannotPayForNonDragonStorageAbility() {
+        Permanent firstLand = addReadyLand();
+        firstLand.setCounterCount(CounterType.STORAGE, 1);
+        Permanent secondLand = addReadyLand();
+
+        harness.activateAbility(player1, 0, 2, 1, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(secondLand.isTapped()).isFalse();
+        assertThat(secondLand.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotRemoveMoreCountersThanPresent() {
+        Permanent land = addReadyLand();
+        land.setCounterCount(CounterType.STORAGE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, 3, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(land.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+        assertThat(manaPool().getTotal()).isZero();
+    }
+
+    @Test
+    void zeroCountersStillAllowsZeroManaActivation() {
+        Permanent land = addReadyLand();
+
+        harness.activateAbility(player1, 0, 2, 0, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(manaPool().getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addReadyLand() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new CrucibleOfTheSpiritDragon());
-        land.setSummoningSick(false);
-        return land;
+        return addCreatureReady(player1, new CrucibleOfTheSpiritDragon());
     }
 
     private ManaPool manaPool() {

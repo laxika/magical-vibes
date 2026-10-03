@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentThenSearchLandD
 
 @CardRegistration(set = "C21", collectorNumber = "84")
 @CardRegistration(set = "C18", collectorNumber = "1")
+@CardRegistration(set = "VOC", collectorNumber = "79")
 public class BoreasCharger extends Card {
 
     public BoreasCharger() {

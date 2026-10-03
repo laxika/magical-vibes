@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1345")
+@CardRegistration(set = "VOC", collectorNumber = "31")
+@CardRegistration(set = "VOC", collectorNumber = "69")
 public class BreathkeeperSeraph extends Card {
 
     public BreathkeeperSeraph() {

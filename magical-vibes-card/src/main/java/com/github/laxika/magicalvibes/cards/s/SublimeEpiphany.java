@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "74")
+@CardRegistration(set = "M21", collectorNumber = "355")
 @CardRegistration(set = "FIC", collectorNumber = "271")
 @CardRegistration(set = "TDC", collectorNumber = "167")
 public class SublimeEpiphany extends Card {

@@ -51,9 +51,7 @@ class CrownOfFlamesTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
     }
@@ -102,5 +100,69 @@ class CrownOfFlamesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Pump resolves using the enchanted creature after the Aura returns to hand")
+    void pumpResolvesAfterAuraReturnsToHand() {
+        Permanent creature = addCreatureReady(player1, new TrainedArmodon());
+        Permanent aura = attachTo(creature);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(aura.getCard());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A resolved pump persists after the Aura returns to hand")
+    void resolvedPumpPersistsWithoutAura() {
+        Permanent creature = addCreatureReady(player1, new TrainedArmodon());
+        attachTo(creature);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Crown of Flames");
+        harness.assertNotOnBattlefield(player1, "Crown of Flames");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Aura controller can enchant and pump an opponent's creature and return the Aura")
+    void canEnchantAndPumpOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new TrainedArmodon());
+        harness.setHand(player1, List.of(new CrownOfFlames()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Crown of Flames");
+        harness.assertNotInHand(player2, "Crown of Flames");
+        harness.assertOnBattlefield(player2, "Trained Armodon");
     }
 }
