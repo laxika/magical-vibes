@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MIC", collectorNumber = "83")
 @CardRegistration(set = "C16", collectorNumber = "63")
+@CardRegistration(set = "VOC", collectorNumber = "82")
 public class CustodiSoulbinders extends Card {
 
     public CustodiSoulbinders() {

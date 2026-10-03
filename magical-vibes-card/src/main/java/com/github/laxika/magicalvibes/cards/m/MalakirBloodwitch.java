@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "100")
+@CardRegistration(set = "VOC", collectorNumber = "131")
 public class MalakirBloodwitch extends Card {
 
     public MalakirBloodwitch() {

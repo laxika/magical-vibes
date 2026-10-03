@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CrosissCharm.class, Forest.class, GrizzlyBears.class, MassOfGhouls.class, Ornithopter.class})
 class CrosissCharmTest extends BaseCardTest {
@@ -69,6 +70,62 @@ class CrosissCharmTest extends BaseCardTest {
         setUpSpell();
 
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 2, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnsPermanentToOwnerRatherThanController() {
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, bears);
+
+        cast(0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void returnModeCanTargetBlackCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MassOfGhouls());
+
+        cast(0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Mass of Ghouls");
+        harness.assertInHand(player2, "Mass of Ghouls");
+    }
+
+    @Test
+    void nonblackCreatureModeDestroysColorlessArtifactCreatureWithoutRegeneration() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        target.setRegenerationShield(1);
+
+        cast(1, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    void artifactModeAllowsRegeneration() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        target.setRegenerationShield(1);
+
+        cast(2, target.getId());
+
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void cannotTargetNoncreatureWithNonblackCreatureMode() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        setUpSpell();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

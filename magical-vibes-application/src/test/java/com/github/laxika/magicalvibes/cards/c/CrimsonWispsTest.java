@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BallynockCohort;
 import com.github.laxika.magicalvibes.cards.i.IlluminatedFolio;
+import com.github.laxika.magicalvibes.cards.t.TurnToMist;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrimsonWisps.class, BallynockCohort.class, IlluminatedFolio.class})
+@CardUsed({CrimsonWisps.class, BallynockCohort.class, IlluminatedFolio.class, TurnToMist.class})
 class CrimsonWispsTest extends BaseCardTest {
 
     @Test
@@ -88,5 +89,26 @@ class CrimsonWispsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Does not draw when the sole target leaves before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BallynockCohort());
+        harness.setHand(player1, List.of(new CrimsonWisps()));
+        harness.setHand(player2, List.of(new TurnToMist()));
+        harness.setLibrary(player1, List.of(new IlluminatedFolio()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Crimson Wisps");
     }
 }

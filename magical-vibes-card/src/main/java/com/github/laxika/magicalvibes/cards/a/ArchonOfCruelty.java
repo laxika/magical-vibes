@@ -24,6 +24,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "75")
 @CardRegistration(set = "M3C", collectorNumber = "197")
+@CardRegistration(set = "DSC", collectorNumber = "371")
 public class ArchonOfCruelty extends Card {
 
     private static final PermanentPredicate CREATURE_OR_PLANESWALKER = new PermanentAnyOfPredicate(List.of(

@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "183")
+@CardRegistration(set = "M21", collectorNumber = "284")
+@CardRegistration(set = "M21", collectorNumber = "305")
 public class GarrukUnleashed extends Card {
 
     private static final String EMBLEM_TEXT =

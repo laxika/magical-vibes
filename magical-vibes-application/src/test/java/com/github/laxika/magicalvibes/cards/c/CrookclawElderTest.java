@@ -129,6 +129,87 @@ class CrookclawElderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Summoning-sick Birds can pay the draw ability's cost")
+    void summoningSickBirdsCanPayCost() {
+        Permanent elder = addCreatureReady(player1, new CrookclawElder());
+        Permanent bird = addCreatureReady(player1, new AvenEnvoy());
+        addCreatureReady(player1, new AvenEnvoy());
+        elder.setSummoningSick(true);
+        bird.setSummoningSick(true);
+        FugitiveWizard drawnCard = new FugitiveWizard();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, battlefieldIndex(player1, elder), 0, null, null);
+        harness.handlePermanentChosen(player1, elder.getId());
+        harness.handlePermanentChosen(player1, bird.getId());
+        harness.passBothPriorities();
+
+        assertThat(elder.isTapped()).isTrue();
+        assertThat(bird.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Wizards, including the source and target, can pay the flying cost")
+    void summoningSickWizardsCanPayCost() {
+        Permanent elder = addCreatureReady(player1, new CrookclawElder());
+        Permanent wizard = addCreatureReady(player1, new FugitiveWizard());
+        addCreatureReady(player1, new FugitiveWizard());
+        elder.setSummoningSick(true);
+        wizard.setSummoningSick(true);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, elder), 1, null, wizard.getId());
+        harness.handlePermanentChosen(player1, elder.getId());
+        harness.handlePermanentChosen(player1, wizard.getId());
+        harness.passBothPriorities();
+
+        assertThat(elder.isTapped()).isTrue();
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already-tapped Elder can activate using other untapped Birds")
+    void tappedElderCanActivateWithOtherBirds() {
+        Permanent elder = addCreatureReady(player1, new CrookclawElder());
+        elder.tap();
+        Permanent bird1 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent bird2 = addCreatureReady(player1, new AvenEnvoy());
+        addCreatureReady(player1, new AvenEnvoy());
+        FugitiveWizard drawnCard = new FugitiveWizard();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, battlefieldIndex(player1, elder), 0, null, null);
+        harness.handlePermanentChosen(player1, bird1.getId());
+        harness.handlePermanentChosen(player1, bird2.getId());
+        harness.passBothPriorities();
+
+        assertThat(bird1.isTapped()).isTrue();
+        assertThat(bird2.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's Bird cannot pay the draw ability's cost")
+    void opponentBirdCannotPayCost() {
+        Permanent elder = addCreatureReady(player1, new CrookclawElder());
+        Permanent bird1 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent bird2 = addCreatureReady(player1, new AvenEnvoy());
+        Permanent opponentBird = addCreatureReady(player2, new AvenEnvoy());
+        FugitiveWizard drawnCard = new FugitiveWizard();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, battlefieldIndex(player1, elder), 0, null, null);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentBird.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, bird1.getId());
+        harness.handlePermanentChosen(player1, bird2.getId());
+        harness.passBothPriorities();
+
+        assertThat(opponentBird.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
     private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "225")
+@CardRegistration(set = "M21", collectorNumber = "381")
 public class SanctumOfAll extends Card {
 
     public SanctumOfAll() {

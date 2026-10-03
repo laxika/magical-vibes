@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "116")
+@CardRegistration(set = "M21", collectorNumber = "359")
 public class Necromentia extends Card {
 
     public Necromentia() {

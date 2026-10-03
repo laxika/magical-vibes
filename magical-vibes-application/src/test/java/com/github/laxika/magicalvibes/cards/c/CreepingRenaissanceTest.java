@@ -1,30 +1,38 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
-import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarrukRelentless;
+import com.github.laxika.magicalvibes.cards.g.GeistcatchersRig;
+import com.github.laxika.magicalvibes.cards.i.IntangibleVirtue;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.t.TravelersAmulet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CreepingRenaissance.class, AncientGrudge.class, AmbushViper.class,
+        TravelersAmulet.class, IntangibleVirtue.class, Mountain.class, GarrukRelentless.class,
+        GeistcatchersRig.class, InvasionOfZendikar.class})
 class CreepingRenaissanceTest extends BaseCardTest {
 
     private void castCreepingRenaissance() {
-        harness.setHand(player1, new ArrayList<>(List.of(new CreepingRenaissance())));
+        harness.setHand(player1, List.of(new CreepingRenaissance()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -33,9 +41,9 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card bear1 = new GrizzlyBears();
-        Card bear2 = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(bear1, bear2));
+        Card bear1 = new AmbushViper();
+        Card bear2 = new AmbushViper();
+        harness.setGraveyard(player1, List.of(bear1, bear2));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "CREATURE");
@@ -52,8 +60,8 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card artifact = new DarksteelRelic();
-        gd.playerGraveyards.get(player1.getId()).add(artifact);
+        Card artifact = new TravelersAmulet();
+        harness.setGraveyard(player1, List.of(artifact));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "ARTIFACT");
@@ -70,8 +78,8 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card enchantment = new GloriousAnthem();
-        gd.playerGraveyards.get(player1.getId()).add(enchantment);
+        Card enchantment = new IntangibleVirtue();
+        harness.setGraveyard(player1, List.of(enchantment));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "ENCHANTMENT");
@@ -89,7 +97,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         Card land = new Mountain();
-        gd.playerGraveyards.get(player1.getId()).add(land);
+        harness.setGraveyard(player1, List.of(land));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "LAND");
@@ -106,10 +114,10 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card creature = new GrizzlyBears();
-        Card artifact = new DarksteelRelic();
+        Card creature = new AmbushViper();
+        Card artifact = new TravelersAmulet();
         Card land = new Mountain();
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(creature, artifact, land));
+        harness.setGraveyard(player1, List.of(creature, artifact, land));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "CREATURE");
@@ -143,8 +151,8 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card creature = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).add(creature);
+        Card creature = new AmbushViper();
+        harness.setGraveyard(player1, List.of(creature));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "ARTIFACT");
@@ -161,13 +169,12 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card creature = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(new CreepingRenaissance(), creature));
+        Card creature = new AmbushViper();
+        harness.setGraveyard(player1, List.of(new CreepingRenaissance(), creature));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
         harness.handleListChoice(player1, "CREATURE");
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -183,8 +190,8 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card opponentCreature = new GrizzlyBears();
-        gd.playerGraveyards.get(player2.getId()).add(opponentCreature);
+        Card opponentCreature = new AmbushViper();
+        harness.setGraveyard(player2, List.of(opponentCreature));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "CREATURE");
@@ -201,8 +208,8 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         Card instant = new AncientGrudge();
-        Card creature = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(instant, creature));
+        Card creature = new AmbushViper();
+        harness.setGraveyard(player1, List.of(instant, creature));
 
         castCreepingRenaissance();
         harness.handleListChoice(player1, "CREATURE");
@@ -212,5 +219,71 @@ class CreepingRenaissanceTest extends BaseCardTest {
                 .doesNotContain(instant);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(instant);
+    }
+
+    @Test
+    @DisplayName("Choosing PLANESWALKER returns planeswalkers without affecting creatures")
+    void choosingPlaneswalkerReturnsPlaneswalkers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card planeswalker = new GarrukRelentless();
+        Card creature = new AmbushViper();
+        harness.setGraveyard(player1, List.of(planeswalker, creature));
+
+        castCreepingRenaissance();
+        harness.handleListChoice(player1, "PLANESWALKER");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(planeswalker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature).doesNotContain(planeswalker);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ARTIFACT", "CREATURE"})
+    @DisplayName("An artifact creature is returned for either of its permanent types")
+    void returnsMultitypeCardForEitherType(String chosenType) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card artifactCreature = new GeistcatchersRig();
+        harness.setGraveyard(player1, List.of(artifactCreature));
+
+        castCreepingRenaissance();
+        harness.handleListChoice(player1, chosenType);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifactCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(artifactCreature);
+    }
+
+    @Test
+    @DisplayName("Battle is offered as a permanent type and returns battle cards")
+    void choosingBattleReturnsBattles() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card battle = new InvasionOfZendikar();
+        harness.setGraveyard(player1, List.of(battle));
+
+        castCreepingRenaissance();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .contains("BATTLE");
+        harness.handleListChoice(player1, "BATTLE");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(battle);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(battle);
+    }
+
+    @Test
+    @DisplayName("A battle with a creature back face is not a creature card in the graveyard")
+    void creatureChoiceDoesNotReturnBattleWithCreatureBackFace() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card battle = new InvasionOfZendikar();
+        Card creature = new AmbushViper();
+        harness.setGraveyard(player1, List.of(battle, creature));
+
+        castCreepingRenaissance();
+        harness.handleListChoice(player1, "CREATURE");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(battle).doesNotContain(creature);
     }
 }

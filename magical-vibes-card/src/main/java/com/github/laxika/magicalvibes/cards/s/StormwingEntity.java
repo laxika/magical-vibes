@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "73")
+@CardRegistration(set = "M21", collectorNumber = "354")
 public class StormwingEntity extends Card {
 
     public StormwingEntity() {

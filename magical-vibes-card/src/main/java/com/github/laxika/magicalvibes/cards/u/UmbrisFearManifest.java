@@ -20,6 +20,8 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2324")
 @CardRegistration(set = "SLD", collectorNumber = "2339")
+@CardRegistration(set = "VOC", collectorNumber = "38")
+@CardRegistration(set = "VOC", collectorNumber = "76")
 public class UmbrisFearManifest extends Card {
 
     public UmbrisFearManifest() {

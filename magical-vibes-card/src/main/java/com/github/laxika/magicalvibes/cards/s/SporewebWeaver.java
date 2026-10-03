@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "208")
+@CardRegistration(set = "M21", collectorNumber = "378")
 public class SporewebWeaver extends Card {
 
     public SporewebWeaver() {

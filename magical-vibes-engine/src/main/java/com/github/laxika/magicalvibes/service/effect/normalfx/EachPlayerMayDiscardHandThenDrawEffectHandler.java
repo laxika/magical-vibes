@@ -3,10 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AcceptedPlayersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardHandThenDrawEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +26,8 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
 
     private final DiscardHandEffectHandler discardHandEffectHandler;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,16 +58,20 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
                 playerId,
                 List.of(effect),
                 sourceCard.getName() + " - You may discard your hand and draw "
-                        + effect.cardsToDraw() + " cards."));
+                        + drawAmountDescription(gameData, effect, playerId) + " cards."));
     }
 
-    public void resolveAcceptedPlayers(GameData gameData, Card sourceCard, UUID sourceControllerId,
-                                       List<UUID> acceptedPlayerIds, int cardsToDraw,
+    public void resolveAcceptedPlayers(GameData gameData, StackEntry entry, Card sourceCard,
+                                       UUID sourceControllerId, List<UUID> acceptedPlayerIds,
+                                       DynamicAmount cardsToDraw,
                                        AcceptedPlayersAwareEffect followUp) {
+        Permanent source = sourcePermanent(gameData, entry);
+
         for (UUID playerId : acceptedPlayerIds) {
+            int drawAmount = evaluateDrawAmount(gameData, entry, source, playerId, cardsToDraw);
             discardHandEffectHandler.discardHand(gameData, playerId, sourceControllerId,
                     sourceCard.getName());
-            playerInteractionSupport.applyDrawCards(gameData, playerId, cardsToDraw);
+            playerInteractionSupport.applyDrawCards(gameData, playerId, drawAmount);
         }
 
         if (followUp != null && gameData.pendingEffectResolutionEntry != null) {
@@ -67,6 +79,35 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
                     gameData.pendingEffectResolutionIndex,
                     List.of(followUp.withAcceptedPlayerIds(acceptedPlayerIds)));
         }
+    }
+
+    private int evaluateDrawAmount(GameData gameData, StackEntry entry, Permanent source,
+                                   UUID playerId, DynamicAmount cardsToDraw) {
+        AmountContext context = entry == null
+                ? new AmountContext(playerId, source, null, 0, 0)
+                : AmountContext.forStackEntry(entry, source).withControllerId(playerId);
+        return Math.max(0, amountEvaluationService.evaluate(gameData, cardsToDraw, context));
+    }
+
+    private String drawAmountDescription(GameData gameData,
+                                         EachPlayerMayDiscardHandThenDrawEffect effect,
+                                         UUID playerId) {
+        if (effect.cardsToDraw() instanceof Fixed fixed) {
+            return Integer.toString(fixed.value());
+        }
+        return Integer.toString(evaluateDrawAmount(gameData, gameData.pendingEffectResolutionEntry,
+                sourcePermanent(gameData, gameData.pendingEffectResolutionEntry), playerId,
+                effect.cardsToDraw()));
+    }
+
+    private Permanent sourcePermanent(GameData gameData, StackEntry entry) {
+        if (entry == null) {
+            return null;
+        }
+        Permanent source = entry.getSourcePermanentId() == null
+                ? entry.getSourcePermanentSnapshot()
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return source == null ? entry.getSourcePermanentSnapshot() : source;
     }
 
     private static List<UUID> apnapPlayers(GameData gameData) {

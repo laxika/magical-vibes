@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "137")
+@CardRegistration(set = "M21", collectorNumber = "303")
 public class ChandrasMagmutt extends Card {
 
     public ChandrasMagmutt() {

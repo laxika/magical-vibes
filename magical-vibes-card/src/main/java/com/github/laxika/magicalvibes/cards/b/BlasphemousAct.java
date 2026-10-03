@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "BRC", collectorNumber = "113")
 @CardRegistration(set = "C18", collectorNumber = "120")
 @CardRegistration(set = "C16", collectorNumber = "120")
+@CardRegistration(set = "VOC", collectorNumber = "143")
 public class BlasphemousAct extends Card {
 
     public BlasphemousAct() {

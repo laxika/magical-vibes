@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "S99", collectorNumber = "79")
 @CardRegistration(set = "M21", collectorNumber = "103")
+@CardRegistration(set = "M21", collectorNumber = "315")
 @CardRegistration(set = "ME3", collectorNumber = "69")
 @CardRegistration(set = "SLD", collectorNumber = "365")
 @CardRegistration(set = "SLD", collectorNumber = "444")
