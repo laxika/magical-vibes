@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Cursecatcher.class, Shock.class, GrizzlyBears.class, CruelEdict.class})
+@CardUsed({Cursecatcher.class, Shock.class, GrizzlyBears.class, CruelEdict.class, Mountain.class})
 class CursecatcherTest extends BaseCardTest {
 
     // ===== Counters an instant when its controller cannot pay {1} =====
@@ -132,5 +133,72 @@ class CursecatcherTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Controller can decline payment even with enough mana")
+    void countersWhenControllerDeclinesPayment() {
+        harness.addToBattlefield(player1, new Cursecatcher());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.assertInGraveyard(player1, "Cursecatcher");
+        harness.assertNotOnBattlefield(player1, "Cursecatcher");
+        assertThat(harness.getGameData().stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertLife(player1, 20);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapped Cursecatcher can sacrifice itself to counter its controller's spell")
+    void tappedCursecatcherCanCounterOwnSpell() {
+        harness.addToBattlefield(player1, new Cursecatcher());
+        harness.getGameData().playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cursecatcher");
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertLife(player2, 20);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Payment choice is offered with an untapped mana source and no floating mana")
+    void canActivateManaAbilitiesToPayDuringResolution() {
+        harness.addToBattlefield(player1, new Cursecatcher());
+        harness.addToBattlefield(player2, new Mountain());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)
+                .playerId()).isEqualTo(player2.getId());
+        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(harness.getGameData().stack.getFirst().getCard().getId()).isEqualTo(shock.getId());
+        harness.assertLife(player1, 20);
     }
 }
