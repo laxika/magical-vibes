@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.r.ReveredDead;
+import com.github.laxika.magicalvibes.cards.t.Timecrafting;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeadwoodTreefolk.class, ReveredDead.class, Damnation.class})
+@CardUsed({DeadwoodTreefolk.class, ReveredDead.class, Damnation.class, Timecrafting.class})
 class DeadwoodTreefolkTest extends BaseCardTest {
 
     @Test
@@ -104,6 +106,87 @@ class DeadwoodTreefolkTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Damnation");
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter with Timecrafting triggers sacrifice and the leaves ability")
+    void externalRemovalOfLastCounterCausesSacrifice() {
+        Permanent treefolk = harness.enterBattlefieldAndReturn(player1, new DeadwoodTreefolk());
+        Card creature = new ReveredDead();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new Timecrafting()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castModalInstantForX(player1, 0, 0, 3, treefolk.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Deadwood Treefolk");
+        harness.assertInGraveyard(player1, "Deadwood Treefolk");
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Revered Dead");
+    }
+
+    @Test
+    @DisplayName("Removing fewer than all time counters with Timecrafting does not sacrifice it")
+    void externalRemovalBeforeLastCounterDoesNotSacrifice() {
+        Permanent treefolk = harness.enterBattlefieldAndReturn(player1, new DeadwoodTreefolk());
+        harness.setHand(player1, List.of(new Timecrafting()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castModalInstantForX(player1, 0, 0, 2, treefolk.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(treefolk.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Deadwood Treefolk");
+    }
+
+    @Test
+    @DisplayName("Vanishing does not trigger at upkeep when there are no time counters")
+    void noTimeCountersMeansNoUpkeepTrigger() {
+        harness.addToBattlefield(player1, new DeadwoodTreefolk());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Deadwood Treefolk");
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not remove a time counter")
+    void opponentUpkeepDoesNotRemoveCounter() {
+        Permanent treefolk = harness.enterBattlefieldAndReturn(player1, new DeadwoodTreefolk());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(treefolk.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Deadwood Treefolk");
+    }
+
+    @Test
+    @DisplayName("The leaves ability can return a creature destroyed at the same time")
+    void returnsCreatureThatDiesAlongsideIt() {
+        DeadwoodTreefolk treefolk = new DeadwoodTreefolk();
+        Card creature = new ReveredDead();
+        harness.addToBattlefield(player1, treefolk);
+        harness.addToBattlefield(player1, creature);
+
+        destroyWithDamnation();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Revered Dead");
+        harness.assertInGraveyard(player1, "Deadwood Treefolk");
     }
 
     private void castDeadwoodTreefolk() {
