@@ -20,6 +20,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CastingOfBonesTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting the Aura attaches it without drawing, and its trigger survives the Aura going to the graveyard")
+    void castAuraAndResolveDeathTrigger() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new StormCrow());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new CastingOfBones()));
+        harness.setLibrary(player1, List.of(new StormCrow(), new StormCrow(), new StormCrow()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> creature.getId().equals(p.getAttachedTo()));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+
+        destroyWithContagion(player2, creature);
+
+        harness.assertInGraveyard(player1, "Casting of Bones");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.handleCardChosen(player1, 2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A later death trigger cannot discard cards drawn by an earlier trigger")
+    void separateTriggersKeepTheirDrawnCardsSeparate() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new StormCrow(), new StormCrow(), new StormCrow(),
+                new StormCrow(), new StormCrow(), new StormCrow()));
+        Permanent first = addCreatureWithAura(player1, player1);
+        destroyWithContagion(player2, first);
+        harness.handleCardChosen(player1, 0);
+        List<Card> earlierCards = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        Permanent second = addCreatureWithAura(player1, player1);
+        destroyWithContagion(player2, second);
+
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(2, 3, 4);
+        harness.handleCardChosen(player1, 4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4).containsAll(earlierCards);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("When the enchanted creature dies, the Aura's controller draws three cards then discards one")
     void deathTriggerDrawsThreeAndDiscardsOne() {
         Permanent creature = addCreatureWithAura(player1, player1);
@@ -72,8 +120,7 @@ class CastingOfBonesTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new StormCrow(), new StormCrow(), new StormCrow()));
 
-        harness.addToBattlefield(player2, new StormCrow());
-        Permanent other = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new StormCrow());
 
         destroyWithContagion(player1, other);
 
@@ -100,8 +147,7 @@ class CastingOfBonesTest extends BaseCardTest {
      * @return the Storm Crow permanent
      */
     private Permanent addCreatureWithAura(Player creatureController, Player auraController) {
-        harness.addToBattlefield(creatureController, new StormCrow());
-        Permanent creature = gd.playerBattlefields.get(creatureController.getId()).getFirst();
+        Permanent creature = harness.addToBattlefieldAndReturn(creatureController, new StormCrow());
 
         Card auraCard = new CastingOfBones();
         Permanent aura = new Permanent(auraCard);

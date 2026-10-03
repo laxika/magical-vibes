@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,8 +15,69 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CentaurRootcaster.class, Forest.class, GrizzlyBears.class, SuntailHawk.class})
+@CardUsed({CentaurRootcaster.class, Forest.class, GrizzlyBears.class, SuntailHawk.class, KrosanVerge.class})
 class CentaurRootcasterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A nonbasic land cannot be found by the search")
+    void nonbasicLandIsExcluded() {
+        Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
+        rootcaster.setAttacking(true);
+        Forest forest = new Forest();
+        KrosanVerge verge = new KrosanVerge();
+        harness.setLibrary(player1, List.of(verge, forest));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(verge);
+        assertThat(gameLogContains("is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a basic land is available")
+    void mayFailToFindAvailableBasicLand() {
+        Permanent rootcaster = addCreatureReady(player1, new CentaurRootcaster());
+        rootcaster.setAttacking(true);
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attacking controller searches their own library and controls the found land")
+    void secondPlayerSearchesOwnLibrary() {
+        Permanent rootcaster = addCreatureReady(player2, new CentaurRootcaster());
+        rootcaster.setAttacking(true);
+        Forest forest = new Forest();
+        SuntailHawk opposingCard = new SuntailHawk();
+        harness.setLibrary(player2, List.of(forest));
+        harness.setLibrary(player1, List.of(opposingCard));
+
+        resolveCombat(player2);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(findPermanent(player2, "Forest").isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opposingCard);
+    }
 
     @Test
     @DisplayName("Combat damage to a player creates a may prompt")

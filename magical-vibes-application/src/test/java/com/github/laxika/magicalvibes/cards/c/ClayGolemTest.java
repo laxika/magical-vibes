@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,9 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClayGolem.class, GrizzlyBears.class})
+@CardUsed({ClayGolem.class})
 class ClayGolemTest extends BaseCardTest {
 
     private RollD8EffectHandler effectHandler;
@@ -38,7 +36,7 @@ class ClayGolemTest extends BaseCardTest {
     void rollsForCountersAndDestroysChosenPermanent() {
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(5));
         Permanent golem = addCreatureReady(player1, new ClayGolem());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ClayGolem());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateAbility(player1, 0, null, null);
@@ -48,14 +46,14 @@ class ClayGolemTest extends BaseCardTest {
 
         assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(golem.isMonstrous()).isTrue();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Clay Golem");
     }
 
     @Test
-    void cannotActivateAgainAfterBecomingMonstrous() {
+    void canActivateAgainAfterBecomingMonstrousWithoutCountersOrAnotherTrigger() {
         ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(1));
-        addCreatureReady(player1, new ClayGolem());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent golem = addCreatureReady(player1, new ClayGolem());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ClayGolem());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateAbility(player1, 0, null, null);
@@ -64,14 +62,70 @@ class ClayGolemTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("already monstrous");
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(golem.isMonstrous()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void rollsAsAnActivationCostBeforeEitherPlayerCanRespond() {
+        FixedDiceRollService dice = new FixedDiceRollService(8);
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", dice);
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new ClayGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(dice.rollCount).isEqualTo(1);
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(golem.isMonstrous()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void onlyTheFirstResolvingActivationAddsCountersAndTriggersBerserk() {
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(8));
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new ClayGolem());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ClayGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+        assertThat(golem.isMonstrous()).isTrue();
+        harness.assertInGraveyard(player2, "Clay Golem");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void berserkCanTargetTheGolemItself() {
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(3));
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new ClayGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, golem.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Clay Golem");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
     private static final class FixedDiceRollService extends DiceRollService {
 
         private final int result;
+        private int rollCount;
 
         private FixedDiceRollService(int result) {
             this.result = result;
@@ -79,6 +133,8 @@ class ClayGolemTest extends BaseCardTest {
 
         @Override
         public int roll(int sides) {
+            assertThat(sides).isEqualTo(8);
+            rollCount++;
             return result;
         }
     }

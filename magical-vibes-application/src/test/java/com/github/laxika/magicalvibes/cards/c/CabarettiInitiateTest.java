@@ -66,6 +66,49 @@ class CabarettiInitiateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent initiate = harness.addToBattlefieldAndReturn(player1, new CabarettiInitiate());
+        initiate.setSummoningSick(true);
+        initiate.setTapped(true);
+        addActivationMana(player1, ManaColor.WHITE);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.DOUBLE_STRIKE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(initiate.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Grants double strike only to the activating creature")
+    void grantsDoubleStrikeOnlyToSource() {
+        Permanent initiate = addInitiateReady(player1);
+        Permanent otherInitiate = addInitiateReady(player1);
+        Permanent opposingInitiate = addInitiateReady(player2);
+        addActivationMana(player1, ManaColor.RED);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherInitiate, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingInitiate, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the hybrid symbol with green mana")
+    void cannotPayHybridWithGreenMana() {
+        addInitiateReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addInitiateReady(Player player) {
         return addCreatureReady(player, new CabarettiInitiate());
     }

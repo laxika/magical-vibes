@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.i.IllusionaryMask;
 import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
+import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AphettoRunecaster.class, ScornfulEgotist.class, AstralSteel.class, IllusionaryMask.class})
+@CardUsed({AphettoRunecaster.class, ScornfulEgotist.class, Stabilizer.class, IllusionaryMask.class})
 class AphettoRunecasterTest extends BaseCardTest {
 
     @Test
@@ -79,7 +80,7 @@ class AphettoRunecasterTest extends BaseCardTest {
         Card drawn = new ScornfulEgotist();
         harness.setLibrary(player1, List.of(drawn));
         harness.addToBattlefield(player1, new AphettoRunecaster());
-        Permanent faceDownPermanent = harness.addToBattlefieldAndReturn(player2, new AstralSteel());
+        Permanent faceDownPermanent = harness.addToBattlefieldAndReturn(player2, new Stabilizer());
         faceDownPermanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
         gs.turnPermanentFaceUpWithoutPayingManaCost(gd, faceDownPermanent);
@@ -90,6 +91,50 @@ class AphettoRunecasterTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(drawn);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    void faceDownRunecasterDoesNotTriggerForAnotherPermanent() {
+        Card drawn = new ScornfulEgotist();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent runecaster = harness.addToBattlefieldAndReturn(player1, new AphettoRunecaster());
+        runecaster.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent egotist = harness.addToBattlefieldAndReturn(player2, new ScornfulEgotist());
+        egotist.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.turnFaceUp(player2, 0);
+
+        assertThat(egotist.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+    }
+
+    @Test
+    void eachRunecasterOffersAnIndependentDrawForAnAlliedPermanent() {
+        Card firstDraw = new ScornfulEgotist();
+        Card secondDraw = new ScornfulEgotist();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addToBattlefield(player1, new AphettoRunecaster());
+        harness.addToBattlefield(player1, new AphettoRunecaster());
+        Permanent egotist = harness.addToBattlefieldAndReturn(player1, new ScornfulEgotist());
+        egotist.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.turnFaceUp(player1, 2);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw);
+        assertThat(gd.stack).isEmpty();
     }
 
     @ParameterizedTest

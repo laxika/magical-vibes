@@ -123,6 +123,38 @@ class ArcboundLancerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(goblin);
     }
 
+    @Test
+    void modularTransfersAllCountersAtDeathAndAddsToExistingCounters() {
+        Permanent lancer = addCreatureReady(player1, new ArcboundLancer());
+        lancer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 7);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        gargoyle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyLancer(lancer);
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(9);
+        harness.assertInGraveyard(player1, "Arcbound Lancer");
+    }
+
+    @Test
+    void modularDoesNotRequestATargetWhenNoArtifactCreatureRemains() {
+        Permanent lancer = addCreatureReady(player1, new ArcboundLancer());
+        lancer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
+        harness.addToBattlefield(player1, new DarksteelPendant());
+
+        destroyLancer(lancer);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Arcbound Lancer");
+    }
+
     private void destroyLancer(Permanent lancer) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

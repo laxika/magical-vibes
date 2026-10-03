@@ -57,6 +57,34 @@ class ArchivalWhorlTest extends BaseCardTest {
         assertThat(findPermanent(player2, "Rhystic Study").getCard().isToken()).isFalse();
     }
 
+    @Test
+    @DisplayName("Empty hands and graveyards still draw seven without shuffling the resolving spell")
+    void emptyZonesDoNotShuffleResolvingSpell() {
+        ArchivalWhorl spell = new ArchivalWhorl();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        List<Card> library = new ArrayList<>();
+        List<Card> opponentLibrary = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            library.add(new ArchivalWhorl());
+            opponentLibrary.add(new ArchivalWhorl());
+        }
+        harness.setLibrary(player1, library);
+        harness.setLibrary(player2, opponentLibrary);
+
+        cast(false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrderElementsOf(opponentLibrary);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Rhystic Study");
+    }
+
     private void cast(boolean giftPromised) {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

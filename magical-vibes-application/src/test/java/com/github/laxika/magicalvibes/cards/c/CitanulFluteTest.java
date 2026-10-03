@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CitanulFlute.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class, Plains.class, Swamp.class})
+@CardUsed({CitanulFlute.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class, Ornithopter.class, Plains.class, Swamp.class})
 class CitanulFluteTest extends BaseCardTest {
 
     @Test
@@ -312,9 +313,7 @@ class CitanulFluteTest extends BaseCardTest {
     void onlyNonCreatureCardsInLibrary() {
         addFluteAndActivate(5);
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp()));
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp()));
 
         harness.passBothPriorities();
 
@@ -328,7 +327,7 @@ class CitanulFluteTest extends BaseCardTest {
     void emptyLibrary() {
         addFluteAndActivate(3);
 
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -337,6 +336,30 @@ class CitanulFluteTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
+    @Test
+    @DisplayName("X=0 finds a zero-mana artifact creature only in the controller's library")
+    void xZeroFindsZeroManaCreatureInOwnLibrary() {
+        Ornithopter ownCreature = new Ornithopter();
+        Ornithopter opposingCreature = new Ornithopter();
+        harness.setLibrary(player1, List.of(ownCreature, new LlanowarElves(), new Plains()));
+        harness.setLibrary(player2, List.of(opposingCreature));
+        addFluteAndActivate(0);
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(ownCreature);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(ownCreature).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
+    }
     private void addFluteAndActivate(int xValue) {
         harness.addToBattlefield(player1, new CitanulFlute());
         harness.addMana(player1, ManaColor.GREEN, xValue);
@@ -344,11 +367,9 @@ class CitanulFluteTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
         // LlanowarElves: MV 1 (creature), GrizzlyBears: MV 2 (creature), AirElemental: MV 5 (creature)
         // Plains: MV 0 (basic land), Swamp: MV 0 (basic land)
-        deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains(), new Swamp()));
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains(), new Swamp()));
     }
 }
 

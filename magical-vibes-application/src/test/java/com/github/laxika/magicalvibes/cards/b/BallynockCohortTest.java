@@ -43,6 +43,27 @@ class BallynockCohortTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A multicolored white creature grants the boost")
+    void boostWithMulticoloredWhiteCreature() {
+        Permanent cohort = addCreatureReady(player1, new BallynockCohort());
+        harness.addToBattlefield(player1, new Somnomancer());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple other white creatures grant only one +1/+1 bonus")
+    void boostDoesNotScaleWithWhiteCreatureCount() {
+        Permanent cohort = addCreatureReady(player1, new BallynockCohort());
+        harness.addToBattlefield(player1, new BallynockCohort());
+        harness.addToBattlefield(player1, new Somnomancer());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Self does not count — a lone Cohort is not 'another white creature'")
     void selfDoesNotCount() {
         Permanent cohort = addCreatureReady(player1, new BallynockCohort());

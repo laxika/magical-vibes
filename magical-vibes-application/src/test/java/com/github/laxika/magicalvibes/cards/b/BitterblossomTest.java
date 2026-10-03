@@ -24,13 +24,12 @@ class BitterblossomTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve life loss
-        harness.passBothPriorities(); // resolve token creation
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+        assertThat(findPermanents(player1, "Faerie Rogue").stream()
                 .filter(p -> p.getCard().isToken())
-                .filter(p -> "Faerie Rogue".equals(p.getCard().getName()))
                 .filter(p -> p.getCard().getKeywords().contains(Keyword.FLYING))
                 .count()).isEqualTo(1);
     }
@@ -42,13 +41,11 @@ class BitterblossomTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken())
-                .filter(p -> "Faerie Rogue".equals(p.getCard().getName()))
-                .count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Faerie Rogue")).isEqualTo(1);
     }
 
     @Test
@@ -76,8 +73,8 @@ class BitterblossomTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Bitterblossom());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve life loss
-        harness.passBothPriorities(); // resolve token creation
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         // A token has no oracle text, so without this the flying would render nowhere
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -98,5 +95,39 @@ class BitterblossomTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .anyMatch(p -> p.getCard().isToken())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each Bitterblossom triggers one complete upkeep ability")
+    void multipleCopiesTriggerIndependently() {
+        harness.addToBattlefield(player1, new Bitterblossom());
+        harness.addToBattlefield(player1, new Bitterblossom());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(countPermanents(player1, "Faerie Rogue")).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(countPermanents(player1, "Faerie Rogue")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves after Bitterblossom leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        harness.addToBattlefield(player1, new Bitterblossom());
+        Permanent source = findPermanent(player1, "Bitterblossom");
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(countPermanents(player1, "Faerie Rogue")).isEqualTo(1);
     }
 }

@@ -107,6 +107,43 @@ class CloudOfFaeriesTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("The controller may decline to untap any lands")
+    void mayChooseZeroLands() {
+        List<Permanent> lands = addTappedLands(player1, 2);
+
+        castCloudOfFaeries();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(lands).allMatch(Permanent::isTapped);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and does not trigger the enters ability")
+    void cyclingDiscardsBeforeDrawingAndDoesNotUntapLands() {
+        List<Permanent> lands = addTappedLands(player1, 2);
+        harness.setHand(player1, List.of(new CloudOfFaeries()));
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Cloud of Faeries");
+        harness.assertNotInHand(player1, "Cloud of Faeries");
+        harness.assertNotInHand(player1, "Giant Cockroach");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Giant Cockroach");
+        harness.assertNotOnBattlefield(player1, "Cloud of Faeries");
+        assertThat(lands).allMatch(Permanent::isTapped);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private List<Permanent> addTappedLands(Player player, int count) {
         List<Permanent> lands = new ArrayList<>();
         for (int i = 0; i < count; i++) {

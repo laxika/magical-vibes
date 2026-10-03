@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
@@ -28,11 +30,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Clone.class, AirElemental.class, AngelOfMercy.class, AngelicChorus.class,
-        ChoMannoRevolutionary.class, GrizzlyBears.class, Spellbook.class, Shock.class,
+        ChoMannoRevolutionary.class, GloriousAnthem.class, GrizzlyBears.class, Spellbook.class, Shock.class,
         TreasureHunter.class, Unsummon.class})
 class CloneTest extends BaseCardTest {
-
-    // ===== Copying a creature =====
 
     @Test
     @DisplayName("Clone copies a creature's power and toughness")
@@ -44,12 +44,11 @@ class CloneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
 
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
         // Should be prompted for may ability
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         // Should be prompted to choose a creature
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
@@ -57,13 +56,9 @@ class CloneTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         // Clone should now be on the battlefield with Grizzly Bears' stats
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        Permanent clonePerm = bf.stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears")
-                        && p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
-
+        Permanent clonePerm = findPermanent(player1, "Grizzly Bears");
         assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getOriginalCard().getName()).isEqualTo("Clone");
         assertThat(clonePerm.getCard().getPower()).isEqualTo(2);
         assertThat(clonePerm.getCard().getToughness()).isEqualTo(2);
     }
@@ -73,20 +68,17 @@ class CloneTest extends BaseCardTest {
     void copiesKeywords() {
         harness.addToBattlefield(player2, new AirElemental());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         UUID targetId = harness.getPermanentId(player2, "Air Elemental");
         harness.handlePermanentChosen(player1, targetId);
 
-        GameData gd = harness.getGameData();
-        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
+        Permanent clonePerm = findPermanent(player1, "Air Elemental");
 
         assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getOriginalCard().getName()).isEqualTo("Clone");
         assertThat(clonePerm.getCard().getName()).isEqualTo("Air Elemental");
         assertThat(clonePerm.getCard().getKeywords()).contains(Keyword.FLYING);
     }
@@ -96,20 +88,17 @@ class CloneTest extends BaseCardTest {
     void copiesSubtypes() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
-        GameData gd = harness.getGameData();
-        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
+        Permanent clonePerm = findPermanent(player1, "Grizzly Bears");
 
         assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getOriginalCard().getName()).isEqualTo("Clone");
         assertThat(clonePerm.getCard().getSubtypes()).containsExactly(CardSubtype.BEAR);
     }
 
@@ -127,39 +116,32 @@ class CloneTest extends BaseCardTest {
         UUID tokenId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, tokenId);
 
-        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
+        Permanent clonePerm = findPermanent(player1, "Grizzly Bears");
 
         assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getOriginalCard().getName()).isEqualTo("Clone");
         assertThat(clonePerm.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(clonePerm.getCard().getPower()).isEqualTo(2);
         assertThat(clonePerm.getCard().getToughness()).isEqualTo(2);
         assertThat(clonePerm.getCard().isToken()).isFalse();
     }
 
-    // ===== Leaving the battlefield =====
-
     @Test
     @DisplayName("Clone goes to graveyard as Clone (not the copied name) when destroyed")
     void goesToGraveyardAsClone() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
-        GameData gd = harness.getGameData();
-
         // Now destroy the Clone (which looks like Grizzly Bears on the battlefield)
-        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
+        Permanent clonePerm = findPermanent(player1, "Grizzly Bears");
         assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getOriginalCard().getName()).isEqualTo("Clone");
 
         // Destroy it through the engine with Shock.
         harness.setHand(player1, List.of(new Shock()));
@@ -176,20 +158,16 @@ class CloneTest extends BaseCardTest {
     void returnsToHandAsClone() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
-        GameData gd = harness.getGameData();
-
-        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
+        Permanent clonePerm = findPermanent(player1, "Grizzly Bears");
         assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getOriginalCard().getName()).isEqualTo("Clone");
 
         // Bounce it through the engine.
         harness.setHand(player1, List.of(new Unsummon()));
@@ -201,16 +179,13 @@ class CloneTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
-    // ===== Legend rule =====
-
     @Test
     @DisplayName("Clone triggers legend rule when copying a legendary creature")
     void triggersLegendRule() {
         ChoMannoRevolutionary choManno = new ChoMannoRevolutionary();
         harness.addToBattlefield(player1, choManno);
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
         // Accept to copy — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
@@ -227,15 +202,12 @@ class CloneTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
-    // ===== Declining / no creatures =====
-
     @Test
     @DisplayName("Clone enters as 0/0 and dies when player declines to copy")
     void diesWhenPlayerDeclines() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
         // Decline to copy
         harness.handleMayAbilityChosen(player1, false);
@@ -280,18 +252,15 @@ class CloneTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Clone");
     }
 
-    // ===== Copied creature's ETB effects =====
-
     @Test
     @DisplayName("Clone copying a creature with mandatory ETB triggers that effect")
     void copiedCreatureMandatoryETBFires() {
         // Angel of Mercy has ETB: gain 3 life
         harness.addToBattlefield(player2, new AngelOfMercy());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         UUID angelId = harness.getPermanentId(player2, "Angel of Mercy");
         harness.handlePermanentChosen(player1, angelId);
@@ -299,10 +268,9 @@ class CloneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Clone should be on the battlefield as Angel of Mercy
-        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
+        Permanent clonePerm = findPermanent(player1, "Angel of Mercy");
         assertThat(clonePerm).isNotNull();
+        assertThat(clonePerm.getOriginalCard().getName()).isEqualTo("Clone");
         assertThat(clonePerm.getCard().getName()).isEqualTo("Angel of Mercy");
 
         // The copied Angel of Mercy's ETB "gain 3 life" should be on the stack
@@ -325,10 +293,9 @@ class CloneTest extends BaseCardTest {
         // Grizzly Bears is a 2/2
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
@@ -353,13 +320,12 @@ class CloneTest extends BaseCardTest {
         // Treasure Hunter's ETB targets an artifact card in its controller's graveyard.
         harness.addToBattlefield(player2, new TreasureHunter());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
         // First may prompt: Clone's own "you may copy" prompt
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         // Choose to copy Treasure Hunter
         UUID hunterId = harness.getPermanentId(player2, "Treasure Hunter");
@@ -380,8 +346,7 @@ class CloneTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spellbook));
         harness.addToBattlefield(player2, new TreasureHunter());
         harness.castFromHand(player1, new Clone(), "{3}{U}");
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities(); // Resolve the spell up to its entry choice.
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -402,5 +367,77 @@ class CloneTest extends BaseCardTest {
         harness.assertInHand(player1, "Spellbook");
         harness.assertNotInGraveyard(player1, "Spellbook");
     }
-}
 
+    @Test
+    @DisplayName("Clone does not copy counters or tapped status")
+    void doesNotCopyCountersOrTappedStatus() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        bears.tap();
+
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        Permanent copy = findPermanent(player1, "Grizzly Bears");
+        assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Clone copies the characteristics already copied by another Clone")
+    void copiesAnotherClonesCopiedCharacteristics() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        Permanent firstCopy = findPermanent(player1, "Grizzly Bears");
+
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, firstCopy.getId());
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2)
+                .allSatisfy(copy -> {
+                    assertThat(copy.getOriginalCard().getName()).isEqualTo("Clone");
+                    assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
+                });
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Copying an unmodified Clone offers its newly gained entry replacement")
+    void copyingUnmodifiedCloneOffersAnotherCopyChoice() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        Permanent originalClone = findPermanent(player1, "Clone");
+
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, originalClone.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(countPermanents(player1, "Clone")).isEqualTo(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        assertThat(countPermanents(player1, "Clone")).isEqualTo(1);
+        Permanent copy = findPermanent(player1, "Grizzly Bears");
+        assertThat(copy.getOriginalCard().getName()).isEqualTo("Clone");
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(3);
+    }
+}

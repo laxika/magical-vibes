@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BojukaBrigand.class, GrizzlyBears.class})
 class BojukaBrigandTest extends BaseCardTest {
 
     @Test
@@ -90,22 +91,57 @@ class BojukaBrigandTest extends BaseCardTest {
     @Test
     @DisplayName("Bojuka Brigand cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent brigand = new Permanent(new BojukaBrigand());
-        brigand.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(brigand);
+        addCreatureReady(player2, new BojukaBrigand());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("An opponent's Ally entry does not trigger your Brigand")
+    void opponentAllyDoesNotTrigger() {
+        Permanent ownBrigand = harness.addToBattlefieldAndReturn(player1, new BojukaBrigand());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new BojukaBrigand()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(ownBrigand.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player2, "Bojuka Brigand")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Successive Ally entries each add a counter to the existing Brigand")
+    void successiveAllyEntriesAccumulateCounters() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new BojukaBrigand());
+        harness.setHand(player1, List.of(new BojukaBrigand(), new BojukaBrigand()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        for (int entry = 0; entry < 2; entry++) {
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+            for (int trigger = 0; trigger < entry + 2; trigger++) {
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+                harness.handleMayAbilityChosen(player1, true);
+                resolveAllTriggers();
+            }
+            assertThat(existing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(entry + 1);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
     }
 }

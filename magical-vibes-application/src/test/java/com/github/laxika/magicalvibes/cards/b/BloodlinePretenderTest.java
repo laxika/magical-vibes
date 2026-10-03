@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,8 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,10 +20,7 @@ class BloodlinePretenderTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a creature type as it enters sets chosenSubtype on the permanent")
     void choosingSubtypeSetsOnPermanent() {
-        harness.setHand(player1, List.of(new BloodlinePretender()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BloodlinePretender(), "{3}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "WIZARD");
 
@@ -39,10 +33,7 @@ class BloodlinePretenderTest extends BaseCardTest {
     void chosenTypeCreaturePutsCounterOnPretender() {
         Permanent pretender = addPretender(player1, CardSubtype.WIZARD);
 
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
         resolveAllTriggers();
 
         assertThat(pretender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -55,10 +46,7 @@ class BloodlinePretenderTest extends BaseCardTest {
     void otherTypeDoesNotTrigger() {
         Permanent pretender = addPretender(player1, CardSubtype.WIZARD);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(pretender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -72,10 +60,7 @@ class BloodlinePretenderTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new FugitiveWizard()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new FugitiveWizard(), "{U}");
         harness.passBothPriorities();
 
         assertThat(pretender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -84,22 +69,57 @@ class BloodlinePretenderTest extends BaseCardTest {
     @Test
     @DisplayName("No creature type choice means no creature-enter trigger")
     void noCounterWithoutChoice() {
-        Permanent pretender = new Permanent(new BloodlinePretender());
-        gd.playerBattlefields.get(player1.getId()).add(pretender);
+        Permanent pretender = harness.addToBattlefieldAndReturn(player1, new BloodlinePretender());
 
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
         harness.passBothPriorities();
 
         assertThat(pretender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Bloodline Pretender does not trigger for its own entry")
+    void ownEntryDoesNotPutCounterOnPretender() {
+        harness.castFromHand(player1, new BloodlinePretender(), "{3}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WIZARD");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Bloodline Pretender")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Another changeling matches the chosen type regardless of its own choice")
+    void anotherChangelingTriggersExistingPretender() {
+        Permanent first = addPretender(player1, CardSubtype.WIZARD);
+
+        harness.castFromHand(player1, new BloodlinePretender(), "{3}");
+        harness.passBothPriorities();
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.handleListChoice(player1, "BEAR");
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each matching creature entry adds another counter")
+    void matchingEntriesAccumulateCounters() {
+        Permanent pretender = addPretender(player1, CardSubtype.WIZARD);
+
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        resolveAllTriggers();
+
+        assertThat(pretender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private Permanent addPretender(Player player, CardSubtype chosen) {
-        Permanent permanent = new Permanent(new BloodlinePretender());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new BloodlinePretender());
         permanent.setChosenSubtype(chosen);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

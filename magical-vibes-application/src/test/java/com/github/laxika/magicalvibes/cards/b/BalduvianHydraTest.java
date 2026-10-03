@@ -115,9 +115,7 @@ class BalduvianHydraTest extends BaseCardTest {
         Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -147,9 +145,7 @@ class BalduvianHydraTest extends BaseCardTest {
     void upkeepAbilityCannotBeActivatedDuringOpponentsUpkeep() {
         addCreatureReady(player1, new BalduvianHydra());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player2);
         harness.addMana(player1, ManaColor.RED, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
@@ -190,5 +186,59 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hydra.getDamagePreventionShield()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The counter is paid immediately, before the prevention ability resolves")
+    void counterPaidBeforeShieldResolves() {
+        Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
+        assertThat(hydra.getDamagePreventionShield()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(hydra.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A +1/+1 counter cannot pay the +1/+0 counter removal cost")
+    void cannotPayWithDifferentCounterType() {
+        Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hydra.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two counter removals prevent both damage from a 2/2 attacker")
+    void multipleShieldsPreventLethalCombatDamage() {
+        Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+        Permanent attacker = addCreatureReady(player2, new BalduvianBears());
+        attacker.setAttacking(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Balduvian Hydra");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
+        assertThat(hydra.getMarkedDamage()).isZero();
+        assertThat(hydra.getDamagePreventionShield()).isZero();
     }
 }

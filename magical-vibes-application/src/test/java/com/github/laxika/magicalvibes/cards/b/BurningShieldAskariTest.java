@@ -155,4 +155,58 @@ class BurningShieldAskariTest extends BaseCardTest {
         assertThat(secondBlocker.getEffectivePower()).isZero();
         assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("First strike is granted only to the Askari whose ability was activated")
+    void firstStrikeOnlyAppliesToSource() {
+        Permanent source = addCreatureReady(player1, new BurningShieldAskari());
+        Permanent other = addCreatureReady(player1, new BurningShieldAskari());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted first strike kills a flanking blocker before it deals combat damage")
+    void firstStrikeWinsCombatAgainstFlankingBlocker() {
+        Permanent askari = addCreatureReady(player1, new BurningShieldAskari());
+        Permanent blocker = addCreatureReady(player2, new ZhalfirinKnight());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(askari);
+        assertThat(askari.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+    }
+
+    @Test
+    @DisplayName("Mixed blockers receive flanking penalties only if they lack flanking")
+    void mixedBlockersOnlyShrinkNonFlankingCreature() {
+        Permanent askari = addCreatureReady(player1, new BurningShieldAskari());
+        askari.setAttacking(true);
+        Permanent scouts = addCreatureReady(player2, new FemerefScouts());
+        Permanent knight = addCreatureReady(player2, new ZhalfirinKnight());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(scouts.getEffectivePower()).isZero();
+        assertThat(scouts.getEffectiveToughness()).isEqualTo(3);
+        assertThat(knight.getEffectivePower()).isEqualTo(2);
+        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+    }
 }

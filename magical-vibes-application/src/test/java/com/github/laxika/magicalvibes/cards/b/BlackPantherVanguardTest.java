@@ -68,6 +68,62 @@ class BlackPantherVanguardTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Black Panther does not trigger for its own entry")
+    void ignoresItsOwnEntry() {
+        harness.enterBattlefieldAndReturn(player1, new BlackPantherVanguard());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An opposing Hero does not trigger Black Panther")
+    void ignoresOpposingHeroEntry() {
+        addPanther();
+        harness.enterBattlefieldAndReturn(player2, new CaptainAmericaWingsOfFreedom());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The mode must be chosen before opponents can respond to the trigger")
+    void choosesModeWhenTriggerGoesOnStack() {
+        addPanther();
+        castCaptainAmerica();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, SOLDIER);
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The boost includes non-Hero allies but excludes opponents and later creatures")
+    void boostsOnlyCreaturesControlledAtResolution() {
+        addPanther();
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new DragoonsWyvern());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DragoonsWyvern());
+        castCaptainAmerica();
+        chooseMode(BOOST);
+
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(2);
+        Permanent captain = findPermanent(player1, "Captain America, Wings of Freedom");
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
+
+        Permanent later = harness.enterBattlefieldAndReturn(player1, new DragoonsWyvern());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(1);
+    }
+
     private Permanent addPanther() {
         return harness.addToBattlefieldAndReturn(player1, new BlackPantherVanguard());
     }
@@ -80,7 +136,6 @@ class BlackPantherVanguardTest extends BaseCardTest {
     }
 
     private void chooseMode(String mode) {
-        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, mode);
         harness.passBothPriorities();

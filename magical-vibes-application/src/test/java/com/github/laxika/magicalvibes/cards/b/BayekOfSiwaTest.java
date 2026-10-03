@@ -61,8 +61,7 @@ class BayekOfSiwaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, bayek.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bayek.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Bayek of Siwa").isFaceDown()).isTrue();
@@ -87,5 +86,50 @@ class BayekOfSiwaTest extends BaseCardTest {
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bayek));
 
         assertThat(bayek.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Face-down Bayek does not grant double strike until it turns face up")
+    void historicGrantStartsWhenTurnedFaceUp() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        Permanent historic = addCreatureReady(player1, new ArnoDorian());
+        harness.setHand(player1, List.of(new BayekOfSiwa()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent bayek = findPermanent(player1, "Bayek of Siwa");
+        assertThat(gqs.hasKeyword(gd, bayek, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, historic, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bayek));
+
+        assertThat(gqs.hasKeyword(gd, bayek, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, historic, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Disguise ward does not counter a spell controlled by Bayek's controller")
+    void ownSpellCanDestroyFaceDownBayekWithoutWardPayment() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BayekOfSiwa()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent bayek = findPermanent(player1, "Bayek of Siwa");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bayek.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bayek);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof BayekOfSiwa);
     }
 }

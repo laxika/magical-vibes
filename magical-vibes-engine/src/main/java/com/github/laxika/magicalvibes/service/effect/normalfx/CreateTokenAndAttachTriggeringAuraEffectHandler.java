@@ -46,7 +46,7 @@ public class CreateTokenAndAttachTriggeringAuraEffectHandler implements NormalEf
         }
 
         Permanent token = gameQueryService.findPermanentById(gameData, created.getFirst());
-        Permanent aura = findAuraByCardId(gameData, entry.getTriggeringCardId());
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (token == null || aura == null || !aura.getCard().isAura()) {
             return;
         }

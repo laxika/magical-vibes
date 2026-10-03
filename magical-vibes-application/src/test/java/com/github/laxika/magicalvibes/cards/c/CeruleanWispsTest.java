@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BlightSickle;
 import com.github.laxika.magicalvibes.cards.i.InescapableBrute;
+import com.github.laxika.magicalvibes.cards.t.TurnToMist;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CeruleanWisps.class, InescapableBrute.class, BlightSickle.class})
+@CardUsed({CeruleanWisps.class, InescapableBrute.class, BlightSickle.class, TurnToMist.class})
 class CeruleanWispsTest extends BaseCardTest {
 
     @Test
@@ -56,9 +57,7 @@ class CeruleanWispsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
     }
@@ -87,5 +86,41 @@ class CeruleanWispsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("An already untapped creature is legal and the caster still draws")
+    void resolvesOnUntappedOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new InescapableBrute());
+        BlightSickle drawnCard = new BlightSickle();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new CeruleanWisps()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("No card is drawn when the only target leaves before resolution")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InescapableBrute());
+        BlightSickle undrawnCard = new BlightSickle();
+        harness.setLibrary(player1, List.of(undrawnCard));
+        harness.setHand(player1, List.of(new CeruleanWisps()));
+        harness.setHand(player2, List.of(new TurnToMist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawnCard);
+        harness.assertInGraveyard(player1, "Cerulean Wisps");
     }
 }

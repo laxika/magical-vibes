@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -40,10 +42,11 @@ class AngelsGraceTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
-    @Test
-    @DisplayName("Damage floor still applies after life loss leaves the controller below 0")
-    void damageFloorAppliesAfterLifeLoss() {
-        harness.setLife(player1, 1);
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("Damage still lowers life after life loss leaves the controller at 0 or less")
+    void damageStillLowersLifeAfterLifeLoss(int startingLife) {
+        harness.setLife(player1, startingLife);
         castAngelsGrace();
 
         addCreatureReady(player2, new UrborgSyphonMage());
@@ -57,7 +60,7 @@ class AngelsGraceTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(-1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife - 2);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
         harness.setHand(player2, List.of(new SuddenShock()));
@@ -65,7 +68,7 @@ class AngelsGraceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife - 4);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
@@ -126,10 +129,71 @@ class AngelsGraceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.DRAW);
 
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
         assertThat(gameLogContains("can't lose the game")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Split second still allows mana abilities")
+    void splitSecondAllowsManaAbilities() {
+        harness.addToBattlefield(player2, new KherKeep());
+        harness.setHand(player1, List.of(new AngelsGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Combat damage cannot lower the controller below 1 life")
+    void combatDamageReducesLifeToOne() {
+        harness.setLife(player1, 1);
+        castAngelsGrace();
+        addCreatureReady(player2, new UrborgSyphonMage());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The opponent can still lose to lethal damage")
+    void opponentCanStillLose() {
+        harness.setLife(player2, 1);
+        castAngelsGrace();
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(-1);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The controller cannot lose from drawing from an empty library")
+    void emptyLibraryDoesNotCauseLoss() {
+        gd.turnNumber = 2;
+        harness.setLibrary(player1, List.of());
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new AngelsGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.passUntil(player1, TurnStep.DRAW);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     private void castAngelsGrace() {

@@ -75,4 +75,101 @@ class ArenaTest extends BaseCardTest {
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Already tapped creatures can be chosen and still fight")
+    void alreadyTappedCreaturesStillFight() {
+        harness.addToBattlefield(player1, new Arena());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        bears.tap();
+        elves.tap();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.handlePermanentChosen(player2, elves.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The opponent chooses among their creatures, leaving unchosen creatures untouched")
+    void opponentCanChooseAmongTheirCreatures() {
+        Permanent arena = harness.addToBattlefieldAndReturn(player1, new Arena());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(otherBears.getId(), elves.getId());
+        harness.handlePermanentChosen(player2, elves.getId());
+        harness.passBothPriorities();
+
+        assertThat(arena.isTapped()).isTrue();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(otherBears.isTapped()).isFalse();
+        assertThat(otherBears.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Taps the opponent's creature without fighting when the first target is gone")
+    void tapsRemainingTargetWhenFirstTargetIsGone() {
+        harness.addToBattlefield(player1, new Arena());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.handlePermanentChosen(player2, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(elves);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Arena leaves the battlefield")
+    void abilityResolvesAfterArenaLeaves() {
+        Permanent arena = harness.addToBattlefieldAndReturn(player1, new Arena());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.handlePermanentChosen(player2, elves.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(arena);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Both creatures deal lethal fight damage to each other")
+    void bothCreaturesDealLethalDamage() {
+        harness.addToBattlefield(player1, new Arena());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.handlePermanentChosen(player2, second.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
 }

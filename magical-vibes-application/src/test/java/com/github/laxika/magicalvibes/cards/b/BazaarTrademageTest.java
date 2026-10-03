@@ -50,4 +50,56 @@ class BazaarTrademageTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertOnBattlefield(player1, "Bazaar Trademage");
     }
+
+    @Test
+    @DisplayName("With fewer than three cards after drawing, discard the entire hand")
+    void discardsEntireHandWhenOnlyTwoCardsAreAvailable() {
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new Forest()));
+        harness.castFromHand(player1, new BazaarTrademage(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Plains", "Swamp");
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Plains", "Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+        harness.assertOnBattlefield(player1, "Bazaar Trademage");
+    }
+
+    @Test
+    @DisplayName("The second player's trigger draws and discards only for its controller")
+    void secondPlayerDrawsAndDiscardsWithoutAffectingOpponent() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Plains(), new Swamp(), new Forest()));
+        harness.castFromHand(player2, new BazaarTrademage(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Plains", "Swamp");
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Plains", "Swamp");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Mountain");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Island");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Bazaar Trademage");
+    }
 }

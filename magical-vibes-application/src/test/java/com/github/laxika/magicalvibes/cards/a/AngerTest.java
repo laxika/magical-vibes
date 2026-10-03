@@ -80,4 +80,44 @@ class AngerTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Haste is lost when Anger leaves the graveyard even if its owner still controls a Mountain")
+    void losesHasteWhenAngerLeavesGraveyardWithMountainRemaining() {
+        harness.setGraveyard(player1, List.of(new Anger()));
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Anger in hand or exile does not grant haste")
+    void handAndExileAngersDoNotGrantHaste() {
+        harness.setHand(player1, List.of(new Anger()));
+        harness.setExile(player1, List.of(new Anger()));
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Anger in the graveyard keeps granting haste when one leaves")
+    void remainingAngerContinuesGrantingHaste() {
+        Anger remainingAnger = new Anger();
+        harness.setGraveyard(player1, List.of(new Anger(), remainingAnger));
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+
+        harness.setGraveyard(player1, List.of(remainingAnger));
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+    }
 }

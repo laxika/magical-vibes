@@ -30,7 +30,7 @@ class ArcumsWeathervaneTest extends BaseCardTest {
 
     @BeforeEach
     void setUpBoard() {
-        weathervane = addReady(player1, new ArcumsWeathervane());
+        weathervane = addCreatureReady(player1, new ArcumsWeathervane());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -128,7 +128,7 @@ class ArcumsWeathervaneTest extends BaseCardTest {
     @Test
     @DisplayName("First ability cannot target a snow creature")
     void firstAbilityRejectsSnowCreature() {
-        Permanent bears = addReady(player1, new BalduvianBears());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
         TestCards.mutableCard(bears).setSupertypes(EnumSet.of(CardSupertype.SNOW));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -140,7 +140,7 @@ class ArcumsWeathervaneTest extends BaseCardTest {
     @Test
     @DisplayName("Second ability cannot target a creature")
     void secondAbilityRejectsCreature() {
-        Permanent bears = addReady(player1, new BalduvianBears());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -212,16 +212,51 @@ class ArcumsWeathervaneTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSupertype(gd, island, CardSupertype.SNOW)).isTrue();
     }
 
+    @Test
+    @DisplayName("Snow removal survives its source leaving before resolution")
+    void removalResolvesWithoutSource() {
+        Permanent snowLand = addSnowLand(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, weathervane), 0, null, snowLand.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(weathervane);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSupertype(gd, snowLand, CardSupertype.SNOW)).isFalse();
+    }
+
+    @Test
+    @DisplayName("First ability fizzles when Melting removes snow before resolution")
+    void firstAbilityFizzlesIfTargetLosesSnow() {
+        Permanent snowLand = addSnowLand(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, weathervane), 0, null, snowLand.getId());
+        Permanent melting = harness.addToBattlefieldAndReturn(player1, new Melting());
+
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(melting);
+
+        assertThat(gqs.hasEffectiveSupertype(gd, snowLand, CardSupertype.SNOW)).isTrue();
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A snow grant can be undone by the first ability")
+    void grantedSnowCanBeRemoved() {
+        Permanent island = addLand(player1);
+        activate(1, island);
+        assertThat(gqs.hasEffectiveSupertype(gd, island, CardSupertype.SNOW)).isTrue();
+
+        weathervane.untap();
+        activate(0, island);
+
+        assertThat(gqs.hasEffectiveSupertype(gd, island, CardSupertype.SNOW)).isFalse();
+    }
+
     private void activate(int abilityIndex, Permanent target) {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, indexOf(player1, weathervane), abilityIndex, null, target.getId());
         harness.passBothPriorities();
-    }
-
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
     }
 
     private Permanent addLand(Player player) {

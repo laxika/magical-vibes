@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({BindingGrasp.class, GrizzlyBears.class, FountainOfYouth.class})
 class BindingGraspTest extends BaseCardTest {
 
-    // ===== Control =====
-
     @Test
     @DisplayName("Resolving Binding Grasp steals the enchanted creature")
     void resolvingStealsCreature() {
@@ -42,8 +40,6 @@ class BindingGraspTest extends BaseCardTest {
                         && p.getAttachedTo().equals(creature.getId()));
     }
 
-    // ===== +0/+1 boost =====
-
     @Test
     @DisplayName("Enchanted creature gets +0/+1")
     void enchantedCreatureGetsPlusZeroPlusOne() {
@@ -56,8 +52,6 @@ class BindingGraspTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness + 1);
     }
-
-    // ===== Upkeep sacrifice-unless-pay =====
 
     @Test
     @DisplayName("Declining to pay {1}{U} sacrifices Binding Grasp")
@@ -138,8 +132,6 @@ class BindingGraspTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a noncreature permanent with Binding Grasp")
     void cannotTargetNonCreature() {
@@ -152,11 +144,61 @@ class BindingGraspTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Upkeep payment accepts one blue mana and one mana of another color")
+    void upkeepPaymentAcceptsMixedColors() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attach(player1, creature);
 
-    private Permanent attach(Player controller, Permanent enchanted) {
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Binding Grasp");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two mana without blue cannot pay Binding Grasp's upkeep")
+    void upkeepPaymentRequiresBlueMana() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attach(player1, creature);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Binding Grasp");
+        harness.assertInGraveyard(player1, "Binding Grasp");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Binding Grasp removes only its enchanted creature's toughness bonus")
+    void sacrificingAuraEndsToughnessBonus() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        int baseToughness = gqs.getEffectiveToughness(gd, creature);
+        int otherToughness = gqs.getEffectiveToughness(gd, otherCreature);
+        attach(player1, creature);
+
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness + 1);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(otherToughness);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Binding Grasp");
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(otherToughness);
+    }
+
+    private void attach(Player controller, Permanent enchanted) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new BindingGrasp());
         aura.setAttachedTo(enchanted.getId());
-        return aura;
     }
 }

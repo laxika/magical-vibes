@@ -93,7 +93,10 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
 
-        if (e.mayChooseNewTargets() && copyEntry.getTargetId() != null) {
+        if (e.mayChooseNewTargets() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
+            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), castingPlayerId,
+                    copyEntry.getTargetableId(), 0);
+        } else if (e.mayChooseNewTargets() && copyEntry.getTargetId() != null) {
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     castingPlayerId,

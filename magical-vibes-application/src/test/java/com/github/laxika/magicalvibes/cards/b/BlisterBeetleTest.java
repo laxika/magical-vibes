@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlisterBeetle.class, GrizzlyBears.class, FugitiveWizard.class})
 class BlisterBeetleTest extends BaseCardTest {
 
     @Test
@@ -31,9 +33,7 @@ class BlisterBeetleTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(-1);
         assertThat(bears.getToughnessModifier()).isEqualTo(-1);
     }
@@ -74,10 +74,40 @@ class BlisterBeetleTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Must target itself when it is the only creature")
+    void mustTargetItselfOnEmptyBattlefield() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new BlisterBeetle(), "{1}{B}");
+        harness.passBothPriorities();
+
+        Permanent beetle = findPermanent(player1, "Blister Beetle");
+        harness.handlePermanentChosen(player1, beetle.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blister Beetle");
+        harness.assertInGraveyard(player1, "Blister Beetle");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast can shrink its controller's creature")
+    void enteringWithoutCastingCanTargetOwnCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new BlisterBeetle());
+
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getPowerModifier()).isEqualTo(-1);
+        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
+        harness.assertOnBattlefield(player1, "Blister Beetle");
+        assertThat(gd.stack).isEmpty();
     }
 }

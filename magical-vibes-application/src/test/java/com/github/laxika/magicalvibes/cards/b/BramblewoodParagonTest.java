@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.cards.m.MassPolymorph;
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BramblewoodParagon.class, ElvishWarrior.class, MassPolymorph.class, PricklyBoggart.class})
+@CardUsed({BramblewoodParagon.class, ElvishWarrior.class, Lignify.class, MassPolymorph.class, PricklyBoggart.class})
 class BramblewoodParagonTest extends BaseCardTest {
 
     // ===== Static: other Warriors you control enter with an additional +1/+1 counter =====
@@ -133,4 +135,70 @@ class BramblewoodParagonTest extends BaseCardTest {
                 assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
     }
 
+
+    @Test
+    @DisplayName("Multiple Paragons each add a counter to an entering Warrior")
+    void multipleParagonsAddCounters() {
+        harness.addToBattlefield(player1, new BramblewoodParagon());
+        harness.addToBattlefield(player1, new BramblewoodParagon());
+
+        harness.castFromHand(player1, new ElvishWarrior(), "{G}{G}");
+        harness.passBothPriorities();
+
+        Permanent warrior = findPermanent(player1, "Elvish Warrior");
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A non-Warrior with a +1/+1 counter also has trample")
+    void counteredNonWarriorGainsTrample() {
+        harness.addToBattlefield(player1, new BramblewoodParagon());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player1, new PricklyBoggart());
+        boggart.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.hasKeyword(gd, boggart, Keyword.TRAMPLE)).isTrue();
+
+        boggart.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        assertThat(gqs.hasKeyword(gd, boggart, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing Paragon removes granted trample but leaves entry counters")
+    void removingParagonLeavesCountersButRemovesTrample() {
+        Permanent paragon = harness.addToBattlefieldAndReturn(player1, new BramblewoodParagon());
+        Permanent warrior = harness.enterBattlefieldAndReturn(player1, new ElvishWarrior());
+
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(paragon);
+
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lignified Paragon cannot add entry counters or grant trample")
+    void lignifiedParagonDoesNotApplyItsAbilities() {
+        Permanent paragon = harness.addToBattlefieldAndReturn(player1, new BramblewoodParagon());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player1, new PricklyBoggart());
+        boggart.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.hasKeyword(gd, boggart, Keyword.TRAMPLE)).isTrue();
+
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, paragon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, boggart, Keyword.TRAMPLE)).isFalse();
+
+        harness.castFromHand(player1, new ElvishWarrior(), "{G}{G}");
+        harness.passBothPriorities();
+
+        Permanent warrior = findPermanent(player1, "Elvish Warrior");
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.TRAMPLE)).isFalse();
+    }
 }

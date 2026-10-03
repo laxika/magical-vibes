@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,10 +22,8 @@ class ChatterOfTheSquirrelTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Chatter of the Squirrel creates a 1/1 green Squirrel token")
     void createsSquirrelToken() {
-        harness.setHand(player1, List.of(new ChatterOfTheSquirrel()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ChatterOfTheSquirrel(), "{G}");
+        harness.passBothPriorities();
 
         List<Permanent> squirrels = squirrelTokens();
         assertThat(squirrels).hasSize(1);
@@ -69,6 +68,40 @@ class ChatterOfTheSquirrelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same card creates two Squirrels when cast from hand and then with flashback")
+    void castingThenFlashbackCreatesTwoTokens() {
+        ChatterOfTheSquirrel card = new ChatterOfTheSquirrel();
+        harness.castFromHand(player1, card, "{G}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Chatter of the Squirrel");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(squirrelTokens()).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Chatter of the Squirrel");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    @DisplayName("Flashback does not allow casting the sorcery during upkeep")
+    void flashbackRequiresMainPhase() {
+        harness.setGraveyard(player1, List.of(new ChatterOfTheSquirrel()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Chatter of the Squirrel");
+        assertThat(gd.stack).isEmpty();
+        assertThat(squirrelTokens()).isEmpty();
     }
 
     private List<Permanent> squirrelTokens() {

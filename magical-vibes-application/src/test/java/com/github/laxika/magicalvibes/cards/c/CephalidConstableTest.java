@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BrigidClachansHeart;
 import com.github.laxika.magicalvibes.cards.e.EpicStruggle;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -22,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BorderPatrol.class, CephalidConstable.class, EpicStruggle.class, KrosanVerge.class, SuntailHawk.class})
+@CardUsed({BorderPatrol.class, BrigidClachansHeart.class, CephalidConstable.class, EpicStruggle.class, KrosanVerge.class, SuntailHawk.class, TrollAscetic.class})
 class CephalidConstableTest extends BaseCardTest {
 
     @Test
@@ -83,7 +84,6 @@ class CephalidConstableTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(BrigidClachansHeart.class)
     @DisplayName("Bouncing a transformed permanent returns its physical front-face card")
     void bounceTransformedPermanent() {
         Permanent constable = addCreatureReady(player1, new CephalidConstable());
@@ -243,8 +243,7 @@ class CephalidConstableTest extends BaseCardTest {
     void canBounceNoncreaturePermanent() {
         Permanent constable = addCreatureReady(player1, new CephalidConstable());
         constable.setAttacking(true);
-        harness.addToBattlefield(player2, new EpicStruggle());
-        Permanent noncreature = findPermanent(player2, "Epic Struggle");
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new EpicStruggle());
 
         resolveCombat();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
@@ -253,5 +252,63 @@ class CephalidConstableTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()).stream().map(Permanent::getId).toList())
                 .doesNotContain(noncreature.getId());
         assertThat(gd.playerHands.get(player2.getId())).contains(noncreature.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's hexproof permanent cannot be selected for the return ability")
+    void cannotBounceOpponentsHexproofPermanent() {
+        Permanent constable = addCreatureReady(player1, new CephalidConstable());
+        constable.setAttacking(true);
+        Permanent troll = addCreatureReady(player2, new TrollAscetic());
+        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .contains(hawk.getId())
+                .doesNotContain(troll.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(troll.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId()));
+
+        harness.assertOnBattlefield(player2, "Troll Ascetic");
+        harness.assertInHand(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("A permanent controlled by the damaged player returns to its different owner's hand")
+    void returnsStolenPermanentToOwnersHand() {
+        Permanent constable = addCreatureReady(player1, new CephalidConstable());
+        constable.setAttacking(true);
+        SuntailHawk hawkCard = new SuntailHawk();
+        hawkCard.setOwnerId(player1.getId());
+        Permanent hawk = addCreatureReady(player2, hawkCard);
+
+        resolveCombat();
+        harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(hawk);
+        assertThat(gd.playerHands.get(player1.getId())).contains(hawkCard);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(hawkCard);
+    }
+
+    @Test
+    @DisplayName("The combat damage trigger still returns a permanent after Constable leaves")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent constable = addCreatureReady(player1, new CephalidConstable());
+        constable.setAttacking(true);
+        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, constable));
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(hawk.getId()));
+
+        harness.assertInHand(player1, "Cephalid Constable");
+        harness.assertInHand(player2, "Suntail Hawk");
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
     }
 }

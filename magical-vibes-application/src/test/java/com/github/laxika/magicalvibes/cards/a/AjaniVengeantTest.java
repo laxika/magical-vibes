@@ -9,21 +9,21 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AjaniVengeant.class, GrizzlyBears.class, Mountain.class, Forest.class})
 class AjaniVengeantTest extends BaseCardTest {
 
-    // ===== +1: target permanent doesn't untap during its controller's next untap step =====
 
     @Test
     @DisplayName("+1 sets skipUntapCount on target permanent and adds loyalty")
     void plusOneSkipsUntapOfTarget() {
         Permanent ajani = addReadyAjani(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
@@ -32,7 +32,6 @@ class AjaniVengeantTest extends BaseCardTest {
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
     }
 
-    // ===== -2: 3 damage to any target and gain 3 life =====
 
     @Test
     @DisplayName("-2 deals 3 damage to target player, controller gains 3 life, loses 2 loyalty")
@@ -55,8 +54,7 @@ class AjaniVengeantTest extends BaseCardTest {
     void minusTwoKillsCreatureAndGainsLife() {
         addReadyAjani(player1);
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, bears.getId());
         harness.passBothPriorities();
@@ -67,7 +65,6 @@ class AjaniVengeantTest extends BaseCardTest {
         assertThat(g.playerLifeTotals.get(player1.getId())).isEqualTo(23); // 20 + 3
     }
 
-    // ===== -7: destroy all lands target player controls =====
 
     @Test
     @DisplayName("-7 destroys all lands the target player controls but not the controller's")
@@ -109,13 +106,85 @@ class AjaniVengeantTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
 
-    // ===== Helpers =====
+    @Test
+    void plusOneDoesNotTapUntappedLandAndOnlySkipsOneUntapStep() {
+        addReadyAjani(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.activateAbility(player1, 0, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isFalse();
+        land.tap();
+        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    void plusOneExpiresEvenIfTargetIsUntappedDuringItsNextUntapStep() {
+        addReadyAjani(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.activateAbility(player1, 0, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.performUntapStep(player2);
+        land.tap();
+        harness.performUntapStep(player2);
+
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    void minusTwoDamagesPlaneswalkerAndGainsLife() {
+        addReadyAjani(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AjaniVengeant());
+        target.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void minusTwoGainsThreeLifeEvenWhenAllDamageIsPrevented() {
+        addReadyAjani(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setDamagePreventionShield(3);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void minusTwoDoesNotGainLifeWhenItsOnlyTargetLeavesBattlefield() {
+        Permanent ajani = addReadyAjani(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
 
     private Permanent addReadyAjani(Player player) {
-        Permanent perm = new Permanent(new AjaniVengeant());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AjaniVengeant());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

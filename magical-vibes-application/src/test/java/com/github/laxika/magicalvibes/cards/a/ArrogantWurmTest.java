@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArrogantWurm.class, Unhinge.class})
+@CardUsed({ArrogantWurm.class, Unhinge.class, AvenTrooper.class})
 class ArrogantWurmTest extends BaseCardTest {
 
     private ArrogantWurm discardViaUnhinge() {
@@ -77,14 +77,56 @@ class ArrogantWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Arrogant Wurm can be cast normally from hand")
+    void castsNormallyFromHand() {
+        harness.setHand(player1, List.of(new ArrogantWurm()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Arrogant Wurm");
+        harness.assertNotInHand(player1, "Arrogant Wurm");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An unaffordable madness cast puts Arrogant Wurm into the graveyard")
+    void unaffordableMadnessGoesToGraveyard() {
+        ArrogantWurm wurm = discardViaUnhinge();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(wurm.getId()));
+        harness.assertInGraveyard(player1, "Arrogant Wurm");
+        harness.assertNotOnBattlefield(player1, "Arrogant Wurm");
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the green part of the madness cost")
+    void madnessWithoutGreenManaGoesToGraveyard() {
+        ArrogantWurm wurm = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(wurm.getId()));
+        harness.assertInGraveyard(player1, "Arrogant Wurm");
+        harness.assertNotOnBattlefield(player1, "Arrogant Wurm");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Trample assigns excess combat damage to the defending player")
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new ArrogantWurm());
         Permanent blocker = addCreatureReady(player2, new AvenTrooper());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 

@@ -84,6 +84,81 @@ class ChainflingerTest extends BaseCardTest {
                 .hasMessageContaining("cards in your graveyard");
     }
 
+    @Test
+    @DisplayName("Threshold only needs to be met when the ability is activated")
+    void thresholdStillResolvesAfterGraveyardShrinks() {
+        addCreatureReady(player1, new Chainflinger());
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The ordinary ability still deals only 1 damage with threshold")
+    void ordinaryAbilityDoesNotUpgradeWithThreshold() {
+        addCreatureReady(player1, new Chainflinger());
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Threshold ability can target and kill its own source")
+    void thresholdCanTargetItself() {
+        Permanent chainflinger = addCreatureReady(player1, new Chainflinger());
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 1, null, chainflinger.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chainflinger");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(chainflinger.getCard());
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after its source dies")
+    void abilityResolvesAfterSourceDies() {
+        Permanent chainflinger = addCreatureReady(player1, new Chainflinger());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        chainflinger.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Chainflinger");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Both abilities share the source's tap cost")
+    void cannotActivateOtherAbilityWhileTapped() {
+        Permanent chainflinger = addCreatureReady(player1, new Chainflinger());
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThat(chainflinger.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        harness.passBothPriorities();
+    }
+
     private List<Card> cards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {

@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.DuskborneSkymarcher;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.v.VampireOutcasts;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodlordOfVaasgoth.class, BloodSeeker.class, RuneclawBear.class, VampireOutcasts.class})
 class BloodlordOfVaasgothTest extends BaseCardTest {
 
     @Test
@@ -35,7 +34,7 @@ class BloodlordOfVaasgothTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Bloodthirst 3 granted only to the controller, not to an opponent's damage")
+    @DisplayName("Bloodthirst ignores damage dealt only to its controller")
     void ownBloodthirstIgnoresControllerDamage() {
         gd.recordDamageToPlayer(player1.getId(), 3);
         castBloodlord();
@@ -50,13 +49,11 @@ class BloodlordOfVaasgothTest extends BaseCardTest {
         addCreatureReady(player1, new BloodlordOfVaasgoth());
         gd.recordDamageToPlayer(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new DuskborneSkymarcher()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BloodSeeker(), "{1}{B}");
         resolveAllTriggers();
 
-        Permanent skymarcher = findPermanent(player1, "Duskborne Skymarcher");
-        assertThat(skymarcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        Permanent vampire = findPermanent(player1, "Blood Seeker");
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -64,12 +61,10 @@ class BloodlordOfVaasgothTest extends BaseCardTest {
     void grantedBloodthirstInactiveWithoutDamage() {
         addCreatureReady(player1, new BloodlordOfVaasgoth());
 
-        harness.setHand(player1, List.of(new DuskborneSkymarcher()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BloodSeeker(), "{1}{B}");
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Duskborne Skymarcher")
+        assertThat(findPermanent(player1, "Blood Seeker")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -79,19 +74,63 @@ class BloodlordOfVaasgothTest extends BaseCardTest {
         addCreatureReady(player1, new BloodlordOfVaasgoth());
         gd.recordDamageToPlayer(player2.getId(), 1);
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RuneclawBear(), "{1}{G}");
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Grizzly Bears")
+        assertThat(findPermanent(player1, "Runeclaw Bear")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void multipleBloodlordsGrantCumulativeBloodthirst() {
+        addCreatureReady(player1, new BloodlordOfVaasgoth());
+        addCreatureReady(player1, new BloodlordOfVaasgoth());
+        gd.recordDamageToPlayer(player2.getId(), 1);
+
+        harness.castFromHand(player1, new BloodSeeker(), "{1}{B}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Blood Seeker")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    void grantedAndPrintedBloodthirstAccumulate() {
+        addCreatureReady(player1, new BloodlordOfVaasgoth());
+        gd.recordDamageToPlayer(player2.getId(), 1);
+
+        harness.castFromHand(player1, new VampireOutcasts(), "{2}{B}{B}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Vampire Outcasts")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void opponentBloodlordDoesNotGrantBloodthirst() {
+        addCreatureReady(player2, new BloodlordOfVaasgoth());
+        gd.recordDamageToPlayer(player2.getId(), 1);
+
+        harness.castFromHand(player1, new BloodSeeker(), "{1}{B}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Blood Seeker")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void damageAfterCastingStillEnablesBloodthirst() {
+        addCreatureReady(player1, new BloodlordOfVaasgoth());
+        harness.castFromHand(player1, new BloodSeeker(), "{1}{B}");
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Blood Seeker")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
     private void castBloodlord() {
-        harness.setHand(player1, List.of(new BloodlordOfVaasgoth()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BloodlordOfVaasgoth(), "{3}{B}{B}");
         resolveAllTriggers();
     }
 }

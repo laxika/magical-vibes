@@ -154,11 +154,61 @@ class BestialFuryTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Bestial Fury"));
     }
 
+    @Test
+    @DisplayName("The delayed draw survives the Aura leaving the battlefield and happens only once")
+    void delayedDrawSurvivesAuraRemovalAndDoesNotRepeat() {
+        Permanent creature = addCreatureReady(player1, new StormCrow());
+        castBestialFury(player1, creature);
+        Permanent aura = findPermanent(player1, "Bestial Fury");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("An Aura controlled by the defender still boosts the opponent's enchanted attacker")
+    void opponentControlledAuraBoostsEnchantedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new GargantuanGorilla());
+        addBestialFuryAttachedTo(player2, attacker);
+        attacker.setAttacking(true);
+        addReadyStormCrow(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+    }
+
+    @Test
+    @DisplayName("An unblocked enchanted attacker gets no boost or trample")
+    void unblockedAttackerDoesNotTrigger() {
+        Permanent attacker = addCreatureReady(player1, new GargantuanGorilla());
+        addBestialFuryAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        addReadyStormCrow(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+    }
+
     private Permanent addBestialFury(Player player) {
-        Permanent perm = new Permanent(new BestialFury());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BestialFury());
     }
 
     private Permanent addBestialFuryAttachedTo(Player player, Permanent creature) {
@@ -168,17 +218,13 @@ class BestialFuryTest extends BaseCardTest {
     }
 
     private Permanent addReadyStormCrow(Player player) {
-        Permanent perm = new Permanent(new StormCrow());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new StormCrow());
     }
 
     private void castBestialFury(Player caster, Permanent creature) {
         harness.setHand(caster, List.of(new BestialFury()));
         harness.addMana(caster, ManaColor.RED, 3);
         harness.castEnchantment(caster, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

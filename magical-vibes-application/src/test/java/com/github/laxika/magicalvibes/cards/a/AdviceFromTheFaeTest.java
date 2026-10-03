@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,8 +33,7 @@ class AdviceFromTheFaeTest extends BaseCardTest {
         addCreatureReady(player1, new SafeholdSentry()); // player1: 1 creature, player2: 0
         List<Card> top = setupTopFive();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMultipleCardsChosen(player1, List.of(top.get(0).getId(), top.get(1).getId()));
         // The remaining three are ordered onto the bottom of the library.
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
@@ -50,8 +50,7 @@ class AdviceFromTheFaeTest extends BaseCardTest {
         addCreatureReady(player2, new SafeholdSentry()); // equal counts -> not "more"
         List<Card> top = setupTopFive();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMultipleCardsChosen(player1, List.of(top.get(0).getId()));
         // The remaining four are ordered onto the bottom of the library.
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
@@ -69,13 +68,54 @@ class AdviceFromTheFaeTest extends BaseCardTest {
         addCreatureReady(player2, new SafeholdSentry());
         List<Card> top = setupTopFive();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMultipleCardsChosen(player1, List.of(top.get(0).getId()));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top.get(0));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4)
                 .containsExactlyInAnyOrder(top.get(1), top.get(2), top.get(3), top.get(4));
+    }
+
+    @Test
+    void putsUnchosenCardsBelowUntouchedLibraryInChosenOrder() {
+        List<Card> top = setupTopFive();
+        Card untouched = new SafeholdSentry();
+        List<Card> library = new ArrayList<>(top);
+        library.add(untouched);
+        harness.setLibrary(player1, library);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(top.get(3).getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 1, 0, 2)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top.get(3));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(untouched, top.get(4), top.get(1), top.get(0), top.get(2));
+    }
+
+    @Test
+    void putsAllAvailableCardsIntoHandWhenLibraryHasFewerThanTwo() {
+        addCreatureReady(player1, new SafeholdSentry());
+        List<Card> top = setupTopFive();
+        harness.setLibrary(player1, List.of(top.get(0)));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top.get(0));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibraryWithoutDrawing() {
+        setupTopFive();
+        harness.setLibrary(player1, List.of());
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

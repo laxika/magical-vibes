@@ -74,6 +74,60 @@ class BespokeBTest extends BaseCardTest {
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    void canReturnAnotherEquipmentWithTheSameName() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BespokeB());
+
+        castBespokeB(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target).hasSize(1);
+        harness.assertInHand(player1, "Bespoke Bō");
+    }
+
+    @Test
+    void returnsStolenPermanentToOwnerRatherThanController() {
+        GrizzlyBears stolenCard = new GrizzlyBears();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, stolenCard);
+
+        castBespokeB(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void reequippingMovesBoostAndVigilanceToNewCreature() {
+        Permanent equipment = addBespokeBReady(player1);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        equipment.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        Permanent equipment = addBespokeBReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
     private void castBespokeB() {
         harness.setHand(player1, List.of(new BespokeB()));
         addBespokeBMana();
@@ -96,9 +150,8 @@ class BespokeBTest extends BaseCardTest {
     }
 
     private Permanent addBespokeBReady(Player player) {
-        Permanent permanent = new Permanent(new BespokeB());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new BespokeB());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

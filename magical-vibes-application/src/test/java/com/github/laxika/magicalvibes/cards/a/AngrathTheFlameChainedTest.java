@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.ThrashingBrontodon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AngrathTheFlameChained.class, Forest.class, GrizzlyBears.class, SerraAngel.class, Shock.class, ThrashingBrontodon.class})
 class AngrathTheFlameChainedTest extends BaseCardTest {
 
     @Test
@@ -43,9 +46,8 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
     @DisplayName("-3 steals, untaps, hastes, and sacrifices a low-mana-value creature at the next end step")
     void minusThreeStealsAndSacrificesLowManaValueCreature() {
         Permanent angrath = addReadyAngrath(player1, 4);
-        Permanent target = new Permanent(new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         target.tap();
-        gd.playerBattlefields.get(player2.getId()).add(target);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
@@ -55,8 +57,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
@@ -67,17 +68,18 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
     @DisplayName("-3 does not sacrifice a creature whose mana value is greater than 3")
     void minusThreeSkipsHighManaValueCreature() {
         addReadyAngrath(player1, 4);
-        Permanent target = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
@@ -85,8 +87,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
     @DisplayName("-3 can target only a creature")
     void minusThreeRejectsNoncreatureTarget() {
         addReadyAngrath(player1, 4);
-        Permanent target = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -108,11 +109,113 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("+1 still causes life loss when the opponent has no cards")
+    void plusOneLosesLifeWithEmptyHand() {
+        addReadyAngrath(player1, 4);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("-3's delayed sacrifice uses the stack before the creature is sacrificed")
+    void minusThreeSacrificeAllowsResponses() {
+        addReadyAngrath(player1, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("-3 can untap and give haste to a creature already controlled by its controller")
+    void minusThreeCanTargetOwnCreature() {
+        addReadyAngrath(player1, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.tap();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("-8 counts the graveyard at resolution and ignores its controller's graveyard")
+    void minusEightCountsAtResolution() {
+        addReadyAngrath(player1, 8);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock()));
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        harness.assertInGraveyard(player1, "Angrath, the Flame-Chained");
+    }
+
+    @Test
+    @DisplayName("-8 causes no life loss with an empty opposing graveyard")
+    void minusEightWithEmptyGraveyard() {
+        addReadyAngrath(player1, 8);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("-3 sacrifices a creature with mana value exactly three")
+    void minusThreeSacrificesAtManaValueBoundary() {
+        addReadyAngrath(player1, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThrashingBrontodon());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Thrashing Brontodon");
+    }
+
     private Permanent addReadyAngrath(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new AngrathTheFlameChained());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new AngrathTheFlameChained());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;

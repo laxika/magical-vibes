@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreakingPoint.class, DarksteelMyr.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BreakingPoint.class, DarksteelMyr.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class, PrismaticStrands.class, SuntailHawk.class})
 class BreakingPointTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class BreakingPointTest extends BaseCardTest {
         castBreakingPoint();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 6);
+        harness.assertLife(player1, lifeBefore - 6);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -73,7 +75,7 @@ class BreakingPointTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
+        harness.assertLife(player2, lifeBefore - 6);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -94,6 +96,42 @@ class BreakingPointTest extends BaseCardTest {
     private void castBreakingPoint() {
         harness.castFromHand(player1, new BreakingPoint(), "{1}{R}{R}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed({BreakingPoint.class, PrismaticStrands.class, SuntailHawk.class})
+    @DisplayName("Accepting prevented damage still prevents creature destruction")
+    void acceptingPreventedDamagePreservesCreatures() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.setLife(player2, 3);
+        harness.castFromHand(player1, new PrismaticStrands(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        castBreakingPoint();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 3);
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+        harness.assertOnBattlefield(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player1, "Breaking Point");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({BreakingPoint.class})
+    @DisplayName("Players may accept damage even when there are no creatures")
+    void acceptingDamageWithNoCreatures() {
+        int lifeBefore = gd.getLife(player1.getId());
+
+        castBreakingPoint();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore - 6);
+        harness.assertInGraveyard(player1, "Breaking Point");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

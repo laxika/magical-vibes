@@ -110,6 +110,17 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             }
         }
 
+        if (e.normalCost()) {
+            for (UUID cardId : castableSpellIds) {
+                var exiled = gameData.findExiledCard(cardId);
+                if (exiled == null) continue;
+                gameData.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        exiled.card(), controllerId,
+                        List.of(new com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect(
+                                UUID.randomUUID(), false)), "Play " + exiled.card().getName() + "?", cardId));
+            }
+            return;
+        }
         if (e.uncastCardsToHandFilter() != null) {
             exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData, uncastCardsToBottomIds);
             gameData.pendingExileFreeCastRemainderToHand.addAll(uncastCardsToHandIds);
@@ -170,7 +181,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
     }
 
     private boolean isCastable(Card card, ExileTopCardsAndMayCastSpellsEffect effect, StackEntry entry) {
-        return isSpell(card)
+        return (isSpell(card) || effect.normalCost() && card.hasType(CardType.LAND))
                 && (effect.castFilter() == null
                 || predicateEvaluationService.matchesCardPredicate(card, effect.castFilter(), entry.getCard().getId()));
     }

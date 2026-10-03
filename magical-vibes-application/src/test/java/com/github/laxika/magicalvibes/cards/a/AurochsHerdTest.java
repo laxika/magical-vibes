@@ -24,8 +24,7 @@ class AurochsHerdTest extends BaseCardTest {
     void enteringMaySearchForAurochs() {
         harness.setLibrary(player1, List.of(new BullAurochs(), new BorealDruid()));
         harness.castFromHand(player1, new AurochsHerd(), "{5}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
@@ -46,8 +45,7 @@ class AurochsHerdTest extends BaseCardTest {
         List<Card> library = List.of(new BullAurochs(), new BorealDruid());
         harness.setLibrary(player1, library);
         harness.castFromHand(player1, new AurochsHerd(), "{5}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -122,6 +120,67 @@ class AurochsHerdTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(herd.getPowerModifier()).isZero();
+        assertThat(herd.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The search can find another Aurochs Herd")
+    void canSearchForAnotherHerd() {
+        AurochsHerd found = new AurochsHerd();
+        harness.setLibrary(player1, List.of(found, new BorealDruid()));
+        harness.castFromHand(player1, new AurochsHerd(), "{5}{G}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(found);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(found);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An accepted search may fail to find even when an Aurochs is present")
+    void canFailToFindAnAurochs() {
+        BullAurochs aurochs = new BullAurochs();
+        BorealDruid druid = new BorealDruid();
+        harness.setLibrary(player1, List.of(aurochs, druid));
+        harness.castFromHand(player1, new AurochsHerd(), "{5}{G}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Bull Aurochs");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(aurochs, druid);
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An accepted search with no Aurochs finishes and shuffles")
+    void searchWithoutMatchingCardsFinishes() {
+        BorealDruid druid = new BorealDruid();
+        harness.setLibrary(player1, List.of(druid));
+        harness.castFromHand(player1, new AurochsHerd(), "{5}{G}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Boreal Druid");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(druid);
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Aurochs that are not attacking do not contribute to the bonus")
+    void ignoresNonattackingAurochs() {
+        Permanent herd = addCreatureReady(player1, new AurochsHerd());
+        addCreatureReady(player1, new BullAurochs());
+        addCreatureReady(player2, new BullAurochs());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
 
         assertThat(herd.getPowerModifier()).isZero();
         assertThat(herd.getToughnessModifier()).isZero();

@@ -76,6 +76,62 @@ class BelbesArmorTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    void canActivateOnTheTurnArmorEntersAndReducePowerBelowZero() {
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new BelbesArmor());
+        Permanent creature = addCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 4, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(-2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(armor.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    void abilityResolvesAfterArmorLeavesBattlefield() {
+        Permanent armor = addReadyArmor(player1);
+        Permanent creature = addCreature(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 3, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(armor);
+        gd.playerGraveyards.get(player1.getId()).add(armor.getCard());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(-1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    void cannotActivateWithInsufficientMana() {
+        Permanent armor = addReadyArmor(player1);
+        Permanent creature = addCreature(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(armor.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedArmorCannotActivateAgain() {
+        Permanent armor = addReadyArmor(player1);
+        Permanent creature = addCreature(player2);
+        armor.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyArmor(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new BelbesArmor());
         perm.setSummoningSick(false);

@@ -499,6 +499,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             if (e.recordChosenCount()) {
                 entry.setEventValue(0);
             }
+            insertEffectAfterCurrent(entry, e, e.effectIfNoCardChosen());
             return;
         }
         UUID controllerId = result.controllerId();

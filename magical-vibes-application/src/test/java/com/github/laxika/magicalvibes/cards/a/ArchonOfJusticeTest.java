@@ -89,6 +89,37 @@ class ArchonOfJusticeTest extends BaseCardTest {
                 .contains(cascadeBluffsId, opposingArchonId);
     }
 
+    @Test
+    @DisplayName("Exiling another Archon does not trigger its dies ability")
+    void exilingAnotherArchonDoesNotTriggerDeathAbility() {
+        harness.addToBattlefield(player1, new ArchonOfJustice());
+        harness.addToBattlefield(player2, new ArchonOfJustice());
+        harness.addToBattlefield(player2, new CascadeBluffs());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new PunctureBlast(), new PunctureBlast()));
+        harness.addMana(player2, ManaColor.RED, 6);
+
+        UUID archonId = harness.getPermanentId(player1, "Archon of Justice");
+        UUID opposingArchonId = harness.getPermanentId(player2, "Archon of Justice");
+
+        killArchonWithPunctureBlasts(archonId);
+
+        harness.assertInGraveyard(player1, "Archon of Justice");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .doesNotContain(archonId);
+        harness.handlePermanentChosen(player1, opposingArchonId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Archon of Justice");
+        harness.assertNotInGraveyard(player2, "Archon of Justice");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Archon of Justice"));
+        harness.assertOnBattlefield(player2, "Cascade Bluffs");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void killArchonWithPunctureBlasts(UUID archonId) {
         harness.castAndResolveInstant(player2, 0, archonId);
         setupPlayer2Active();

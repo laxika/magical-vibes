@@ -87,4 +87,76 @@ class CaesarLegionsEmperorTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Soldier")).isEmpty();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Reflexive modes and target are chosen before players receive priority")
+    void reflexiveChoicesPrecedePriority() {
+        addCreatureReady(player1, new CaesarLegionsEmperor());
+        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1,
+                "Create two 1/1 red and white Soldier creature tokens with haste that are tapped and attacking");
+        harness.handleListChoice(player1,
+                "Caesar deals damage equal to the number of creature tokens you control to target opponent");
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Token and draw modes work together when selected in reverse order")
+    void tokenAndDrawModes() {
+        addCreatureReady(player1, new CaesarLegionsEmperor());
+        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Draw a card and lose 1 life");
+        harness.handleListChoice(player1,
+                "Create two 1/1 red and white Soldier creature tokens with haste that are tapped and attacking");
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player1, lifeBefore - 1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Caesar triggers when only another creature attacks and that attacker can be sacrificed")
+    void caesarDoesNotNeedToAttack() {
+        addCreatureReady(player1, new CaesarLegionsEmperor());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Draw a card and lose 1 life");
+        harness.handleListChoice(player1,
+                "Create two 1/1 red and white Soldier creature tokens with haste that are tapped and attacking");
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+        assertThat(findPermanent(player1, "Caesar, Legion's Emperor").isTapped()).isFalse();
+    }
 }

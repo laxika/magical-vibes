@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MeriekeRiBerit;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -12,7 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Anarchy.class, GrizzlyBears.class, Ornithopter.class, Pacifism.class, Plains.class,
+@CardUsed({Anarchy.class, AvacynAngelOfHope.class, GrizzlyBears.class, MeriekeRiBerit.class,
+        Ornithopter.class, Pacifism.class, Plains.class,
         SerraAngel.class})
 class AnarchyTest extends BaseCardTest {
 
@@ -73,8 +75,41 @@ class AnarchyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SerraAngel());
         castAnarchy();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Serra Angel"));
+        harness.assertNotOnBattlefield(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Destroys multicolored permanents that are white")
+    void destroysWhiteMulticoloredPermanent() {
+        harness.addToBattlefield(player2, new MeriekeRiBerit());
+        castAnarchy();
+
+        harness.assertNotOnBattlefield(player2, "Merieke Ri Berit");
+        harness.assertInGraveyard(player2, "Merieke Ri Berit");
+    }
+
+    @Test
+    @DisplayName("Resolves when there are no white permanents")
+    void resolvesWithoutWhitePermanents() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castAnarchy();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Anarchy");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Allows a white permanent to regenerate")
+    void allowsRegeneration() {
+        var angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        angel.setRegenerationShield(1);
+        castAnarchy();
+
+        harness.assertOnBattlefield(player2, "Serra Angel");
+        harness.assertNotInGraveyard(player2, "Serra Angel");
+        assertThat(angel.isTapped()).isTrue();
+        assertThat(angel.getRegenerationShield()).isZero();
     }
 
     private void castAnarchy() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BasrisAcolyte.class, GrizzlyBears.class, LlanowarElves.class})
 class BasrisAcolyteTest extends BaseCardTest {
 
     @Test
@@ -25,13 +27,11 @@ class BasrisAcolyteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BasrisAcolyte()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        UUID bearsId = battlefield.get(0).getId();
-        UUID elvesId = battlefield.get(1).getId();
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castCreature(player1, 0, List.of(bearsId, elvesId));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Grizzly Bears")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -49,8 +49,7 @@ class BasrisAcolyteTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castCreature(player1, 0, List.of(bearsId));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Grizzly Bears")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -63,11 +62,12 @@ class BasrisAcolyteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Basri's Acolyte");
         assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Basri's Acolyte")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -81,5 +81,70 @@ class BasrisAcolyteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(opposingCreatureId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another creature you control");
+    }
+
+    @Test
+    void canChooseZeroTargetsEvenWhenOtherCreaturesAreAvailable() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BasrisAcolyte()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Basri's Acolyte");
+        assertThat(findPermanent(player1, "Grizzly Bears")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetAnotherAcolyteButDoesNotPutACounterOnItself() {
+        harness.addToBattlefield(player1, new BasrisAcolyte());
+        Permanent other = findPermanent(player1, "Basri's Acolyte");
+        harness.setHand(player1, List.of(new BasrisAcolyte()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, List.of(other.getId()));
+        resolveAllTriggers();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Basri's Acolyte")).hasSize(2);
+        assertThat(findPermanents(player1, "Basri's Acolyte").stream()
+                .filter(permanent -> !permanent.getId().equals(other.getId()))
+                .mapToInt(permanent -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)))
+                .containsExactly(0);
+    }
+
+    @Test
+    void stillCountersRemainingTargetWhenOneTargetLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent elves = findPermanent(player1, "Llanowar Elves");
+        harness.setHand(player1, List.of(new BasrisAcolyte()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, List.of(bears.getId(), elves.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+        resolveAllTriggers();
+
+        assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void combatDamageGainsLifeForItsController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BasrisAcolyte());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
     }
 }

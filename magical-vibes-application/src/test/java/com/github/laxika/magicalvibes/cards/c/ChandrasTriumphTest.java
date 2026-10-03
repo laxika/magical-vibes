@@ -50,10 +50,112 @@ class ChandrasTriumphTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void cast(Permanent target) {
+    @Test
+    void marksExactlyThreeDamageWithoutChandra() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        cast(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void opposingChandraDoesNotIncreaseDamageToPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 6);
+
+        cast(target);
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Chandra Nalaar");
+    }
+
+    @Test
+    void dealsExactlyFiveDamageToPlaneswalkerWithChandra() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 6);
+
+        cast(target);
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Chandra Nalaar");
+    }
+
+    @Test
+    void cannotTargetOwnPlaneswalker() {
+        Permanent ownTarget = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        ownTarget.setCounterCount(CounterType.LOYALTY, 6);
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new ChandrasTriumph()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, ownTarget.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOpponentDirectly() {
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new ChandrasTriumph()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chandraEnteringBeforeResolutionIncreasesDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new ChandrasTriumph()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, target.getId());
+
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
         harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void losingControlOfChandraBeforeResolutionReducesDamage() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new ChandrasTriumph()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(chandra);
+        gd.playerBattlefields.get(player2.getId()).add(chandra);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void targetBecomingControlledByCasterIsIllegalAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new ChandrasTriumph()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Chandra's Triumph");
+    }
+
+    private void cast(Permanent target) {
+        harness.setHand(player1, List.of(new ChandrasTriumph()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

@@ -6,7 +6,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * The greatest effective power among creatures the controller controls that match the optional
  * filter.
  */
-public record GreatestPowerAmongControlled(PermanentPredicate filter, boolean floorAtZero) implements DynamicAmount {
+public record GreatestPowerAmongControlled(PermanentPredicate filter, boolean floorAtZero,
+                                           boolean declaredAttackersOnly) implements DynamicAmount {
+
+    public GreatestPowerAmongControlled(PermanentPredicate filter, boolean floorAtZero) {
+        this(filter, floorAtZero, false);
+    }
 
     public GreatestPowerAmongControlled(PermanentPredicate filter) {
         this(filter, true);

@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CollapsingBorders.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class})
 class CollapsingBordersTest extends BaseCardTest {
@@ -73,5 +76,52 @@ class CollapsingBordersTest extends BaseCardTest {
 
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Domain is counted when the upkeep ability resolves")
+    void countsLandTypesAtResolution() {
+        harness.addToBattlefield(player1, new CollapsingBorders());
+        harness.addToBattlefield(player2, new Forest());
+
+        advanceToUpkeep(player2);
+        harness.assertLife(player2, 20);
+        harness.addToBattlefield(player2, new Island());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Life is gained before damage, allowing a player at 1 life to survive")
+    void gainsLifeBeforeTakingDamage() {
+        harness.addToBattlefield(player1, new CollapsingBorders());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player2, 1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Copies controlled by different players both trigger on the same upkeep")
+    void eachCopyTriggersIndependently() {
+        harness.addToBattlefield(player1, new CollapsingBorders());
+        harness.addToBattlefield(player2, new CollapsingBorders());
+        harness.addToBattlefield(player2, new Forest());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
     }
 }

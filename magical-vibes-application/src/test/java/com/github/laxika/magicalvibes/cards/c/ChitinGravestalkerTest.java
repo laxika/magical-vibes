@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LifecraftEngine;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,10 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChitinGravestalker.class, GrizzlyBears.class, Island.class, LifecraftEngine.class,
+        Ornithopter.class, Shock.class})
 class ChitinGravestalkerTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Cost reduction")
+    @CardUsed({ChitinGravestalker.class, GrizzlyBears.class, LifecraftEngine.class,
+            Ornithopter.class, Shock.class})
     class CostReduction {
 
         @Test
@@ -75,6 +81,85 @@ class ChitinGravestalkerTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         }
+
+        @Test
+        void artifactCreatureCountsOnlyOnce() {
+            harness.setGraveyard(player1, List.of(new Ornithopter()));
+            harness.setHand(player1, List.of(new ChitinGravestalker()));
+            harness.addMana(player1, ManaColor.BLACK, 5);
+
+            harness.castCreature(player1, 0);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+            harness.passBothPriorities();
+            harness.assertOnBattlefield(player1, "Chitin Gravestalker");
+        }
+
+        @Test
+        void noncreatureArtifactReducesCost() {
+            harness.setGraveyard(player1, List.of(new LifecraftEngine()));
+            harness.setHand(player1, List.of(new ChitinGravestalker()));
+            harness.addMana(player1, ManaColor.BLACK, 5);
+
+            harness.castCreature(player1, 0);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+            harness.passBothPriorities();
+            harness.assertOnBattlefield(player1, "Chitin Gravestalker");
+        }
+
+        @Test
+        void reductionCannotPayBlackManaRequirement() {
+            harness.setGraveyard(player1, List.of(new ChitinGravestalker(), new ChitinGravestalker(),
+                    new ChitinGravestalker(), new ChitinGravestalker(), new ChitinGravestalker()));
+            harness.setHand(player1, List.of(new ChitinGravestalker()));
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+            assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                    .isInstanceOf(IllegalStateException.class);
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertInHand(player1, "Chitin Gravestalker");
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void graveyardReductionDoesNotReduceCyclingCost() {
+        harness.setGraveyard(player1, List.of(new ChitinGravestalker(), new ChitinGravestalker(),
+                new ChitinGravestalker()));
+        harness.setHand(player1, List.of(new ChitinGravestalker()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertInHand(player1, "Chitin Gravestalker");
+        harness.assertNotInHand(player1, "Island");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void cyclingPaysAndDiscardsBeforeDrawResolves() {
+        harness.setHand(player1, List.of(new ChitinGravestalker()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertNotInHand(player1, "Chitin Gravestalker");
+        harness.assertInGraveyard(player1, "Chitin Gravestalker");
+        harness.assertNotInHand(player1, "Island");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

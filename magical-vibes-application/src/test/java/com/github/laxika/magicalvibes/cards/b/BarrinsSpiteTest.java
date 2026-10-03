@@ -25,8 +25,7 @@ class BarrinsSpiteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
     }
 
     @Test
@@ -117,5 +116,62 @@ class BarrinsSpiteTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Empress Galina");
         harness.assertInGraveyard(player2, "Kavu Aggressor");
         harness.assertNotInHand(player2, "Kavu Aggressor");
+    }
+
+    @Test
+    @DisplayName("The controller may sacrifice the second target instead of the first")
+    void canSacrificeSecondTarget() {
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+        Permanent lancer = addCreatureReady(player2, new BenalishLancer());
+
+        castBarrinsSpite(kavu, lancer);
+        harness.handlePermanentChosen(player2, lancer.getId());
+
+        harness.assertInGraveyard(player2, "Benalish Lancer");
+        harness.assertInHand(player2, "Kavu Aggressor");
+        harness.assertNotOnBattlefield(player2, "Benalish Lancer");
+        harness.assertNotOnBattlefield(player2, "Kavu Aggressor");
+    }
+
+    @Test
+    @DisplayName("A stolen creature returns to its owner's hand rather than its controller's")
+    void returnsStolenCreatureToOwnersHand() {
+        addCreatureReady(player1, new EmpressGalina());
+        Permanent sisay = addCreatureReady(player2, new CaptainSisay());
+        Permanent kavu = addCreatureReady(player1, new KavuAggressor());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, 0, null, sisay.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Captain Sisay");
+
+        castBarrinsSpite(kavu, sisay);
+        harness.handlePermanentChosen(player1, kavu.getId());
+
+        harness.assertInGraveyard(player1, "Kavu Aggressor");
+        harness.assertInHand(player2, "Captain Sisay");
+        harness.assertNotInHand(player1, "Captain Sisay");
+        harness.assertNotOnBattlefield(player1, "Captain Sisay");
+    }
+
+    @Test
+    @DisplayName("The spell has no effect when both targets have left the battlefield")
+    void doesNothingWhenBothTargetsAreGone() {
+        Permanent kavu = addCreatureReady(player2, new KavuAggressor());
+        Permanent lancer = addCreatureReady(player2, new BenalishLancer());
+        harness.setHand(player1, List.of(new BarrinsSpite()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, List.of(kavu.getId(), lancer.getId()));
+        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(kavu, lancer));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Barrin's Spite");
+        harness.assertNotInGraveyard(player2, "Kavu Aggressor");
+        harness.assertNotInGraveyard(player2, "Benalish Lancer");
+        harness.assertNotInHand(player2, "Kavu Aggressor");
+        harness.assertNotInHand(player2, "Benalish Lancer");
     }
 }

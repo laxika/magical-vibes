@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -66,6 +67,99 @@ class CelebrateTheMountainKingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Recruit creates a Human Soldier token")
+    void recruitTokenIsHumanSoldier() {
+        castAndResolve(List.of(), new GrizzlyBears(), new Forest());
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
+        assertThat(token.getCard().getPower()).isEqualTo(1);
+        assertThat(token.getCard().getToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Exile and recruit enter abilities go on the stack separately")
+    void enterAbilitiesAreSeparateTriggers() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast(new GrizzlyBears(), new Forest());
+        harness.castEnchantment(player1, 0, List.of(bear.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The controller may decline to exile an available opposing permanent")
+    void mayChooseNoTargetsWithOpponentPermanentAvailable() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castAndResolve(List.of(), new GrizzlyBears(), new Forest());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Recruit may discard the card just drawn and creates its token during resolution")
+    void mayDiscardDrawnCard() {
+        prepareCast(new Forest(), new GrizzlyBears());
+        harness.castEnchantment(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("The exile ability cannot target a land")
+    void cannotTargetOpponentLand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepareCast(new GrizzlyBears(), new Forest());
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The exile ability cannot target the controller's permanent")
+    void cannotTargetOwnPermanent() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCast(new GrizzlyBears(), new Forest());
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, List.of(bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The target is not exiled if the enchantment leaves before its enter ability resolves")
+    void sourceLeavingBeforeResolutionPreventsExile() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCast(new GrizzlyBears(), new Forest());
+        harness.castEnchantment(player1, 0, List.of(bear.getId()));
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Celebrate the Mountain-king"));
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+        }
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Exiled permanents return when the enchantment leaves")
     void exiledPermanentReturnsWhenSourceLeaves() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -79,8 +173,7 @@ class CelebrateTheMountainKingTest extends BaseCardTest {
 
         UUID sourceId = harness.getPermanentId(player1, "Celebrate the Mountain-king");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, sourceId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sourceId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

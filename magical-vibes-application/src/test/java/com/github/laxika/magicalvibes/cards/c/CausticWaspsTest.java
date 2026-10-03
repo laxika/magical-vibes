@@ -16,6 +16,61 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CausticWasps.class, CreditVoucher.class, DeadlyInsect.class, RishadanAirship.class})
 class CausticWaspsTest extends BaseCardTest {
+    @Test
+    @DisplayName("An artifact that changes controller before resolution is no longer a legal target")
+    void targetThatChangesControllerIsNotDestroyed() {
+        Permanent wasps = addCreatureReady(player1, new CausticWasps());
+        wasps.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CreditVoucher());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Credit Voucher");
+        harness.assertNotInGraveyard(player2, "Credit Voucher");
+    }
+
+    @Test
+    @DisplayName("The trigger does not choose another artifact when its target leaves the battlefield")
+    void missingTargetDoesNotRetarget() {
+        Permanent wasps = addCreatureReady(player1, new CausticWasps());
+        wasps.setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CreditVoucher());
+        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player2, new CreditVoucher());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherArtifact);
+        harness.assertInHand(player2, "Credit Voucher");
+        harness.assertNotInGraveyard(player2, "Credit Voucher");
+    }
+
+    @Test
+    @DisplayName("The combat damage trigger resolves even after Caustic Wasps leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        Permanent wasps = addCreatureReady(player1, new CausticWasps());
+        wasps.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CreditVoucher());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, wasps));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Caustic Wasps");
+        harness.assertNotOnBattlefield(player2, "Credit Voucher");
+        harness.assertInGraveyard(player2, "Credit Voucher");
+    }
+
 
     @Test
     @DisplayName("Accepting the combat damage trigger destroys an artifact the damaged player controls")

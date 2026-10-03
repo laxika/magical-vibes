@@ -8,11 +8,11 @@ param(
     [int] $Rounds = 5000,
 
     # Codex model used to diagnose and fix a failed fuzz run.
-    [string] $Model = "gpt-5.6-sol",
+    [string] $Model = "gpt-6.1-sol",
 
     # Reasoning effort used by the Codex repair instance.
     [ValidateSet("low", "medium", "high", "xhigh", "max")]
-    [string] $Effort = "xhigh"
+    [string] $Effort = "high"
 )
 
 $ErrorActionPreference = "Stop"

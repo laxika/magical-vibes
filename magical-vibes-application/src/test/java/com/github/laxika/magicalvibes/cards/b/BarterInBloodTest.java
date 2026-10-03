@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BarterInBlood.class, OmegaMyr.class, Mountain.class})
 class BarterInBloodTest extends BaseCardTest {
@@ -142,5 +143,73 @@ class BarterInBloodTest extends BaseCardTest {
 
         assertThat(creatureCount(player1)).isZero();
         assertThat(creatureCount(player2)).isZero();
+    }
+
+    @Test
+    @DisplayName("A player cannot decline the mandatory sacrifice")
+    void cannotChooseNoCreaturesWhenTwoMustBeSacrificed() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new OmegaMyr());
+        }
+
+        castBarter();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creatureCount(player1)).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+
+        harness.handleMultiplePermanentsChosen(player1, creatureIds(player1).stream().limit(2).toList());
+
+        assertThat(creatureCount(player1)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A player cannot sacrifice only one when at least two creatures are available")
+    void cannotChooseOnlyOneCreatureWhenTwoMustBeSacrificed() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new OmegaMyr());
+        }
+
+        castBarter();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(
+                player1, creatureIds(player1).stream().limit(1).toList()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creatureCount(player1)).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+
+        harness.handleMultiplePermanentsChosen(player1, creatureIds(player1).stream().limit(2).toList());
+
+        assertThat(creatureCount(player1)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Player two chooses first when player two is the active player")
+    void playerTwoChoosesFirstOnTheirTurn() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new OmegaMyr());
+            harness.addToBattlefield(player2, new OmegaMyr());
+        }
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new BarterInBlood(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, creatureIds(player2).stream().limit(2).toList());
+
+        assertThat(creatureCount(player2)).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, creatureIds(player1).stream().limit(2).toList());
+
+        assertThat(creatureCount(player1)).isEqualTo(1);
+        assertThat(creatureCount(player2)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Omega Myr"))).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId()).stream()
+                .filter(card -> card.getName().equals("Omega Myr"))).hasSize(2);
+        harness.assertInGraveyard(player2, "Barter in Blood");
     }
 }

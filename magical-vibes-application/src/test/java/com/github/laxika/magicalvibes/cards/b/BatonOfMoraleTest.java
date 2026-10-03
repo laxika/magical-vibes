@@ -88,4 +88,58 @@ class BatonOfMoraleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped Baton can activate using colored mana for its generic cost")
+    void tappedBatonCanActivateWithColoredMana() {
+        Permanent baton = harness.addToBattlefieldAndReturn(player1, new BatonOfMorale());
+        baton.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PaleBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isTrue();
+        assertThat(baton.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability resolves and expires normally after the Baton leaves")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent baton = harness.addToBattlefieldAndReturn(player1, new BatonOfMorale());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PaleBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(baton);
+        gd.playerGraveyards.get(player1.getId()).add(baton.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability does not affect another creature when its target leaves")
+    void abilityDoesNotRetargetWhenTargetLeaves() {
+        harness.addToBattlefield(player1, new BatonOfMorale());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PaleBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new PaleBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.BANDING)).isFalse();
+    }
 }

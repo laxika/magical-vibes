@@ -54,6 +54,18 @@ class BlessedOratorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Blessed Orators boost each other without boosting themselves")
+    void twoOratorsBoostEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BlessedOrator());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BlessedOrator());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Does not buff own noncreature permanents")
     void doesNotBuffNoncreaturePermanents() {
         harness.addToBattlefield(player1, new BlessedOrator());

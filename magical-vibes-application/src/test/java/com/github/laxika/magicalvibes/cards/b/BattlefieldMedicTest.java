@@ -29,8 +29,7 @@ class BattlefieldMedicTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isZero();
     }
@@ -46,8 +45,7 @@ class BattlefieldMedicTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(medic.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
@@ -65,8 +63,7 @@ class BattlefieldMedicTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isZero();
     }
@@ -97,5 +94,61 @@ class BattlefieldMedicTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Unused prevention carries over to later damage events and is consumed")
+    void preventionIsConsumedAcrossDamageEvents() {
+        addCreatureReady(player1, new BattlefieldMedic());
+        addCreatureReady(player1, new BattlefieldMedic());
+        addCreatureReady(player2, new BattlefieldMedic());
+        Permanent target = addCreatureReady(player2, new RavenousBaloth());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Clerics entering after resolution do not increase prevention")
+    void preventionAmountIsFixedAtResolution() {
+        addCreatureReady(player1, new BattlefieldMedic());
+        Permanent target = addCreatureReady(player2, new RavenousBaloth());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        addCreatureReady(player2, new BattlefieldMedic());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability resolves with zero prevention if the only Cleric dies in response")
+    void sourceDyingBeforeResolutionLeavesZeroPrevention() {
+        Permanent medic = addCreatureReady(player1, new BattlefieldMedic());
+        Permanent target = addCreatureReady(player2, new RavenousBaloth());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, medic.getId());
+        harness.assertInGraveyard(player1, "Battlefield Medic");
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 }

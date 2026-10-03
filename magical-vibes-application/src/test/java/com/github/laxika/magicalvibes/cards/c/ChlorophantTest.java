@@ -77,6 +77,84 @@ class ChlorophantTest extends BaseCardTest {
         assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Losing threshold after upkeep begins does not remove the second trigger")
+    void losingThresholdDoesNotRemoveTriggeredAbility() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent chlorophant = addChlorophant();
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gaining threshold after upkeep begins does not create another trigger")
+    void gainingThresholdAfterUpkeepDoesNotTrigger() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        Permanent chlorophant = addChlorophant();
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard does not enable threshold")
+    void opponentsGraveyardDoesNotEnableThreshold() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, graveyardWithSevenCards());
+        Permanent chlorophant = addChlorophant();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Neither counter ability triggers during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent chlorophant = addChlorophant();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Both optional counters may be declined independently")
+    void mayDeclineBothCounters() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent chlorophant = addChlorophant();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(chlorophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addChlorophant() {
         return harness.addToBattlefieldAndReturn(player1, new Chlorophant());
     }

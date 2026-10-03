@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Harrow;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.m.MindSpring;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BilboThiefInTheNight.class, CounselOfTheSoratami.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({BilboThiefInTheNight.class, CounselOfTheSoratami.class, GrizzlyBears.class,
+        MindStone.class, MindSpring.class, Harrow.class})
 class BilboThiefInTheNightTest extends BaseCardTest {
 
     @Test
@@ -78,6 +80,102 @@ class BilboThiefInTheNightTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 1);
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(counsel, mindStone, creature);
+    }
+
+    @Test
+    void opposingBilboDoesNotProvideAnAdditionalDiscount() {
+        addReadyBilbo();
+        addCreatureReady(player2, new BilboThiefInTheNight());
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttack();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void allowsChoosingXWhenCastingFromGraveyard() {
+        addReadyBilbo();
+        MindSpring mindSpring = new MindSpring();
+        harness.setGraveyard(player1, List.of(mindSpring));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttack();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        harness.handleXValueChosen(player1, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cannotCastHarrowWithoutALandToSacrifice() {
+        addReadyBilbo();
+        Harrow harrow = new Harrow();
+        harness.setGraveyard(player1, List.of(harrow));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        declareAttack();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(harrow);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(harrow.getId()));
+    }
+
+    @Test
+    void doesNotReduceSpellsCastFromHand() {
+        addReadyBilbo();
+        harness.castFromHand(player1, new MindStone(), "{2}");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mind Stone");
+    }
+
+    @Test
+    void cannotChooseCardsFromOpponentsGraveyard() {
+        addReadyBilbo();
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(counsel));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttack();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(counsel);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void leavesUnaffordableSpellInGraveyard() {
+        addReadyBilbo();
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttack();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(counsel);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     private void addReadyBilbo() {

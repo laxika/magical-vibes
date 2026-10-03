@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
+import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CorpseKnight.class, GreenwoodSentinel.class, RaiseTheAlarm.class})
 class CorpseKnightTest extends BaseCardTest {
 
     @Test
@@ -18,15 +18,13 @@ class CorpseKnightTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new CorpseKnight());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GreenwoodSentinel(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -35,28 +33,78 @@ class CorpseKnightTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new CorpseKnight());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GreenwoodSentinel(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("Does not trigger when Corpse Knight itself enters")
     void noTriggerOnSelfEnter() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new CorpseKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CorpseKnight(), "{W}{B}");
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Triggers separately for both tokens entering simultaneously")
+    void triggersForEachTokenEntering() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new CorpseKnight());
+
+        harness.castFromHand(player1, new RaiseTheAlarm(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Each Corpse Knight triggers for another creature entering")
+    void multipleKnightsTriggerIndependently() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new CorpseKnight());
+        harness.addToBattlefield(player1, new CorpseKnight());
+
+        harness.castFromHand(player1, new GreenwoodSentinel(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An existing Corpse Knight triggers when a second Corpse Knight enters")
+    void anotherKnightEnteringTriggersOnlyExistingKnight() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new CorpseKnight());
+
+        harness.castFromHand(player1, new CorpseKnight(), "{W}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
     }
 }

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.e.ElvishLookout;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CapashenKnight.class, ElvishLookout.class})
+@CardUsed({CapashenKnight.class, SuntailHawk.class})
 class CapashenKnightTest extends BaseCardTest {
 
     @Test
@@ -80,16 +80,60 @@ class CapashenKnightTest extends BaseCardTest {
     @DisplayName("First strike destroys a 1/1 blocker before it can deal combat damage")
     void firstStrikeDealsCombatDamageFirst() {
         Permanent knight = addCreatureReady(player1, new CapashenKnight());
-        Permanent blocker = addCreatureReady(player2, new ElvishLookout());
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(knight))));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Capashen Knight");
-        harness.assertInGraveyard(player2, "Elvish Lookout");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new CapashenKnight());
+        knight.setSummoningSick(true);
+        knight.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
+        assertThat(knight.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot pay the white mana requirement")
+    void cannotActivateWithoutWhiteMana() {
+        addCreatureReady(player1, new CapashenKnight());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Boost applies only to the source and only when the ability resolves")
+    void boostsOnlySourceOnResolution() {
+        Permanent knight = addCreatureReady(player1, new CapashenKnight());
+        Permanent otherKnight = addCreatureReady(player1, new CapashenKnight());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherKnight)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherKnight)).isEqualTo(1);
     }
 }

@@ -43,4 +43,33 @@ class BladeSliverTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(2);
     }
+
+    @Test
+    void bonusesFromMultipleBladeSliversStackAcrossControllers() {
+        Permanent ownBlade = addCreatureReady(player1, new BladeSliver());
+        Permanent opponentBlade = addCreatureReady(player2, new BladeSliver());
+        Permanent sliver = addCreatureReady(player2, new ShiftingSliver());
+
+        assertThat(gqs.getEffectivePower(gd, ownBlade)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentBlade)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownBlade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBlade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(ownBlade);
+
+        assertThat(gqs.getEffectivePower(gd, opponentBlade)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(3);
+    }
+
+    @Test
+    void boostsSliverEnteringAfterSource() {
+        addCreatureReady(player1, new BladeSliver());
+
+        Permanent sliver = harness.enterBattlefieldAndReturn(player2, new ShiftingSliver());
+
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(2);
+    }
 }

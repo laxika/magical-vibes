@@ -90,12 +90,50 @@ class ChitteringWitchTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
     }
 
-    private void castWitch() {
-        harness.setHand(player1, List.of(new ChitteringWitch()));
+    @Test
+    @DisplayName("The Witch can sacrifice itself while summoning sick and its ability still resolves")
+    void canSacrificeItselfImmediately() {
+        castWitch();
+        Permanent witch = findPermanent(player1, "Chittering Witch");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChitteringWitch());
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player1, 0);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(witch),
+                null, target.getId());
+        harness.handlePermanentChosen(player1, witch.getId());
+
+        harness.assertInGraveyard(player1, "Chittering Witch");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Chittering Witch");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Rat token can pay the sacrifice cost to target your own Witch")
+    void canSacrificeRatToTargetOwnCreature() {
+        castWitch();
+        Permanent witch = findPermanent(player1, "Chittering Witch");
+        Permanent rat = findPermanent(player1, "Rat");
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(witch),
+                null, witch.getId());
+        harness.handlePermanentChosen(player1, rat.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rat).contains(witch);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chittering Witch");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    private void castWitch() {
+        harness.castFromHand(player1, new ChitteringWitch(), "{3}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

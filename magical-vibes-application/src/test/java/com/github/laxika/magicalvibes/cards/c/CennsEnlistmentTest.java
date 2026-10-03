@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,8 +28,7 @@ class CennsEnlistmentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> soldiers = kithkinSoldiers();
         assertThat(soldiers).hasSize(2);
@@ -117,6 +117,61 @@ class CennsEnlistmentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same Cenn's Enlistment can be retraced repeatedly")
+    void canRetraceAgainAfterResolving() {
+        CennsEnlistment enlistment = new CennsEnlistment();
+        harness.setGraveyard(player1, List.of(enlistment));
+        harness.setHand(player1, List.of(new SpringjackPasture(), new SpringjackPasture()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castRetrace(player1, 0, 0);
+        harness.passBothPriorities();
+
+        int graveyardIndex = gd.playerGraveyards.get(player1.getId()).indexOf(enlistment);
+        assertThat(graveyardIndex).isNotNegative();
+        harness.castRetrace(player1, graveyardIndex, 0);
+        harness.passBothPriorities();
+
+        assertThat(kithkinSoldiers()).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enlistment).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Retrace still requires the full mana cost")
+    void retraceRequiresManaInAdditionToLand() {
+        harness.setGraveyard(player1, List.of(new CennsEnlistment()));
+        harness.setHand(player1, List.of(new SpringjackPasture()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Springjack Pasture");
+        harness.assertInGraveyard(player1, "Cenn's Enlistment");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Retrace does not allow casting a sorcery during upkeep")
+    void retraceRequiresSorceryTiming() {
+        harness.setGraveyard(player1, List.of(new CennsEnlistment()));
+        harness.setHand(player1, List.of(new SpringjackPasture()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Springjack Pasture");
+        harness.assertInGraveyard(player1, "Cenn's Enlistment");
+        assertThat(gd.stack).isEmpty();
     }
 
     private List<Permanent> kithkinSoldiers() {

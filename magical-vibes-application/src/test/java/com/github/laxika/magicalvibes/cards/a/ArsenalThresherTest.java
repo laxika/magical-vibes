@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArsenalThresher.class, DarksteelRelic.class, Ornithopter.class, GrizzlyBears.class})
 class ArsenalThresherTest extends BaseCardTest {
 
     @Test
@@ -25,7 +27,7 @@ class ArsenalThresherTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent thresher = findThresher(player1);
+        Permanent thresher = findPermanent(player1, "Arsenal Thresher");
         assertThat(thresher).isNotNull();
         assertThat(thresher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -40,7 +42,7 @@ class ArsenalThresherTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent thresher = findThresher(player1);
+        Permanent thresher = findPermanent(player1, "Arsenal Thresher");
         assertThat(thresher).isNotNull();
         assertThat(thresher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -55,7 +57,7 @@ class ArsenalThresherTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent thresher = findThresher(player1);
+        Permanent thresher = findPermanent(player1, "Arsenal Thresher");
         assertThat(thresher).isNotNull();
         assertThat(thresher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -70,7 +72,7 @@ class ArsenalThresherTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent thresher = findThresher(player1);
+        Permanent thresher = findPermanent(player1, "Arsenal Thresher");
         assertThat(thresher).isNotNull();
         assertThat(thresher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -81,9 +83,30 @@ class ArsenalThresherTest extends BaseCardTest {
         harness.addMana(player, ManaColor.WHITE, 1);
     }
 
-    private Permanent findThresher(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Arsenal Thresher"))
-                .findFirst().orElse(null);
+    @Test
+    @DisplayName("Controller chooses which other artifact cards to reveal as it enters")
+    void offersRevealChoiceInsteadOfAutomaticallyCountingAllArtifacts() {
+        harness.setHand(player1, List.of(new ArsenalThresher(), new ArsenalThresher()));
+        payMana(player1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Artifacts on the battlefield do not provide entry counters")
+    void doesNotCountBattlefieldArtifacts() {
+        harness.addToBattlefield(player1, new ArsenalThresher());
+        harness.setHand(player1, List.of(new ArsenalThresher()));
+        payMana(player1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Arsenal Thresher")).hasSize(2)
+                .allSatisfy(permanent -> assertThat(
+                        permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
     }
 }

@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +19,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CapturedSunlight.class, Forest.class, GrizzlyBears.class, HillGiant.class,
+        LlanowarElves.class, Plains.class})
 class CapturedSunlightTest extends BaseCardTest {
-
-    // ===== Gain life =====
 
     @Test
     @DisplayName("Controller gains 4 life on resolution")
@@ -35,8 +35,6 @@ class CapturedSunlightTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
 
-    // ===== Cascade =====
-
     @Test
     @DisplayName("Cascade digs past a land and an equal-cost nonland to the first nonland with lesser mana value")
     void cascadeDigsToFirstLesserNonland() {
@@ -47,8 +45,7 @@ class CapturedSunlightTest extends BaseCardTest {
         LlanowarElves belowHit = new LlanowarElves();
         Plains land = new Plains();
         HillGiant skipped = new HillGiant();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(land, skipped, new GrizzlyBears(), belowHit));
+        harness.setLibrary(player1, List.of(land, skipped, new GrizzlyBears(), belowHit));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -64,7 +61,7 @@ class CapturedSunlightTest extends BaseCardTest {
         assertThat(castable).containsExactly("Grizzly Bears");
 
         // Cast the offered hit for free.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Grizzly Bears")
                 && se.getEntryType() == StackEntryType.CREATURE_SPELL);
 
@@ -77,12 +74,65 @@ class CapturedSunlightTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Declining cascade returns the hit and skipped cards below the untouched library")
+    void decliningCascadeReturnsAllExiledCards() {
+        castCapturedSunlight();
+        Plains land = new Plains();
+        GrizzlyBears hit = new GrizzlyBears();
+        LlanowarElves below = new LlanowarElves();
+        harness.setLibrary(player1, List.of(land, hit, below));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(below);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 3))
+                .containsExactlyInAnyOrder(land, hit);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the life gain")
+    void emptyLibraryStillGainsLife() {
+        castCapturedSunlight();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertInGraveyard(player1, "Captured Sunlight");
+    }
+
+    @Test
+    @DisplayName("Cascade cards are in exile while choosing whether to cast the hit")
+    void cascadeMovesCardsIntoExile() {
+        castCapturedSunlight();
+        Plains land = new Plains();
+        GrizzlyBears hit = new GrizzlyBears();
+        LlanowarElves below = new LlanowarElves();
+        harness.setLibrary(player1, List.of(land, hit, below));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).extracting(entry -> entry.card())
+                .containsExactlyInAnyOrder(land, hit);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(below);
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.exiledCards).isEmpty();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 24);
+    }
 
     private void castCapturedSunlight() {
         // Library holds only lands so cascade finds no hit and prompts nothing.
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Plains(), new Forest()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

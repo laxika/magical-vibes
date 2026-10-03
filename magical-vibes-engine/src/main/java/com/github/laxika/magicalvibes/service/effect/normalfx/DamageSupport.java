@@ -888,7 +888,19 @@ public class DamageSupport {
                 : entry != null && entry.getSourcePermanentId() != null
                         ? gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId())
                         : entry == null ? null : entry.getControllerId();
+        if (sourceControllerId == null && entry != null) sourceControllerId = entry.getControllerId();
         gameData.recordDamageToPermanentFromSource(targetId, amount, sourceId, sourceName, sourceControllerId);
+        boolean qualifyingSpell = entry != null
+                && entry.getEntryType() != com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY;
+        boolean qualifyingCreature = damageSource != null
+                && (gameQueryService.hasEffectiveSubtype(gameData, damageSource,
+                com.github.laxika.magicalvibes.model.CardSubtype.GIANT)
+                || gameQueryService.hasEffectiveSubtype(gameData, damageSource,
+                com.github.laxika.magicalvibes.model.CardSubtype.WIZARD));
+        if (amount > 0 && (qualifyingSpell || qualifyingCreature)) {
+            gameData.recordQualifyingDamageControllerToPermanent(targetId, sourceControllerId);
+        }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null && gameQueryService.isCreature(gameData, target)) {
             gameData.recordDamageDealtToCreatureBySource(sourceId, targetId);
@@ -1183,6 +1195,13 @@ public class DamageSupport {
                             damageDealt);
                     gameData.recordNoncombatDamageToPermanent(targetPermanent.getId(), damageDealt);
                     recordDamageToPermanent(gameData, targetPermanent.getId(), damageDealt, entry, sourcePermanent);
+                    int excessDamage = Math.max(0, damageDealt - (gameQueryService.isToughnessAsLoyaltyPermanent(
+                            gameData, targetPermanent) ? gameQueryService.getEffectiveToughness(gameData, targetPermanent)
+                            : targetPermanent.getCounterCount(CounterType.LOYALTY)));
+                    if (excessDamage > 0) {
+                        triggerCollectionService.checkOpponentPermanentDealtExcessDamageTriggers(
+                                gameData, targetPermanent, pwControllerId, excessDamage);
+                    }
                     if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                             || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
                         gameData.recordQualifyingDamageControllerToPermanent(

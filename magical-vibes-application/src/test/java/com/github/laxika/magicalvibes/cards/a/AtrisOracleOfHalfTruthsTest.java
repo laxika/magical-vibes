@@ -1,24 +1,30 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.DevourerOfMemory;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AtrisOracleOfHalfTruths.class, Forest.class, Island.class, Plains.class, Swamp.class})
+@CardUsed({AtrisOracleOfHalfTruths.class, Forest.class, Island.class, Plains.class, Swamp.class,
+        DevourerOfMemory.class, LeylineOfTheVoid.class})
 class AtrisOracleOfHalfTruthsTest extends BaseCardTest {
 
     @Test
@@ -79,13 +85,111 @@ class AtrisOracleOfHalfTruthsTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
     }
 
+    @Test
+    void controllerCanChooseFaceUpPile() {
+        Card island = new Island();
+        Card forest = new Forest();
+        Card swamp = new Swamp();
+        harness.setLibrary(player1, List.of(island, forest, swamp));
+
+        cast();
+        harness.handleMultipleCardsChosen(player2, List.of(island.getId()));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(forest, swamp);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(island);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void eitherPileCanBeEmptyAndChosen(boolean faceDownEmpty) {
+        Card island = new Island();
+        Card forest = new Forest();
+        Card swamp = new Swamp();
+        List<Card> cards = List.of(island, forest, swamp);
+        harness.setLibrary(player1, cards);
+
+        cast();
+        harness.handleMultipleCardsChosen(player2,
+                faceDownEmpty ? List.of() : cards.stream().map(Card::getId).toList());
+        harness.handleMayAbilityChosen(player1, faceDownEmpty);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void shortLibraryUsesAllAvailableCards(int size) {
+        List<Card> cards = List.<Card>of(new Island(), new Forest()).subList(0, size);
+        harness.setLibrary(player1, cards);
+
+        cast();
+        harness.handleMultipleCardsChosen(player2, cards.stream().map(Card::getId).toList());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryFinishesWithoutPileChoice() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({DevourerOfMemory.class})
+    void graveyardPileTriggersDevourerOnce() {
+        Permanent devourer = harness.addToBattlefieldAndReturn(player1, new DevourerOfMemory());
+        Card island = new Island();
+        Card forest = new Forest();
+        Card swamp = new Swamp();
+        harness.setLibrary(player1, List.of(island, forest, swamp));
+
+        cast();
+        harness.handleMultipleCardsChosen(player2, List.of(island.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(forest, swamp);
+        assertThat(devourer.getEffectivePower()).isEqualTo(3);
+        assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(devourer.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @CardUsed({LeylineOfTheVoid.class})
+    void graveyardPileRespectsLeylineReplacement() {
+        harness.addToBattlefield(player2, new LeylineOfTheVoid());
+        Card island = new Island();
+        Card forest = new Forest();
+        Card swamp = new Swamp();
+        harness.setLibrary(player1, List.of(island, forest, swamp));
+
+        cast();
+        harness.handleMultipleCardsChosen(player2, List.of(island.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(forest, swamp);
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new AtrisOracleOfHalfTruths()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

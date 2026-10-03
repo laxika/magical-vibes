@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AlmostPerfect.class, FountainOfYouth.class, SerraAngel.class})
+@CardUsed({AlmostPerfect.class, FountainOfYouth.class, SerraAngel.class, WrathOfGod.class})
 class AlmostPerfectTest extends BaseCardTest {
 
     @Test
@@ -58,6 +60,40 @@ class AlmostPerfectTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void countersApplyOnTopOfTheNewBasePowerAndToughness() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        angel.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castAndResolve(angel);
+
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(12);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void onlyTheEnchantedCreatureSurvivesDestroyAllCreatures() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        castAndResolve(enchanted);
+
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(enchanted);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(other);
+        harness.assertInGraveyard(player2, "Serra Angel");
+        harness.assertOnBattlefield(player1, "Almost Perfect");
     }
 
     private void castAndResolve(Permanent target) {

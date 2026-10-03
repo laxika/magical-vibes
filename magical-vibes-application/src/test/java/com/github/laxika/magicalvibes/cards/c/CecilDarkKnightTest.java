@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -58,8 +59,7 @@ class CecilDarkKnightTest extends BaseCardTest {
         harness.setLife(player1, 12);
         harness.setLife(player2, 20);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(cecil))));
@@ -85,24 +85,83 @@ class CecilDarkKnightTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, nonAttacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Darkness uses half the Commander starting life total")
+    void darknessTransformsAtCommanderHalfLife() {
+        gd.format = DeckFormat.COMMANDER;
+        Permanent cecil = addReadyCecil(player1);
+        harness.setLife(player1, 22);
+        harness.setLife(player2, 40);
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 38);
+        assertThat(cecil.isTransformed()).isTrue();
+        assertThat(cecil.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Darkness transforms when life falls below half")
+    void darknessTransformsBelowHalfLife() {
+        Permanent cecil = addReadyCecil(player1);
+        harness.setLife(player1, 10);
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 8);
+        assertThat(cecil.isTransformed()).isTrue();
+        assertThat(cecil.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The redeemed face gains life from damage without triggering Darkness")
+    void redeemedPaladinGainsLifeWithoutDarkness() {
+        Permanent cecil = addTransformedCecil(player1);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 16);
+        assertThat(cecil.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protect saves another attacker from lethal combat damage")
+    void protectPreventsCombatDestruction() {
+        addTransformedCecil(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
+        resolveAllTriggers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
     private Permanent addReadyCecil(com.github.laxika.magicalvibes.model.Player player) {
-        return addReadyPermanent(player, new CecilDarkKnight());
+        return addCreatureReady(player, new CecilDarkKnight());
     }
 
     private Permanent addTransformedCecil(com.github.laxika.magicalvibes.model.Player player) {
         CecilDarkKnight front = new CecilDarkKnight();
-        Permanent cecil = new Permanent(front);
+        Permanent cecil = addCreatureReady(player, front);
         cecil.setCard(front.getBackFaceCard());
         cecil.setTransformed(true);
-        cecil.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(cecil);
         return cecil;
-    }
-
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

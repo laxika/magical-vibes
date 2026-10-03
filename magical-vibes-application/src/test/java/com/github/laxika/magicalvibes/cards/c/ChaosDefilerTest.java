@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.ArcaneSignet;
+import com.github.laxika.magicalvibes.cards.a.ArcoFlagellant;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChaosDefiler.class, GrizzlyBears.class, Murder.class})
+@CardUsed({ChaosDefiler.class, GrizzlyBears.class, Murder.class, ArcaneSignet.class, ArcoFlagellant.class, Forest.class})
 class ChaosDefilerTest extends BaseCardTest {
 
     @Test
@@ -62,12 +65,83 @@ class ChaosDefilerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(second);
     }
 
+    @Test
+    void destroysAnOpponentsOnlyNonlandPermanentWithoutAChoice() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ArcaneSignet());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new ArcaneSignet());
+
+        castChaosDefiler();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land).doesNotContain(artifact);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownArtifact);
+        harness.assertInGraveyard(player2, "Arcane Signet");
+        harness.assertOnBattlefield(player1, "Chaos Defiler");
+    }
+
+    @Test
+    void doesNothingWhenOpponentControlsOnlyLands() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new ArcaneSignet());
+
+        castChaosDefiler();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownArtifact);
+        harness.assertOnBattlefield(player1, "Chaos Defiler");
+    }
+
+    @Test
+    void choiceExcludesLandsAndTheControllersPermanents() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ArcaneSignet());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ArcaneSignet());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new ArcaneSignet());
+
+        castChaosDefiler();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, land).doesNotContain(second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownArtifact);
+    }
+
+    @Test
+    void canChooseAnIndestructiblePermanentWithoutDestroyingAnotherInstead() {
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new ArcoFlagellant());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ArcaneSignet());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        castChaosDefiler();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(protectedCreature.getId(), artifact.getId());
+        harness.handlePermanentChosen(player1, protectedCreature.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(protectedCreature, artifact);
+    }
+
     private void castChaosDefiler() {
-        harness.setHand(player1, List.of(new ChaosDefiler()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChaosDefiler(), "{3}{B}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

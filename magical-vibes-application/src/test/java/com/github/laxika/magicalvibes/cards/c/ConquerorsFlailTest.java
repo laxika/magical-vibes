@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.q.QasaliAmbusher;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -20,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConquerorsFlail.class, AirElemental.class, GrizzlyBears.class, QasaliAmbusher.class, Shock.class, Ornithopter.class, RagingGoblin.class})
+@CardUsed({ConquerorsFlail.class, GrizzlyBears.class, QasaliAmbusher.class, Shock.class, Ornithopter.class, RagingGoblin.class, ProdigalPyromancer.class})
 class ConquerorsFlailTest extends BaseCardTest {
 
     @Test
@@ -88,10 +87,92 @@ class ConquerorsFlailTest extends BaseCardTest {
         harness.assertLife(player1, 18);
     }
 
+    @Test
+    void bonusCountsDistinctColorsAndUpdatesWhenPermanentsLeave() {
+        Permanent creature = addCreatureReady(player1, new Ornithopter());
+        Permanent flail = addFlailReady(player1);
+        flail.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent goblin = addCreatureReady(player1, new RagingGoblin());
+        addCreatureReady(player2, new QasaliAmbusher());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(goblin);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    void bonusUsesEquipmentControllerEvenWhenCreatureHasAnotherController() {
+        Permanent creature = addCreatureReady(player2, new Ornithopter());
+        addCreatureReady(player2, new QasaliAmbusher());
+        addCreatureReady(player1, new RagingGoblin());
+        Permanent flail = addFlailReady(player1);
+        flail.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    void opponentCanCastDuringTheirOwnTurnWhileFlailIsAttached() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent flail = addFlailReady(player1);
+        flail.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void controllerCanCastDuringTheirTurnWhileFlailIsAttached() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent flail = addFlailReady(player1);
+        flail.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void opponentCanActivateCreatureAbilitiesDuringEquipmentControllersTurn() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent flail = addFlailReady(player1);
+        flail.setAttachedTo(creature.getId());
+        addCreatureReady(player2, new ProdigalPyromancer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
     private Permanent addFlailReady(Player player) {
-        Permanent permanent = new Permanent(new ConquerorsFlail());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ConquerorsFlail());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

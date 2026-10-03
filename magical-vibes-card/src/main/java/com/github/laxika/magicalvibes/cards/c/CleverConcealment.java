@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "FIC", collectorNumber = "236")
 @CardRegistration(set = "MSC", collectorNumber = "125")
 @CardRegistration(set = "MSC", collectorNumber = "298")
+@CardRegistration(set = "ONC", collectorNumber = "5")
+@CardRegistration(set = "ONC", collectorNumber = "43")
 public class CleverConcealment extends Card {
 
     public CleverConcealment() {

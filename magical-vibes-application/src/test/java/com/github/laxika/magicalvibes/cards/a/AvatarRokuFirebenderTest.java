@@ -14,7 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvatarRokuFirebender.class, GrizzlyBears.class, Forest.class})
+@CardUsed({AvatarRokuFirebender.class, GrizzlyBears.class, Forest.class,
+        AvatarAang.class, AangMasterOfElements.class})
 class AvatarRokuFirebenderTest extends BaseCardTest {
 
     @Test
@@ -55,9 +56,7 @@ class AvatarRokuFirebenderTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
     }
@@ -71,5 +70,69 @@ class AvatarRokuFirebenderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    void addsManaOnlyOnceWhenMultipleCreaturesAttackWithoutRoku() {
+        harness.addToBattlefield(player1, new AvatarRokuFirebender());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(6);
+    }
+
+    @Test
+    void addsNoManaWhenNoCreaturesAttack() {
+        addCreatureReady(player1, new AvatarRokuFirebender());
+
+        declareAttackers(List.of());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void combatManaPaysForRepeatedBoostsWithoutReturningAsStepsEnd() {
+        addCreatureReady(player1, new AvatarRokuFirebender());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(6);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.activateAbility(player1, 0, null, target.getId());
+            harness.passBothPriorities();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+            assertThat(target.getEffectivePower()).isEqualTo(5);
+
+            harness.activateAbility(player1, 0, null, target.getId());
+            harness.passBothPriorities();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+            assertThat(target.getEffectivePower()).isEqualTo(8);
+            assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        });
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void attackManaDoesNotCountAsFirebendingOrTriggerAang() {
+        harness.addToBattlefield(player1, new AvatarRokuFirebender());
+        harness.addToBattlefield(player1, new AvatarAang());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        declareAttackers(List.of(2));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(6);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

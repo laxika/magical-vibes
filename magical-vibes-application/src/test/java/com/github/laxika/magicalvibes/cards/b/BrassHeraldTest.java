@@ -152,12 +152,13 @@ class BrassHeraldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(elf, coast));
         List<Card> deck = gd.playerDecks.get(player1.getId());
 
-        castHeraldAndChoose("ELF");
+        harness.castFromHand(player1, new BrassHerald(), "{6}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ELF");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
 
-        Permanent herald = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof BrassHerald)
-                .findFirst()
-                .orElseThrow();
+        Permanent herald = findPermanent(player1, "Brass Herald");
         gd.playerBattlefields.get(player1.getId()).remove(herald);
 
         harness.passBothPriorities();
@@ -229,5 +230,49 @@ class BrassHeraldTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(herald);
         assertThat(gqs.computeStaticBonus(gd, elfPerm).power()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Unmatched cards go below the untouched library in the chosen order")
+    void unmatchedCardsGoToBottomInChosenOrder() {
+        Card elf = new UrborgElf();
+        Card golem = new Dodecapod();
+        Card coast = new YavimayaCoast();
+        Card index = new Index();
+        Card deepElf = new UrborgElf();
+        harness.setLibrary(player1, List.of(elf, golem, coast, index, deepElf));
+
+        castHeraldAndChoose("ELF");
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elf);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(deepElf, index, golem, coast);
+    }
+
+    @Test
+    @DisplayName("All matching cards enter hand even when fewer than four remain")
+    void shortLibraryWithAllMatchesNeedsNoReorder() {
+        Card elf = new UrborgElf();
+        Card changeling = new WoodlandChangeling();
+        harness.setLibrary(player1, List.of(elf, changeling));
+
+        castHeraldAndChoose("ELF");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(elf, changeling);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Changeling creatures receive the chosen type bonus")
+    void boostsChangelingCreatures() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player2, new WoodlandChangeling());
+        harness.setLibrary(player1, List.of());
+
+        castHeraldAndChoose("ELF");
+
+        var bonus = gqs.computeStaticBonus(gd, changeling);
+        assertThat(bonus.power()).isEqualTo(1);
+        assertThat(bonus.toughness()).isEqualTo(1);
     }
 }

@@ -152,4 +152,60 @@ class ButcherOrggTest extends BaseCardTest {
                 player1, 0, Map.of(blocker.getId(), 7, player2.getId(), -1)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A blocked Butcher Orgg can assign all damage to the defending player")
+    void assignsAllBlockedDamageToDefendingPlayer() {
+        harness.setLife(player2, 20);
+        Permanent orgg = addCreatureReady(player1, new ButcherOrgg());
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+        orgg.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 6));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(orgg.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("A blocked Butcher Orgg can assign all damage to a creature that is not blocking")
+    void assignsAllBlockedDamageToNonblockingCreature() {
+        harness.setLife(player2, 20);
+        Permanent orgg = addCreatureReady(player1, new ButcherOrgg());
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+        Permanent otherCreature = addCreatureReady(player2, new GlorySeeker());
+        orgg.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(otherCreature.getId(), 6));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(orgg.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(blocker).doesNotContain(otherCreature);
+    }
+
+    @Test
+    @DisplayName("A blocked Butcher Orgg with no blockers remaining assigns no damage")
+    void assignsNoDamageWhenAllBlockersHaveLeftCombat() {
+        harness.setLife(player2, 20);
+        Permanent orgg = addCreatureReady(player1, new ButcherOrgg());
+        Permanent defendingCreature = addCreatureReady(player2, new GlorySeeker());
+        orgg.setAttacking(true);
+        orgg.setBlockedWithoutBlockers(true);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(defendingCreature.getMarkedDamage()).isZero();
+    }
 }

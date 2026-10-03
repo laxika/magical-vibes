@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DragonMage;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,6 @@ class BladewingTheRisenTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → ETB triggers graveyard targeting
     }
 
-    // ===== ETB reanimation =====
-
     @Test
     @DisplayName("ETB returns a targeted Dragon permanent card from graveyard to the battlefield")
     void etbReturnsDragonToBattlefield() {
@@ -43,6 +42,9 @@ class BladewingTheRisenTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(dragon.getId()));
         harness.passBothPriorities(); // resolve the ETB triggered ability
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Dragon Mage");
         harness.assertNotInGraveyard(player1, "Dragon Mage");
@@ -70,16 +72,18 @@ class BladewingTheRisenTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        // Choose nothing — "you may return"
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(dragon.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Dragon Mage");
         harness.assertNotOnBattlefield(player1, "Dragon Mage");
     }
 
     @Test
-    @DisplayName("Empty graveyard produces no trigger")
+    @DisplayName("Empty graveyard produces no legal graveyard target")
     void emptyGraveyardNoTrigger() {
         castBladewing();
 
@@ -96,8 +100,6 @@ class BladewingTheRisenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player2, "Dragon Mage");
     }
-
-    // ===== Activated ability: Dragon creatures get +1/+1 =====
 
     @Test
     @DisplayName("{B}{R} pumps all Dragon creatures until end of turn")
@@ -133,11 +135,59 @@ class BladewingTheRisenTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(dragon.getPowerModifier()).isEqualTo(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(dragon.getPowerModifier()).isEqualTo(0);
         assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @CardUsed({NamelessInversion.class})
+    @DisplayName("A Dragon instant with changeling is not a Dragon permanent card")
+    void dragonInstantIsNotALegalTarget() {
+        DragonMage dragon = new DragonMage();
+        NamelessInversion instant = new NamelessInversion();
+        harness.setGraveyard(player1, List.of(dragon, instant));
+
+        castBladewing();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(dragon.getId());
+    }
+
+    @Test
+    @DisplayName("A Dragon removed from the graveyard before resolution is not returned")
+    void missingTargetIsNotReturned() {
+        DragonMage dragon = new DragonMage();
+        harness.setGraveyard(player1, List.of(dragon));
+
+        castBladewing();
+        harness.handleMultipleCardsChosen(player1, List.of(dragon.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Dragon Mage");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and do not pump Dragons entering after resolution")
+    void repeatedPumpsExcludeLaterDragons() {
+        Permanent bladewing = harness.addToBattlefieldAndReturn(player1, new BladewingTheRisen());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent laterDragon = harness.addToBattlefieldAndReturn(player2, new DragonMage());
+
+        assertThat(bladewing.getEffectivePower()).isEqualTo(6);
+        assertThat(bladewing.getEffectiveToughness()).isEqualTo(6);
+        assertThat(laterDragon.getEffectivePower()).isEqualTo(5);
+        assertThat(laterDragon.getEffectiveToughness()).isEqualTo(5);
     }
 }

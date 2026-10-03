@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CoatOfArms.class, Anarchist.class, ChangelingWayfinder.class, RagingGoblin.class,
+@CardUsed({CoatOfArms.class, Anarchist.class, ArcaneAdaptation.class, ChangelingWayfinder.class, RagingGoblin.class,
         StandingTroops.class, WelkinHawk.class})
 class CoatOfArmsTest extends BaseCardTest {
 
@@ -165,7 +165,6 @@ class CoatOfArmsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ArcaneAdaptation.class)
     @DisplayName("Counts a creature type granted by another continuous effect")
     void countsGrantedCreatureTypes() {
         harness.addToBattlefield(player1, new CoatOfArms());
@@ -266,5 +265,37 @@ class CoatOfArmsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, trackedGoblin)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, trackedGoblin)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sharing two creature types still counts each other creature only once")
+    void multipleSharedTypesCountEachCreatureOnce() {
+        harness.addToBattlefield(player1, new CoatOfArms());
+        Permanent firstTroops = harness.addToBattlefieldAndReturn(player1, new StandingTroops());
+        Permanent secondTroops = harness.addToBattlefieldAndReturn(player2, new StandingTroops());
+        Permanent anarchist = harness.addToBattlefieldAndReturn(player1, new Anarchist());
+
+        assertThat(gqs.getEffectivePower(gd, firstTroops)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstTroops)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, secondTroops)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondTroops)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, anarchist)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, anarchist)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A changeling connects unrelated types without making them share with each other")
+    void changelingDoesNotMakeUnrelatedCreaturesShareTypes() {
+        harness.addToBattlefield(player1, new CoatOfArms());
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new ChangelingWayfinder());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new WelkinHawk());
+
+        assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wayfinder)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(2);
     }
 }

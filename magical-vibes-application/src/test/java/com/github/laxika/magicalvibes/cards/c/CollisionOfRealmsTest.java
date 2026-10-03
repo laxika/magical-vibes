@@ -59,11 +59,67 @@ class CollisionOfRealmsTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Forest", "Grizzly Bears");
     }
 
+    @Test
+    void multipleShuffledCreaturesReturnOnlyOneCreature() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.addToBattlefield(player1, first);
+        harness.addToBattlefield(player1, second);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of());
+
+        cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Card returned = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        assertThat(returned).isIn(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(first == returned ? second : first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsNoneOf(first, second);
+    }
+
+    @Test
+    void creatureControlledByOpponentReturnsUnderItsOwnersControl() {
+        GrizzlyBears stolen = new GrizzlyBears();
+        stolen.setOwnerId(player1.getId());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, stolen);
+        gd.stolenCreatures.put(permanent.getId(), player1.getId());
+        harness.setLibrary(player1, List.of(new Forest()));
+        GrizzlyBears opponentLibraryCreature = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(opponentLibraryCreature));
+
+        cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .containsExactly(stolen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentLibraryCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+    }
+
+    @Test
+    void playersWithoutCreaturesDoNotPutLibraryCreaturesOntoBattlefield() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        Forest land = new Forest();
+        harness.addToBattlefield(player1, land);
+        harness.setLibrary(player1, List.of(first));
+        harness.setLibrary(player2, List.of(second));
+
+        cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second);
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new CollisionOfRealms()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

@@ -77,4 +77,65 @@ class CircleOfTheLandDruidTest extends BaseCardTest {
         harness.assertInHand(player1, "Forest");
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("ETB mills only the top four cards of its controller's library")
+    void millsOnlyTopFourOfControllersLibrary() {
+        List<Card> library = List.of(new Forest(), new CircleOfTheLandDruid(),
+                new Forest(), new CircleOfTheLandDruid(), new Forest());
+        Card opponentsCard = new Forest();
+        harness.setLibrary(player1, library);
+        harness.setLibrary(player2, List.of(opponentsCard));
+
+        harness.enterBattlefieldAndReturn(player1, new CircleOfTheLandDruid());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(library.subList(0, 4));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(4));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB mills all remaining cards when fewer than four remain")
+    void millsShortLibrary() {
+        List<Card> library = List.of(new Forest(), new CircleOfTheLandDruid());
+        harness.setLibrary(player1, library);
+
+        harness.enterBattlefieldAndReturn(player1, new CircleOfTheLandDruid());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    @DisplayName("Death trigger cannot target an opponent's land or replace a removed target")
+    void deathTargetMustRemainInControllersGraveyard() {
+        Card land = new Forest();
+        Card otherLand = new Forest();
+        Card opponentsLand = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(land, otherLand));
+        harness.setGraveyard(player2, List.of(opponentsLand));
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new CircleOfTheLandDruid());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(land.getId(), otherLand.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.setGraveyard(player1, List.of(otherLand, druid.getCard()));
+        harness.setExile(player1, List.of(land));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsLand);
+    }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -60,11 +61,62 @@ class BronzeplateBoarTest extends BaseCardTest {
         assertThat(boar.getAttachedTo()).isNull();
     }
 
+    @Test
+    void reconfigureMovesDirectlyBetweenCreatures() {
+        Permanent boar = addReadyBoar();
+        Permanent first = addCreatureReady(player1, new BronzeplateBoar());
+        Permanent second = addCreatureReady(player1, new BronzeplateBoar());
+        boar.setAttachedTo(first.getId());
+        addReconfigureMana();
+
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(boar.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.isCreature(gd, boar)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+    }
+
+    @Test
+    void bothReconfigureAbilitiesAreRestrictedToMainPhases() {
+        Permanent boar = addReadyBoar();
+        Permanent creature = addCreatureReady(player1, new BronzeplateBoar());
+        addReconfigureMana();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        boar.setAttachedTo(creature.getId());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(boar.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void reconfigureKeepsOriginalAttachmentWhenNewTargetLeaves() {
+        Permanent boar = addReadyBoar();
+        Permanent original = addCreatureReady(player1, new BronzeplateBoar());
+        Permanent target = addCreatureReady(player1, new BronzeplateBoar());
+        boar.setAttachedTo(original.getId());
+        addReconfigureMana();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(boar.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, boar)).isFalse();
+    }
+
     private Permanent addReadyBoar() {
-        Permanent boar = new Permanent(new BronzeplateBoar());
-        boar.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(boar);
-        return boar;
+        return addCreatureReady(player1, new BronzeplateBoar());
     }
 
     private void addReconfigureMana() {

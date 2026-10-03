@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MightOfTheMeek;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,9 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BrambleguardCaptain.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({BrambleguardCaptain.class, GrizzlyBears.class, HillGiant.class, MightOfTheMeek.class})
 class BrambleguardCaptainTest extends BaseCardTest {
 
     @Test
@@ -77,6 +81,52 @@ class BrambleguardCaptainTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("Can boost itself without repeatedly recalculating the boost")
+    void boostsItselfByItsPowerBeforeTheBoost() {
+        Permanent captain = addCaptain();
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, captain.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Uses its power when the ability resolves, including a response spell's boost")
+    void usesPowerAtResolution() {
+        Permanent captain = addCaptain();
+        harness.setHand(player1, List.of(new MightOfTheMeek()));
+        harness.setLibrary(player1, List.of(new BrambleguardCaptain()));
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, captain.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, captain.getId());
+
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Negative source power gives a zero boost")
+    void negativeSourcePowerDoesNotReduceItsOwnPower() {
+        Permanent captain = addCaptain();
+        captain.setPowerModifier(-3);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, captain.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(3);
+    }
+
     private Permanent addCaptain() {
         return harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
     }
@@ -84,7 +134,6 @@ class BrambleguardCaptainTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 }

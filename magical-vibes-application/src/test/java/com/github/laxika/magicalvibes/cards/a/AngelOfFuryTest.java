@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AngelOfFury.class)
+@CardUsed({AngelOfFury.class})
 class AngelOfFuryTest extends BaseCardTest {
 
     @Test
@@ -95,5 +95,28 @@ class AngelOfFuryTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(angelId));
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getId().equals(angelId));
+    }
+
+    @Test
+    @DisplayName("An accepted death trigger cannot retrieve Angel of Fury after it leaves the graveyard")
+    void acceptedTriggerDoesNothingAfterAngelLeavesGraveyard() {
+        harness.setLibrary(player2, new ArrayList<>());
+        AngelOfFury card = new AngelOfFury();
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, card);
+        angel.setMarkedDamage(5);
+
+        harness.runStateBasedActions();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(card);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player2, java.util.List.of());
+        harness.setExile(player2, java.util.List.of(card));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(card);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(card);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(card.getId()));
+        assertThat(gd.stack).isEmpty();
     }
 }

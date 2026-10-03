@@ -33,7 +33,6 @@ class AdarkarWindformTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
@@ -54,12 +53,73 @@ class AdarkarWindformTest extends BaseCardTest {
     @DisplayName("Ability rejects a non-creature target")
     void rejectsNonCreatureTarget() {
         addWindformReady(player1);
-        Permanent land = new Permanent(new SnowCoveredPlains());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SnowCoveredPlains());
         payAbilityCost(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Windform can target itself using colored snow mana")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent windform = harness.addToBattlefieldAndReturn(player1, new AdarkarWindform());
+        windform.setSummoningSick(true);
+        windform.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, windform.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, windform, Keyword.FLYING)).isFalse();
+        assertThat(windform.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("One snow mana cannot pay both the generic and snow symbols")
+    void requiresTwoManaIncludingOneSnowMana() {
+        Permanent windform = addWindformReady(player1);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, windform.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Ability resolves even after Windform leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent windform = addWindformReady(player1);
+        Permanent target = addCreatureReady(player2, new BorealGriffin());
+        payAbilityCost(player1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(windform);
+        gd.playerGraveyards.get(player1.getId()).add(windform.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature without flying remains a legal target")
+    void canTargetCreatureAfterItLosesFlying() {
+        addWindformReady(player1);
+        Permanent target = addCreatureReady(player2, new BorealGriffin());
+        payAbilityCost(player1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+
+        payAbilityCost(player1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addWindformReady(Player player) {

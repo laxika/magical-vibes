@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodfellCaves.class})
 class BloodfellCavesTest extends BaseCardTest {
 
     @Test
@@ -66,10 +68,44 @@ class BloodfellCavesTest extends BaseCardTest {
         assertThat(caves.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Life gain waits for resolution and survives the land leaving")
+    void lifeGainResolvesAfterLandLeavesBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BloodfellCaves()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        Permanent caves = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(caves.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being played still enters tapped and gains life")
+    void enteringWithoutBeingPlayedTriggersLifeGain() {
+        harness.setLife(player2, 20);
+        Permanent caves = harness.enterBattlefieldAndReturn(player2, new BloodfellCaves());
+
+        assertThat(caves.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 21);
+    }
+
     private Permanent addReadyCaves(Player player) {
-        Permanent perm = new Permanent(new BloodfellCaves());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BloodfellCaves());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

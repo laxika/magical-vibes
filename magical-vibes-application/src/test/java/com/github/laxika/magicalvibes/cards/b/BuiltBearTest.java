@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,12 +13,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BuiltBear.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({BuiltBear.class, Forest.class, Shock.class})
 class BuiltBearTest extends BaseCardTest {
 
     @Test
-    void entersAsBuiltBearAndDrawsACard() {
+    void unmodifiedBearDoesNotReceiveUncircledUpgradesOrDrawACard() {
         Forest drawnCard = new Forest();
         harness.setHand(player1, List.of(new BuiltBear()));
         harness.setLibrary(player1, List.of(drawnCard));
@@ -28,35 +27,40 @@ class BuiltBearTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
-        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isTrue();
-        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isTrue();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.WARD)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
     }
 
     @Test
-    void tapsForManaOfChosenColor() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new BuiltBear());
-        bear.setSummoningSick(false);
+    void unmodifiedBearCannotActivateUncircledManaAbility() {
+        addCreatureReady(player1, new BuiltBear());
 
-        harness.activateAbility(player1, 0, null, null);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, ManaColor.BLUE.name());
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test
-    void wardCountersAnOpponentSpellUnlessTheyPayTwo() {
+    void unmodifiedBearTapsWhenAttackingWithoutCircledVigilance() {
+        Permanent bear = addCreatureReady(player1, new BuiltBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bear.isTapped()).isTrue();
+    }
+
+    @Test
+    void unmodifiedBearDoesNotCounterAnOpponentSpellWithUncircledWard() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new BuiltBear());
-        bear.setSummoningSick(false);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -64,8 +68,11 @@ class BuiltBearTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castInstant(player2, 0, bear.getId());
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");
+        harness.assertInGraveyard(player1, "Built Bear");
+        harness.assertNotOnBattlefield(player1, "Built Bear");
     }
 }

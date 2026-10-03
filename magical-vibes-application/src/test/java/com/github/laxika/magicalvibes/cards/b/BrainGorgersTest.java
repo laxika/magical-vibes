@@ -132,11 +132,68 @@ class BrainGorgersTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Brain Gorgers");
     }
 
+    @Test
+    @DisplayName("All players choose before creatures are sacrificed and the spell is countered")
+    void sacrificesWaitForAllPlayersChoices() {
+        harness.addToBattlefield(player1, new BloodKnight());
+        harness.addToBattlefield(player2, new BloodKnight());
+        castBrainGorgers(player1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Blood Knight");
+        harness.assertOnBattlefield(player2, "Blood Knight");
+        harness.assertNotInGraveyard(player1, "Brain Gorgers");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player1, "Blood Knight");
+        harness.assertInGraveyard(player2, "Blood Knight");
+        harness.assertInGraveyard(player1, "Brain Gorgers");
+        harness.assertNotOnBattlefield(player1, "Brain Gorgers");
+    }
+
+    @Test
+    @DisplayName("Brain Gorgers resolves when both players with creatures decline")
+    void bothPlayersDecline() {
+        harness.addToBattlefield(player1, new BloodKnight());
+        harness.addToBattlefield(player2, new BloodKnight());
+        castBrainGorgers(player1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Brain Gorgers");
+        harness.assertOnBattlefield(player1, "Blood Knight");
+        harness.assertOnBattlefield(player2, "Blood Knight");
+    }
+
+    @Test
+    @DisplayName("An opponent can sacrifice to counter Brain Gorgers cast for madness")
+    void sacrificeCountersMadnessCast() {
+        harness.addToBattlefield(player2, new BloodKnight());
+        discardViaPiracyCharm();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Brain Gorgers");
+        harness.assertInGraveyard(player2, "Blood Knight");
+        harness.assertNotOnBattlefield(player1, "Brain Gorgers");
+    }
+
     private void castBrainGorgers(Player player) {
-        harness.setHand(player, List.of(new BrainGorgers()));
-        harness.addMana(player, ManaColor.BLACK, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 3);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new BrainGorgers(), "{3}{B}");
     }
 
     private BrainGorgers discardViaPiracyCharm() {

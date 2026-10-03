@@ -19,6 +19,61 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CanopyVistaTest extends BaseCardTest {
 
     @Test
+    void entersTappedWithNoLands() {
+        playCanopyVista();
+
+        assertThat(findCanopyVista(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWithTwoTappedForests() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+
+        playCanopyVista();
+
+        assertThat(findCanopyVista(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWithMoreThanTwoBasicLands() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+
+        playCanopyVista();
+
+        assertThat(findCanopyVista(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void basicLandTypesOnNonbasicLandDoNotCount() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new CanopyVista());
+
+        playCanopyVista();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(2).isTapped()).isTrue();
+    }
+
+    @Test
+    void entersTappedWhenPutOntoBattlefieldWithoutBeingPlayed() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new CanopyVista());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWhenPutOntoBattlefieldWithTwoBasicLands() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new CanopyVista());
+
+        assertThat(permanent.isTapped()).isFalse();
+    }
+
+    @Test
     void entersTappedWithFewerThanTwoBasicLands() {
         harness.addToBattlefield(player1, new Forest());
 
@@ -83,9 +138,8 @@ class CanopyVistaTest extends BaseCardTest {
     }
 
     private Permanent addReadyCanopyVista(Player player) {
-        Permanent permanent = new Permanent(new CanopyVista());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new CanopyVista());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

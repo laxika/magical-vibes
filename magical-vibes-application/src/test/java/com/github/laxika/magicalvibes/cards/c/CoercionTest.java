@@ -100,4 +100,47 @@ class CoercionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("The caster must choose a card and the opponent cannot make that choice")
+    void choiceIsMandatoryAndBelongsToCaster() {
+        Island island = new Island();
+        harness.setHand(player2, List.of(island));
+        harness.setHand(player1, List.of(new Coercion()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(island);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(island);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coercion");
+    }
+
+    @Test
+    @DisplayName("Choosing one copy leaves an identical card in the opponent's hand")
+    void discardsOnlyTheChosenCopy() {
+        GrizzlyBears firstBear = new GrizzlyBears();
+        GrizzlyBears secondBear = new GrizzlyBears();
+        harness.setHand(player2, List.of(firstBear, secondBear));
+        harness.setHand(player1, List.of(new Coercion()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstBear);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(secondBear);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

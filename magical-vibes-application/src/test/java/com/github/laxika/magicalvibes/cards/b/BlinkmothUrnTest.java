@@ -71,6 +71,81 @@ class BlinkmothUrnTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
+    @Test
+    void countsArtifactsWhenTheAbilityResolves() {
+        harness.addToBattlefield(player1, new BlinkmothUrn());
+        advanceToPrecombatMain(player1);
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        artifact.tap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    void addsNoManaToAnActivePlayerWithNoArtifacts() {
+        harness.addToBattlefield(player1, new BlinkmothUrn());
+        advanceToPrecombatMain(player2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void eachUrnAddsManaSeparately() {
+        harness.addToBattlefield(player1, new BlinkmothUrn());
+        harness.addToBattlefield(player2, new BlinkmothUrn());
+        harness.addToBattlefield(player1, new Ornithopter());
+        advanceToPrecombatMain(player1);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void usesLastKnownUntappedStateWhenUrnLeavesBeforeResolution() {
+        Permanent urn = harness.addToBattlefieldAndReturn(player1, new BlinkmothUrn());
+        harness.addToBattlefield(player1, new Ornithopter());
+        advanceToPrecombatMain(player1);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, urn);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void usesLastKnownTappedStateWhenUrnLeavesBeforeResolution() {
+        Permanent urn = harness.addToBattlefieldAndReturn(player1, new BlinkmothUrn());
+        harness.addToBattlefield(player1, new Ornithopter());
+        advanceToPrecombatMain(player1);
+
+        urn.tap();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, urn);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerAtTheBeginningOfPostcombatMain() {
+        harness.addToBattlefield(player1, new BlinkmothUrn());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
     private void advanceToPrecombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);

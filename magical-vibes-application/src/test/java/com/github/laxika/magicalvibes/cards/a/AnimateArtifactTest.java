@@ -22,9 +22,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AnimateArtifactTest extends BaseCardTest {
 
     private Permanent enchant(Permanent artifact) {
-        Permanent aura = new Permanent(new AnimateArtifact());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new AnimateArtifact());
         aura.setAttachedTo(artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 
@@ -85,8 +84,7 @@ class AnimateArtifactTest extends BaseCardTest {
     @DisplayName("An artifact that is already a creature keeps its printed P/T")
     void doesNotAnimateArtifactCreature() {
         // Ornithopter is already a 0/2 artifact creature; the "isn't a creature" clause fails.
-        harness.addToBattlefield(player1, new Ornithopter());
-        Permanent thopter = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         enchant(thopter);
 
         assertThat(gqs.isCreature(gd, thopter)).isTrue();
@@ -122,5 +120,52 @@ class AnimateArtifactTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
+    }
+
+    @Test
+    void zeroManaArtifactCreatureSurvivesResolution() {
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new AnimateArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, thopter.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertOnBattlefield(player1, "Animate Artifact");
+        assertThat(gqs.getEffectivePower(gd, thopter)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
+    }
+
+    @Test
+    void animationResumesWhenOtherCreatureEffectStopsApplying() {
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
+        enchant(warden);
+        harness.forceActivePlayer(player2);
+
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(3);
+
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.isCreature(gd, warden)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(3);
+    }
+
+    @Test
+    void remainingAuraContinuesAnimationWhenFirstAuraLeaves() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Conservator());
+        Permanent firstAura = enchant(artifact);
+        enchant(artifact);
+
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        assertThat(gqs.isCreature(gd, artifact)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(4);
     }
 }

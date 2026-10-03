@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.q.QuicksilverDragon;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CorrodingDragonstorm.class, Forest.class, GrizzlyBears.class, Island.class, ShivanDragon.class})
+@CardUsed({CorrodingDragonstorm.class, Forest.class, GrizzlyBears.class, Island.class,
+        ShivanDragon.class, QuicksilverDragon.class})
 class CorrodingDragonstormTest extends BaseCardTest {
 
     @Test
@@ -34,8 +36,7 @@ class CorrodingDragonstormTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore + 2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
@@ -55,8 +56,7 @@ class CorrodingDragonstormTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Corroding Dragonstorm");
         harness.assertInHand(player1, "Corroding Dragonstorm");
@@ -70,7 +70,7 @@ class CorrodingDragonstormTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Corroding Dragonstorm");
     }
@@ -86,8 +86,102 @@ class CorrodingDragonstormTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 6);
 
         harness.castCreature(player2, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Corroding Dragonstorm");
+    }
+
+    @Test
+    @DisplayName("Surveil can keep both cards in a different order")
+    void surveilCanReorderBothCards() {
+        Card first = new Forest();
+        Card second = new Island();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new CorrodingDragonstorm()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surveil can put both cards into the graveyard")
+    void surveilCanMillBothCards() {
+        Card first = new Forest();
+        Card second = new Island();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new CorrodingDragonstorm()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    @DisplayName("Surveil uses the only card in a one-card library")
+    void surveilWithOneCard() {
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new CorrodingDragonstorm()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the life changes")
+    void enteringWithEmptyLibraryStillDrains() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new CorrodingDragonstorm()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Corroding Dragonstorm");
+    }
+
+    @Test
+    @DisplayName("Returns when a Dragon enters without being cast")
+    void returnsForDragonPutOntoBattlefield() {
+        harness.addToBattlefield(player1, new CorrodingDragonstorm());
+
+        harness.enterBattlefieldAndReturn(player1, new ShivanDragon());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Corroding Dragonstorm");
+        harness.assertInHand(player1, "Corroding Dragonstorm");
+    }
+
+    @Test
+    @DisplayName("A Dragon card cast face down has no Dragon subtype and does not trigger the return")
+    void doesNotReturnForFaceDownDragon() {
+        harness.addToBattlefield(player1, new CorrodingDragonstorm());
+        harness.setHand(player1, List.of(new QuicksilverDragon()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Corroding Dragonstorm");
+        harness.assertNotInHand(player1, "Corroding Dragonstorm");
     }
 }

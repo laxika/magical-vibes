@@ -83,7 +83,7 @@ class BlightedShamanTest extends BaseCardTest {
     @Test
     @DisplayName("The +1/+1 boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent shaman = addCreatureReady(player1, new BlightedShaman());
+        addCreatureReady(player1, new BlightedShaman());
         harness.addToBattlefield(player1, new Swamp());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
@@ -163,5 +163,91 @@ class BlightedShamanTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(shaman, costSwamp, noncreatureTarget);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeOpponentsSwamp() {
+        Permanent shaman = addCreatureReady(player1, new BlightedShaman());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(swamp);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new BlightedShaman());
+        shaman.setSummoningSick(true);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shaman, swamp);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void tappedShamanCannotActivateEitherAbility() {
+        Permanent shaman = addCreatureReady(player1, new BlightedShaman());
+        shaman.setTapped(true);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shaman, swamp);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void canTargetAndSacrificeTheSameCreature() {
+        Permanent shaman = addCreatureReady(player1, new BlightedShaman());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shaman).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(target.getCard().getId()));
+        harness.passBothPriorities();
+
+        assertThat(shaman.isTapped()).isTrue();
+        assertThat(shaman.getPowerModifier()).isZero();
+        assertThat(shaman.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void creatureSacrificeBoostWearsOffAtEndOfTurn() {
+        addCreatureReady(player1, new BlightedShaman());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
     }
 }

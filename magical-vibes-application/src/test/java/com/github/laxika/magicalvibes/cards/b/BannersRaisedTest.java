@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BannersRaised.class, GrizzlyBears.class})
 class BannersRaisedTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class BannersRaisedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BannersRaised()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
             assertThat(p.getEffectivePower()).isEqualTo(3);
@@ -40,8 +41,7 @@ class BannersRaisedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BannersRaised()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getEffectivePower()).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(2);
@@ -54,8 +54,7 @@ class BannersRaisedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BannersRaised()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -72,9 +71,38 @@ class BannersRaisedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BannersRaised()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringLater() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BannersRaised()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(original.getEffectivePower()).isEqualTo(3);
+        assertThat(original.getEffectiveToughness()).isEqualTo(2);
+        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering while the spell is on the stack receive the boost")
+    void boostsCreaturesPresentAtResolution() {
+        harness.setHand(player1, List.of(new BannersRaised()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
 }

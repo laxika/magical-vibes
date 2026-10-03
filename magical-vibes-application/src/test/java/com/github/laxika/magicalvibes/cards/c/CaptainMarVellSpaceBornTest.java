@@ -47,6 +47,80 @@ class CaptainMarVellSpaceBornTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Grants flash while the opponent's first spell is still on the stack")
+    void grantsFlashBeforeOpponentSpellResolves() {
+        harness.addToBattlefield(player1, new CaptainMarVellSpaceBorn());
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new CaptainMarVellSpaceBorn()));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.castCreature(player2, 0);
+
+        harness.setHand(player1, List.of(new CaptainMarVellSpaceBorn()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Counts an opponent's spell cast before Captain Mar-Vell entered")
+    void countsSpellCastBeforeEntering() {
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new CaptainMarVellSpaceBorn()));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new CaptainMarVellSpaceBorn());
+        harness.setHand(player1, List.of(new CaptainMarVellSpaceBorn()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Flash permission ends when Captain Mar-Vell leaves the battlefield")
+    void losesFlashWhenCaptainLeaves() {
+        harness.addToBattlefield(player1, new CaptainMarVellSpaceBorn());
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new CaptainMarVellSpaceBorn()));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.setHand(player1, List.of(new CaptainMarVellSpaceBorn()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Casting your own spell does not enable Cosmic Awareness")
+    void ownSpellDoesNotEnableFlash() {
+        harness.addToBattlefield(player1, new CaptainMarVellSpaceBorn());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
     private void prepareOpponentTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

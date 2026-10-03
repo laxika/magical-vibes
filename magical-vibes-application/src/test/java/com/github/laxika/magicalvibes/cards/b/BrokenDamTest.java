@@ -19,6 +19,64 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BrokenDamTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cannot cast without choosing at least one target")
+    void cannotChooseZeroTargets() {
+        harness.addToBattlefield(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new BrokenDam()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two targets")
+    void cannotChooseThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new BrokenDam()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Still taps the remaining target when the other leaves the battlefield")
+    void resolvesWithOneRemainingTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new BrokenDam()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Broken Dam");
+    }
+
+    @Test
+    @DisplayName("Goes to the graveyard without tapping anything when all targets leave")
+    void doesNotResolveWithNoRemainingTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new BrokenDam()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, List.of(creature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Broken Dam");
+    }
+
+    @Test
     @DisplayName("Taps two target creatures without horsemanship")
     void tapsTwoTargetCreatures() {
         Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());

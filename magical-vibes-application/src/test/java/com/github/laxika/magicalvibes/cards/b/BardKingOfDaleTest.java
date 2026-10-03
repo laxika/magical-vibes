@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AlhammarretsArchive;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -11,26 +12,25 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BardKingOfDale.class, BladeSplicer.class, Forest.class, GrizzlyBears.class, Island.class, Peek.class})
+@CardUsed({AlhammarretsArchive.class, BardKingOfDale.class, BladeSplicer.class, Forest.class, GrizzlyBears.class, Island.class, Peek.class})
 class BardKingOfDaleTest extends BaseCardTest {
 
     @Test
     @DisplayName("Doubles draws except the first draw in each of the controller's draw steps")
     void doublesExtraDrawsButNotFirstDrawStepDraw() {
         harness.addToBattlefield(player1, new BardKingOfDale());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(),
                 new GrizzlyBears(),
                 new Island(),
                 new Forest()
-        )));
+        ));
         harness.forceStep(TurnStep.DRAW);
-        gd.activePlayerId = player1.getId();
+        harness.forceActivePlayer(player1);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
@@ -43,11 +43,11 @@ class BardKingOfDaleTest extends BaseCardTest {
     @DisplayName("Doubles a draw outside the controller's draw step")
     void doublesDrawOutsideDrawStep() {
         harness.addToBattlefield(player1, new BardKingOfDale());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(),
                 new GrizzlyBears(),
                 new Island()
-        )));
+        ));
         harness.setHand(player1, List.of(new Peek()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -78,10 +78,10 @@ class BardKingOfDaleTest extends BaseCardTest {
     void doesNotAffectOpponent() {
         harness.addToBattlefield(player1, new BardKingOfDale());
 
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player2, List.of(
                 new Forest(),
                 new GrizzlyBears()
-        )));
+        ));
         harness.setHand(player2, List.of(new Peek()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
@@ -107,5 +107,55 @@ class BardKingOfDaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Phyrexian Golem")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Doubles the first draw during an opponent's draw step")
+    void doublesDrawDuringOpponentDrawStep() {
+        harness.addToBattlefield(player1, new BardKingOfDale());
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+        harness.setHand(player1, List.of(new Peek()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A two-card instruction during the controller's draw step draws three cards")
+    void exemptsOnlyFirstCardOfMultiCardDraw() {
+        harness.addToBattlefield(player1, new BardKingOfDale());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Forest(), new Island()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({AlhammarretsArchive.class, BardKingOfDale.class, Forest.class, Island.class})
+    @DisplayName("Bard and Alhammarret's Archive multiply an eligible draw to four cards")
+    void stacksWithAnotherDrawDoubler() {
+        harness.addToBattlefield(player1, new BardKingOfDale());
+        harness.addToBattlefield(player1, new AlhammarretsArchive());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(
+                new Forest(), new Island(), new Forest(), new Island(), new Forest()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

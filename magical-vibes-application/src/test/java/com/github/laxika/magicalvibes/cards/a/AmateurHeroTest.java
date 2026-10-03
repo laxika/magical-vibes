@@ -33,4 +33,23 @@ class AmateurHeroTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 10);
     }
+
+    @Test
+    @DisplayName("Casting it gains life only after its enter trigger resolves")
+    void castingGainsLifeOnlyWhenEnterTriggerResolves() {
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+
+        harness.castFromHand(player1, new AmateurHero(), "{2}{W}");
+        harness.assertLife(player1, 8);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Amateur Hero");
+        harness.assertLife(player1, 8);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 17);
+    }
 }

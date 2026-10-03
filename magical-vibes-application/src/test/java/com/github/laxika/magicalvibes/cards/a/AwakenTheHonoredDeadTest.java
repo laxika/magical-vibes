@@ -37,15 +37,14 @@ class AwakenTheHonoredDeadTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fountainPermanent.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(p -> p.getCard().getName())
-                .doesNotContain("Fountain of Youth")
-                .contains("Forest");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test
     void chapterIIMillsThreeCards() {
         harness.addToBattlefield(player1, new AwakenTheHonoredDead());
-        Permanent saga = findSaga();
+        Permanent saga = findPermanent(player1, "Awaken the Honored Dead");
         saga.setCounterCount(CounterType.LORE, 1);
         GrizzlyBears cardOne = new GrizzlyBears();
         Forest cardTwo = new Forest();
@@ -62,7 +61,7 @@ class AwakenTheHonoredDeadTest extends BaseCardTest {
     @Test
     void chapterIIIOptionallyDiscardsThenReturnsCreatureOrLand() {
         harness.addToBattlefield(player1, new AwakenTheHonoredDead());
-        Permanent saga = findSaga();
+        Permanent saga = findPermanent(player1, "Awaken the Honored Dead");
         saga.setCounterCount(CounterType.LORE, 2);
         Shock discardedCard = new Shock();
         GrizzlyBears returnedCard = new GrizzlyBears();
@@ -88,8 +87,128 @@ class AwakenTheHonoredDeadTest extends BaseCardTest {
                 .doesNotContain(returnedCard.getId());
     }
 
+    @Test
+    void chapterICanDestroyTheSagaItself() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new AwakenTheHonoredDead());
+
+        advanceSagaToNextChapter(0);
+        harness.handlePermanentChosen(player1, saga.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Awaken the Honored Dead");
+        harness.assertInGraveyard(player1, "Awaken the Honored Dead");
+    }
+
+    @Test
+    void chapterIIMillsAllRemainingCardsWhenLibraryHasFewerThanThree() {
+        harness.addToBattlefield(player1, new AwakenTheHonoredDead());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setGraveyard(player1, List.of());
+
+        advanceSagaToNextChapter(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void chapterIIICanDeclineDiscardWithoutReturningAnything() {
+        harness.addToBattlefield(player1, new AwakenTheHonoredDead());
+        Forest handCard = new Forest();
+        Forest graveyardCard = new Forest();
+        harness.setHand(player1, List.of(handCard));
+        harness.setGraveyard(player1, List.of(graveyardCard));
+
+        advanceSagaToNextChapter(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Awaken the Honored Dead");
+        harness.assertInGraveyard(player1, "Awaken the Honored Dead");
+    }
+
+    @Test
+    void chapterIIICanTargetAndReturnTheLandJustDiscarded() {
+        harness.addToBattlefield(player1, new AwakenTheHonoredDead());
+        Forest discardedCard = new Forest();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.setGraveyard(player1, List.of());
+
+        advanceSagaToNextChapter(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(discardedCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Awaken the Honored Dead");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(discardedCard);
+    }
+
+    @Test
+    void chapterIIIOnlyTargetsCreatureOrLandCardsInItsControllersGraveyard() {
+        harness.addToBattlefield(player1, new AwakenTheHonoredDead());
+        GrizzlyBears discardedCard = new GrizzlyBears();
+        Forest ownLand = new Forest();
+        Shock ownInstant = new Shock();
+        FountainOfYouth ownArtifact = new FountainOfYouth();
+        Forest opposingLand = new Forest();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.setGraveyard(player1, List.of(ownLand, ownInstant, ownArtifact));
+        harness.setGraveyard(player2, List.of(opposingLand));
+
+        advanceSagaToNextChapter(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactlyInAnyOrder(ownLand, discardedCard);
+        harness.handleMultipleCardsChosen(player1, List.of(discardedCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownLand, ownInstant, ownArtifact);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingLand);
+    }
+
+    @Test
+    void chapterIIIDoesNotReturnAnythingWhenHandIsEmpty() {
+        harness.addToBattlefield(player1, new AwakenTheHonoredDead());
+        Forest graveyardCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(graveyardCard));
+
+        advanceSagaToNextChapter(2);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Awaken the Honored Dead");
+    }
+
     private void advanceSagaToNextChapter(int loreCount) {
-        Permanent saga = findSaga();
+        Permanent saga = findPermanent(player1, "Awaken the Honored Dead");
         saga.setCounterCount(CounterType.LORE, loreCount);
         advanceToNextChapter();
     }
@@ -101,10 +220,4 @@ class AwakenTheHonoredDeadTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent findSaga() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof AwakenTheHonoredDead)
-                .findFirst()
-                .orElseThrow();
-    }
 }

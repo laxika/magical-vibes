@@ -46,8 +46,7 @@ class BywayBartererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -71,13 +70,101 @@ class BywayBartererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Crossing four mana with a larger spell permits discarding an empty hand")
+    void crossingThresholdWithEmptyHandDrawsTwo() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BywayBarterer(), new BywayBarterer()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Spending more mana after declining does not trigger again that turn")
+    void doesNotTriggerAgainAfterDeclining() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BywayBarterer(), new BywayBarterer(), new BywayBarterer()));
+        harness.addMana(player1, ManaColor.RED, 9);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when its own casting cost reaches four mana spent")
+    void doesNotSeeItsOwnCastingCostReachThreshold() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock(), new BywayBarterer(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertOnBattlefield(player1, "Byway Barterer");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Opponent spending four mana does not trigger the controller's ability")
+    void doesNotTriggerForOpponentSpendingMana() {
+        harness.addToBattlefield(player1, new BywayBarterer());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new BywayBarterer(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }

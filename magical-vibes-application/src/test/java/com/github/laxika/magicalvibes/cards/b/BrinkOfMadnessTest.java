@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.e.Erase;
 import com.github.laxika.magicalvibes.cards.y.YavimayaWurm;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrinkOfMadness.class, GiantCockroach.class, YavimayaWurm.class})
+@CardUsed({BrinkOfMadness.class, Erase.class, GiantCockroach.class, YavimayaWurm.class})
 class BrinkOfMadnessTest extends BaseCardTest {
 
     @Test
@@ -95,5 +97,43 @@ class BrinkOfMadnessTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Brink of Madness is sacrificed even when the target opponent has no cards")
+    void sacrificesWhenOpponentHandIsEmpty() {
+        harness.addToBattlefield(player1, new BrinkOfMadness());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Brink of Madness");
+        harness.assertInGraveyard(player1, "Brink of Madness");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent still discards if Brink of Madness is exiled in response")
+    void discardsEvenIfSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new BrinkOfMadness());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Erase(), new GiantCockroach(), new YavimayaWurm()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Brink of Madness"));
+
+        harness.assertNotOnBattlefield(player1, "Brink of Madness");
+        harness.assertNotInGraveyard(player1, "Brink of Madness");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Erase", "Giant Cockroach", "Yavimaya Wurm");
     }
 }

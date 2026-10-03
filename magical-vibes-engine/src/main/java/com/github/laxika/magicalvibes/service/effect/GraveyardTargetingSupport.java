@@ -273,11 +273,17 @@ public class GraveyardTargetingSupport {
      * @param maxTargets how many graveyard cards the step may target — {@code 1} for the
      *                   single-target effects, larger for "up to N"/"any number of target cards"
      * @param minTargets how many graveyard targets the step requires
+     * @param dynamicMaxTargets optional dynamic upper bound evaluated when the reflexive target
+     *                           choice is created
      */
     public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                          int maxTargets, int minTargets, DynamicAmount maximumManaValue,
                          boolean singleGraveyard, Integer maximumTotalPower,
                          DynamicAmount dynamicMaxTargets) {
+
+        public DynamicAmount maximumTargetCount() {
+            return dynamicMaxTargets;
+        }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                 int maxTargets, int minTargets, DynamicAmount maximumManaValue,

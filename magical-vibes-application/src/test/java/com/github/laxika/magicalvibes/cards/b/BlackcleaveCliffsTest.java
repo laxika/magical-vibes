@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +15,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlackcleaveCliffs.class, Memnite.class, Mountain.class})
 class BlackcleaveCliffsTest extends BaseCardTest {
 
-    // ===== Enters the battlefield: untapped (few lands) =====
 
     @Test
     @DisplayName("Enters untapped when you control zero other lands")
@@ -24,7 +26,7 @@ class BlackcleaveCliffsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cliffs = findCliffs(player1);
         assertThat(cliffs.isTapped()).isFalse();
@@ -39,7 +41,7 @@ class BlackcleaveCliffsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cliffs = findCliffs(player1);
         assertThat(cliffs.isTapped()).isFalse();
@@ -55,13 +57,12 @@ class BlackcleaveCliffsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cliffs = findCliffs(player1);
         assertThat(cliffs.isTapped()).isFalse();
     }
 
-    // ===== Enters the battlefield: tapped (too many lands) =====
 
     @Test
     @DisplayName("Enters tapped when you control three other lands")
@@ -74,7 +75,7 @@ class BlackcleaveCliffsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cliffs = findCliffs(player1);
         assertThat(cliffs.isTapped()).isTrue();
@@ -91,35 +92,32 @@ class BlackcleaveCliffsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cliffs = findCliffs(player1);
         assertThat(cliffs.isTapped()).isTrue();
     }
 
-    // ===== Only counts lands, not other permanents =====
 
     @Test
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         // Add 3 creatures (not lands)
         for (int i = 0; i < 3; i++) {
-            Permanent creature = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(creature);
+            harness.addToBattlefield(player1, new Memnite());
         }
 
         harness.setHand(player1, List.of(new BlackcleaveCliffs()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         // 0 lands, 3 creatures — should enter untapped
         Permanent cliffs = findCliffs(player1);
         assertThat(cliffs.isTapped()).isFalse();
     }
 
-    // ===== Only counts your lands, not opponent's =====
 
     @Test
     @DisplayName("Opponent's lands do not count toward the land check")
@@ -133,14 +131,13 @@ class BlackcleaveCliffsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         // Player1 has 0 other lands — should enter untapped
         Permanent cliffs = findCliffs(player1);
         assertThat(cliffs.isTapped()).isFalse();
     }
 
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Tapping for black mana produces one black")
@@ -164,20 +161,33 @@ class BlackcleaveCliffsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Entering without a land play still checks the other lands")
+    void enteringWithoutLandPlayChecksOtherLands() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new BlackcleaveCliffs());
+        assertThat(first.isTapped()).isFalse();
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new BlackcleaveCliffs());
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped Cliffs can produce mana immediately after entering")
+    void producesManaImmediatelyAfterEntering() {
+        Permanent cliffs = harness.enterBattlefieldAndReturn(player1, new BlackcleaveCliffs());
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(cliffs.isTapped()).isTrue();
+    }
 
     private Permanent addCliffsReady(Player player) {
-        Permanent perm = new Permanent(new BlackcleaveCliffs());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BlackcleaveCliffs());
     }
 
     private void addBasicLand(Player player) {
-        // Create a simple land permanent — use a card that's typed as LAND
-        com.github.laxika.magicalvibes.model.Card land = new com.github.laxika.magicalvibes.cards.m.Mountain();
-        Permanent perm = new Permanent(land);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findCliffs(Player player) {

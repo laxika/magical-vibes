@@ -126,8 +126,7 @@ class AnnexTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, annexPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, annexPerm.getId());
 
         // Land should return to player2
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -143,13 +142,58 @@ class AnnexTest extends BaseCardTest {
     @DisplayName("Cannot target a nonland permanent with Annex")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player2, new Forest()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new ElvishWarrior());
-        Permanent warrior = findPermanent(player2, "Elvish Warrior");
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
         harness.setHand(player1, List.of(new Annex()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, warrior.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("A stolen noncreature land can immediately be tapped for mana")
+    void stolenLandCanImmediatelyProduceMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Annex()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Destroying the newer Annex leaves the older Annex controlling the land")
+    void olderAnnexStillControlsLandAfterNewerAnnexIsDestroyed() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Annex(), new Annex()));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        Permanent olderAnnex = findPermanent(player1, "Annex");
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        Permanent newerAnnex = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof Annex && !p.getId().equals(olderAnnex.getId()))
+                .findFirst().orElseThrow();
+
+        harness.setHand(player1, List.of(new Demystify(), new Demystify()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, newerAnnex.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest, olderAnnex);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(forest);
+        assertThat(olderAnnex.getAttachedTo()).isEqualTo(forest.getId());
+
+        harness.castAndResolveInstant(player1, 0, olderAnnex.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
     }
 }

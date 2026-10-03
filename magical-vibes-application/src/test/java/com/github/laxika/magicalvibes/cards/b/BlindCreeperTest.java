@@ -72,6 +72,56 @@ class BlindCreeperTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Blind Creeper does not trigger from its own casting")
+    void castingBlindCreeperDoesNotShrinkItself() {
+        harness.castFromHand(player1, new BlindCreeper(), "{1}{B}");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The penalty resolves before the spell that triggered it")
+    void penaltyResolvesBeforeTriggeringSpell() {
+        harness.addToBattlefield(player1, new BlindCreeper());
+        harness.castFromHand(player1, new ConjurersBauble(), "{1}");
+
+        assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Conjurer's Bauble");
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Conjurer's Bauble");
+
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Conjurer's Bauble");
+    }
+
+    @Test
+    @DisplayName("A third spell puts Blind Creeper into the graveyard before that spell resolves")
+    void thirdSpellKillsBlindCreeperBeforeResolving() {
+        harness.addToBattlefield(player1, new BlindCreeper());
+        for (int i = 0; i < 2; i++) {
+            harness.castFromHand(player1, new ConjurersBauble(), "{1}");
+            resolveAllTriggers();
+        }
+        assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(1);
+
+        harness.castFromHand(player1, new BlindCreeper(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blind Creeper");
+        harness.assertInGraveyard(player1, "Blind Creeper");
+
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, blindCreeper())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blindCreeper())).isEqualTo(3);
+    }
+
     private Permanent blindCreeper() {
         return findPermanent(player1, "Blind Creeper");
     }

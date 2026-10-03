@@ -48,4 +48,36 @@ class CoalGolemTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Coal Golem");
     }
+    @Test
+    @DisplayName("Coal Golem can be sacrificed while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        var golem = harness.addToBattlefieldAndReturn(player1, new CoalGolem());
+        golem.setTapped(true);
+        golem.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Coal Golem");
+        harness.assertInGraveyard(player1, "Coal Golem");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana does not sacrifice Coal Golem or spend the available mana")
+    void insufficientManaLeavesSourceAndManaUnchanged() {
+        harness.addToBattlefield(player1, new CoalGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Coal Golem");
+        harness.assertNotInGraveyard(player1, "Coal Golem");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

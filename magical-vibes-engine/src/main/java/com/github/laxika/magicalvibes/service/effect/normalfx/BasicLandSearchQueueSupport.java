@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class BasicLandSearchQueueSupport {
     private final LibrarySearchSupport librarySearchSupport;
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     /** Active player first, then every other player in seating order (CR 101.4 APNAP). */
     public List<UUID> apnapOrder(GameData gameData) {
@@ -108,7 +110,8 @@ public class BasicLandSearchQueueSupport {
 
         List<Card> basicLands = deck.stream()
                 .filter(card -> card.hasAllCardNames()
-                        || (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)))
+                        || (card.hasType(CardType.LAND)
+                        && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, playerId)))
                 .toList();
         if (basicLands.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);

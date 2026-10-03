@@ -111,6 +111,14 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
+     * True when paying this cost sacrifices the source permanent itself (or the permanent that
+     * granted the ability), rather than merely moving it to another zone.
+     */
+    default boolean sacrificesSourcePermanent() {
+        return false;
+    }
+
+    /**
      * True when paying this cost sacrifices a battlefield permanent chosen by the payer.
      * Creature-specific sacrifice costs inherit this from {@link #sacrificesChosenCreature()};
      * broader sacrifice costs override it directly.

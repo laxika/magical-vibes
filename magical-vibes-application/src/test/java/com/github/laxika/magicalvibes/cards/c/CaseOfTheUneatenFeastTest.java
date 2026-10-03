@@ -27,8 +27,7 @@ class CaseOfTheUneatenFeastTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 21);
     }
@@ -79,6 +78,107 @@ class CaseOfTheUneatenFeastTest extends BaseCardTest {
                 .hasMessageContaining("solved");
     }
 
+    @Test
+    void doesNotGainLifeForOpponentsCreature() {
+        harness.addToBattlefield(player1, new CaseOfTheUneatenFeast());
+        harness.setHand(player2, List.of(new SavannahLions()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotSolveAfterOnlyFourLifeGained() {
+        Permanent feast = harness.addToBattlefieldAndReturn(player1, new CaseOfTheUneatenFeast());
+        harness.setHand(player1, List.of(new SavannahLions(), new SavannahLions(),
+                new SavannahLions(), new SavannahLions()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        for (int i = 0; i < 4; i++) {
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+        }
+
+        resolveEndStepTriggers();
+
+        assertThat(feast.isSolved()).isFalse();
+    }
+
+    @Test
+    void doesNotSolveDuringOpponentsEndStep() {
+        Permanent feast = harness.addToBattlefieldAndReturn(player1, new CaseOfTheUneatenFeast());
+        gainFiveLifeFromCreatureEntries();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(feast.isSolved()).isFalse();
+    }
+
+    @Test
+    void solvedAbilityDoesNotPermitNoncreatureCards() {
+        gainFiveLifeAndSolveCase();
+        harness.setGraveyard(player1, List.of(new CaseOfTheUneatenFeast()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void creatureEnteringGraveyardAfterResolutionDoesNotGainCastingAbility() {
+        gainFiveLifeAndSolveCase();
+        harness.setGraveyard(player1, List.of());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        harness.setGraveyard(player1, List.of(new WalkingCorpse()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void graveyardPermissionDoesNotWaiveManaCost() {
+        gainFiveLifeAndSolveCase();
+        harness.setGraveyard(player1, List.of(new WalkingCorpse()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Walking Corpse");
+    }
+
+    @Test
+    void graveyardPermissionDoesNotWaiveCreatureTiming() {
+        gainFiveLifeAndSolveCase();
+        harness.setGraveyard(player1, List.of(new WalkingCorpse()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Walking Corpse");
+    }
+
     private void gainFiveLifeAndSolveCase() {
         harness.addToBattlefield(player1, new CaseOfTheUneatenFeast());
         gainFiveLifeFromCreatureEntries();
@@ -99,8 +199,7 @@ class CaseOfTheUneatenFeastTest extends BaseCardTest {
 
         for (int i = 0; i < 5; i++) {
             harness.castCreature(player1, 0);
-            harness.passBothPriorities();
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
     }
 

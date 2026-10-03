@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CephalidInkmage.class, GrizzlyBears.class})
 class CephalidInkmageTest extends BaseCardTest {
 
     @Test
@@ -93,17 +96,95 @@ class CephalidInkmageTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private Permanent addReadyInkmage(Player player) {
-        Permanent inkmage = new Permanent(new CephalidInkmage());
+    @Test
+    @DisplayName("Surveil may keep and reorder all three cards without disturbing the rest")
+    void surveilKeepsAndReordersAllCards() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card fourth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.enterBattlefieldAndReturn(player1, new CephalidInkmage());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second, third);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(2, 0, 1), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first, second, fourth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surveil with fewer than three cards may put all available cards into the graveyard")
+    void surveilShortLibraryAndEnablesThreshold() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        Permanent inkmage = harness.enterBattlefieldAndReturn(player1, new CephalidInkmage());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7).contains(first, second);
         inkmage.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(inkmage);
+        inkmage.setAttacking(true);
+        Permanent blocker = addReadyCreature(player2);
+        beginBlockerDeclaration();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, inkmage)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Surveil on an empty library finishes without a choice or a loss")
+    void surveilEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new CephalidInkmage());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Dropping from seven graveyard cards to six restores blockability")
+    void losingThresholdRestoresBlockability() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent inkmage = addReadyInkmage(player1);
+        Permanent blocker = addReadyCreature(player2);
+        inkmage.setAttacking(true);
+        beginBlockerDeclaration();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, inkmage)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+
+        gd.playerGraveyards.get(player1.getId()).removeFirst();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, inkmage))));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    private Permanent addReadyInkmage(Player player) {
+        Permanent inkmage = harness.addToBattlefieldAndReturn(player, new CephalidInkmage());
+        inkmage.setSummoningSick(false);
         return inkmage;
     }
 
     private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 

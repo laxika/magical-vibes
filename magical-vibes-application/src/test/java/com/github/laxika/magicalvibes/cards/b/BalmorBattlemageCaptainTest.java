@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BalmorBattlemageCaptain.class, Divination.class, GrizzlyBears.class, Shock.class})
 class BalmorBattlemageCaptainTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class BalmorBattlemageCaptainTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gqs.getEffectivePower(gd, balmor)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
@@ -37,8 +38,7 @@ class BalmorBattlemageCaptainTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, balmor)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
@@ -54,8 +54,7 @@ class BalmorBattlemageCaptainTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
@@ -73,5 +72,66 @@ class BalmorBattlemageCaptainTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, balmor)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, balmor, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's instant does not trigger Balmor")
+    void opponentInstantDoesNotTriggerAbility() {
+        Permanent balmor = harness.addToBattlefieldAndReturn(player1, new BalmorBattlemageCaptain());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gqs.getEffectivePower(gd, balmor)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, balmor, Keyword.TRAMPLE)).isFalse();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Each instant cast adds another power boost without increasing toughness")
+    void repeatedCastsStackPowerBoosts() {
+        Permanent balmor = harness.addToBattlefieldAndReturn(player1, new BalmorBattlemageCaptain());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, balmor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, balmor)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before the trigger resolves receive the boost")
+    void creatureEnteringBeforeResolutionIsBoosted() {
+        harness.addToBattlefield(player1, new BalmorBattlemageCaptain());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the trigger resolves receive neither boost nor trample")
+    void creatureEnteringAfterResolutionIsNotBoosted() {
+        harness.addToBattlefield(player1, new BalmorBattlemageCaptain());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DismalFailure;
+import com.github.laxika.magicalvibes.cards.d.DustElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
 import com.github.laxika.magicalvibes.cards.k.KavuPredator;
 import com.github.laxika.magicalvibes.cards.p.PiracyCharm;
@@ -19,7 +20,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AkromaAngelOfFury.class, DismalFailure.class, GiantDustwasp.class, KavuPredator.class,
+@CardUsed({AkromaAngelOfFury.class, DismalFailure.class, DustElemental.class, GiantDustwasp.class, KavuPredator.class,
         PiracyCharm.class, Sunlance.class})
 class AkromaAngelOfFuryTest extends BaseCardTest {
 
@@ -37,8 +38,7 @@ class AkromaAngelOfFuryTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, akroma.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Akroma, Angel of Fury");
         harness.assertInGraveyard(player2, "Dismal Failure");
@@ -114,9 +114,7 @@ class AkromaAngelOfFuryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent akroma = findPermanent(player1, "Akroma, Angel of Fury");
         assertThat(akroma.isFaceDown()).isTrue();
@@ -127,5 +125,79 @@ class AkromaAngelOfFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(akroma.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void faceDownSpellCanBeCountered() {
+        AkromaAngelOfFury akroma = new AkromaAngelOfFury();
+        harness.setHand(player1, List.of(akroma));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new DismalFailure()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, akroma.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Akroma, Angel of Fury");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void protectionFromWhitePreventsFlyingWhiteBlocker() {
+        addCreatureReady(player1, new AkromaAngelOfFury());
+        addCreatureReady(player2, new DustElemental());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void redAbilityCanBeActivatedRepeatedlyWithoutTapping() {
+        Permanent akroma = harness.addToBattlefieldAndReturn(player1, new AkromaAngelOfFury());
+        int basePower = gqs.getEffectivePower(gd, akroma);
+        int baseToughness = gqs.getEffectiveToughness(gd, akroma);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, akroma)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, akroma)).isEqualTo(baseToughness);
+        assertThat(akroma.isTapped()).isFalse();
+    }
+
+    @Test
+    void turningFaceUpInResponseToSunlanceGainsProtectionImmediately() {
+        harness.setHand(player1, List.of(new AkromaAngelOfFury()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent akroma = findPermanent(player1, "Akroma, Angel of Fury");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Sunlance()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castSorcery(player2, 0, akroma.getId());
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        int stackSize = gd.stack.size();
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(akroma.isFaceDown()).isFalse();
+        assertThat(gd.stack).hasSize(stackSize);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Akroma, Angel of Fury");
+        assertThat(akroma.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Sunlance");
     }
 }

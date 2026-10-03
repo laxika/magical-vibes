@@ -27,9 +27,9 @@ class CloudhoofKirinTest extends BaseCardTest {
 
         harness.castFromHand(player1, new IdeasUnbound(), "{U}{U}");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -43,9 +43,9 @@ class CloudhoofKirinTest extends BaseCardTest {
 
         harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
@@ -58,6 +58,8 @@ class CloudhoofKirinTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new ArabaMothrider(), new ArabaMothrider()));
 
         harness.castFromHand(player1, new IdeasUnbound(), "{U}{U}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
@@ -91,7 +93,6 @@ class CloudhoofKirinTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new ArabaMothrider(), new ArabaMothrider()));
 
         harness.castFromHand(player1, new IdeasUnbound(), "{U}{U}");
-        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -99,6 +100,61 @@ class CloudhoofKirinTest extends BaseCardTest {
         assertThat(targetChoice.validPermanentIds()).isEmpty();
         assertThat(targetChoice.validPlayerIds()).containsExactlyInAnyOrder(player1.getId(), player2.getId());
         assertThat(targetChoice.validIds()).doesNotContain(permanent.getId());
+    }
+
+    @Test
+    @DisplayName("The target is chosen before the optional mill decision at resolution")
+    void optionalMillIsChosenOnlyAtResolution() {
+        addCloudhoofKirin();
+        harness.setLibrary(player2, List.of(new ArabaMothrider(), new ArabaMothrider()));
+
+        harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller can target themselves and mill the top card")
+    void canMillController() {
+        addCloudhoofKirin();
+        var topCard = new ArabaMothrider();
+        var bottomCard = new SpiritualVisit();
+        harness.setLibrary(player1, List.of(topCard, bottomCard));
+
+        harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("A player mills only the available cards when the library is too small")
+    void millsAllRemainingCardsInShortLibrary() {
+        addCloudhoofKirin();
+        var remainingCard = new ArabaMothrider();
+        harness.setLibrary(player2, List.of(remainingCard));
+
+        harness.castFromHand(player1, new IdeasUnbound(), "{U}{U}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remainingCard);
     }
 
     private void addCloudhoofKirin() {

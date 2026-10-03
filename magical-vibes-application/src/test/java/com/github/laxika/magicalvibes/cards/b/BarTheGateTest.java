@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BarTheGate.class, GrizzlyBears.class, JaceBeleren.class, Opt.class})
+@CardUsed({BarTheGate.class, GrizzlyBears.class, JaceBeleren.class, Opt.class, HillGiantHerdgorger.class})
 class BarTheGateTest extends BaseCardTest {
 
     @Test
@@ -31,13 +32,14 @@ class BarTheGateTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        gd.playerDungeonProgress.put(player2.getId(),
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDungeonProgress.get(player2.getId()))
-                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 3));
     }
 
     @Test
@@ -52,13 +54,14 @@ class BarTheGateTest extends BaseCardTest {
 
         harness.castPlaneswalker(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, jace.getId());
-        harness.passBothPriorities();
+        gd.playerDungeonProgress.put(player2.getId(),
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+        harness.castAndResolveInstant(player2, 0, jace.getId());
 
         harness.assertInGraveyard(player1, "Jace Beleren");
         harness.assertNotOnBattlefield(player1, "Jace Beleren");
         assertThat(gd.playerDungeonProgress.get(player2.getId()))
-                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 3));
     }
 
     @Test
@@ -77,5 +80,51 @@ class BarTheGateTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, opt.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature or planeswalker spell");
+    }
+
+    @Test
+    @DisplayName("Starting a dungeon requires the controller to choose it")
+    void startingDungeonRequiresControllerChoice() {
+        HillGiantHerdgorger giant = new HillGiantHerdgorger();
+        harness.setHand(player1, List.of(giant));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.setHand(player2, List.of(new BarTheGate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+
+        harness.assertInGraveyard(player1, "Hill Giant Herdgorger");
+        assertThat(gd.playerDungeonProgress).doesNotContainKey(player2.getId());
+        assertThat(gd.pendingInteractions).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not venture when its only target leaves the stack")
+    void doesNotVentureWhenTargetLeavesStack() {
+        HillGiantHerdgorger giant = new HillGiantHerdgorger();
+        harness.setHand(player1, List.of(giant, new BarTheGate()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new BarTheGate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        gd.playerDungeonProgress.put(player1.getId(),
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+        gd.playerDungeonProgress.put(player2.getId(),
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, giant.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hill Giant Herdgorger");
+        harness.assertInGraveyard(player2, "Bar the Gate");
+        assertThat(gd.playerDungeonProgress.get(player2.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
     }
 }

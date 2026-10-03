@@ -46,7 +46,6 @@ class BrassTalonChimeraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
@@ -80,5 +79,56 @@ class BrassTalonChimeraTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+    @Test
+    @DisplayName("Sacrifice is paid before the counter and first strike resolve")
+    void sacrificeIsAnActivationCost() {
+        harness.addToBattlefield(player1, new BrassTalonChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IronHeartChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Brass-Talon Chimera");
+        harness.assertInGraveyard(player1, "Brass-Talon Chimera");
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target itself, but sacrificing it leaves no legal target")
+    void canTargetItself() {
+        Permanent chimera = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
+
+        harness.activateAbility(player1, 0, null, chimera.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Brass-Talon Chimera");
+        harness.assertInGraveyard(player1, "Brass-Talon Chimera");
+        assertThat(gd.stack).isEmpty();
+        assertThat(chimera.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+    }
+
+    @Test
+    @DisplayName("A target sacrificed in response receives neither counter nor first strike")
+    void targetSacrificedInResponse() {
+        harness.addToBattlefield(player1, new BrassTalonChimera());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IronHeartChimera());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Brass-Talon Chimera");
+        harness.assertInGraveyard(player1, "Iron-Heart Chimera");
+        harness.assertNotOnBattlefield(player1, "Iron-Heart Chimera");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

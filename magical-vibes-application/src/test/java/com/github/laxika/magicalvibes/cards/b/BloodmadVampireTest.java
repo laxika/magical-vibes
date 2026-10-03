@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodmadVampire.class, RavensCrime.class, SerraAngel.class})
 class BloodmadVampireTest extends BaseCardTest {
 
     private Permanent addReadyVampire() {
-        Permanent perm = new Permanent(new BloodmadVampire());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new BloodmadVampire());
     }
 
     /** Force player1 to discard Bloodmad Vampire via Raven's Crime from player2. */
@@ -64,11 +63,9 @@ class BloodmadVampireTest extends BaseCardTest {
         vampire.setAttacking(true);
         harness.setLife(player2, 20);
 
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -115,6 +112,67 @@ class BloodmadVampireTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(vampire.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat damage puts the counter ability on the stack before adding the counter")
+    void counterWaitsForTriggerResolution() {
+        Permanent vampire = addReadyVampire();
+        Permanent otherVampire = addReadyVampire();
+        vampire.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(otherVampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherVampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A counter trigger cannot put counters on another Vampire after its source dies")
+    void departedSourceDoesNotGiveCounterToAnotherVampire() {
+        Permanent vampire = addReadyVampire();
+        Permanent otherVampire = addReadyVampire();
+        vampire.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        vampire.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Bloodmad Vampire");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(otherVampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting normally pays {2}{R} without a madness prompt")
+    void castsNormallyFromHand() {
+        BloodmadVampire vampire = new BloodmadVampire();
+        harness.setHand(player1, List.of(vampire));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

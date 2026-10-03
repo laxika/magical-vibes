@@ -129,6 +129,47 @@ class CabalSurgeonTest extends BaseCardTest {
         assertThat(surgeon.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Can activate with exactly two graveyard cards, exiling its own target")
+    void exactlyTwoGraveyardCardsCanPayCost() {
+        Permanent surgeon = addReadySurgeon();
+        Card target = new CabalTorturer();
+        Card costCard = new CabalRitual();
+        harness.setGraveyard(player1, List.of(target, costCard));
+        addActivationMana();
+
+        harness.activateAbilityWithGraveyardTargets(
+                player1, index(surgeon), 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Cabal Torturer");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getId())
+                .containsExactlyInAnyOrder(target.getId(), costCard.getId());
+        assertThat(surgeon.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent surgeon = addReadySurgeon();
+        surgeon.setSummoningSick(true);
+        Card target = new CabalTorturer();
+        Card costCard = new CabalRitual();
+        Card otherCostCard = new CabalRitual();
+        harness.setGraveyard(player1, List.of(target, costCard, otherCostCard));
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, index(surgeon), 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(surgeon.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(target, costCard, otherCostCard);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
     private Permanent addReadySurgeon() {
         return addCreatureReady(player1, new CabalSurgeon());
     }

@@ -16,6 +16,49 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CelestialAncientTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Each Celestial Ancient triggers independently for an enchantment spell")
+    void multipleAncientsEachAddCounters() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CelestialAncient());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CelestialAncient());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+
+        harness.castFromHand(player1, new SealOfFire(), "{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An enchantment entering without being cast does not trigger Celestial Ancient")
+    void enchantmentEnteringWithoutCastDoesNotAddCounters() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new CelestialAncient());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+
+        harness.enterBattlefieldAndReturn(player1, new SealOfFire());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The trigger affects creatures present when it resolves")
+    void creaturesEnteringBeforeTriggerResolvesReceiveCounters() {
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new CelestialAncient());
+
+        harness.castFromHand(player1, new SealOfFire(), "{R}");
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        harness.passBothPriorities();
+
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Casting an enchantment puts a +1/+1 counter on each creature you control")
     void castingEnchantmentAddsCountersToOwnCreatures() {
         Permanent ancient = harness.addToBattlefieldAndReturn(player1, new CelestialAncient());

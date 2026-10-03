@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.o.Oxidize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArcboundWorker.class, CrazedGoblin.class, DarksteelGargoyle.class, Oxidize.class})
+@CardUsed({ArcboundWorker.class, CrazedGoblin.class, DarksteelGargoyle.class, DarksteelIngot.class, Oxidize.class})
 class ArcboundWorkerTest extends BaseCardTest {
 
     @Test
@@ -88,6 +89,82 @@ class ArcboundWorkerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(opponentArtifactCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void modularCannotTargetANonCreatureArtifact() {
+        Permanent worker = addCreatureReady(player1, new ArcboundWorker());
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent ingot = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        destroyWorker(worker);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId())
+                .doesNotContain(ingot.getId(), worker.getId());
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ingot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modularAddsToExistingCountersWithoutCopyingOtherCounterTypes() {
+        Permanent worker = addCreatureReady(player1, new ArcboundWorker());
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        worker.setCounterCount(CounterType.CHARGE, 2);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        gargoyle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyWorker(worker);
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gargoyle.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertInGraveyard(player1, "Arcbound Worker");
+    }
+
+    @Test
+    void modularDoesNotRemainOnTheStackWithoutALegalTarget() {
+        Permanent worker = addCreatureReady(player1, new ArcboundWorker());
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
+        Permanent ingot = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+
+        destroyWorker(worker);
+
+        harness.assertInGraveyard(player1, "Arcbound Worker");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ingot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modularResolutionPromptDescribesPlusOnePlusOneCounters() {
+        Permanent worker = addCreatureReady(player1, new ArcboundWorker());
+        worker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        destroyWorker(worker);
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice.description()).contains("+1/+1").doesNotContain("-1/-1");
+
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void destroyWorker(Permanent worker) {

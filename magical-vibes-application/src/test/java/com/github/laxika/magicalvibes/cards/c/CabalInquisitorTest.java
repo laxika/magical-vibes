@@ -116,4 +116,114 @@ class CabalInquisitorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canTargetSelfAndChooseWhichCardToDiscard() {
+        Permanent inquisitor = addCreatureReady(player1, new CabalInquisitor());
+        prepareThresholdActivation();
+        Card kept = new CabalInquisitor();
+        Card discarded = new DuskImp();
+        harness.setHand(player1, List.of(kept, discarded));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        payExileCost();
+
+        assertThat(inquisitor.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded).hasSize(6);
+    }
+
+    @Test
+    void emptyHandDoesNotPreventActivationOrRefundCosts() {
+        Permanent inquisitor = addCreatureReady(player1, new CabalInquisitor());
+        prepareThresholdActivation();
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        payExileCost();
+        harness.passBothPriorities();
+
+        assertThat(inquisitor.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent inquisitor = addCreatureReady(player1, new CabalInquisitor());
+        inquisitor.setTapped(true);
+        prepareThresholdActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent inquisitor = addCreatureReady(player1, new CabalInquisitor());
+        inquisitor.setSummoningSick(true);
+        prepareThresholdActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    void cannotActivateDuringOwnCombatPhase() {
+        addCreatureReady(player1, new CabalInquisitor());
+        prepareThresholdActivation();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithAnAbilityOnTheStack() {
+        addCreatureReady(player1, new CabalInquisitor());
+        addCreatureReady(player1, new CabalInquisitor());
+        prepareThresholdActivation();
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        payExileCost();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+    }
+
+    private void prepareThresholdActivation() {
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+    }
+
+    private void payExileCost() {
+        harness.handleMultipleCardsChosen(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .limit(2)
+                .map(Card::getId)
+                .toList());
+    }
 }

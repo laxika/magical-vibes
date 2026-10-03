@@ -22,7 +22,10 @@ public class CopyNextSpellCastThisTurnEffectHandler implements NormalEffectHandl
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CopyNextSpellCastThisTurnEffect) effect;
         if (copyEffect.spellFilter() == null && copyEffect.removedSupertypes().isEmpty()) {
-            gameData.pendingNextSpellCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
+            gameData.delayedActions.add(new com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger(
+                    entry.getControllerId(), entry.getSourcePermanentId(), entry.getCard(), null,
+                    java.util.List.of(new com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect(true)),
+                    true, false));
             log.info("Game {} - {} will copy their next spell this turn", gameData.id, entry.getControllerId());
             return;
         }

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AcrobaticCheerleader.class)
+@CardUsed({AcrobaticCheerleader.class})
 class AcrobaticCheerleaderTest extends BaseCardTest {
 
     @Test
@@ -32,16 +32,21 @@ class AcrobaticCheerleaderTest extends BaseCardTest {
     }
 
     @Test
-    void untappedCreatureDoesNotTriggerLaterInTheTurn() {
+    void untappedCreatureCanTriggerAtALaterSecondMainPhase() {
         Permanent cheerleader = harness.addToBattlefieldAndReturn(player1, new AcrobaticCheerleader());
 
         advanceToPostcombatMain(player1);
 
+        assertThat(gd.stack).isEmpty();
         cheerleader.tap();
-        advanceToPostcombatMain(player1);
-
         assertThat(gd.stack).isEmpty();
         assertThat(cheerleader.getCounterCount(CounterType.FLYING)).isZero();
+
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(cheerleader.getCounterCount(CounterType.FLYING)).isEqualTo(1);
     }
 
     @Test
@@ -72,11 +77,62 @@ class AcrobaticCheerleaderTest extends BaseCardTest {
         assertThat(cheerleader.getCounterCount(CounterType.FLYING)).isEqualTo(1);
     }
 
+    @Test
+    void opponentSecondMainPhaseDoesNotTriggerOrConsumeAbility() {
+        Permanent cheerleader = harness.addToBattlefieldAndReturn(player1, new AcrobaticCheerleader());
+        cheerleader.tap();
+
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(cheerleader.getCounterCount(CounterType.FLYING)).isZero();
+
+        advanceToPostcombatMain(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(cheerleader.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+    }
+
+    @Test
+    void failedResolutionStillConsumesTheOnlyTrigger() {
+        Permanent cheerleader = harness.addToBattlefieldAndReturn(player1, new AcrobaticCheerleader());
+        cheerleader.tap();
+
+        advanceToPostcombatMain(player1);
+        assertThat(gd.stack).hasSize(1);
+        cheerleader.untap();
+        harness.passBothPriorities();
+        assertThat(cheerleader.getCounterCount(CounterType.FLYING)).isZero();
+
+        cheerleader.tap();
+        advanceToPostcombatMain(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(cheerleader.getCounterCount(CounterType.FLYING)).isZero();
+    }
+
+    @Test
+    void eachPermanentHasItsOwnOnceOnlyTrigger() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AcrobaticCheerleader());
+        first.tap();
+        advanceToPostcombatMain(player1);
+        harness.passBothPriorities();
+
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AcrobaticCheerleader());
+        second.tap();
+        advanceToPostcombatMain(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+    }
+
     private void advanceToPostcombatMain(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
     }
 }

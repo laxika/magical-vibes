@@ -90,6 +90,47 @@ class CoalitionRelicTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A charge counter added in response to the main phase trigger is converted to mana")
+    void chargeInResponseIsCountedAtResolution() {
+        Permanent relic = addRelic(player1);
+        advanceToPrecombatMain(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(relic.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(relic.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(relic.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conversion removes only charge counters and permits choosing the same color repeatedly")
+    void conversionPreservesOtherCountersAndAllowsRepeatedColor() {
+        Permanent relic = addRelic(player1);
+        relic.setCounterCount(CounterType.CHARGE, 2);
+        relic.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToPrecombatMain(player1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(relic.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+        assertThat(relic.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addRelic(Player player) {
         return harness.addToBattlefieldAndReturn(player, new CoalitionRelic());
     }

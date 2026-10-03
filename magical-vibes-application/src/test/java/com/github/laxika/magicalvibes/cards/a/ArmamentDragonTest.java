@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,12 +71,63 @@ class ArmamentDragonTest extends BaseCardTest {
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void canPutAllCountersOnItselfThroughDistributionChoice() {
+        castArmamentDragon();
+        harness.passBothPriorities();
+        Permanent dragon = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.handlePermanentChosen(player1, dragon.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void distributesOneCounterToEachOfThreeTargetsThroughDistributionChoice() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ArmamentDragon());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ArmamentDragon());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new ArmamentDragon());
+
+        castArmamentDragon();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, third.getId());
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "1");
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotRedistributeCountersWhenOneTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ArmamentDragon());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ArmamentDragon());
+
+        castArmamentDragon();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "2");
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void castArmamentDragon() {
-        harness.setHand(player1, List.of(new ArmamentDragon()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArmamentDragon(), "{3}{W}{B}{G}");
     }
 }

@@ -34,7 +34,7 @@ class CoastalHornclawTest extends BaseCardTest {
     void multipleLandsPromptsChoice() {
         Permanent hornclaw = addCreatureReady(player1, new CoastalHornclaw());
         Permanent landA = harness.addToBattlefieldAndReturn(player1, new Island());
-        harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, landA.getId());
@@ -87,11 +87,57 @@ class CoastalHornclawTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Land is sacrificed immediately, but flying waits for resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent hornclaw = addCreatureReady(player1, new CoastalHornclaw());
+        harness.addToBattlefield(player1, new Island());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(countPermanents(player1, "Island")).isZero();
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Hornclaw can sacrifice a tapped land")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent hornclaw = harness.addToBattlefieldAndReturn(player1, new CoastalHornclaw());
+        hornclaw.setSummoningSick(true);
+        hornclaw.setTapped(true);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        land.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isTrue();
+        assertThat(hornclaw.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Flying is granted only to the Hornclaw whose ability was activated")
+    void grantsFlyingOnlyToSource() {
+        Permanent hornclaw = addCreatureReady(player1, new CoastalHornclaw());
+        Permanent other = addCreatureReady(player1, new CoastalHornclaw());
+        harness.addToBattlefield(player1, new Island());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 
 }

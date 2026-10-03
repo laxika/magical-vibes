@@ -30,8 +30,7 @@ class CaveInTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Crenellated Wall");
         harness.assertNotOnBattlefield(player2, "Gerrard's Irregulars");
@@ -48,9 +47,7 @@ class CaveInTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new CrenellatedWall());
         harness.setHand(player1, List.of(new CaveIn(), new FlailingSoldier()));
-        harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, List.of(), null, List.of(), false, 1);
+        harness.castSorceryWithDiscard(player1, 0, 1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Crenellated Wall");
@@ -67,14 +64,65 @@ class CaveInTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CaveIn(), new CloudSprite()));
         harness.ensurePriority(player1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, List.of(), null, List.of(), false, 1))
+        assertThatThrownBy(() -> harness.castSorceryWithDiscard(player1, 0, 1))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Exiled card must be red card");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(card -> card.getName())
                 .containsExactly("Cave-In", "Cloud Sprite");
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void damagesFlyingCreaturesOnBothSides() {
+        harness.addToBattlefield(player1, new CloudSprite());
+        harness.addToBattlefield(player2, new CloudSprite());
+        harness.setHand(player1, List.of(new CaveIn()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Cloud Sprite");
+        harness.assertNotOnBattlefield(player2, "Cloud Sprite");
+        harness.assertInGraveyard(player1, "Cloud Sprite");
+        harness.assertInGraveyard(player2, "Cloud Sprite");
+    }
+
+    @Test
+    void canExileAnotherCaveInBeforeTheSpellInHand() {
+        CaveIn payment = new CaveIn();
+        CaveIn spell = new CaveIn();
+        harness.setHand(player1, List.of(payment, spell, new CloudSprite()));
+
+        harness.castSorceryWithDiscard(player1, 1, 0);
+
+        assertThat(gd.exiledCards).extracting(e -> e.card()).containsExactly(payment);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Cloud Sprite");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.exiledCards).extracting(e -> e.card()).containsExactly(payment);
+    }
+
+    @Test
+    void cannotExileTheSpellItself() {
+        harness.setHand(player1, List.of(new CaveIn(), new FlailingSoldier()));
+
+        assertThatThrownBy(() -> harness.castSorceryWithDiscard(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Cave-In", "Flailing Soldier");
         assertThat(gd.exiledCards).isEmpty();
         assertThat(gd.stack).isEmpty();
     }

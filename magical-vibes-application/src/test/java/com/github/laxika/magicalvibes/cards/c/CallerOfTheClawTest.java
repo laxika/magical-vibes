@@ -43,8 +43,7 @@ class CallerOfTheClawTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
@@ -59,10 +58,8 @@ class CallerOfTheClawTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, token.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player1, 0, token.getId());
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
@@ -100,10 +97,8 @@ class CallerOfTheClawTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castInstant(player1, 0, firstCreature.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, secondCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstCreature.getId());
+        harness.castAndResolveInstant(player1, 0, secondCreature.getId());
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
@@ -125,8 +120,7 @@ class CallerOfTheClawTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castInstant(player1, 0, opponentCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, opponentCreature.getId());
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
@@ -143,11 +137,77 @@ class CallerOfTheClawTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Bear")).hasSize(1);
+    }
+
+    @Test
+    void countsCallerItselfWhenItDiesBeforeItsTriggerResolves() {
+        harness.setHand(player1, List.of(new CallerOfTheClaw(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent caller = findPermanent(player1, "Caller of the Claw");
+        harness.castAndResolveInstant(player1, 0, caller.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Caller of the Claw");
+        harness.assertNotOnBattlefield(player1, "Caller of the Claw");
+        assertThat(findPermanents(player1, "Bear")).hasSize(1);
+    }
+
+    @Test
+    void countsOwnCreatureThatDiedUnderOpponentsControl() {
+        Card creatureCard = new GrizzlyBears();
+        creatureCard.setOwnerId(player1.getId());
+        Permanent creature = addCreatureReady(player2, creatureCard);
+        harness.setHand(player1, List.of(new Shock(), new CallerOfTheClaw()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Bear")).hasSize(1);
+    }
+
+    @Test
+    void doesNotCountOpponentsCreatureThatDiedUnderOwnControl() {
+        Card creatureCard = new GrizzlyBears();
+        creatureCard.setOwnerId(player2.getId());
+        Permanent creature = addCreatureReady(player1, creatureCard);
+        harness.setHand(player1, List.of(new Shock(), new CallerOfTheClaw()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Bear")).isEmpty();
+    }
+
+    @Test
+    void doesNotCountCreatureThatDiedOnPreviousTurn() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new CallerOfTheClaw()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Bear")).isEmpty();
     }
 
     private Card createTokenCreature() {

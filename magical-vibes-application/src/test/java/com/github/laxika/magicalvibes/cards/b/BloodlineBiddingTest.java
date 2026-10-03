@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,15 +15,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodlineBidding.class, GrizzlyBears.class, HillGiant.class, AvianChangeling.class, SoulWarden.class})
 class BloodlineBiddingTest extends BaseCardTest {
 
     private void castAndChoose(String creatureType) {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant(), new AvianChangeling()));
-        harness.setHand(player1, List.of(new BloodlineBidding()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new BloodlineBidding(), "{6}{B}{B}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, creatureType);
     }
@@ -51,11 +50,7 @@ class BloodlineBiddingTest extends BaseCardTest {
     void ignoresOpponentsGraveyard() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new BloodlineBidding()));
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new BloodlineBidding()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new BloodlineBidding(), "{6}{B}{B}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BEAR");
 
@@ -64,5 +59,71 @@ class BloodlineBiddingTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    void returnsMultipleMatchingCreatures() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new HillGiant()));
+        harness.castFromHand(player1, new BloodlineBidding(), "{6}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Hill Giant", "Bloodline Bidding");
+    }
+
+    @Test
+    void canChooseTypeAbsentFromGraveyard() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant()));
+        harness.castFromHand(player1, new BloodlineBidding(), "{6}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ELF");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Grizzly Bears", "Hill Giant", "Bloodline Bidding");
+    }
+
+    @Test
+    void resolvesWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.castFromHand(player1, new BloodlineBidding(), "{6}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Bloodline Bidding");
+    }
+
+    @Test
+    void convokePaysGenericManaWithSummoningSickCreature() {
+        var convoker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        convoker.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(new HillGiant()));
+        harness.setHand(player1, List.of(new BloodlineBidding()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convoker.getId()));
+
+        assertThat(convoker.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GIANT");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    void returnedCreaturesSeeEachOthersSimultaneousEntry() {
+        harness.setGraveyard(player1, List.of(new AvianChangeling(), new SoulWarden()));
+        harness.castFromHand(player1, new BloodlineBidding(), "{6}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "HUMAN");
+
+        harness.assertOnBattlefield(player1, "Avian Changeling");
+        harness.assertOnBattlefield(player1, "Soul Warden");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
     }
 }

@@ -3,16 +3,57 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AncientLumberknot.class, GiantSpider.class, GoblinPiker.class, GrizzlyBears.class})
+@CardUsed({AncientLumberknot.class, GiantSpider.class, GoblinPiker.class, GrizzlyBears.class, TurnToFrog.class})
 class AncientLumberknotTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The toughness assignment effect stops when Lumberknot loses all abilities")
+    void effectStopsWhenSourceLosesAbilities() {
+        Permanent lumberknot = addCreatureReady(player1, new AncientLumberknot());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        assertThat(gqs.getEffectiveCombatDamage(gd, spider)).isEqualTo(4);
+
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, lumberknot.getId());
+
+        assertThat(gqs.getEffectiveCombatDamage(gd, spider)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An unblocked Lumberknot deals damage equal to its toughness")
+    void unblockedLumberknotDealsToughnessDamage() {
+        addCreatureReady(player1, new AncientLumberknot());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Two Lumberknots do not multiply toughness combat damage")
+    void multipleLumberknotsDoNotMultiplyDamage() {
+        addCreatureReady(player1, new AncientLumberknot());
+        addCreatureReady(player1, new AncientLumberknot());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+
+        assertThat(gqs.getEffectiveCombatDamage(gd, spider)).isEqualTo(4);
+    }
+
 
     @Test
     @DisplayName("Ancient Lumberknot assigns combat damage equal to its toughness")

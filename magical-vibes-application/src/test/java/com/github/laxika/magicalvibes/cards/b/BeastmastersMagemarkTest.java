@@ -121,9 +121,63 @@ class BeastmastersMagemarkTest extends BaseCardTest {
         return addCreatureReady(player, new StreetbreakerWurm());
     }
 
+    @Test
+    @DisplayName("The Magemark is the source of the becomes-blocked ability")
+    void magemarkIsSourceOfTriggeredAbility() {
+        Permanent attacker = addReadyCreature(player1);
+        attach(new BeastmastersMagemark(), attacker, player1);
+        Permanent magemark = findPermanent(player1, "Beastmaster's Magemark");
+        addReadyCreature(player2);
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(magemark.getId());
+    }
+
+    @Test
+    @DisplayName("Each Magemark creates a separate becomes-blocked trigger")
+    void multipleMagemarksTriggerSeparately() {
+        Permanent attacker = addReadyCreature(player1);
+        attach(new BeastmastersMagemark(), attacker, player1);
+        attach(new BeastmastersMagemark(), attacker, player1);
+        addReadyCreature(player2);
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("The combat bonus applies to other enchanted creatures you control")
+    void boostsOtherEnchantedCreatureWhenBlocked() {
+        Permanent magemarkTarget = addReadyCreature(player1);
+        attach(new BeastmastersMagemark(), magemarkTarget, player1);
+        Permanent attacker = addReadyCreature(player1);
+        attach(new HypervoltGrasp(), attacker, player1);
+        addReadyCreature(player2);
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, magemarkTarget)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, magemarkTarget)).isEqualTo(5);
+    }
+
     private void attach(Card auraCard, Permanent creature, Player controller) {
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, auraCard);
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 }

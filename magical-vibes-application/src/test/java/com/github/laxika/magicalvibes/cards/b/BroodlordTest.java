@@ -84,10 +84,90 @@ class BroodlordTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("X=0 enters without counters and cannot distribute or draw")
+    void zeroXHasNoCountersOrDraw() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        castBroodlord(0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Broodlord")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Brood Telepathy may choose no targets even when other creatures are available")
+    void canDeclineAllTargets() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castBroodlord(3);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Broodlord")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Ravenous and Brood Telepathy create two independent triggered abilities")
+    void ravenousAndTelepathyTriggerIndependently() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        gd.pendingETBDamageAssignments = Map.of(other.getId(), 5);
+
+        castBroodlord(5);
+        harness.passBothPriorities();
+        chooseTargets(other);
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Losing all Brood Telepathy targets does not stop the Ravenous draw")
+    void ravenousDrawsWhenTelepathyTargetLeaves() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        gd.pendingETBDamageAssignments = Map.of(other.getId(), 5);
+
+        castBroodlord(5);
+        harness.passBothPriorities();
+        chooseTargets(other);
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Counters assigned to a lost target are not redistributed to surviving targets")
+    void lostTargetDoesNotChangeAnnouncedDistribution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 2);
+
+        castBroodlord(3);
+        harness.passBothPriorities();
+        chooseTargets(first, second);
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void castBroodlord(int x) {
         harness.setHand(player1, List.of(new Broodlord()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, x + 3);
-        gs.playCard(gd, player1, 0, x, null, null);
+        harness.castCreature(player1, 0, x);
     }
 }

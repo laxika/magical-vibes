@@ -56,8 +56,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CommuneWithNature()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -81,8 +80,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CommuneWithNature()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose Llanowar Elves
@@ -112,8 +110,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CommuneWithNature()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
@@ -139,8 +136,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CommuneWithNature()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -164,8 +160,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CommuneWithNature()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -181,8 +176,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CommuneWithNature()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -203,8 +197,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(commune));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // The spell only reaches the graveyard once its resolution finishes
@@ -212,6 +205,72 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(commune);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the top five are considered and the rest go below untouched cards")
+    void leavesDeeperCardsUntouched() {
+        LlanowarElves elves = new LlanowarElves();
+        Shock shock = new Shock();
+        Plains plains = new Plains();
+        Swamp swamp = new Swamp();
+        Shock secondShock = new Shock();
+        GrizzlyBears deeperBears = new GrizzlyBears();
+        Plains deeperPlains = new Plains();
+        harness.setLibrary(player1, List.of(elves, shock, plains, swamp, secondShock,
+                deeperBears, deeperPlains));
+        harness.setHand(player1, List.of(new CommuneWithNature()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(elves);
+        harness.handleCardChosen(player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elves);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(deeperBears, deeperPlains, secondShock, swamp, plains, shock);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only creature in a one-card library may still be declined")
+    void mayDeclineOnlyCardInLibrary() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        harness.setHand(player1, List.of(new CommuneWithNature()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, -1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing the only card in the library completes resolution without a reorder")
+    void mayTakeOnlyCardInLibrary() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        harness.setHand(player1, List.of(new CommuneWithNature()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

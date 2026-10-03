@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ByForce.class, RodOfRuin.class, Ornithopter.class, GrizzlyBears.class})
 class ByForceTest extends BaseCardTest {
 
     @Test
@@ -40,8 +42,7 @@ class ByForceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ByForce()));
         harness.addMana(player1, ManaColor.RED, 1); // X=0: {0}{R} = 1
 
-        harness.castSorcery(player1, 0, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player2, "Rod of Ruin");
     }
@@ -74,5 +75,60 @@ class ByForceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(creatureId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact");
+    }
+
+    @Test
+    @DisplayName("Cannot choose fewer than X artifacts even when enough are available")
+    void cannotTargetFewerThanX() {
+        harness.addToBattlefield(player2, new RodOfRuin());
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new ByForce()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID rodId = harness.getPermanentId(player2, "Rod of Ruin");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, List.of(rodId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Positive X cannot be cast without targets")
+    void positiveXRequiresTargets() {
+        harness.setHand(player1, List.of(new ByForce()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same artifact cannot fill two target positions")
+    void cannotTargetSameArtifactTwice() {
+        harness.addToBattlefield(player2, new RodOfRuin());
+        harness.setHand(player1, List.of(new ByForce()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID rodId = harness.getPermanentId(player2, "Rod of Ruin");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, List.of(rodId, rodId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy artifacts controlled by either player")
+    void destroysArtifactsOfBothPlayers() {
+        harness.addToBattlefield(player1, new RodOfRuin());
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new ByForce()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID rodId = harness.getPermanentId(player1, "Rod of Ruin");
+        UUID thopterId = harness.getPermanentId(player2, "Ornithopter");
+
+        harness.castSorcery(player1, 0, 2, List.of(rodId, thopterId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 }

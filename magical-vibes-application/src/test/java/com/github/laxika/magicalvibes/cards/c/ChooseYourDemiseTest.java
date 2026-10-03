@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,7 +77,93 @@ class ChooseYourDemiseTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island, forest);
     }
 
+    @Test
+    void multipleOpponentsStillRequireSeparationAndPileChoice() {
+        Card island = new Island();
+        Card forest = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(island, forest));
+        UUID thirdPlayerId = UUID.randomUUID();
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerIdToName.put(thirdPlayerId, "Third player");
+
+        queueScheme();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    void faceDownCardsPutIntoHandAreNotNamedInPublicLog() {
+        Card island = new Island();
+        Card forest = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(island, forest));
+
+        resolveScheme();
+        harness.handleMultipleCardsChosen(player1, List.of(island.getId()));
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(forest.getName()));
+    }
+
+    @Test
+    void singleFaceDownCardPutOnBottomIsNotNamedInPublicLog() {
+        Card island = new Island();
+        Card forest = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(island, forest));
+
+        resolveScheme();
+        harness.handleMultipleCardsChosen(player1, List.of(island.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(forest.getName()));
+    }
+
+    @Test
+    void opponentCanChooseEmptyPileAndControllerOrdersAllCardsOnBottom() {
+        Card island = new Island();
+        Card forest = new Forest();
+        Card mountain = new Mountain();
+        Card plains = new Plains();
+        Card untouched = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(island, forest, mountain, plains, untouched));
+
+        resolveScheme();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player2, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, plains, mountain, forest, island);
+    }
+
+    @Test
+    void emptyLibraryFinishesWithoutAChoice() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        resolveScheme();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void resolveScheme() {
+        queueScheme();
+        harness.passBothPriorities();
+    }
+
+    private void queueScheme() {
         ChooseYourDemise scheme = new ChooseYourDemise();
         gd.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -84,6 +171,5 @@ class ChooseYourDemiseTest extends BaseCardTest {
                 player1.getId(),
                 scheme.getName(),
                 scheme.getEffects(EffectSlot.SPELL)));
-        harness.passBothPriorities();
     }
 }

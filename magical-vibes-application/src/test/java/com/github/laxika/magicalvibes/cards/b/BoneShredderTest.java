@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FogOfGnats;
 import com.github.laxika.magicalvibes.cards.k.Knighthood;
+import com.github.laxika.magicalvibes.cards.s.Snap;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BoneShredder.class, BouncingBeebles.class, FogOfGnats.class, BeastOfBurden.class,
-        Knighthood.class})
+        Knighthood.class, Snap.class})
 class BoneShredderTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class BoneShredderTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Bouncing Beebles");
         harness.castCreature(player1, 0, targetId);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Bouncing Beebles");
         harness.assertInGraveyard(player2, "Bouncing Beebles");
@@ -88,8 +88,7 @@ class BoneShredderTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player2, "Bouncing Beebles");
         harness.castCreature(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -111,13 +110,56 @@ class BoneShredderTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player2, "Bouncing Beebles");
         harness.castCreature(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
+        harness.assertInGraveyard(player1, "Bone Shredder");
+    }
+
+    @Test
+    @DisplayName("Echo still triggers when there is no eligible entry target")
+    void echoTriggersWithoutEligibleEntryTarget() {
+        harness.setHand(player1, List.of(new BoneShredder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Bone Shredder");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Bone Shredder");
+        harness.assertInGraveyard(player1, "Bone Shredder");
+    }
+
+    @Test
+    @DisplayName("Echo still triggers when the destruction target leaves before resolution")
+    void echoTriggersAfterEntryAbilityLosesTarget() {
+        harness.addToBattlefield(player2, new BouncingBeebles());
+        harness.setHand(player1, List.of(new BoneShredder(), new Snap()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        UUID targetId = harness.getPermanentId(player2, "Bouncing Beebles");
+
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        resolveAllTriggers();
+        harness.assertInHand(player2, "Bouncing Beebles");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Bone Shredder");
         harness.assertInGraveyard(player1, "Bone Shredder");
     }
 }

@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.w.WhipOfErebos;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +21,77 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BurningVengeance.class, AncientGrudge.class, FountainOfYouth.class, GrizzlyBears.class,
+        BumpInTheNight.class, Naturalize.class, Opalescence.class, WhipOfErebos.class})
 class BurningVengeanceTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Triggered damage uses lifelink granted to animated Burning Vengeance")
+    void triggeredDamageUsesSourceLifelink() {
+        harness.addToBattlefield(player1, new BurningVengeance());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new WhipOfErebos());
+        harness.setGraveyard(player1, List.of(new BumpInTheNight()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFlashback(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, opponentLife - 2);
+        harness.assertLife(player1, controllerLife + 2);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, opponentLife - 5);
+        harness.assertLife(player1, controllerLife + 2);
+    }
+
+    @Test
+    @DisplayName("The trigger can target its controller and resolves before the graveyard spell")
+    void canTargetControllerBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new BurningVengeance());
+        harness.setGraveyard(player1, List.of(new BumpInTheNight()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFlashback(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, controllerLife - 2);
+        harness.assertLife(player2, opponentLife);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, opponentLife - 3);
+    }
+
+    @Test
+    @DisplayName("Removing Burning Vengeance does not stop its pending trigger")
+    void triggerResolvesAfterSourceIsDestroyed() {
+        harness.addToBattlefield(player1, new BurningVengeance());
+        UUID vengeanceId = harness.getPermanentId(player1, "Burning Vengeance");
+        harness.setGraveyard(player1, List.of(new BumpInTheNight()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFlashback(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.castAndResolveInstant(player2, 0, vengeanceId);
+        harness.assertNotOnBattlefield(player1, "Burning Vengeance");
+        harness.assertInGraveyard(player1, "Burning Vengeance");
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, opponentLife - 2);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, opponentLife - 5);
+    }
 
     @Test
     @DisplayName("Casting a flashback spell triggers target selection")

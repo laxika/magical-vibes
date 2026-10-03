@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArtifactMutation.class, AlloyGolem.class, AncientKavu.class})
+@CardUsed({ArtifactMutation.class, AlloyGolem.class, AncientKavu.class, ChromaticSphere.class})
 class ArtifactMutationTest extends BaseCardTest {
 
     @Test
@@ -83,5 +84,44 @@ class ArtifactMutationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own noncreature artifact and creates one Saproling for mana value one")
+    void destroysOwnNoncreatureArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ChromaticSphere());
+        harness.setHand(player1, List.of(new ArtifactMutation()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Chromatic Sphere");
+        harness.assertInGraveyard(player1, "Chromatic Sphere");
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    @DisplayName("Creates no additional Saprolings when its target has already left the battlefield")
+    void doesNotCreateTokensForMissingTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChromaticSphere());
+        harness.setHand(player1, List.of(new ArtifactMutation(), new ArtifactMutation()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Chromatic Sphere");
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
     }
 }

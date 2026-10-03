@@ -61,9 +61,7 @@ class ClockworkAvianTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(avian.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(1);
-
-        leaveEndOfCombat();
+        resolveAllTriggers();
 
         assertThat(avian.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
     }
@@ -131,10 +129,62 @@ class ClockworkAvianTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
+    @Test
+    void attackingDoesNotTriggerUntilEndOfCombat() {
+        Permanent avian = addCreatureReady(player1, new ClockworkAvian());
+        avian.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(avian.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+    }
+
+    @Test
+    void endOfCombatCounterRemovalUsesTheStack() {
+        Permanent avian = addCreatureReady(player1, new ClockworkAvian());
+        avian.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        });
+
+        assertThat(avian.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(avian.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(3);
+    }
+
+    @Test
+    void mayChooseNoCountersForPositiveX() {
+        Permanent avian = addCreatureReady(player1, new ClockworkAvian());
+        avian.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "0");
+
+        assertThat(avian.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(1);
+        assertThat(avian.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new ClockworkAvian());
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+    }
+
     private void activateUpkeepAbility(int x) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, x);
 
         harness.activateAbility(player1, 0, x, null);

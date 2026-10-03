@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.m.MassacreWurm;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AlabornZealot.class, AlabornTrooper.class})
+@CardUsed({AlabornZealot.class, AlabornTrooper.class, MassacreWurm.class})
 class AlabornZealotTest extends BaseCardTest {
 
     private Permanent addZealotBlocker() {
@@ -75,6 +76,7 @@ class AlabornZealotTest extends BaseCardTest {
         declareZealotBlock();
         harness.passBothPriorities();
 
+        harness.resolveCombatDamage();
         harness.assertLife(player2, 20);
     }
 
@@ -111,6 +113,71 @@ class AlabornZealotTest extends BaseCardTest {
     void normalCreatureDoesNotTriggerOnBlock() {
         addCreatureReady(player2, new AlabornTrooper());
         addAttacker(2, 2);
+
+        declareZealotBlock();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The blocked creature sees Alaborn Zealot die simultaneously with it")
+    @CardUsed({AlabornZealot.class, MassacreWurm.class})
+    void blockedCreatureSeesSimultaneousDeath() {
+        harness.setLife(player2, 20);
+        addZealotBlocker();
+        Permanent attacker = addCreatureReady(player1, new MassacreWurm());
+        attacker.setAttacking(true);
+
+        declareZealotBlock();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Massacre Wurm");
+        harness.assertInGraveyard(player2, "Alaborn Zealot");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Regenerating Alaborn Zealot does not save the blocked creature")
+    void regeneratingZealotStillDestroysAttacker() {
+        Permanent zealot = addZealotBlocker();
+        zealot.setRegenerationShield(1);
+        Permanent attacker = addCreatureReady(player1, new AlabornTrooper());
+        attacker.setAttacking(true);
+
+        declareZealotBlock();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Alaborn Trooper");
+        harness.assertOnBattlefield(player2, "Alaborn Zealot");
+        harness.assertNotInGraveyard(player2, "Alaborn Zealot");
+        assertThat(zealot.isTapped()).isTrue();
+        assertThat(zealot.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Regenerating the blocked creature does not save Alaborn Zealot")
+    void regeneratingAttackerStillDestroysZealot() {
+        addZealotBlocker();
+        Permanent attacker = addCreatureReady(player1, new AlabornTrooper());
+        attacker.setAttacking(true);
+        attacker.setRegenerationShield(1);
+
+        declareZealotBlock();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Alaborn Trooper");
+        harness.assertNotInGraveyard(player1, "Alaborn Trooper");
+        harness.assertInGraveyard(player2, "Alaborn Zealot");
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Alaborn Zealot does not trigger when it attacks and becomes blocked")
+    void attackingZealotDoesNotTrigger() {
+        Permanent zealot = addCreatureReady(player1, new AlabornZealot());
+        zealot.setAttacking(true);
+        addCreatureReady(player2, new AlabornTrooper());
 
         declareZealotBlock();
 

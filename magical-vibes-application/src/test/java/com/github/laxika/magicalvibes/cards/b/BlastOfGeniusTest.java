@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.m.MazesEnd;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlastOfGenius.class, GrizzlyBears.class, WindDrake.class, MazesEnd.class})
 class BlastOfGeniusTest extends BaseCardTest {
 
     private void addMana(com.github.laxika.magicalvibes.model.Player player) {
@@ -28,8 +31,7 @@ class BlastOfGeniusTest extends BaseCardTest {
         // Grizzly Bears ({1}{G}, mana value 2) is drawn and discarded.
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
 
@@ -47,8 +49,7 @@ class BlastOfGeniusTest extends BaseCardTest {
         // Wind Drake ({2}{U}, mana value 3) is drawn and discarded.
         harness.setLibrary(player1, List.of(new WindDrake(), new WindDrake(), new WindDrake()));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -64,10 +65,61 @@ class BlastOfGeniusTest extends BaseCardTest {
         // Wind Drake's mana value 3 is lethal to a 2/2.
         harness.setLibrary(player1, List.of(new WindDrake(), new WindDrake(), new WindDrake()));
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A land discarded after drawing causes no damage")
+    void discardingLandDealsZeroDamage() {
+        harness.setHand(player1, List.of(new BlastOfGenius(), new MazesEnd()));
+        harness.setLibrary(player1, List.of(new WindDrake(), new WindDrake(), new WindDrake()));
+        addMana(player1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Maze's End");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and discard a card already in hand")
+    void canDiscardPreexistingCardAndDamageController() {
+        harness.setHand(player1, List.of(new BlastOfGenius(), new BlastOfGenius()));
+        harness.setLibrary(player1, List.of(new WindDrake(), new WindDrake(), new WindDrake()));
+        addMana(player1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An absent target prevents drawing and discarding")
+    void illegalTargetPreventsAllEffects() {
+        harness.addToBattlefield(player2, new WindDrake());
+        java.util.UUID targetId = harness.getPermanentId(player2, "Wind Drake");
+        harness.setHand(player1, List.of(new BlastOfGenius(), new WindDrake()));
+        harness.setLibrary(player1, List.of(new WindDrake(), new WindDrake(), new WindDrake()));
+        addMana(player1);
+
+        harness.castSorcery(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Blast of Genius");
+        harness.assertNotInGraveyard(player1, "Wind Drake");
     }
 }

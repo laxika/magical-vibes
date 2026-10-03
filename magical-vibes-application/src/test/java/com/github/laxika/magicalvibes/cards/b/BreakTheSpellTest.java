@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UpTheBeanstalk;
+import com.github.laxika.magicalvibes.cards.t.TuinvaleGuide;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,13 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BreakTheSpell.class, GhostlyPrison.class, GrizzlyBears.class})
+@CardUsed({BreakTheSpell.class, UpTheBeanstalk.class, TuinvaleGuide.class})
 class BreakTheSpellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys an enchantment you control and draws a card")
     void destroysOwnEnchantmentAndDraws() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GhostlyPrison());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
         prepareSpell();
 
         cast(target);
@@ -36,7 +36,7 @@ class BreakTheSpellTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys an opponent's enchantment without drawing")
     void destroysOpponentsEnchantmentWithoutDrawing() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UpTheBeanstalk());
         prepareSpell();
 
         cast(target);
@@ -85,23 +85,52 @@ class BreakTheSpellTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TuinvaleGuide());
         harness.setHand(player1, List.of(new BreakTheSpell()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Regeneration prevents destruction and the card draw")
+    void regeneratedEnchantmentDoesNotDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
+        target.setRegenerationShield(1);
+        prepareSpell();
+
+        cast(target);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw if the target leaves before resolution")
+    void missingTargetDoesNotDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
+        prepareSpell();
+        harness.castInstant(player1, 0, target.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Up the Beanstalk");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Break the Spell");
+    }
     private void prepareSpell() {
         harness.setHand(player1, List.of(new BreakTheSpell()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new TuinvaleGuide()));
         harness.addMana(player1, ManaColor.WHITE, 1);
     }
 
     private void cast(Permanent target) {
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

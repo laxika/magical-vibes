@@ -35,4 +35,19 @@ class AngelicWallTest extends BaseCardTest {
 
         assertThat(wall.isBlocking()).isTrue();
     }
+
+    @Test
+    void summoningSickWallCanBlockAndSurviveFlyingAttacker() {
+        addCreatureReady(player1, new DuskImp());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Angelic Wall");
+        harness.assertOnBattlefield(player1, "Dusk Imp");
+        assertThat(wall.getMarkedDamage()).isEqualTo(2);
+    }
 }

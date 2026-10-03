@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Harmonize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BaxterFlyInTheOintment.class, GrizzlyBears.class})
+@CardUsed({BaxterFlyInTheOintment.class, GrizzlyBears.class, Harmonize.class})
 class BaxterFlyInTheOintmentTest extends BaseCardTest {
 
     @Test
@@ -76,6 +77,59 @@ class BaxterFlyInTheOintmentTest extends BaseCardTest {
         advanceToDraw(player2);
 
         assertThat(baxter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The attack trigger checks counters when it resolves, including Baxter's counters")
+    void attackChecksCountersAtResolution() {
+        Permanent baxter = addCreatureReady(player1, new BaxterFlyInTheOintment());
+        Permanent gainsCounter = addCreatureReady(player1, new GrizzlyBears());
+        Permanent losesCounter = addCreatureReady(player1, new GrizzlyBears());
+        losesCounter.setCounterCount(CounterType.CHARGE, 1);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(baxter)));
+        baxter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gainsCounter.setCounterCount(CounterType.CHARGE, 1);
+        losesCounter.setCounterCount(CounterType.CHARGE, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, baxter, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gainsCounter, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, losesCounter, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying recipients stay fixed after resolution")
+    void flyingRecipientsStayFixedAfterResolution() {
+        Permanent countered = addCreatureReady(player1, new GrizzlyBears());
+        countered.setCounterCount(CounterType.CHARGE, 1);
+        Permanent uncountered = addCreatureReady(player1, new GrizzlyBears());
+
+        castBaxter();
+        countered.setCounterCount(CounterType.CHARGE, 0);
+        uncountered.setCounterCount(CounterType.CHARGE, 1);
+        Permanent lateArrival = addCreatureReady(player1, new GrizzlyBears());
+        lateArrival.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThat(gqs.hasKeyword(gd, countered, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, uncountered, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateArrival, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Drawing three cards puts one counter on Baxter for each card")
+    void drawingMultipleCardsPutsOneCounterPerCard() {
+        Permanent baxter = harness.addToBattlefieldAndReturn(player1, new BaxterFlyInTheOintment());
+        harness.setLibrary(player1, List.of(new BaxterFlyInTheOintment(),
+                new BaxterFlyInTheOintment(), new BaxterFlyInTheOintment()));
+        harness.setHand(player1, List.of(new Harmonize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(baxter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     private void castBaxter() {

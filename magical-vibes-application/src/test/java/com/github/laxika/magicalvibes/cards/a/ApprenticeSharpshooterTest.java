@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SkywarpSkaab;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ApprenticeSharpshooter.class, GrizzlyBears.class})
+@CardUsed({ApprenticeSharpshooter.class, GrizzlyBears.class, SkywarpSkaab.class})
 class ApprenticeSharpshooterTest extends BaseCardTest {
 
     @Test
@@ -55,5 +57,54 @@ class ApprenticeSharpshooterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
 
         assertThat(gd.stack).isEmpty();
+    }
+    @Test
+    void reachAllowsBlockingFlyingCreature() {
+        Permanent sharpshooter = addCreatureReady(player2, new ApprenticeSharpshooter());
+        addCreatureReady(player1, new SkywarpSkaab());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(sharpshooter.isBlocking()).isTrue();
+    }
+
+    @Test
+    void trainingTriggersOnlyOnceWithMultipleGreaterPowerAttackers() {
+        Permanent sharpshooter = addCreatureReady(player1, new ApprenticeSharpshooter());
+        addCreatureReady(player1, new SkywarpSkaab());
+        addCreatureReady(player1, new SkywarpSkaab());
+
+        declareAttackers(List.of(0, 1, 2));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(sharpshooter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void trainingStillResolvesAfterAllyLosesGreaterPower() {
+        Permanent sharpshooter = addCreatureReady(player1, new ApprenticeSharpshooter());
+        Permanent ally = addCreatureReady(player1, new ApprenticeSharpshooter());
+        ally.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(List.of(0, 1));
+
+        assertThat(gd.stack).hasSize(1);
+        ally.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        resolveAllTriggers();
+        assertThat(sharpshooter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void trainingDoesNotTriggerWithNonattackingGreaterPowerCreature() {
+        Permanent sharpshooter = addCreatureReady(player1, new ApprenticeSharpshooter());
+        addCreatureReady(player1, new SkywarpSkaab());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(sharpshooter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

@@ -94,6 +94,61 @@ class ChillingApparitionTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Combat damage to a player with an empty hand resolves without a discard choice")
+    void emptyHandDoesNotRequireDiscardChoice() {
+        Permanent apparition = addCreatureReady(player1, new ChillingApparition());
+        harness.setHand(player2, List.of());
+        apparition.setAttacking(true);
+
+        resolveCombatAndTrigger();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The damaged player discards when the other player controls the attacker")
+    void otherControllerMakesDamagedPlayerDiscard() {
+        Permanent apparition = addCreatureReady(player2, new ChillingApparition());
+        BogElemental discardedCard = new BogElemental();
+        ChillingApparition keptCard = new ChillingApparition();
+        harness.setHand(player1, List.of(keptCard, discardedCard));
+        harness.setHand(player2, List.of(new BogElemental()));
+        apparition.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped creature can activate regeneration repeatedly without tapping as a cost")
+    void tappedCreatureCanCreateMultipleShields() {
+        Permanent apparition = addCreatureReady(player1, new ChillingApparition());
+        apparition.tap();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(apparition.getRegenerationShield()).isEqualTo(2);
+        assertThat(apparition.isTapped()).isTrue();
+    }
+
     private void resolveCombatAndTrigger() {
         resolveCombat();
         harness.passBothPriorities();

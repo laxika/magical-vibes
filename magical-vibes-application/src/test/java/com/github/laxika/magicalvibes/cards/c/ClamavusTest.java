@@ -43,4 +43,38 @@ class ClamavusTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
+
+    @Test
+    void boostsItselfAndIgnoresOtherCounterTypes() {
+        Permanent clamavus = harness.addToBattlefieldAndReturn(player1, new Clamavus());
+        clamavus.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        clamavus.getCounters().put(CounterType.STUN, 3);
+
+        assertThat(gqs.getEffectivePower(gd, clamavus)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, clamavus)).isEqualTo(7);
+
+        clamavus.getCounters().remove(CounterType.PLUS_ONE_PLUS_ONE);
+
+        assertThat(gqs.getEffectivePower(gd, clamavus)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, clamavus)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleCopiesStackAndUseEachCreaturesOwnCounters() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Clamavus());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Clamavus());
+        first.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        second.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(9);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(7);
+    }
 }

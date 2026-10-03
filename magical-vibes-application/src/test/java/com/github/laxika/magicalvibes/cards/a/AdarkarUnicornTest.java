@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.m.MysticRemora;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AdarkarUnicorn.class, BalduvianBears.class})
+@CardUsed({AdarkarUnicorn.class, BalduvianBears.class, MysticRemora.class})
 class AdarkarUnicornTest extends BaseCardTest {
 
     private Permanent unicornOnBattlefield() {
@@ -141,5 +142,54 @@ class AdarkarUnicornTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColorless()).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Both mana from the second mode pay Mystic Remora's upkeep with two age counters")
+    void paysIncreasedGenericCumulativeUpkeep() {
+        unicornOnBattlefield();
+        Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+        remora.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(remora.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        activateAddCU();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remora);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColorless()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Activating one mana choice taps the Unicorn and prevents activating the other")
+    void choicesShareTapCostAndResolveImmediately() {
+        Permanent unicorn = unicornOnBattlefield();
+
+        activateAddU();
+
+        assertThat(unicorn.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(this::activateAddCU).isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColorless()).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Unicorn cannot activate either tap ability")
+    void summoningSicknessPreventsBothChoices() {
+        Permanent unicorn = unicornOnBattlefield();
+        unicorn.setSummoningSick(true);
+
+        assertThatThrownBy(this::activateAddU).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(this::activateAddCU).isInstanceOf(IllegalStateException.class);
+
+        assertThat(unicorn.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColored(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getCumulativeUpkeepOnlyColorless()).isZero();
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BaldinCenturyHerdmaster.class, GoblinPiker.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({BaldinCenturyHerdmaster.class, GrizzlyBears.class, FountainOfYouth.class})
 class BaldinCenturyHerdmasterTest extends BaseCardTest {
 
     @Test
@@ -83,10 +82,71 @@ class BaldinCenturyHerdmasterTest extends BaseCardTest {
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("The attack trigger uses the controller's hand size at resolution and can target Baldin")
+    void attackUsesHandSizeAtResolution() {
+        Permanent baldin = addReadyPermanent(player1, new BaldinCenturyHerdmaster());
+        Permanent opposingTarget = addReadyPermanent(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+
+        beginCombat(player1);
+        gs.declareAttackers(gd, player1, List.of(indexOf(player1, baldin)));
+        harness.handleMultiplePermanentsChosen(player1, List.of(baldin.getId(), opposingTarget.getId()));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(baldin.getToughnessModifier()).isEqualTo(2);
+        assertThat(opposingTarget.getToughnessModifier()).isEqualTo(2);
+        assertThat(baldin.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Baldin may attack without choosing any targets")
+    void attackCanChooseNoTargets() {
+        Permanent baldin = addReadyPermanent(player1, new BaldinCenturyHerdmaster());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        beginCombat(player1);
+        gs.declareAttackers(gd, player1, List.of(indexOf(player1, baldin)));
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(baldin.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand grants no boost to selected creatures")
+    void attackWithEmptyHandGrantsNoBoost() {
+        Permanent baldin = addReadyPermanent(player1, new BaldinCenturyHerdmaster());
+        harness.setHand(player1, List.of());
+
+        beginCombat(player1);
+        gs.declareAttackers(gd, player1, List.of(indexOf(player1, baldin)));
+        harness.handleMultiplePermanentsChosen(player1, List.of(baldin.getId()));
+        harness.passBothPriorities();
+
+        assertThat(baldin.getToughnessModifier()).isZero();
+        assertThat(baldin.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Baldin itself deals combat damage equal to its toughness")
+    void baldinDealsToughnessDamage() {
+        Permanent baldin = addReadyPermanent(player1, new BaldinCenturyHerdmaster());
+        baldin.setAttacking(true);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
     private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

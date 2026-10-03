@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.t.TravelersAmulet;
+import com.github.laxika.magicalvibes.cards.s.SilverchaseFox;
+import com.github.laxika.magicalvibes.cards.d.DoomedTraveler;
+import com.github.laxika.magicalvibes.cards.m.MayorOfAvabruck;
+import com.github.laxika.magicalvibes.cards.m.Moonmist;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,17 +19,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BondsOfFaith.class, GrizzlyBears.class, HonorGuard.class, FountainOfYouth.class})
+@CardUsed({BondsOfFaith.class, SilverchaseFox.class, DoomedTraveler.class, TravelersAmulet.class, MayorOfAvabruck.class, Moonmist.class})
 class BondsOfFaithTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Resolving Bonds of Faith attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new SilverchaseFox());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new BondsOfFaith()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -42,21 +41,17 @@ class BondsOfFaithTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Human gets +2/+2 =====
-
     @Test
     @DisplayName("Human creature enchanted with Bonds of Faith gets +2/+2")
     void humanCreatureGetsBoost() {
-        Permanent humanPerm = new Permanent(new HonorGuard());
+        Permanent humanPerm = harness.addToBattlefieldAndReturn(player1, new DoomedTraveler());
         humanPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(humanPerm);
 
         // Attach Bonds of Faith directly
-        Permanent bondsPerm = new Permanent(new BondsOfFaith());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player1, new BondsOfFaith());
         bondsPerm.setAttachedTo(humanPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(bondsPerm);
 
-        // Honor Guard is 1/1; with +2/+2 should be 3/3
+        // Doomed Traveler is 1/1; with +2/+2 should be 3/3
         assertThat(gqs.getEffectivePower(gd, humanPerm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, humanPerm)).isEqualTo(3);
     }
@@ -64,13 +59,11 @@ class BondsOfFaithTest extends BaseCardTest {
     @Test
     @DisplayName("Human creature enchanted with Bonds of Faith can still attack")
     void humanCreatureCanAttack() {
-        Permanent humanPerm = new Permanent(new HonorGuard());
+        Permanent humanPerm = harness.addToBattlefieldAndReturn(player1, new DoomedTraveler());
         humanPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(humanPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfFaith());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player1, new BondsOfFaith());
         bondsPerm.setAttachedTo(humanPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(bondsPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -84,19 +77,16 @@ class BondsOfFaithTest extends BaseCardTest {
     @Test
     @DisplayName("Human creature enchanted with Bonds of Faith can still block")
     void humanCreatureCanBlock() {
-        Permanent humanPerm = new Permanent(new HonorGuard());
+        Permanent humanPerm = harness.addToBattlefieldAndReturn(player2, new DoomedTraveler());
         humanPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(humanPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfFaith());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player2, new BondsOfFaith());
         bondsPerm.setAttachedTo(humanPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(bondsPerm);
 
         // Player1 has an attacker
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
+        Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new SilverchaseFox());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -108,20 +98,16 @@ class BondsOfFaithTest extends BaseCardTest {
         assertThat(humanPerm.isBlocking()).isTrue();
     }
 
-    // ===== Non-Human can't attack or block =====
-
     @Test
     @DisplayName("Non-Human creature enchanted with Bonds of Faith does not get +2/+2")
     void nonHumanCreatureDoesNotGetBoost() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new SilverchaseFox());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfFaith());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player1, new BondsOfFaith());
         bondsPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(bondsPerm);
 
-        // Grizzly Bears is 2/2, should remain 2/2 (no boost for non-Human)
+        // Silverchase Fox is 2/2, should remain 2/2 (no boost for non-Human)
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
     }
@@ -129,13 +115,11 @@ class BondsOfFaithTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Human creature enchanted with Bonds of Faith cannot attack")
     void nonHumanCreatureCannotAttack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new SilverchaseFox());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfFaith());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player2, new BondsOfFaith());
         bondsPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(bondsPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -150,19 +134,16 @@ class BondsOfFaithTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Human creature enchanted with Bonds of Faith cannot block")
     void nonHumanCreatureCannotBlock() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new SilverchaseFox());
         blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfFaith());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player1, new BondsOfFaith());
         bondsPerm.setAttachedTo(blockerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(bondsPerm);
 
         // Player1 has an attacker (index 1, after Bonds at index 0)
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
+        Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new SilverchaseFox());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -174,18 +155,14 @@ class BondsOfFaithTest extends BaseCardTest {
                 .hasMessageContaining("Invalid blocker index");
     }
 
-    // ===== Bonds of Faith removed restores ability =====
-
     @Test
     @DisplayName("Non-Human creature can attack again after Bonds of Faith is removed")
     void nonHumanCanAttackAfterBondsRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new SilverchaseFox());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfFaith());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player2, new BondsOfFaith());
         bondsPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(bondsPerm);
 
         // Verify creature can't attack
         harness.forceActivePlayer(player1);
@@ -207,31 +184,25 @@ class BondsOfFaithTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a noncreature permanent with Bonds of Faith")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new TravelersAmulet());
         harness.setHand(player1, List.of(new BondsOfFaith()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Traveler's Amulet");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Bonds of Faith fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new SilverchaseFox());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new BondsOfFaith()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -245,5 +216,54 @@ class BondsOfFaithTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Bonds of Faith");
         harness.assertNotOnBattlefield(player1, "Bonds of Faith");
+    }
+
+    @Test
+    @DisplayName("An opponent's Human gets the boost and loses it when the Aura leaves")
+    void opposingHumanLosesBoostWhenAuraLeaves() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new DoomedTraveler());
+        harness.setHand(player1, List.of(new BondsOfFaith()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, human.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Bonds of Faith"));
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Transforming a Human into a non-Human switches the boost to combat restrictions")
+    void transformingHumanSwitchesToRestriction() {
+        Permanent mayor = harness.addToBattlefieldAndReturn(player1, new MayorOfAvabruck());
+        mayor.setSummoningSick(false);
+        harness.setHand(player1, List.of(new BondsOfFaith(), new Moonmist()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, mayor.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mayor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mayor)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(mayor.isTransformed()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mayor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mayor)).isEqualTo(3);
+        assertThat(findPermanent(player1, "Bonds of Faith").getAttachedTo()).isEqualTo(mayor.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 }

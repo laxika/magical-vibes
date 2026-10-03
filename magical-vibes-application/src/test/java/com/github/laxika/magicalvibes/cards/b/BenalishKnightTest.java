@@ -173,4 +173,35 @@ class BenalishKnightTest extends BaseCardTest {
         assertThat(perm.getCard()).isSameAs(knight);
         assertThat(perm.isSummoningSick()).isTrue();
     }
+
+    @Test
+    @DisplayName("An unblocked first striker deals damage only once")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        attacker.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Two first strikers deal lethal combat damage to each other")
+    void twoFirstStrikersDealDamageSimultaneously() {
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BenalishKnight());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof BenalishKnight);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof BenalishKnight);
+    }
 }

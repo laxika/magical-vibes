@@ -89,4 +89,53 @@ class BrawnTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Removing Brawn from the graveyard removes trample even while a Forest remains")
+    void losesTrampleWhenBrawnLeavesGraveyardWithForestStillPresent() {
+        Brawn brawn = new Brawn();
+        harness.setGraveyard(player1, List.of(brawn));
+        harness.addToBattlefield(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(brawn));
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after Brawn's graveyard ability is active also have trample")
+    void grantsTrampleToCreaturesEnteringLater() {
+        harness.setGraveyard(player1, List.of(new Brawn()));
+        harness.addToBattlefield(player1, new Forest());
+        Permanent firstBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, firstBears, Keyword.TRAMPLE)).isTrue();
+
+        Permanent laterBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, laterBears, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Trample persists until the last Brawn leaves the graveyard")
+    void remainingBrawnContinuesGrantingTrample() {
+        Brawn firstBrawn = new Brawn();
+        Brawn secondBrawn = new Brawn();
+        harness.setGraveyard(player1, List.of(firstBrawn, secondBrawn));
+        harness.addToBattlefield(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+
+        harness.setGraveyard(player1, List.of(secondBrawn));
+        harness.setExile(player1, List.of(firstBrawn));
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(secondBrawn));
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
 }

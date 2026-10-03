@@ -45,8 +45,7 @@ class BoneknitterTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, zombie.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, zombie.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
         assertThat(zombie.getRegenerationShield()).isZero();
@@ -63,6 +62,42 @@ class BoneknitterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Zombie");
+    }
+
+    @Test
+    @DisplayName("A tapped Boneknitter can repeatedly regenerate itself without untapping")
+    void tappedBoneknitterCanRegenerateItselfRepeatedly() {
+        Permanent boneknitter = harness.addToBattlefieldAndReturn(player1, new Boneknitter());
+        boneknitter.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, boneknitter.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, boneknitter.getId());
+        harness.passBothPriorities();
+
+        assertThat(boneknitter.getRegenerationShield()).isEqualTo(2);
+        assertThat(boneknitter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Turning Boneknitter face up makes its regeneration ability available immediately")
+    void canRegenerateAfterTurningFaceUp() {
+        harness.setHand(player1, List.of(new Boneknitter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent boneknitter = findPermanent(player1, "Boneknitter");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(boneknitter);
+        harness.turnFaceUp(player1, index);
+        harness.activateAbility(player1, index, 0, null, boneknitter.getId());
+        harness.passBothPriorities();
+
+        assertThat(boneknitter.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test

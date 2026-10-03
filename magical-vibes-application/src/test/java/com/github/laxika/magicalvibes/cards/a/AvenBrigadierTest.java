@@ -14,6 +14,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({AvenBrigadier.class, AvenSoulgazer.class, GustcloakRunner.class,
         GustcloakHarrier.class, ElvishWarrior.class})
 class AvenBrigadierTest extends BaseCardTest {
+    @Test
+    @DisplayName("Bird Soldiers entering later receive both bonuses until the Brigadier leaves")
+    void buffsLaterCreaturesOnlyWhileOnBattlefield() {
+        Permanent baseline = harness.addToBattlefieldAndReturn(player1, new GustcloakHarrier());
+        int basePower = gqs.getEffectivePower(gd, baseline);
+        int baseToughness = gqs.getEffectiveToughness(gd, baseline);
+        Permanent brigadier = harness.enterBattlefieldAndReturn(player1, new AvenBrigadier());
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player2, new GustcloakHarrier());
+
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(baseToughness + 2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, brigadier));
+
+        assertThat(gqs.getEffectivePower(gd, baseline)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, baseline)).isEqualTo(baseToughness);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(baseToughness);
+    }
 
     @Test
     @DisplayName("Birds and Soldiers get +1/+1, and creatures with both types get +2/+2")

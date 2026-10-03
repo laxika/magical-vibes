@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "40K", collectorNumber = "183")
 @CardRegistration(set = "MSC", collectorNumber = "126")
 @CardRegistration(set = "MSC", collectorNumber = "299")
+@CardRegistration(set = "ONC", collectorNumber = "61")
 public class CollectiveEffort extends Card {
 
     public CollectiveEffort() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -112,6 +113,79 @@ class ChainOfAcidTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An indestructible target survives and its controller can copy without changing targets")
+    void indestructibleTargetCanBeCopiedWithSameTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        castAt(target.getId());
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof ChainOfAcid)
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration saves the target without preventing its controller from copying")
+    void regeneratedTargetStillOffersCopy() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        target.setRegenerationShield(1);
+        castAt(target.getId());
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Forest");
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Chain of Acid");
+        harness.assertNotInGraveyard(player2, "Chain of Acid");
+    }
+
+    @Test
+    @DisplayName("A target that becomes a creature makes the spell fail to resolve without a copy choice")
+    void targetBecomingCreaturePreventsResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new ChainOfAcid()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castSorcery(player1, 0, target.getId());
+
+        target.setAnimatedUntilEndOfTurn(true);
+        target.setAnimatedPower(2);
+        target.setAnimatedToughness(2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Chain of Acid");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castAt(java.util.UUID targetId) {

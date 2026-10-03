@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.d.DarksteelPendant;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.cards.o.Oxidize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ArcboundCrusher.class, CrazedGoblin.class, DarksteelGargoyle.class,
-        DarksteelPendant.class, Oxidize.class})
+        DarksteelPendant.class, EchoingTruth.class, Oxidize.class})
 class ArcboundCrusherTest extends BaseCardTest {
 
     @Test
@@ -43,8 +44,7 @@ class ArcboundCrusherTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DarksteelPendant()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(crusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
@@ -53,8 +53,7 @@ class ArcboundCrusherTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DarksteelPendant()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castArtifact(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(crusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
@@ -144,8 +143,75 @@ class ArcboundCrusherTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Arcbound Crusher"));
+        harness.assertInGraveyard(player1, "Arcbound Crusher");
+    }
+
+    @Test
+    void doesNotTriggerForANonartifactCreature() {
+        Permanent crusher = addCreatureReady(player1, new ArcboundCrusher());
+        crusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new CrazedGoblin()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Crazed Goblin");
+        assertThat(crusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void anotherCrusherTriggersTheExistingCrusherButNotItself() {
+        Permanent first = addCreatureReady(player1, new ArcboundCrusher());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        ArcboundCrusher enteringCard = new ArcboundCrusher();
+        harness.setHand(player1, List.of(enteringCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent second = findPermanents(player1, "Arcbound Crusher").stream()
+                .filter(permanent -> permanent.getCard().getId().equals(enteringCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void artifactEntryTriggerStillResolvesAfterEnteringArtifactLeaves() {
+        Permanent crusher = addCreatureReady(player1, new ArcboundCrusher());
+        crusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new DarksteelPendant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent pendant = findPermanent(player1, "Darksteel Pendant");
+        assertThat(crusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.setHand(player2, List.of(new EchoingTruth()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, pendant.getId());
+        harness.assertInHand(player1, "Darksteel Pendant");
+        resolveAllTriggers();
+
+        assertThat(crusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void modularHasNoLegalTargetWhenOnlyANoncreatureArtifactAndNonartifactCreatureRemain() {
+        Permanent crusher = addCreatureReady(player1, new ArcboundCrusher());
+        crusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addToBattlefield(player1, new DarksteelPendant());
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
+
+        destroyCrusher(crusher);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Arcbound Crusher");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.HithlainRope;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Cataclysm.class, Millstone.class, IronStar.class, GrizzlyBears.class,
-        HillGiant.class, Crusade.class, Plains.class, Juggernaut.class})
+        HillGiant.class, Crusade.class, Plains.class, Juggernaut.class, HithlainRope.class})
 class CataclysmTest extends BaseCardTest {
 
     private void cast() {
@@ -115,5 +116,73 @@ class CataclysmTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .contains(opponentMillstone, opponentBears, opponentCrusade, opponentPlains)
                 .doesNotContain(opponentIronStar, opponentHillGiant, opponentSecondPlains);
+    }
+
+    @Test
+    @DisplayName("Keeping an artifact creature as the artifact allows a different creature to survive")
+    void canKeepDifferentPermanentsForOverlappingTypes() {
+        Permanent juggernaut = harness.addToBattlefieldAndReturn(player1, new Juggernaut());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(juggernaut.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactlyInAnyOrder(juggernaut, bears);
+        harness.assertInGraveyard(player1, "Millstone");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("No permanents are sacrificed until both players finish choosing")
+    void waitsForBothPlayersBeforeSacrificing() {
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.forceActivePlayer(player1);
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownBears.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactlyInAnyOrder(ownBears, ownGiant);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactlyInAnyOrder(opponentBears, opponentGiant);
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentGiant.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ownBears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentGiant);
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cataclysm resolves on an empty battlefield without requesting choices")
+    void resolvesWithNoPermanents() {
+        cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cataclysm");
+    }
+
+    @Test
+    @DisplayName("An unchosen permanent that cannot be sacrificed remains on the battlefield")
+    void cannotSacrificeUnchosenHithlainRope() {
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent rope = harness.addToBattlefieldAndReturn(player1, new HithlainRope());
+        Permanent ironStar = harness.addToBattlefieldAndReturn(player1, new IronStar());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(millstone.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactlyInAnyOrder(millstone, rope);
+        harness.assertInGraveyard(player1, "Iron Star");
     }
 }

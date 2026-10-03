@@ -53,8 +53,7 @@ class CompostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict; the Compost trigger remains on the stack.
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve Compost trigger → may prompt
 
         GameData gd = harness.getGameData();
@@ -91,8 +90,7 @@ class CompostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new TomeScour()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Tome Scour → mills 5, black card enters graveyard
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve Compost trigger → may prompt
 
         GameData gd = harness.getGameData();
@@ -126,8 +124,7 @@ class CompostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict; no Compost trigger should be created.
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Hulking Ogre");
@@ -163,8 +160,7 @@ class CompostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new TomeScour()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities(); // Resolve Tome Scour → own black card into own graveyard
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Ravenous Rats");
@@ -204,8 +200,7 @@ class CompostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict; the Compost trigger remains on the stack.
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         int handSizeAfterCast = harness.getGameData().playerHands.get(player1.getId()).size();
 
@@ -244,8 +239,7 @@ class CompostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict; the Compost trigger remains on the stack.
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         int handSizeAfterCast = harness.getGameData().playerHands.get(player1.getId()).size();
 
@@ -305,6 +299,55 @@ class CompostTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, token));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each black card milled creates a separate optional draw")
+    void eachBlackCardMilledCreatesSeparateOptionalDraw() {
+        harness.addToBattlefield(player1, new Millstone());
+        harness.addToBattlefield(player1, new Compost());
+        harness.setLibrary(player2, List.of(new BogImp(), new BogImp()));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A resolved black sorcery entering the opponent's graveyard triggers Compost")
+    void triggersForResolvedOpponentBlackSpell() {
+        harness.addToBattlefield(player2, new Compost());
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.assertInGraveyard(player1, "Mind Rot");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 }

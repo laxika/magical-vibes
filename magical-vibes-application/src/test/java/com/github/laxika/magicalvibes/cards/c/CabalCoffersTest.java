@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CabalCoffers.class, Swamp.class})
 class CabalCoffersTest extends BaseCardTest {
@@ -16,12 +17,11 @@ class CabalCoffersTest extends BaseCardTest {
     @Test
     @DisplayName("Adds black mana for each Swamp you control")
     void addsBlackManaForEachControlledSwamp() {
-        harness.addToBattlefield(player1, new CabalCoffers());
+        Permanent coffers = harness.addToBattlefieldAndReturn(player1, new CabalCoffers());
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player1, new Swamp());
         harness.addToBattlefield(player2, new Swamp());
 
-        Permanent coffers = findPermanent(player1, "Cabal Coffers");
         coffers.setSummoningSick(false);
         int coffersIndex = gd.playerBattlefields.get(player1.getId()).indexOf(coffers);
 
@@ -54,5 +54,73 @@ class CabalCoffersTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(coffers.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Counts tapped Swamps used to pay the activation cost and resolves immediately")
+    void countsTappedSwampsAndResolvesImmediately() {
+        Permanent coffers = harness.addToBattlefieldAndReturn(player1, new CabalCoffers());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(coffers.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot use the mana it would produce to pay its own activation cost")
+    void cannotPayActivationCostWithFutureMana() {
+        Permanent coffers = harness.addToBattlefieldAndReturn(player1, new CabalCoffers());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(coffers.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate Cabal Coffers again while it is tapped")
+    void cannotActivateWhileTapped() {
+        harness.addToBattlefield(player1, new CabalCoffers());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent's Swamps do not produce mana for Cabal Coffers")
+    void ignoresSwampsControlledOnlyByOpponent() {
+        Permanent coffers = harness.addToBattlefieldAndReturn(player1, new CabalCoffers());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(coffers.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

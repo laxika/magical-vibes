@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,17 +9,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
+import com.github.laxika.magicalvibes.cards.s.SafePassage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ChainersTorment.class, AnointedProcession.class, SafePassage.class})
 class ChainersTormentTest extends BaseCardTest {
-
-    // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test
     @DisplayName("Casting Chainer's Torment adds a lore counter and triggers chapter I")
@@ -65,17 +67,10 @@ class ChainersTormentTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(p1LifeBefore + 2);
     }
 
-    // ===== Precombat main: lore counter addition =====
-
     @Test
     @DisplayName("At the beginning of precombat main, Saga gets a second lore counter and triggers chapter II")
     void precombatMainTriggersChapterII() {
-        harness.addToBattlefield(player1, new ChainersTorment());
-        // Manually set lore counter to 1 (simulating ETB already happened)
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
         saga.setCounterCount(CounterType.LORE, 1);
 
         int p1LifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -105,20 +100,14 @@ class ChainersTormentTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(p1LifeBefore + 2);
     }
 
-    // ===== Chapter III: token creation and self-damage =====
-
     @Test
     @DisplayName("Chapter III creates X/X token where X is half life rounded up and deals X damage to controller")
     void chapterIIICreatesTokenAndDealsDamage() {
-        harness.addToBattlefield(player1, new ChainersTorment());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Set player1's life to 20, so X = ceil(20/2) = 10
-        gd.playerLifeTotals.put(player1.getId(), 20);
+        harness.setLife(player1, 20);
 
         // Advance to precombat main to trigger chapter III
         harness.forceActivePlayer(player1);
@@ -151,15 +140,11 @@ class ChainersTormentTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III with odd life total rounds X up")
     void chapterIIIRoundsUp() {
-        harness.addToBattlefield(player1, new ChainersTorment());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Set life to 15, X = ceil(15/2) = 8
-        gd.playerLifeTotals.put(player1.getId(), 15);
+        harness.setLife(player1, 15);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -182,19 +167,13 @@ class ChainersTormentTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(7);
     }
 
-    // ===== Saga sacrifice SBA =====
-
     @Test
     @DisplayName("Saga is sacrificed after final chapter ability resolves")
     void sagaSacrificedAfterFinalChapter() {
-        harness.addToBattlefield(player1, new ChainersTorment());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
         saga.setCounterCount(CounterType.LORE, 2);
 
-        gd.playerLifeTotals.put(player1.getId(), 20);
+        harness.setLife(player1, 20);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -210,29 +189,14 @@ class ChainersTormentTest extends BaseCardTest {
         // Resolve chapter III
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        // Saga should now be sacrificed (no longer on battlefield)
-        boolean sagaOnBattlefield = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Chainer's Torment"));
-        assertThat(sagaOnBattlefield).isFalse();
-
-        // Saga should be in graveyard
-        boolean sagaInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Chainer's Torment"));
-        assertThat(sagaInGraveyard).isTrue();
+        harness.assertNotOnBattlefield(player1, "Chainer's Torment");
+        harness.assertInGraveyard(player1, "Chainer's Torment");
     }
-
-    // ===== Saga not sacrificed while chapter ability is on the stack =====
 
     @Test
     @DisplayName("Saga is not sacrificed while its chapter ability is still on the stack")
     void sagaNotSacrificedWhileChapterOnStack() {
-        harness.addToBattlefield(player1, new ChainersTorment());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
@@ -249,8 +213,6 @@ class ChainersTormentTest extends BaseCardTest {
         // Saga should still be on the battlefield (not yet sacrificed)
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
     }
-
-    // ===== Saga doesn't get lore counter on the turn it enters =====
 
     @Test
     @DisplayName("Saga doesn't get an additional lore counter on the turn it's cast")
@@ -271,5 +233,71 @@ class ChainersTormentTest extends BaseCardTest {
         assertThat(saga).isNotNull();
         // Should still have exactly 1 lore counter (not 2)
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
+    @Test
+    @DisplayName("Each token created by chapter III deals X damage")
+    void doubledTokensEachDealDamage() {
+        harness.addToBattlefield(player1, new AnointedProcession());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Nightmare Horror"))
+                .hasSize(2)
+                .allSatisfy(p -> {
+                    assertThat(p.getCard().getPower()).isEqualTo(10);
+                    assertThat(p.getCard().getToughness()).isEqualTo(10);
+                });
+        harness.assertLife(player1, 0);
+    }
+
+    @Test
+    @DisplayName("Chapter III's token damage can be prevented")
+    void tokenDamageIsPreventedBySafePassage() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SafePassage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Nightmare Horror");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Chapter III uses the life total when it resolves")
+    void tokenSizeUsesLifeTotalAtResolution() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ChainersTorment());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.setLife(player1, 13);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Nightmare Horror"))
+                .singleElement().satisfies(p -> {
+                    assertThat(p.getCard().getPower()).isEqualTo(7);
+                    assertThat(p.getCard().getToughness()).isEqualTo(7);
+                });
+        harness.assertLife(player1, 6);
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.u.UnrulyMob;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,21 +14,18 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CandlegroveWitch.class, CrawWurm.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({CandlegroveWitch.class, CrawWurm.class, GrizzlyBears.class, HillGiant.class, UnrulyMob.class, CelestusSanctifier.class})
 class CandlegroveWitchTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void endTurn() {
-        gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
     }
 
     @Test
@@ -70,5 +68,93 @@ class CandlegroveWitchTest extends BaseCardTest {
         endTurn();
 
         assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Coven does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
+        harness.addToBattlefield(player1, new UnrulyMob());
+        harness.addToBattlefield(player1, new CelestusSanctifier());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent's creatures do not count toward coven")
+    void opponentsCreaturesDoNotCount() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
+        harness.addToBattlefield(player2, new UnrulyMob());
+        harness.addToBattlefield(player2, new CelestusSanctifier());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Coven must still be met when the ability resolves")
+    void covenIsRecheckedAtResolution() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
+        harness.addToBattlefield(player1, new UnrulyMob());
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player1, new CelestusSanctifier());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        sanctifier.setPowerModifier(-1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Establishing coven after combat begins does not create a trigger")
+    void gainingCovenAfterCombatBeginsDoesNotTrigger() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
+        harness.addToBattlefield(player1, new UnrulyMob());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new CelestusSanctifier());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Duplicate powers do not prevent coven when three distinct powers exist")
+    void extraCreatureWithDuplicatePowerDoesNotPreventCoven() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
+        Permanent otherWitch = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
+        Permanent mob = harness.addToBattlefieldAndReturn(player1, new UnrulyMob());
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player1, new CelestusSanctifier());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherWitch, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mob, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sanctifier, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing coven after resolution does not remove granted flying")
+    void flyingPersistsAfterCovenIsLost() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
+        harness.addToBattlefield(player1, new UnrulyMob());
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player1, new CelestusSanctifier());
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        sanctifier.setPowerModifier(-1);
+
+        assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isTrue();
     }
 }

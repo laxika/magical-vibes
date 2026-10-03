@@ -72,6 +72,75 @@ class ContinueTest extends BaseCardTest {
                 .contains(alreadyInGraveyard.getId());
     }
 
+    @Test
+    @DisplayName("Can resolve with no eligible creatures")
+    void resolvesWithoutEligibleCreatures() {
+        castContinue();
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Continue?");
+    }
+
+    @Test
+    @DisplayName("May choose zero targets even when eligible creatures exist")
+    void mayChooseZeroTargets() {
+        Card creature = addAndDestroyCreatures(1).getFirst().getCard();
+        castContinue();
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        harness.assertInGraveyard(player1, "Continue?");
+    }
+
+    @Test
+    @DisplayName("Does not offer creatures in an opponent's graveyard")
+    void excludesOpponentsGraveyard() {
+        Card ownCreature = addAndDestroyCreatures(1).getFirst().getCard();
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, opposingCreature));
+        castContinue();
+        harness.castInstant(player1, 0);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(ownCreature.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature.getCard());
+    }
+
+    @Test
+    @DisplayName("Returns remaining legal targets when one target leaves the graveyard")
+    void returnsRemainingLegalTargets() {
+        List<Permanent> creatures = addAndDestroyCreatures(2);
+        Card leaving = creatures.getFirst().getCard();
+        Card remaining = creatures.getLast().getCard();
+        castContinue();
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(leaving.getId(), remaining.getId()));
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, leaving.getId());
+            harness.getPermanentRemovalService()
+                    .addCardToHandFromGraveyard(gd, player1.getId(), player1.getId(), leaving);
+        });
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(leaving);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(remaining.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+    }
+
     private List<Permanent> addAndDestroyCreatures(int count) {
         List<Permanent> creatures = new ArrayList<>();
         for (int i = 0; i < count; i++) {

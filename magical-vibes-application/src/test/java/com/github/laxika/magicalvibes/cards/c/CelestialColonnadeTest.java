@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CelestialColonnade.class})
 class CelestialColonnadeTest extends BaseCardTest {
 
     @Test
@@ -37,7 +38,7 @@ class CelestialColonnadeTest extends BaseCardTest {
     @Test
     @DisplayName("Celestial Colonnade becomes a 4/4 white and blue Elemental with flying and vigilance")
     void animatesIntoCelestialColonnade() {
-        Permanent colonnade = addReadyColonnade(player1);
+        Permanent colonnade = addCreatureReady(player1, new CelestialColonnade());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -59,7 +60,7 @@ class CelestialColonnadeTest extends BaseCardTest {
     @Test
     @DisplayName("Celestial Colonnade stops being a creature at end of turn")
     void animationEndsAtEndOfTurn() {
-        Permanent colonnade = addReadyColonnade(player1);
+        Permanent colonnade = addCreatureReady(player1, new CelestialColonnade());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -75,12 +76,69 @@ class CelestialColonnadeTest extends BaseCardTest {
         assertThat(colonnade.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, colonnade, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, colonnade, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, colonnade)).isEmpty();
     }
 
-    private Permanent addReadyColonnade(Player player) {
-        Permanent permanent = new Permanent(new CelestialColonnade());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void addsBlueManaWithoutUsingTheStack() {
+        Permanent colonnade = addCreatureReady(player1, new CelestialColonnade());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(colonnade.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canAnimateWhileTappedAndSummoningSick() {
+        harness.setHand(player1, List.of(new CelestialColonnade()));
+        harness.playLand(player1, 0);
+        Permanent colonnade = findPermanent(player1, "Celestial Colonnade");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gqs.isCreature(gd, colonnade)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, colonnade)).isTrue();
+        assertThat(colonnade.isTapped()).isTrue();
+    }
+
+    @Test
+    void animatedColonnadeCanStillProduceMana() {
+        Permanent colonnade = addCreatureReady(player1, new CelestialColonnade());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(colonnade.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(colonnade.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, colonnade)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    void attackingWithVigilanceDoesNotTapColonnade() {
+        Permanent colonnade = addCreatureReady(player1, new CelestialColonnade());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThat(colonnade.isAttacking()).isTrue();
+        assertThat(colonnade.isTapped()).isFalse();
     }
 }

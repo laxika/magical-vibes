@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranKnight;
+import com.github.laxika.magicalvibes.cards.s.StealEnchantment;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,9 +45,8 @@ class CallToArmsTest extends BaseCardTest {
     }
 
     private Permanent addCallToArms(CardColor chosen) {
-        Permanent perm = new Permanent(new CallToArms());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new CallToArms());
         perm.setChosenColor(chosen);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
@@ -206,5 +208,65 @@ class CallToArmsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Call to Arms");
         harness.assertInGraveyard(player1, "Call to Arms");
+    }
+
+    @Test
+    @DisplayName("An empty opposing battlefield causes the sacrifice ability to trigger")
+    void sacrificedWhenOpponentControlsNoPermanents() {
+        harness.castFromHand(player1, new CallToArms(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Call to Arms");
+        harness.assertInGraveyard(player1, "Call to Arms");
+    }
+
+    @Test
+    @CardUsed({StealEnchantment.class})
+    @DisplayName("Changing controllers preserves the player chosen when Call to Arms entered")
+    void retainsChosenPlayerAfterControlChanges() {
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.addToBattlefield(player1, new KjeldoranKnight());
+        harness.castFromHand(player1, new CallToArms(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        Permanent call = findPermanent(player1, "Call to Arms");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new StealEnchantment()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castEnchantment(player2, 0, call.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Call to Arms");
+        Permanent knight = findPermanent(player1, "Kjeldoran Knight");
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({CelestialDawn.class})
+    @DisplayName("Continuous color changes count when determining the most common color")
+    void countsColorsSetByContinuousEffects() {
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new CelestialDawn());
+        harness.addToBattlefield(player1, new KjeldoranKnight());
+        harness.castFromHand(player1, new CallToArms(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Call to Arms");
+        Permanent knight = findPermanent(player1, "Kjeldoran Knight");
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
     }
 }

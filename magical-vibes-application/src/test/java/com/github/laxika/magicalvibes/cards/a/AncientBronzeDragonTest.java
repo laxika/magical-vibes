@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Owlbear;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AncientBronzeDragon.class, GrizzlyBears.class})
+@CardUsed({AncientBronzeDragon.class, Owlbear.class})
 class AncientBronzeDragonTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -40,8 +40,8 @@ class AncientBronzeDragonTest extends BaseCardTest {
     void combatDamagePutsTheRollAmountOfCountersOnUpToTwoCreatures() {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(7));
         addCreatureReady(player1, new AncientBronzeDragon());
-        Permanent firstTarget = addCreatureReady(player1, new GrizzlyBears());
-        Permanent secondTarget = addCreatureReady(player2, new GrizzlyBears());
+        Permanent firstTarget = addCreatureReady(player1, new Owlbear());
+        Permanent secondTarget = addCreatureReady(player2, new Owlbear());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -60,7 +60,7 @@ class AncientBronzeDragonTest extends BaseCardTest {
     void combatDamageMayChooseNoCreatures() {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(20));
         addCreatureReady(player1, new AncientBronzeDragon());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new Owlbear());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -68,6 +68,59 @@ class AncientBronzeDragonTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void mayChooseOnlyTheDragonAfterSeeingTheRoll() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(1));
+        Permanent dragon = addCreatureReady(player1, new AncientBronzeDragon());
+        Permanent otherCreature = addCreatureReady(player2, new Owlbear());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(gameLogContains("rolls a d20 for Ancient Bronze Dragon: 1.")).isTrue();
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handlePermanentChosen(player1, dragon.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void naturalTwentyPutsTwentyCountersOnEachChosenCreature() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(20));
+        Permanent dragon = addCreatureReady(player1, new AncientBronzeDragon());
+        Permanent target = addCreatureReady(player2, new Owlbear());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, dragon.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(20);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(20);
+    }
+
+    @Test
+    void remainingTargetGetsCountersWhenTheOtherTargetLeavesBeforeResolution() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(12));
+        addCreatureReady(player1, new AncientBronzeDragon());
+        Permanent firstTarget = addCreatureReady(player1, new Owlbear());
+        Permanent secondTarget = addCreatureReady(player2, new Owlbear());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, firstTarget.getId());
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(firstTarget);
+        gd.playerGraveyards.get(player1.getId()).add(firstTarget.getCard());
+        resolveAllTriggers();
+
+        assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(secondTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(12);
     }
 
     private static final class FixedD20RollService extends D20RollService {

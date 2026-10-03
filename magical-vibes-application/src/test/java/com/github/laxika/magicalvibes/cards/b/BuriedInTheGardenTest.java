@@ -58,8 +58,7 @@ class BuriedInTheGardenTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID auraId = harness.getPermanentId(player1, "Buried in the Garden");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, auraId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, auraId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -69,9 +68,8 @@ class BuriedInTheGardenTest extends BaseCardTest {
     @Test
     void enchantedLandAddsOneManaOfAnyColorToItsController() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent aura = new Permanent(new BuriedInTheGarden());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BuriedInTheGarden());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player1, 0);
         harness.handleListChoice(player1, "BLUE");
@@ -83,9 +81,8 @@ class BuriedInTheGardenTest extends BaseCardTest {
     @Test
     void enchantedLandControllerGetsBonusEvenWhenAuraIsControlledByOpponent() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        Permanent aura = new Permanent(new BuriedInTheGarden());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BuriedInTheGarden());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player2, 0);
         harness.handleListChoice(player2, "RED");
@@ -123,5 +120,63 @@ class BuriedInTheGardenTest extends BaseCardTest {
                 player1, 0, List.of(forest.getId(), ownBears.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonland permanent an opponent controls");
+    }
+
+    @Test
+    void auraLeavingBeforeExileTriggerResolvesDoesNotExileTarget() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BuriedInTheGarden()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, List.of(forest.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        UUID auraId = harness.getPermanentId(player1, "Buried in the Garden");
+        harness.castAndResolveInstant(player2, 0, auraId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Buried in the Garden");
+    }
+
+    @Test
+    void unenchantedLandDoesNotProduceBonusMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BuriedInTheGarden());
+        aura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void auraCanResolveWithoutAnEligibleExileTarget() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new BuriedInTheGarden()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Buried in the Garden");
+        assertThat(gd.stack).isEmpty();
+        harness.tapPermanent(player1, 0);
+        harness.handleListChoice(player1, "WHITE");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 }

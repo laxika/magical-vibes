@@ -67,6 +67,72 @@ class BloodChinFanaticTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canTargetItsController() {
+        addReadyFanatic();
+        harness.addToBattlefield(player1, new BloodChinFanatic());
+        harness.setLife(player1, 10);
+        addMana();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.assertInGraveyard(player1, "Blood-Chin Fanatic");
+        harness.assertLife(player1, 10);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Blood-Chin Fanatic");
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsWarrior() {
+        addReadyFanatic();
+        harness.addToBattlefield(player2, new BloodChinFanatic());
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Blood-Chin Fanatic");
+        harness.assertOnBattlefield(player2, "Blood-Chin Fanatic");
+    }
+
+    @Test
+    void cannotActivateWithoutEnoughMana() {
+        addReadyFanatic();
+        harness.addToBattlefield(player1, new BloodChinFanatic());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void usesChosenWarriorsPowerWhenMultipleSacrificesAreAvailable() {
+        addReadyFanatic();
+        var chosen = harness.addToBattlefieldAndReturn(player1, new BloodChinFanatic());
+        chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        var other = harness.addToBattlefieldAndReturn(player1, new BloodChinFanatic());
+        harness.setLife(player1, 10);
+        addMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        harness.assertInGraveyard(player1, "Blood-Chin Fanatic");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(other).doesNotContain(chosen);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 15);
+    }
+
     private void addReadyFanatic() {
         harness.addToBattlefield(player1, new BloodChinFanatic());
     }

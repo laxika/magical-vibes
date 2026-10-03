@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.Afterlife;
 import com.github.laxika.magicalvibes.cards.j.JhovallRider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CorruptOfficial.class, JhovallRider.class})
+@CardUsed({CorruptOfficial.class, JhovallRider.class, Afterlife.class})
 class CorruptOfficialTest extends BaseCardTest {
 
     @Test
@@ -98,6 +99,51 @@ class CorruptOfficialTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).contains(rider);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The blocked trigger resolves harmlessly when the defending player has no cards")
+    void blockedWithEmptyDefendingHand() {
+        JhovallRider controllerCard = new JhovallRider();
+        harness.setHand(player1, List.of(controllerCard));
+        harness.setHand(player2, List.of());
+        addAttackingOfficial();
+        addCreatureReady(player2, new JhovallRider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The defending player still discards at random after Corrupt Official is destroyed in response")
+    void blockedTriggerResolvesAfterSourceLeaves() {
+        Permanent official = addAttackingOfficial();
+        addCreatureReady(player2, new JhovallRider());
+        harness.setHand(player1, List.of(new Afterlife()));
+        harness.setHand(player2, List.of(new JhovallRider(), new JhovallRider()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player1, 0, official.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Corrupt Official");
+        harness.assertInGraveyard(player1, "Corrupt Official");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addAttackingOfficial() {

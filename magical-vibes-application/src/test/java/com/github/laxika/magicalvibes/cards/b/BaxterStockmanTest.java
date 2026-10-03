@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -100,6 +101,61 @@ class BaxterStockmanTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({BaxterStockman.class})
+    @DisplayName("Baxter can boost its Robot even if Baxter leaves before the combat trigger resolves")
+    void robotIsBoostedAfterBaxterLeaves() {
+        Permanent baxter = harness.enterBattlefieldAndReturn(player1, new BaxterStockman());
+        resolveAllTriggers();
+        Permanent robot = findPermanent(player1, "Robot");
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, robot.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, baxter));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, robot, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, robot, Keyword.VIGILANCE)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Baxter Stockman");
+    }
+
+    @Test
+    @CardUsed({BaxterStockman.class})
+    @DisplayName("The enters trigger still creates exactly one Robot after Baxter leaves")
+    void entersTriggerCreatesTokenAfterBaxterLeaves() {
+        Permanent baxter = harness.enterBattlefieldAndReturn(player1, new BaxterStockman());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, baxter));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Robot")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Robot")).isZero();
+        Permanent robot = findPermanent(player1, "Robot");
+        assertThat(robot.getCard().getColors()).isEmpty();
+        assertThat(robot.getCard().getSubtypes())
+                .containsExactly(CardSubtype.ROBOT);
+        harness.assertNotOnBattlefield(player1, "Baxter Stockman");
+    }
+
+    @Test
+    @CardUsed({BaxterStockman.class})
+    @DisplayName("No combat target choice remains when there is no artifact creature to target")
+    void combatWithoutArtifactCreatureDoesNotAskForTarget() {
+        addBaxter(player1);
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        Permanent baxter = findPermanent(player1, "Baxter Stockman");
+        assertThat(gqs.getEffectivePower(gd, baxter)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, baxter, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, baxter, Keyword.VIGILANCE)).isFalse();
     }
 
     private Permanent addBaxter(Player controller) {

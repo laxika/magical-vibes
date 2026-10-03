@@ -1,28 +1,30 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.f.FeralKrushok;
+import com.github.laxika.magicalvibes.cards.s.ScrollOfTheMasters;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArchfiendOfDepravity.class, FeralKrushok.class, ScrollOfTheMasters.class})
 class ArchfiendOfDepravityTest extends BaseCardTest {
 
     @Test
     @DisplayName("An opponent keeps up to two creatures and sacrifices the rest")
     void opponentKeepsUpToTwoCreatures() {
         harness.addToBattlefield(player1, new ArchfiendOfDepravity());
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new ScrollOfTheMasters());
 
         advanceToEndStep(player2);
 
@@ -45,9 +47,9 @@ class ArchfiendOfDepravityTest extends BaseCardTest {
     @DisplayName("The opponent may keep one or no creatures")
     void opponentMayKeepFewerThanTwoCreatures() {
         harness.addToBattlefield(player1, new ArchfiendOfDepravity());
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
 
         advanceToEndStep(player2);
         harness.handleMultiplePermanentsChosen(player2, List.of(first.getId()));
@@ -61,8 +63,8 @@ class ArchfiendOfDepravityTest extends BaseCardTest {
     @DisplayName("The opponent's choice may spare no creatures")
     void opponentMayKeepNoCreatures() {
         harness.addToBattlefield(player1, new ArchfiendOfDepravity());
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
 
         advanceToEndStep(player2);
         harness.handleMultiplePermanentsChosen(player2, List.of());
@@ -76,7 +78,7 @@ class ArchfiendOfDepravityTest extends BaseCardTest {
     @DisplayName("It does not trigger on its controller's end step")
     void doesNotTriggerOnControllersEndStep() {
         harness.addToBattlefield(player1, new ArchfiendOfDepravity());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FeralKrushok());
 
         advanceToEndStep(player1);
 
@@ -85,11 +87,54 @@ class ArchfiendOfDepravityTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
     }
 
+    @Test
+    @DisplayName("An opponent with one creature may keep it")
+    void opponentMayKeepTheirOnlyCreature() {
+        harness.addToBattlefield(player1, new ArchfiendOfDepravity());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FeralKrushok());
+
+        advanceToEndStep(player2);
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent without creatures makes no choice and keeps noncreatures")
+    void opponentWithoutCreaturesMakesNoChoice() {
+        Permanent archfiend = harness.addToBattlefieldAndReturn(player1, new ArchfiendOfDepravity());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ScrollOfTheMasters());
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(artifact);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(archfiend);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent's end step does not sacrifice the controller's creatures")
+    void controllersCreaturesAreUnaffected() {
+        Permanent archfiend = harness.addToBattlefieldAndReturn(player1, new ArchfiendOfDepravity());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new FeralKrushok());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new FeralKrushok());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new FeralKrushok());
+        harness.addToBattlefield(player2, new FeralKrushok());
+
+        advanceToEndStep(player2);
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(archfiend, first, second, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }

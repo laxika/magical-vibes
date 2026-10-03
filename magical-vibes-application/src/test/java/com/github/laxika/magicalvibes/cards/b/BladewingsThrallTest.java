@@ -87,4 +87,54 @@ class BladewingsThrallTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bladewing's Thrall");
         harness.assertNotOnBattlefield(player1, "Bladewing's Thrall");
     }
+
+    @Test
+    void returningForYourOwnDragonGrantsFlying() {
+        harness.setGraveyard(player1, List.of(new BladewingsThrall()));
+
+        harness.enterBattlefieldAndReturn(player1, new DragonTyrant());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Bladewing's Thrall");
+        harness.assertNotInGraveyard(player1, "Bladewing's Thrall");
+        Permanent returnedThrall = findPermanent(player1, "Bladewing's Thrall");
+        assertThat(gqs.hasKeyword(gd, returnedThrall, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void returnsEvenIfDragonLeavesBeforeTriggerResolves() {
+        harness.setGraveyard(player1, List.of(new BladewingsThrall()));
+        Permanent dragon = harness.enterBattlefieldAndReturn(player1, new DragonTyrant());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dragon));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Bladewing's Thrall");
+        harness.assertNotInGraveyard(player1, "Bladewing's Thrall");
+        Permanent returnedThrall = findPermanent(player1, "Bladewing's Thrall");
+        assertThat(gqs.hasKeyword(gd, returnedThrall, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void returnDoesNotIncludeAnotherThrallPutInGraveyardAfterDragonEntered() {
+        BladewingsThrall triggeringThrall = new BladewingsThrall();
+        BladewingsThrall laterThrall = new BladewingsThrall();
+        harness.setGraveyard(player1, List.of(triggeringThrall));
+        harness.enterBattlefieldAndReturn(player2, new DragonTyrant());
+        harness.setGraveyard(player1, List.of(triggeringThrall, laterThrall));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(triggeringThrall.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(laterThrall);
+    }
 }

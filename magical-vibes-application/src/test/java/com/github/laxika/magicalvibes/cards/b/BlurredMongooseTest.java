@@ -32,8 +32,7 @@ class BlurredMongooseTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, mongoose.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, mongoose.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Blurred Mongoose");
@@ -55,5 +54,21 @@ class BlurredMongooseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, mongoose.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents the controller from targeting the creature")
+    void shroudPreventsControllerTargeting() {
+        Permanent mongoose = harness.addToBattlefieldAndReturn(player1, new BlurredMongoose());
+        harness.setHand(player1, List.of(new Repulse()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, mongoose.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+
+        harness.assertOnBattlefield(player1, "Blurred Mongoose");
+        harness.assertInHand(player1, "Repulse");
+        assertThat(gd.stack).isEmpty();
     }
 }

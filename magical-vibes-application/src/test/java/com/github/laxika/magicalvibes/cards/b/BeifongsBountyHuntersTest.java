@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.e.EarthbendingLesson;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BeifongsBountyHunters.class, EarthbendingLesson.class, Forest.class,
-        GrizzlyBears.class, Murder.class})
+        GrizzlyBears.class, Murder.class, GloriousAnthem.class, Demystify.class})
 class BeifongsBountyHuntersTest extends BaseCardTest {
 
     @Test
@@ -73,25 +75,78 @@ class BeifongsBountyHuntersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EarthbendingLesson()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0, land.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, land.getId());
 
         destroy(land);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
-        Permanent returnedLand = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(land.getCard().getId()))
-                .findFirst().orElseThrow();
+        Permanent returnedLand = findPermanent(player1, "Forest");
+        assertThat(returnedLand.getCard().getId()).isEqualTo(land.getCard().getId());
         assertThat(gqs.isLand(gd, returnedLand)).isTrue();
         assertThat(gqs.isCreature(gd, returnedLand)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Own death uses last-known power even if an anthem leaves before resolution")
+    void ownDeathPreservesStaticPowerBonus() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new BeifongsBountyHunters());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        destroy(source);
+        harness.handlePermanentChosen(player1, land.getId());
+
+        harness.setHand(player1, List.of(new Demystify()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, anthem.getId());
+        resolveAllTriggers();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An opponent's nonland creature dying does not trigger earthbend")
+    void doesNotTriggerForOpponentsCreature() {
+        harness.addToBattlefield(player1, new BeifongsBountyHunters());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        destroy(creature);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The chosen land returns tapped without counters after the source has died")
+    void earthbendedLandReturnsAfterSourceDeath() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new BeifongsBountyHunters());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        destroy(source);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validPermanentIds()).containsExactly(land.getId());
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+        destroy(land);
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.getCard().getId()).isEqualTo(land.getCard().getId());
+        assertThat(returned.getId()).isNotEqualTo(land.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
     }
 
     private void destroy(Permanent permanent) {
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, permanent.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, permanent.getId());
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.ArmorOfThorns;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.s.SpittingEarth;
 import com.github.laxika.magicalvibes.cards.s.StalkingTiger;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BayFalcon.class, CeruleanWyvern.class, SpittingEarth.class, UktabiFaerie.class,
+@CardUsed({ArmorOfThorns.class, BayFalcon.class, CeruleanWyvern.class, SpittingEarth.class, UktabiFaerie.class,
         UnyaroBeeSting.class, ViashinoWarrior.class, StalkingTiger.class})
 class CeruleanWyvernTest extends BaseCardTest {
 
@@ -57,8 +58,7 @@ class CeruleanWyvernTest extends BaseCardTest {
         addCreatureReady(player1, new CeruleanWyvern());
         Permanent blocker = addCreatureReady(player2, new BayFalcon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -71,8 +71,7 @@ class CeruleanWyvernTest extends BaseCardTest {
         addCreatureReady(player1, new StalkingTiger());
         addCreatureReady(player2, new CeruleanWyvern());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -107,5 +106,33 @@ class CeruleanWyvernTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Spitting Earth");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(wyvern.getId());
+    }
+
+    @Test
+    @DisplayName("Protection prevents its controller from targeting it with a green Aura")
+    void cannotBeTargetedByOwnGreenAura() {
+        Permanent wyvern = addCreatureReady(player1, new CeruleanWyvern());
+        harness.setHand(player1, List.of(new ArmorOfThorns()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, wyvern.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from green");
+    }
+
+    @Test
+    @DisplayName("Protection from green does not prevent combat damage from a red creature")
+    void takesCombatDamageFromNonGreenCreature() {
+        addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new CeruleanWyvern());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Cerulean Wyvern");
+        harness.assertInGraveyard(player2, "Cerulean Wyvern");
+        harness.assertNotOnBattlefield(player1, "Viashino Warrior");
+        harness.assertInGraveyard(player1, "Viashino Warrior");
     }
 }

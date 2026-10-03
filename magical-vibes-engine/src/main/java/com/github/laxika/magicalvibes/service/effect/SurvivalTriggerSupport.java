@@ -14,9 +14,6 @@ public final class SurvivalTriggerSupport {
         if (!(effect instanceof SurvivalTriggerEffect survival)) {
             return effect;
         }
-        if (!gameData.survivalTriggersEvaluated.add(source.getId())) {
-            return null;
-        }
         return survival.wrapped();
     }
 

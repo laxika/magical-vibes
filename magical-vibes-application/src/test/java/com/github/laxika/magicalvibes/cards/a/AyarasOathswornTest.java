@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,8 +46,7 @@ class AyarasOathswornTest extends BaseCardTest {
         assertThat(oathsworn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(libraryCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -71,6 +69,93 @@ class AyarasOathswornTest extends BaseCardTest {
         assertThat(oathsworn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Rechecks the counter limit when the combat damage trigger resolves")
+    void doesNothingIfFourthCounterArrivesBeforeResolution() {
+        Permanent oathsworn = addReadyOathsworn();
+        oathsworn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Card libraryCard = new AyarasOathsworn();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        dealCombatDamage(oathsworn);
+        assertThat(gd.stack).hasSize(1);
+        oathsworn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.passBothPriorities();
+
+        assertThat(oathsworn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Uses the current counter count when resolving the trigger")
+    void searchesAfterCounterCountChangesToThreeBeforeResolution() {
+        Permanent oathsworn = addReadyOathsworn();
+        oathsworn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Card libraryCard = new AyarasOathsworn();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        dealCombatDamage(oathsworn);
+        assertThat(gd.stack).hasSize(1);
+        oathsworn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(oathsworn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).contains(libraryCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Reaching four counters with an empty library completes without a choice")
+    void emptyLibraryDoesNotPreventFourthCounter() {
+        Permanent oathsworn = addReadyOathsworn();
+        oathsworn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLibrary(player1, List.of());
+
+        dealCombatDamageAndResolveTrigger(oathsworn);
+
+        assertThat(oathsworn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat damage adds only one counter regardless of the amount of damage")
+    void startsWithOneCounterAfterFirstCombatDamage() {
+        Permanent oathsworn = addReadyOathsworn();
+
+        dealCombatDamageAndResolveTrigger(oathsworn);
+
+        assertThat(oathsworn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger with more than four counters")
+    void doesNotTriggerAboveFourCounters() {
+        Permanent oathsworn = addReadyOathsworn();
+        oathsworn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+
+        dealCombatDamage(oathsworn);
+
+        assertThat(oathsworn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void dealCombatDamage(Permanent oathsworn) {
+        oathsworn.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
     }
 
     private Permanent addReadyOathsworn() {

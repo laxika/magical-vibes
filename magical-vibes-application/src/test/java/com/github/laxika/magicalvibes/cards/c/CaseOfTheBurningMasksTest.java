@@ -16,9 +16,123 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CaseOfTheBurningMasks.class, GiantSpider.class, LightningStrike.class, Shock.class})
 class CaseOfTheBurningMasksTest extends BaseCardTest {
+
+    @Test
+    void entersAndDealsThreeDamageToOpponentsCreature() {
+        addCaseAfterItsDamageResolves();
+
+        assertThat(findPermanent(player2, "Giant Spider").getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void cannotTargetControllersCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        harness.setHand(player1, List.of(new CaseOfTheBurningMasks()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotSolveWithOnlyTwoDamageSources() {
+        Permanent casePermanent = addCaseAfterItsDamageResolves();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        castLightningStrike(target);
+        resolveEndStepTriggers();
+
+        assertThat(casePermanent.isSolved()).isFalse();
+    }
+
+    @Test
+    void opponentsDamageSourcesDoNotSolveTheCase() {
+        Permanent casePermanent = addCaseAfterItsDamageResolves();
+        harness.addMana(player2, ManaColor.RED, 2);
+        for (int i = 0; i < 2; i++) {
+            harness.setHand(player2, List.of(new Shock()));
+            harness.castInstant(player2, 0, player1.getId());
+            harness.passBothPriorities();
+        }
+        resolveEndStepTriggers();
+
+        assertThat(casePermanent.isSolved()).isFalse();
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    void cannotActivateWhileUnsolved() {
+        addCaseAfterItsDamageResolves();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Case of the Burning Masks");
+    }
+
+    @Test
+    void chosenCardCanBeCastButOtherExiledCardsCannot() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheBurningMasks());
+        casePermanent.setSolved(true);
+        Card first = new Shock();
+        Card second = new Shock();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, first.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.castFromExile(player1, first.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).containsExactly(second.getId());
+        harness.assertInGraveyard(player1, "Case of the Burning Masks");
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void chosenCardCannotBeCastAfterTheTurnEnds() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheBurningMasks());
+        casePermanent.setSolved(true);
+        Card chosen = new Shock();
+        harness.setLibrary(player1, List.of(chosen));
+        harness.setLibrary(player2, List.of(new Shock()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).containsExactly(chosen.getId());
+    }
+
+    @Test
+    void emptyLibraryStillSacrificesCaseWithoutOfferingAChoice() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheBurningMasks());
+        casePermanent.setSolved(true);
+        harness.setLibrary(player1, List.of());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Case of the Burning Masks");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("Solves after three different sources deal damage this turn")
@@ -79,9 +193,7 @@ class CaseOfTheBurningMasksTest extends BaseCardTest {
     private void resolveEndStepTriggers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

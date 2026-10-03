@@ -73,4 +73,84 @@ class BlinkmothInfusionTest extends BaseCardTest {
         assertThat(opponentArtifact.isTapped()).isFalse();
         assertThat(nonArtifact.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Partial affinity leaves the remaining generic and blue mana payable")
+    void partialAffinityLeavesRemainingGenericCost() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new ConjurersBauble());
+        }
+        harness.setHand(player1, List.of(new BlinkmothInfusion()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Blinkmoth Infusion");
+    }
+
+    @Test
+    @DisplayName("Excess affinity cannot pay the blue mana requirement")
+    void excessAffinityDoesNotReduceColoredCost() {
+        for (int i = 0; i < 14; i++) {
+            harness.addToBattlefield(player1, new ConjurersBauble());
+        }
+        harness.setHand(player1, List.of(new BlinkmothInfusion()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Blinkmoth Infusion");
+    }
+
+    @Test
+    @DisplayName("Non-artifact permanents do not contribute to affinity")
+    void nonArtifactsDoNotReduceCost() {
+        for (int i = 0; i < 12; i++) {
+            harness.addToBattlefield(player1, new SkyhunterProwler());
+        }
+        harness.setHand(player1, List.of(new BlinkmothInfusion()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Artifacts entering after casting are also untapped on resolution")
+    void untapsArtifactsPresentAtResolution() {
+        harness.setHand(player1, List.of(new BlinkmothInfusion()));
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0);
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ConjurersBauble());
+        artifact.tap();
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Blinkmoth Infusion");
+    }
+
+    @Test
+    @DisplayName("Resolves without any artifacts on the battlefield")
+    void resolvesWithoutArtifacts() {
+        harness.setHand(player1, List.of(new BlinkmothInfusion()));
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Blinkmoth Infusion");
+    }
 }

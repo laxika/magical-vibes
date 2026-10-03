@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.v.Voidslime;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AutumnsVeil.class, Cancel.class, Discombobulate.class, DoomBlade.class, Enslave.class, GrizzlyBears.class, Shock.class, AlluringSiren.class, Voidslime.class, Unsummon.class})
 class AutumnsVeilTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -42,13 +46,14 @@ class AutumnsVeilTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Autumn's Veil");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(AutumnsVeil.class);
     }
 
     // ===== Counter protection =====
 
     @Nested
     @DisplayName("Spells can't be countered by blue or black spells")
+    @CardUsed({AutumnsVeil.class, Cancel.class, Discombobulate.class, DoomBlade.class, Enslave.class, GrizzlyBears.class, Shock.class, AlluringSiren.class, Voidslime.class, Unsummon.class})
     class CounterProtection {
 
         @Test
@@ -179,6 +184,7 @@ class AutumnsVeilTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Creatures can't be targeted by blue or black spells")
+    @CardUsed({AutumnsVeil.class, Cancel.class, Discombobulate.class, DoomBlade.class, Enslave.class, GrizzlyBears.class, Shock.class, AlluringSiren.class, Voidslime.class, Unsummon.class})
     class CreatureTargetingProtection {
 
         @Test
@@ -357,10 +363,7 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             // Put AlluringSiren (blue creature) on player2's battlefield
-            AlluringSiren siren = new AlluringSiren();
-            Permanent sirenPerm = new Permanent(siren);
-            sirenPerm.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(sirenPerm);
+            addCreatureReady(player2, new AlluringSiren());
 
             // Reset game state for ability activation
             harness.forceActivePlayer(player2);
@@ -392,6 +395,7 @@ class AutumnsVeilTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Effects expire at end of turn")
+    @CardUsed({AutumnsVeil.class, Cancel.class, Discombobulate.class, DoomBlade.class, Enslave.class, GrizzlyBears.class, Shock.class, AlluringSiren.class, Voidslime.class, Unsummon.class})
     class EndOfTurnCleanup {
 
         @Test
@@ -415,11 +419,90 @@ class AutumnsVeilTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
+    @Test
+    @DisplayName("A green and blue counterspell cannot counter a protected spell")
+    void multicoloredBlueCounterCannotCounter() {
+        harness.setHand(player1, List.of(new AutumnsVeil()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Voidslime()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(bears);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Autumn's Veil also prohibits its controller's black spells from targeting their creatures")
+    void ownBlackSpellCannotTargetProtectedCreature() {
+        Permanent bears = addCreature(player1);
+        harness.setHand(player1, List.of(new AutumnsVeil()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+    @Test
+    @DisplayName("Blue spells cannot target protected creatures")
+    void blueSpellCannotTargetProtectedCreature() {
+        Permanent bears = addCreature(player1);
+        harness.setHand(player1, List.of(new AutumnsVeil()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Black spells can target creatures again after turn cleanup")
+    void targetingProtectionExpiresAfterCleanup() {
+        Permanent bears = addCreature(player1);
+        harness.setHand(player1, List.of(new AutumnsVeil()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
     private Permanent addCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

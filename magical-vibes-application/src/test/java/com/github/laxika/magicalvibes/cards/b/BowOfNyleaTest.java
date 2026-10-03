@@ -1,23 +1,27 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.e.EnsoulArtifact;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.p.PrescientChimera;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BowOfNylea.class, Forest.class, NessianCourser.class, PrescientChimera.class, EnsoulArtifact.class})
 class BowOfNyleaTest extends BaseCardTest {
 
     private Permanent addBow() {
@@ -34,10 +38,10 @@ class BowOfNyleaTest extends BaseCardTest {
     @DisplayName("Grants deathtouch to your attacking creatures only")
     void grantsDeathtouchToAttackingCreaturesYouControl() {
         addBow();
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new NessianCourser());
         attacker.setAttacking(true);
-        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentAttacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new NessianCourser());
+        Permanent opponentAttacker = addCreatureReady(player2, new NessianCourser());
         opponentAttacker.setAttacking(true);
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
@@ -46,10 +50,26 @@ class BowOfNyleaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An animated attacking Bow grants itself deathtouch")
+    void animatedBowHasDeathtouchWhileAttacking() {
+        Permanent bow = addBow();
+        harness.setHand(player1, List.of(new EnsoulArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, bow.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bow, Keyword.DEATHTOUCH)).isFalse();
+        bow.setAttacking(true);
+        assertThat(gqs.hasKeyword(gd, bow, Keyword.DEATHTOUCH)).isTrue();
+        bow.setAttacking(false);
+        assertThat(gqs.hasKeyword(gd, bow, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
     @DisplayName("Puts a +1/+1 counter on target creature")
     void putsCounterOnTargetCreature() {
         Permanent bow = addBow();
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new NessianCourser());
 
         harness.activateAbility(player1, bowIndex(bow), 0, null, bears.getId());
         harness.passBothPriorities();
@@ -61,7 +81,7 @@ class BowOfNyleaTest extends BaseCardTest {
     @DisplayName("Deals 2 damage only to target creature with flying")
     void damagesTargetCreatureWithFlying() {
         Permanent bow = addBow();
-        Permanent flyer = addCreatureReady(player2, new AirElemental());
+        Permanent flyer = addCreatureReady(player2, new PrescientChimera());
 
         harness.activateAbility(player1, bowIndex(bow), 1, null, flyer.getId());
         harness.passBothPriorities();
@@ -73,7 +93,7 @@ class BowOfNyleaTest extends BaseCardTest {
     @DisplayName("Rejects a nonflying creature for the damage mode")
     void rejectsNonflyingDamageTarget() {
         Permanent bow = addBow();
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new NessianCourser());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, bowIndex(bow), 1, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -96,17 +116,20 @@ class BowOfNyleaTest extends BaseCardTest {
     void putsGraveyardCardsOnBottomInChosenOrder() {
         Permanent bow = addBow();
         Card first = new Forest();
-        Card second = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(first, second)));
-        Card libraryCard = new AirElemental();
-        harness.setLibrary(player1, new ArrayList<>(List.of(libraryCard)));
+        Card second = new NessianCourser();
+        harness.setGraveyard(player1, List.of(first, second));
+        Card libraryCard = new PrescientChimera();
+        harness.setLibrary(player1, List.of(libraryCard));
 
         harness.activateAbilityWithGraveyardTargets(player1, bowIndex(bow), 3,
                 List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
-                .containsExactly(libraryCard.getId(), first.getId(), second.getId());
+                .containsExactly(libraryCard.getId(), second.getId(), first.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
@@ -120,5 +143,61 @@ class BowOfNyleaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, bowIndex(bow), 3, List.of(card.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The graveyard mode can be activated with zero targets")
+    void allowsZeroGraveyardTargets() {
+        Permanent bow = addBow();
+        Card libraryCard = new Forest();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbilityWithGraveyardTargets(player1, bowIndex(bow), 3, List.of());
+        harness.passBothPriorities();
+
+        assertThat(bow.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The graveyard mode rejects more than four targets")
+    void rejectsFiveGraveyardTargets() {
+        Permanent bow = addBow();
+        List<Card> cards = List.of(new Forest(), new NessianCourser(), new PrescientChimera(),
+                new Forest(), new NessianCourser());
+        harness.setGraveyard(player1, cards);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, bowIndex(bow), 3,
+                cards.stream().map(Card::getId).toList()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The graveyard mode cannot target the same card twice")
+    void rejectsDuplicateGraveyardTargets() {
+        Permanent bow = addBow();
+        Card card = new Forest();
+        harness.setGraveyard(player1, List.of(card));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, bowIndex(bow), 3,
+                List.of(card.getId(), card.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activating a mode taps the Bow and prevents another activation")
+    void tapCostPreventsAnotherMode() {
+        Permanent bow = addBow();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, bowIndex(bow), 2, null, null);
+
+        assertThat(bow.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, bowIndex(bow), 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
     }
 }

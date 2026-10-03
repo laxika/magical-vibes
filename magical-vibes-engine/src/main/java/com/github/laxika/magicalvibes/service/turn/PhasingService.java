@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
+import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -61,7 +62,8 @@ public class PhasingService {
      * @param activePlayerId the player whose untap step is being processed
      */
     public void applyPhasing(GameData gameData, UUID activePlayerId) {
-        Map<Permanent, UUID> phasingIn = collectPhasingIn(gameData, activePlayerId);
+        Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
+                ? Map.of() : collectPhasingIn(gameData, activePlayerId);
         Set<Permanent> phasingOut = collectPhasingOut(gameData, activePlayerId);
         if (phasingIn.isEmpty() && phasingOut.isEmpty()) {
             return;
@@ -92,7 +94,8 @@ public class PhasingService {
      * @param gameData the current game state to modify
      */
     public void applyTimeAndTide(GameData gameData) {
-        Map<Permanent, UUID> phasingIn = collectAllPhasedOutCreaturesPhasingIn(gameData);
+        Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
+                ? Map.of() : collectAllPhasedOutCreaturesPhasingIn(gameData);
         Set<Permanent> phasingOut = collectAllCreaturesWithPhasingPhasingOut(gameData);
         if (phasingIn.isEmpty() && phasingOut.isEmpty()) {
             return;
@@ -176,7 +179,8 @@ public class PhasingService {
             return;
         }
 
-        Map<Permanent, UUID> phasingIn = collectSpecificPhasingIn(gameData, targetIds);
+        Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
+                ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
         phasingIn.forEach((permanent, controllerId) -> {
             phasedOutList(gameData, controllerId).remove(permanent);
             permanent.setPhasedOutIndirectly(false);
@@ -266,7 +270,8 @@ public class PhasingService {
             return;
         }
 
-        Map<Permanent, UUID> phasingIn = collectSpecificPhasingIn(gameData, targetIds);
+        Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
+                ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
         phasingIn.forEach((permanent, controllerId) -> {
             phasedOutList(gameData, controllerId).remove(permanent);
             permanent.setPhasedOutIndirectly(false);
@@ -292,7 +297,8 @@ public class PhasingService {
             return;
         }
 
-        Map<Permanent, UUID> phasingIn = collectSpecificPhasingIn(gameData, targetIds);
+        Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
+                ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
         phasingIn.forEach((permanent, controllerId) -> {
             phasedOutList(gameData, controllerId).remove(permanent);
             permanent.setPhasedOutIndirectly(false);
@@ -452,6 +458,22 @@ public class PhasingService {
                 .filter(permanent -> permanent.getId().equals(permanentId))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private boolean permanentsCantPhaseIn(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                if (gameQueryService.hasActiveStaticEffect(
+                        gameData, source, PermanentsCantPhaseInEffect.class)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

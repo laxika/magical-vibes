@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.h.HallOfTheBanditLord;
 import com.github.laxika.magicalvibes.cards.h.HeartOfYavimaya;
 import com.github.laxika.magicalvibes.cards.l.LakeOfTheDead;
+import com.github.laxika.magicalvibes.cards.r.ReflectingPool;
 import com.github.laxika.magicalvibes.cards.s.SoldeviExcavations;
 import com.github.laxika.magicalvibes.cards.t.ThawingGlaciers;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BenthicExplorers.class, HallOfTheBanditLord.class, HeartOfYavimaya.class, LakeOfTheDead.class,
-        SoldeviExcavations.class, ThawingGlaciers.class})
+        ReflectingPool.class, SoldeviExcavations.class, ThawingGlaciers.class})
 class BenthicExplorersTest extends BaseCardTest {
 
     @Test
@@ -127,6 +128,72 @@ class BenthicExplorersTest extends BaseCardTest {
 
         assertThat(glaciers.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can choose exactly one blue mana from Soldevi Excavations")
+    void canChooseBlueMana() {
+        addReadyExplorers();
+        Permanent excavations = harness.addToBattlefieldAndReturn(player2, new SoldeviExcavations());
+        excavations.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(excavations.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A tapped Explorers cannot activate even with a legal land payment")
+    void cannotActivateWhileTapped() {
+        Permanent explorers = addReadyExplorers();
+        explorers.tap();
+        Permanent lake = harness.addToBattlefieldAndReturn(player2, new LakeOfTheDead());
+        lake.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(lake.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Explorers cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent explorers = addReadyExplorers();
+        explorers.setSummoningSick(true);
+        Permanent lake = harness.addToBattlefieldAndReturn(player2, new LakeOfTheDead());
+        lake.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(explorers.isTapped()).isFalse();
+        assertThat(lake.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({BenthicExplorers.class, LakeOfTheDead.class, ReflectingPool.class})
+    @DisplayName("Reflecting Pool can produce the mana type of its controller's other land")
+    void copiesManaTypeFromReflectingPool() {
+        addReadyExplorers();
+        harness.addToBattlefield(player2, new LakeOfTheDead());
+        Permanent pool = harness.addToBattlefieldAndReturn(player2, new ReflectingPool());
+        pool.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pool.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

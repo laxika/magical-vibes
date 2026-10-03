@@ -30,9 +30,10 @@ class BladeBlizzardKitsuneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BladeBlizzardKitsune()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
-        harness.activateHandAbility(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.activateHandAbility(player1, 0, bears.getId());
+            harness.passBothPriorities();
+        });
 
         harness.assertInHand(player1, "Grizzly Bears");
         Permanent kitsune = findPermanent(player1, "Blade-Blizzard Kitsune");
@@ -67,5 +68,49 @@ class BladeBlizzardKitsuneTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("unblocked attacker");
+    }
+
+    @Test
+    @DisplayName("A Kitsune entering through ninjutsu deals damage in both combat damage steps")
+    void ninjutsuEntrantDealsDoubleStrikeDamage() {
+        Permanent attacker = addCreatureReady(player1, new BladeBlizzardKitsune());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new BladeBlizzardKitsune()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            harness.activateHandAbility(player1, 0, attacker.getId());
+            harness.assertInHand(player1, "Blade-Blizzard Kitsune");
+            assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+            harness.passBothPriorities();
+        });
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+        harness.assertOnBattlefield(player1, "Blade-Blizzard Kitsune");
+        harness.assertInHand(player1, "Blade-Blizzard Kitsune");
+    }
+
+    @Test
+    @DisplayName("Insufficient ninjutsu mana does not return the attacker")
+    void insufficientManaLeavesAttackerOnBattlefield() {
+        Permanent attacker = addCreatureReady(player1, new BladeBlizzardKitsune());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new BladeBlizzardKitsune()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("mana");
+        });
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(attacker);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -27,8 +27,7 @@ class CephalidIllusionistTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, illusionist.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, illusionist.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
@@ -91,8 +90,7 @@ class CephalidIllusionistTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
@@ -126,6 +124,74 @@ class CephalidIllusionistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(illusionist.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mills its controller's library before the targeting spell resolves")
+    void millsControllerBeforeTargetingSpellResolves() {
+        Permanent illusionist = addCreatureReady(player2, new CephalidIllusionist());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, illusionist.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        harness.assertOnBattlefield(player2, "Cephalid Illusionist");
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Cephalid Illusionist");
+    }
+
+    @Test
+    @DisplayName("Mills the remaining cards when fewer than three are in the library")
+    void millsShortLibrary() {
+        Permanent illusionist = addCreatureReady(player1, new CephalidIllusionist());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        activateAbility(illusionist, illusionist);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Cephalid Illusionist");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent illusionist = harness.addToBattlefieldAndReturn(player1, new CephalidIllusionist());
+        illusionist.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(illusionist.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The prevention ability resolves even if the Illusionist dies in response")
+    void preventionResolvesAfterSourceDies() {
+        Permanent illusionist = addCreatureReady(player1, new CephalidIllusionist());
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, illusionist.getId());
+
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Cephalid Illusionist");
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
     }
 
     private void activateAbility(Permanent source, Permanent target) {

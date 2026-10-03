@@ -25,8 +25,7 @@ class BewilderingBlizzardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
@@ -42,8 +41,7 @@ class BewilderingBlizzardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -51,6 +49,40 @@ class BewilderingBlizzardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Draws three cards even when no creatures are on the battlefield")
+    void drawsWithNoCreatures() {
+        harness.setHand(player1, List.of(new BewilderingBlizzard()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Bewildering Blizzard");
+    }
+
+    @Test
+    @DisplayName("Only creatures present when the spell resolves are weakened")
+    void locksAffectedCreaturesAtResolution() {
+        Permanent existingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BewilderingBlizzard()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addMana();
+
+        harness.castInstant(player1, 0);
+        Permanent creatureBeforeResolution = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+        Permanent creatureAfterResolution = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, creatureBeforeResolution)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, creatureAfterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creatureBeforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creatureAfterResolution)).isEqualTo(2);
     }
 
     private void addMana() {

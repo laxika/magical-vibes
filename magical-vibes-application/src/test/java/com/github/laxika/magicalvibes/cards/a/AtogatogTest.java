@@ -18,11 +18,8 @@ class AtogatogTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing an Atog gives Atogatog +X/+X based on its power")
     void sacrificeBoostsBySacrificedPower() {
-        harness.addToBattlefield(player1, new Atogatog());
-        harness.addToBattlefield(player1, new Atog());
-
-        Permanent atogatog = findPermanent(player1, "Atogatog");
-        Permanent atog = findPermanent(player1, "Atog");
+        Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
+        Permanent atog = harness.addToBattlefieldAndReturn(player1, new Atog());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, atog.getId());
@@ -36,11 +33,9 @@ class AtogatogTest extends BaseCardTest {
     @Test
     @DisplayName("Uses the sacrificed Atog's effective power")
     void usesEffectivePower() {
-        harness.addToBattlefield(player1, new Atogatog());
+        Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
         Permanent atog = addCreatureReady(player1, new Atog());
         atog.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-
-        Permanent atogatog = findPermanent(player1, "Atogatog");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, atog.getId());
@@ -100,9 +95,8 @@ class AtogatogTest extends BaseCardTest {
     @Test
     @DisplayName("The power and toughness boost expires at the end of the turn")
     void boostExpiresAtEndOfTurn() {
-        harness.addToBattlefield(player1, new Atogatog());
+        Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
         Permanent atog = addCreatureReady(player1, new Atog());
-        Permanent atogatog = findPermanent(player1, "Atogatog");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, atog.getId());
@@ -117,5 +111,88 @@ class AtogatogTest extends BaseCardTest {
 
         assertThat(atogatog.getPowerModifier()).isZero();
         assertThat(atogatog.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a zero-power Atog gives no boost")
+    void zeroPowerGivesNoBoost() {
+        Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
+        Permanent atog = harness.addToBattlefieldAndReturn(player1, new Atog());
+        atog.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, atog.getId());
+        harness.assertInGraveyard(player1, "Atog");
+        harness.passBothPriorities();
+
+        assertThat(atogatog.getPowerModifier()).isZero();
+        assertThat(atogatog.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a negative-power Atog gives no boost or penalty")
+    void negativePowerGivesNoBoostOrPenalty() {
+        Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
+        Permanent atog = harness.addToBattlefieldAndReturn(player1, new Atog());
+        atog.setPowerModifier(-2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, atog.getId());
+        harness.assertInGraveyard(player1, "Atog");
+        harness.passBothPriorities();
+
+        assertThat(atogatog.getPowerModifier()).isZero();
+        assertThat(atogatog.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Atog cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsAtog() {
+        Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
+        Permanent ownAtog = harness.addToBattlefieldAndReturn(player1, new Atog());
+        Permanent opponentsAtog = harness.addToBattlefieldAndReturn(player2, new Atog());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentsAtog.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, ownAtog.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Atog");
+        harness.assertNotInGraveyard(player2, "Atog");
+        harness.assertInGraveyard(player1, "Atog");
+        assertThat(atogatog.getPowerModifier()).isEqualTo(1);
+        assertThat(atogatog.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each activation keeps the power of its own sacrificed Atog")
+    void separateActivationsKeepTheirOwnSacrificedPower() {
+        Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
+        Permanent firstAtog = harness.addToBattlefieldAndReturn(player1, new Atog());
+        Permanent secondAtog = harness.addToBattlefieldAndReturn(player1, new Atog());
+        secondAtog.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, firstAtog.getId());
+        assertThat(atogatog.getPowerModifier()).isZero();
+        assertThat(atogatog.getToughnessModifier()).isZero();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, secondAtog.getId());
+        harness.passBothPriorities();
+
+        assertThat(atogatog.getPowerModifier()).isEqualTo(3);
+        assertThat(atogatog.getToughnessModifier()).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(atogatog.getPowerModifier()).isEqualTo(4);
+        assertThat(atogatog.getToughnessModifier()).isEqualTo(4);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Atog"))
+                .hasSize(2);
     }
 }

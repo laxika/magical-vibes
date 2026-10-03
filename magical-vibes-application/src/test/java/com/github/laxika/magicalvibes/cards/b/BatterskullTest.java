@@ -1,70 +1,32 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Batterskull.class, GrizzlyBears.class})
 class BatterskullTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
-
-    
-
-    @Test
-    @DisplayName("Batterskull has {3} return to hand ability and equip {5} ability")
-    void hasActivatedAbilities() {
-        Batterskull card = new Batterskull();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {3}: Return to hand
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOfSatisfying(ReturnToHandEffect.class,
-                        e -> assertThat(e.scope()).isEqualTo(BounceScope.SELF));
-
-        // Ability 1: Equip {5}
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{5}");
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(1).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(1).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
-    }
-
-    // ===== Living weapon ETB =====
 
     @Test
     @DisplayName("Casting Batterskull triggers living weapon ETB on the stack")
     void castingTriggersLivingWeapon() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
@@ -76,21 +38,12 @@ class BatterskullTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving living weapon creates a Phyrexian Germ token and attaches equipment")
     void livingWeaponCreatesGermAndAttaches() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-
-        Permanent batterskull = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Batterskull"))
-                .findFirst().orElseThrow();
-        Permanent germ = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent batterskull = findPermanent(player1, "Batterskull");
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(batterskull.getAttachedTo()).isEqualTo(germ.getId());
     }
@@ -98,10 +51,7 @@ class BatterskullTest extends BaseCardTest {
     @Test
     @DisplayName("Phyrexian Germ token has correct properties")
     void germTokenHasCorrectProperties() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -111,19 +61,15 @@ class BatterskullTest extends BaseCardTest {
         assertThat(germ.getCard().getPower()).isEqualTo(0);
         assertThat(germ.getCard().getToughness()).isEqualTo(0);
         assertThat(germ.getCard().isToken()).isTrue();
+        assertThat(germ.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(germ.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GERM);
     }
 
-    // ===== Germ gets equipment bonuses =====
-
     @Test
     @DisplayName("Germ token gets +4/+4, vigilance, and lifelink from Batterskull")
     void germGetsEquipmentBonuses() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -136,21 +82,14 @@ class BatterskullTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, germ, Keyword.LIFELINK)).isTrue();
     }
 
-    // ===== Equip to another creature =====
-
     @Test
     @DisplayName("Equipping Batterskull to another creature moves it from the Germ")
     void equipToAnotherCreature() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.activateAbility(player1, 0, 1, null, bears.getId());
@@ -167,21 +106,14 @@ class BatterskullTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 
-    // ===== Germ dies when equipment is moved =====
-
     @Test
     @DisplayName("Germ token dies (0 toughness) when Batterskull is moved to another creature")
     void germDiesWhenEquipmentMoved() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.activateAbility(player1, 0, 1, null, bears.getId());
@@ -190,15 +122,10 @@ class BatterskullTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 
-    // ===== Return to hand ability =====
-
     @Test
     @DisplayName("Activating {3} ability returns Batterskull to hand")
     void returnToHandAbility() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -218,10 +145,7 @@ class BatterskullTest extends BaseCardTest {
     @Test
     @DisplayName("Germ dies when Batterskull is returned to hand")
     void germDiesWhenBatterskullReturnedToHand() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -234,21 +158,119 @@ class BatterskullTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 
-    // ===== Equipment stays when Germ is removed =====
-
     @Test
     @DisplayName("Batterskull stays on battlefield when Germ is removed")
     void equipmentStaysWhenGermIsRemoved() {
-        harness.setHand(player1, List.of(new Batterskull()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Batterskull(), "{5}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent germ = findPermanent(player1, "Phyrexian Germ");
-        gd.playerBattlefields.get(player1.getId()).remove(germ);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, germ));
+        harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Batterskull");
+        assertThat(findPermanent(player1, "Batterskull").getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Returning Batterskull before living weapon resolves leaves no Germ alive")
+    void returnInResponseToLivingWeapon() {
+        harness.castFromHand(player1, new Batterskull(), "{5}");
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Batterskull");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Batterskull");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning equipped Batterskull removes its bonuses from the surviving creature")
+    void returningEquipmentRemovesBonuses() {
+        harness.addToBattlefield(player1, new Batterskull());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Batterskull");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        harness.addToBattlefield(player1, new Batterskull());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void cannotEquipDuringCombat() {
+        harness.addToBattlefield(player1, new Batterskull());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Return ability can be activated during an opponent's turn and costs three mana")
+    void returnDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new Batterskull());
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Batterskull");
+    }
+
+    @Test
+    @DisplayName("Equip spends five generic mana")
+    void equipCostsFiveMana() {
+        harness.addToBattlefield(player1, new Batterskull());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Batterskull").getAttachedTo()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Equipped Germ attacks without tapping and gains life from combat damage")
+    void vigilanceAndLifelinkWorkInCombat() {
+        harness.castFromHand(player1, new Batterskull(), "{5}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
+        germ.setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        declareAttackers(List.of(1));
+        assertThat(germ.isTapped()).isFalse();
+        resolveCombat();
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
     }
 }

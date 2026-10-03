@@ -113,10 +113,108 @@ class BrotherhoodRegaliaTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
+    @Test
+    void wardCountersOpponentsActivatedAbility() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent regalia = addReadyRegalia(player1);
+        regalia.setAttachedTo(creature.getId());
+        Permanent kamahl = addCreatureReady(player2, new KamahlPitFighter());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, battlefieldIndex(player2, kamahl), 0, null, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(kamahl);
+    }
+
+    @Test
+    void wardCanBeDeclinedEvenWithEnoughMana() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addReadyRegalia(player1).setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, java.util.List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void wardDoesNotTriggerForControllersSpell() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addReadyRegalia(player1).setAttachedTo(creature.getId());
+        harness.setHand(player1, java.util.List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void movingEquipmentTransfersItsContinuousBenefits() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent regalia = addReadyRegalia(player1);
+        regalia.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, regalia), 1, null, second.getId());
+        resolveAllTriggers();
+
+        assertThat(regalia.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.hasEffectiveSubtype(gd, first, CardSubtype.ASSASSIN)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, second, CardSubtype.ASSASSIN)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
+    }
+
+    @Test
+    void equipRejectsOpponentsCreature() {
+        Permanent regalia = addReadyRegalia(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                battlefieldIndex(player1, regalia), 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(regalia.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void bothEquipAbilitiesRequireSorceryTiming() {
+        Permanent regalia = addReadyRegalia(player1);
+        Permanent creature = addCreatureReady(player1, new KamahlPitFighter());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                battlefieldIndex(player1, regalia), 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                battlefieldIndex(player1, regalia), 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(regalia.getAttachedTo()).isNull();
+    }
+
     private Permanent addReadyRegalia(Player player) {
-        Permanent regalia = new Permanent(new BrotherhoodRegalia());
+        Permanent regalia = harness.addToBattlefieldAndReturn(player, new BrotherhoodRegalia());
         regalia.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(regalia);
         return regalia;
     }
 

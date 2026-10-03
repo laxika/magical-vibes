@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.t.TheWanderer;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,11 +13,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CommandTheDreadhorde.class, GrizzlyBears.class, HillGiant.class, HolyDay.class})
+@CardUsed({CommandTheDreadhorde.class, GrizzlyBears.class, HillGiant.class, HolyDay.class,
+        TheWanderer.class, CharmedStray.class})
 class CommandTheDreadhordeTest extends BaseCardTest {
 
     @Test
@@ -34,12 +37,11 @@ class CommandTheDreadhordeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
         harness.passBothPriorities();
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.playerLifeTotals.get(player1.getId())).isEqualTo(14);
-        assertThat(gameData.playerBattlefields.get(player1.getId()))
+        harness.assertLife(player1, 14);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactlyInAnyOrder(ownCreature.getId(), opponentCreature.getId());
-        assertThat(gameData.playerGraveyards.get(player2.getId()))
+        assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(opponentCreature.getId()));
     }
 
@@ -57,7 +59,7 @@ class CommandTheDreadhordeTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        harness.assertLife(player1, 16);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactly(opponentCreature.getId());
@@ -76,9 +78,9 @@ class CommandTheDreadhordeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).contains(creature);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
     }
 
     @Test
@@ -92,5 +94,117 @@ class CommandTheDreadhordeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(instant.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returningPlaneswalkerDoesNotPreventTheEarlierDamage() {
+        Card wanderer = new TheWanderer();
+        harness.setGraveyard(player2, List.of(wanderer));
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(wanderer.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertOnBattlefield(player1, "The Wanderer");
+        harness.assertNotInGraveyard(player2, "The Wanderer");
+    }
+
+    @Test
+    void preventedDamageDoesNotStopReanimation() {
+        harness.addToBattlefield(player1, new TheWanderer());
+        Card creature = new CharmedStray();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Charmed Stray");
+        harness.assertNotInGraveyard(player2, "Charmed Stray");
+    }
+
+    @Test
+    void simultaneouslyReturnedCreaturesSeeEachOtherEnter() {
+        Card first = new CharmedStray();
+        Card second = new CharmedStray();
+        harness.setGraveyard(player1, List.of(first));
+        harness.setGraveyard(player2, List.of(second));
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .allSatisfy(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(1));
+    }
+
+    @Test
+    void targetMovedToHandDoesNotContributeToDamage() {
+        Card removed = new CharmedStray();
+        Card remaining = new TheWanderer();
+        harness.setGraveyard(player1, List.of(removed));
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(removed));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertOnBattlefield(player1, "The Wanderer");
+        harness.assertNotOnBattlefield(player1, "Charmed Stray");
+        harness.assertInHand(player1, "Charmed Stray");
+    }
+
+    @Test
+    void allTargetsBecomingIllegalPreventsDamage() {
+        Card creature = new CharmedStray();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Command the Dreadhorde");
+    }
+
+    @Test
+    void mayReturnMoreThanNinetyNineCards() {
+        List<Card> creatures = IntStream.range(0, 100)
+                .mapToObj(index -> (Card) new GrizzlyBears()).toList();
+        harness.setGraveyard(player1, creatures);
+        harness.setLife(player1, 300);
+        harness.setHand(player1, List.of(new CommandTheDreadhorde()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, creatures.stream().map(Card::getId).toList());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 100);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(100);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }

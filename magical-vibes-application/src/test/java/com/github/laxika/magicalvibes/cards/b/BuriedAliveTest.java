@@ -146,6 +146,45 @@ class BuriedAliveTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Buried Alive");
     }
 
+    @Test
+    @DisplayName("An empty library finishes the spell without a choice")
+    void emptyLibrary() {
+        castBuriedAlive();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Buried Alive");
+    }
+
+    @Test
+    @DisplayName("The selected creature goes to the caster's graveyard without entering or drawing")
+    void selectedCreatureDoesNotEnterBattlefield() {
+        castBuriedAlive();
+        StripedBears first = new StripedBears();
+        StripedBears second = new StripedBears();
+        NullRod artifact = new NullRod();
+        harness.setLibrary(player1, List.of(first, artifact, second));
+        StripedBears opposingCreature = new StripedBears();
+        harness.setLibrary(player2, List.of(opposingCreature));
+        List<Card> originalHand = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, artifact);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(originalHand);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingCreature);
+        harness.assertNotOnBattlefield(player1, "Striped Bears");
+        harness.assertNotInGraveyard(player2, "Striped Bears");
+        harness.assertInGraveyard(player1, "Buried Alive");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castBuriedAlive() {
         harness.castFromHand(player1, new BuriedAlive(), "{2}{B}");
     }

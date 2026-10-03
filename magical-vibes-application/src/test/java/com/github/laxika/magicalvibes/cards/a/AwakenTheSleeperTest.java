@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AwakenTheSleeper.class, GrizzlyBears.class, LeoninScimitar.class,
+        LoxodonWarhammer.class, Pacifism.class})
 class AwakenTheSleeperTest extends BaseCardTest {
 
     @Test
@@ -82,8 +86,9 @@ class AwakenTheSleeperTest extends BaseCardTest {
     @Test
     @DisplayName("Awaken the Sleeper cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        enchantment.setAttachedTo(creature.getId());
         harness.setHand(player1, List.of(new AwakenTheSleeper()));
         addManaForAwaken();
 
@@ -91,11 +96,74 @@ class AwakenTheSleeperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Control and haste expire at cleanup")
+    void controlAndHasteExpireAtCleanup() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castAwaken(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Awaken the Sleeper can untap and grant haste to your own creature")
+    void canTargetOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.tap();
+
+        castAwaken(target);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equipment destruction preserves Auras and Equipment attached elsewhere")
+    void destroysOnlyEquipmentAttachedToTargetRegardlessOfController() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        addAttachedEquipment(player1, new LeoninScimitar(), target);
+        addAttachedEquipment(player2, new LoxodonWarhammer(), target);
+        Permanent otherEquipment = addAttachedEquipment(player2, new LeoninScimitar(), otherCreature);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(target.getId());
+
+        castAwaken(target);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Loxodon Warhammer");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura, otherEquipment);
+        assertThat(aura.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(otherEquipment.getAttachedTo()).isEqualTo(otherCreature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("An Aura alone does not make the target equipped")
+    void auraAloneDoesNotOfferDestruction() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(target.getId());
+
+        castAwaken(target);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
     private void castAwaken(Permanent target) {
         harness.setHand(player1, List.of(new AwakenTheSleeper()));
         addManaForAwaken();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addManaForAwaken() {
@@ -104,10 +172,8 @@ class AwakenTheSleeperTest extends BaseCardTest {
     }
 
     private Permanent addAttachedEquipment(Player player, Card equipment, Permanent target) {
-        Permanent permanent = new Permanent(equipment);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, equipment);
         permanent.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

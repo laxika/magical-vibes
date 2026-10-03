@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CloudDjinn;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.k.KarnsTouch;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -89,9 +91,59 @@ class BubbleMatrixTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Thunderbolt()));
         giveThunderboltMana(player1);
-        harness.castInstant(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("An unblocked creature still deals combat damage to a player")
+    void doesNotPreventCombatDamageToPlayers() {
+        harness.addToBattlefield(player1, new BubbleMatrix());
+        addAttacker(player2);
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Prevention ends when Bubble Matrix leaves the battlefield")
+    void preventionEndsWhenSourceLeaves() {
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new BubbleMatrix());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CloudDjinn());
+        gd.playerBattlefields.get(player1.getId()).remove(matrix);
+        harness.setHand(player1, List.of(new Thunderbolt()));
+        giveThunderboltMana(player1);
+
+        harness.castModalInstant(player1, 0, 1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Cloud Djinn");
+        harness.assertInGraveyard(player2, "Cloud Djinn");
+    }
+
+    @Test
+    @CardUsed({KarnsTouch.class, Humility.class})
+    @DisplayName("An animated Bubble Matrix cannot prevent damage after losing its abilities")
+    void losesPreventionWhenAnimatedAndAbilitiesRemoved() {
+        Permanent matrix = harness.addToBattlefieldAndReturn(player1, new BubbleMatrix());
+        harness.setHand(player1, List.of(new KarnsTouch()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, matrix.getId());
+        harness.addToBattlefield(player1, new Humility());
+        addBlocker(player1, 0);
+        addAttacker(player2);
+        harness.forceActivePlayer(player2);
+
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Redwood Treefolk");
+        harness.assertNotOnBattlefield(player2, "Redwood Treefolk");
+        harness.assertInGraveyard(player1, "Redwood Treefolk");
+        harness.assertInGraveyard(player2, "Redwood Treefolk");
     }
 }

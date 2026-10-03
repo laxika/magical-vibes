@@ -107,6 +107,58 @@ class CloudchaserKestrelTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
     }
 
+    @Test
+    @DisplayName("Must destroy its controller's enchantment when it is the only enchantment")
+    void destroysOwnEnchantment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GriffinGuide());
+        aura.setAttachedTo(creature.getId());
+
+        harness.castFromHand(player1, new CloudchaserKestrel(), "{1}{W}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Griffin Guide");
+        harness.assertNotOnBattlefield(player1, "Griffin Guide");
+        harness.assertOnBattlefield(player1, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly while tapped and summoning sick")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent kestrel = harness.addToBattlefieldAndReturn(player1, new CloudchaserKestrel());
+        kestrel.setTapped(true);
+        kestrel.setSummoningSick(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.activateAbility(player1, 0, 0, null, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.getEffectiveColors(gd, artifact)).containsExactly(CardColor.WHITE);
+        assertThat(kestrel.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Color ability resolves after its source leaves the battlefield")
+    void colorAbilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent kestrel = harness.addToBattlefieldAndReturn(player1, new CloudchaserKestrel());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, kestrel));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Cloudchaser Kestrel");
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
+    }
+
     private Permanent addAttachedGriffinGuide() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new GriffinGuide());

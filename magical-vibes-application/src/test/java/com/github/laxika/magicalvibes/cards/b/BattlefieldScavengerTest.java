@@ -1,20 +1,19 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.g.GloryBoundInitiate;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BattlefieldScavenger.class, Forest.class, GloryBoundInitiate.class})
 class BattlefieldScavengerTest extends BaseCardTest {
 
     @Test
@@ -49,8 +48,8 @@ class BattlefieldScavengerTest extends BaseCardTest {
     @DisplayName("Exerting then accepting the loot discards a card then draws a card")
     void exertThenLootDiscardsThenDraws() {
         addCreatureReady(player1, new BattlefieldScavenger());
-        setDeck(player1, List.of(new Forest()));
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new GloryBoundInitiate()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -59,9 +58,9 @@ class BattlefieldScavengerTest extends BaseCardTest {
 
         // Discard happens before the draw.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        harness.handleCardChosen(player1, 0); // discard Grizzly Bears
+        harness.handleCardChosen(player1, 0); // discard Glory-Bound Initiate
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Glory-Bound Initiate");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
     }
@@ -70,8 +69,8 @@ class BattlefieldScavengerTest extends BaseCardTest {
     @DisplayName("Exerting then declining the loot leaves the hand untouched")
     void exertThenDeclineLoot() {
         addCreatureReady(player1, new BattlefieldScavenger());
-        setDeck(player1, List.of(new Forest()));
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new GloryBoundInitiate()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -79,7 +78,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline loot
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Glory-Bound Initiate");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
@@ -87,7 +86,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
     @DisplayName("Declining exert keeps the creature untapped-able and offers no loot")
     void decliningExertDoesNothing() {
         Permanent scavenger = addCreatureReady(player1, new BattlefieldScavenger());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of(new GloryBoundInitiate()));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -98,10 +97,59 @@ class BattlefieldScavengerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Exerting another creature triggers the Scavenger's rummage ability")
+    void exertingAnotherCreatureOffersLoot() {
+        harness.addToBattlefield(player1, new BattlefieldScavenger());
+        addCreatureReady(player1, new GloryBoundInitiate());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new GloryBoundInitiate()));
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Glory-Bound Initiate");
+    }
+
+    @Test
+    @DisplayName("Each Scavenger triggers when one Scavenger exerts")
+    void eachScavengerOffersLootForOneExert() {
+        addCreatureReady(player1, new BattlefieldScavenger());
+        harness.addToBattlefield(player1, new BattlefieldScavenger());
+        harness.setHand(player1, List.of(new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Accepting rummage with an empty hand does not draw")
+    void emptyHandCannotDrawWithoutDiscarding() {
+        addCreatureReady(player1, new BattlefieldScavenger());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

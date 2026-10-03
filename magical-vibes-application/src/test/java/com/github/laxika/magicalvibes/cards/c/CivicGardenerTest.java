@@ -61,9 +61,65 @@ class CivicGardenerTest extends BaseCardTest {
         assertThat(land.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Gardener can target and untap itself after attacking")
+    void attackTriggerUntapsItself() {
+        Permanent gardener = addReadyGardener();
+
+        declareAttackers(List.of(0));
+
+        assertThat(gardener.isTapped()).isTrue();
+        harness.handlePermanentChosen(player1, gardener.getId());
+        harness.passBothPriorities();
+
+        assertThat(gardener.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking can untap an opponent's creature")
+    void attackTriggerUntapsOpponentsCreature() {
+        addReadyGardener();
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking can untap an opponent's land")
+    void attackTriggerUntapsOpponentsLand() {
+        addReadyGardener();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.tap();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already untapped creature is a legal target")
+    void attackTriggerCanTargetUntappedCreature() {
+        addReadyGardener();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(land.isTapped()).isTrue();
+    }
+
     private Permanent addReadyGardener() {
-        Permanent gardener = harness.addToBattlefieldAndReturn(player1, new CivicGardener());
-        gardener.setSummoningSick(false);
-        return gardener;
+        return addCreatureReady(player1, new CivicGardener());
     }
 }

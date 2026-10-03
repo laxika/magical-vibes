@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,11 +117,9 @@ class BarbarianGuidesTest extends BaseCardTest {
                 .doesNotContain(indexOf(player1, attacker));
 
         harness.ensurePriority(player1);
-        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.UPKEEP));
-        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.UPKEEP));
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
@@ -168,6 +166,45 @@ class BarbarianGuidesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, indexOf(player1, guides), 0, null, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Nonbasic land types are legal choices for snow landwalk")
+    void canChooseNonbasicLandType() {
+        Permanent guides = addCreatureReady(player1, new BarbarianGuides());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, indexOf(player1, guides), 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).contains("DESERT", "GATE", "LOCUS", "LAIR");
+        harness.handleListChoice(player1, "DESERT");
+    }
+
+    @Test
+    @DisplayName("The delayed return uses the stack and allows responses before the creature leaves")
+    void endStepReturnWaitsForTriggerResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent guides = addCreatureReady(player1, new BarbarianGuides());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, indexOf(player1, guides), 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertNotInHand(player1, "Balduvian Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInHand(player1, "Balduvian Bears");
     }
 
     /**

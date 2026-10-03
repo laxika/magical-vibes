@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "234")
 @CardRegistration(set = "FCA", collectorNumber = "20")
+@CardRegistration(set = "BRC", collectorNumber = "170")
 public class TraxosScourgeOfKroog extends Card {
 
     public TraxosScourgeOfKroog() {
