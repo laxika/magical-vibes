@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FirdochCore;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeepwayNavigator.class, MerfolkOfThePearlTrident.class, GrizzlyBears.class})
+@CardUsed({DeepwayNavigator.class, MerfolkOfThePearlTrident.class, GrizzlyBears.class, FirdochCore.class})
 class DeepwayNavigatorTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class DeepwayNavigatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(merfolk.isTapped()).isFalse();
         assertThat(bear.isTapped()).isTrue();
@@ -63,5 +64,79 @@ class DeepwayNavigatorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, navigator)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, merfolk)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Entering untaps noncreature Merfolk permanents")
+    void enteringUntapsKindredArtifactWithChangeling() {
+        Permanent core = harness.addToBattlefieldAndReturn(player1, new FirdochCore());
+        core.tap();
+        harness.setHand(player1, List.of(new DeepwayNavigator()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(core.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flash allows Navigator to enter during the opponent's main phase")
+    void canCastDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DeepwayNavigator()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Deepway Navigator");
+    }
+
+    @Test
+    @DisplayName("The entry trigger excludes its source and opposing Merfolk")
+    void enteringDoesNotUntapItselfOrOpposingMerfolk() {
+        Permanent opponent = addCreatureReady(player2, new MerfolkOfThePearlTrident());
+        opponent.tap();
+        harness.setHand(player1, List.of(new DeepwayNavigator()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent navigator = findPermanent(player1, "Deepway Navigator");
+        navigator.tap();
+
+        resolveAllTriggers();
+
+        assertThat(navigator.isTapped()).isTrue();
+        assertThat(opponent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Navigator entering after combat boosts even Merfolk that did not attack")
+    void enteringAfterCombatUsesEarlierAttackHistory() {
+        addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        Permanent nonattacker = addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        Permanent opponent = addCreatureReady(player2, new MerfolkOfThePearlTrident());
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveCombat();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DeepwayNavigator()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Deepway Navigator"))).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonattacker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
     }
 }
