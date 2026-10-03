@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FeralProwler;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,9 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Dreamstealer.class, FeralProwler.class, Forest.class})
 class DreamstealerTest extends BaseCardTest {
-
-    // ===== Combat-damage discard trigger =====
 
     @Test
     @DisplayName("Combat damage to a player makes that player discard cards equal to the damage dealt")
@@ -31,7 +31,7 @@ class DreamstealerTest extends BaseCardTest {
         // Two +1/+1 counters make the 1/2 Dreamstealer deal 3 combat damage.
         Permanent dreamstealer = addAttackingDreamstealer(player1);
         dreamstealer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest(), new Forest())));
+        harness.setHand(player2, new ArrayList<>(List.of(new FeralProwler(), new Forest(), new Forest())));
 
         resolveCombatAndTrigger();
 
@@ -52,9 +52,11 @@ class DreamstealerTest extends BaseCardTest {
     @DisplayName("No trigger when Dreamstealer is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
         addAttackingDreamstealer(player1);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        for (int i = 0; i < 2; i++) {
+            Permanent blocker = addCreatureReady(player2, new FeralProwler());
+            blocker.setBlocking(true);
+            blocker.addBlockingTarget(0);
+        }
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
 
         resolveCombatAndTrigger();
@@ -62,8 +64,6 @@ class DreamstealerTest extends BaseCardTest {
         // No combat damage reached the player, so no discard was prompted.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
-
-    // ===== Eternalize =====
 
     @Test
     @DisplayName("Eternalize exiles the source card from the graveyard and makes a 4/4 black Zombie token copy")
@@ -84,7 +84,7 @@ class DreamstealerTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes())
                 .contains(CardSubtype.ZOMBIE, CardSubtype.HUMAN, CardSubtype.WIZARD);
         assertThat(token.getCard().getManaCost()).isEmpty();
-        // The token still carries the combat-damage discard trigger via Menace.
+        // The token retains menace in addition to its combat-damage discard trigger.
         assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
     }
 
@@ -104,7 +104,75 @@ class DreamstealerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Dreamstealer");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The eternalized token makes the damaged player discard four cards")
+    void eternalizedTokenDiscardsFourCards() {
+        setUpEternalize();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        Permanent token = eternalizedToken();
+        token.setSummoningSick(false);
+        token.setAttacking(true);
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+
+        resolveCombatAndTrigger();
+
+        for (int i = 0; i < 4; i++) {
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            harness.handleCardChosen(player2, 0);
+        }
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("A player with fewer cards than the damage discards their entire hand")
+    void discardsAvailableCardsWhenHandIsTooSmall() {
+        Permanent dreamstealer = addAttackingDreamstealer(player1);
+        dreamstealer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player2, List.of(new Forest()));
+
+        resolveCombatAndTrigger();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The discard amount remains the damage dealt when power changes before resolution")
+    void discardAmountDoesNotUsePowerAtResolution() {
+        Permanent dreamstealer = addAttackingDreamstealer(player1);
+        dreamstealer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        resolveCombat();
+        dreamstealer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        resolveAllTriggers();
+
+        for (int i = 0; i < 3; i++) {
+            harness.handleCardChosen(player2, 0);
+        }
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Combat damage to a player with an empty hand completes without a discard choice")
+    void emptyHandDoesNotRequireInput() {
+        addAttackingDreamstealer(player1);
+        harness.setHand(player2, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
 
     private Permanent addAttackingDreamstealer(Player player) {
         Permanent dreamstealer = addCreatureReady(player, new Dreamstealer());
@@ -114,7 +182,7 @@ class DreamstealerTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities(); // resolve what combat damage triggered
+        resolveAllTriggers();
     }
 
     private void addEternalizeMana() {
@@ -130,8 +198,6 @@ class DreamstealerTest extends BaseCardTest {
     }
 
     private Permanent eternalizedToken() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dreamstealer") && p.getCard().isToken())
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Dreamstealer");
     }
 }
