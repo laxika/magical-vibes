@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "231")
 @CardRegistration(set = "C19", collectorNumber = "210")
+@CardRegistration(set = "VOC", collectorNumber = "160")
 public class AzoriusLocket extends Card {
 
     public AzoriusLocket() {

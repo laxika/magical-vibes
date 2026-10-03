@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -79,6 +81,21 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             supertypes.addAll(copyCard.getSupertypes());
             supertypes.removeAll(e.removedSupertypes());
             copyCard.setSupertypes(Set.copyOf(supertypes));
+        }
+        if (!e.additionalSubtypes().isEmpty()) {
+            ArrayList<CardSubtype> subtypes = new ArrayList<>(copyCard.getSubtypes());
+            for (var subtype : e.additionalSubtypes()) {
+                if (!subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+            copyCard.setSubtypes(List.copyOf(subtypes));
+        }
+        if (e.powerOverride() != null) {
+            copyCard.setPower(e.powerOverride());
+        }
+        if (e.toughnessOverride() != null) {
+            copyCard.setToughness(e.toughnessOverride());
         }
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
         if (e.startingLoyaltyFromX()) {

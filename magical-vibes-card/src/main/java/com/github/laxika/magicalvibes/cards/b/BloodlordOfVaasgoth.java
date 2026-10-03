@@ -25,6 +25,7 @@ import java.util.List;
  * while it is still on the stack; each instance applies separately (CR 702.54c).
  */
 @CardRegistration(set = "M12", collectorNumber = "82")
+@CardRegistration(set = "VOC", collectorNumber = "121")
 public class BloodlordOfVaasgoth extends Card {
 
     public BloodlordOfVaasgoth() {

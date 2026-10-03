@@ -264,6 +264,7 @@ on what the mana may pay for.
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + DiscardEffect(3, EACH_PLAYER, true) |
 | Each player may discard hand and draw seven | `r/RaphaelsTechnique.java` | `EachPlayerMayDiscardHandThenDrawEffect(7)` — each player chooses independently in APNAP order; all choices finish before accepted players discard and draw |
 | Each player may discard hand and draw five, then damage accepting opponents | `s/Snort.java` | `EachPlayerMayDiscardHandThenDrawEffect(5, DealDamageToPlayersEffect.selectedOpponents(5))` — all choices finish before accepted hands change; the follow-up is bound only to opponents who accepted; `FlashbackCast("{5}{R}")` |
+| Each player may discard hand and draw based on their own commander | `i/ImposingGrandeur.java` | `EachPlayerMayDiscardHandThenDrawEffect(new GreatestManaValueAmongOwnedCommanders())` — dynamic amount is evaluated separately for each player who accepts |
 | Each player discards hand, then creates per-player tokens | `a/AwakenTheErstwhile.java` | `EachPlayerDiscardsHandThenCreatesTokensEffect(CreateTokenEffect.blackZombie(1))` — each player creates one token per card they personally discarded |
 | Each other player may draw up to N | `i/IndenturedDjinn.java` | ON_ENTER_BATTLEFIELD `EachOtherPlayerMayDrawUpToNCardsEffect(N)` — each other player chooses independently in APNAP order |
 | Library selection (hand/top/bottom) | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |

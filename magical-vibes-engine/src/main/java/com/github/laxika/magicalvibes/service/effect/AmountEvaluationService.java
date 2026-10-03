@@ -181,6 +181,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastCardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsControllingReturnedPermanents;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
@@ -481,6 +482,8 @@ public class AmountEvaluationService {
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case OpponentsWithAtLeastCardsDrawnThisTurn c ->
                     opponentsWithAtLeastCardsDrawnThisTurn(gameData, c, ctx);
+            case OpponentsControllingReturnedPermanents ignored ->
+                    opponentsControllingReturnedPermanents(gameData, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
                     countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctPermanentNamesAmongControlled c ->
@@ -2909,6 +2912,21 @@ public class AmountEvaluationService {
             total += gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
         }
         return total;
+    }
+
+    private int opponentsControllingReturnedPermanents(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null || ctx.stackEntry() == null) return 0;
+        Set<UUID> returnedPermanentIds = ctx.stackEntry().getReturnedPermanentIds();
+        if (returnedPermanentIds.isEmpty()) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .anyMatch(permanent -> returnedPermanentIds.contains(permanent.getId()))) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
     }
 
     private int opponentsWithAtLeastCardsDrawnThisTurn(

@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueGreaterThanControllerHandSizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
@@ -742,6 +743,22 @@ public class PredicateEvaluationService {
                             .filter(permanent -> permanent.isTapped()
                                     && gameQueryService.isCreature(gameData, permanent))
                             .count();
+            case CardManaValueAtMostControlledCountPredicate p -> {
+                if (gameData == null || cardOwnerId == null) {
+                    yield false;
+                }
+                List<Permanent> battlefield = gameData.playerBattlefields.get(cardOwnerId);
+                int matchingCount = 0;
+                if (battlefield != null) {
+                    FilterContext context = new FilterContext(gameData, null, cardOwnerId, null, null);
+                    for (Permanent permanent : battlefield) {
+                        if (matchesPermanentPredicate(permanent, p.countFilter(), context)) {
+                            matchingCount++;
+                        }
+                    }
+                }
+                yield card.getManaValue() <= matchingCount;
+            }
             case CardManaValueAtMostSourcePowerPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;

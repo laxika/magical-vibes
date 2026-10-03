@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "RTR", collectorNumber = "71")
 @CardRegistration(set = "E02", collectorNumber = "20")
 @CardRegistration(set = "C21", collectorNumber = "147")
+@CardRegistration(set = "VOC", collectorNumber = "132")
 public class NecropolisRegent extends Card {
 
     public NecropolisRegent() {

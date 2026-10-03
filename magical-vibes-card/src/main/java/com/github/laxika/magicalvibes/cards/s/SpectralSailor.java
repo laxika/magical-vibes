@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "M20", collectorNumber = "76")
 @CardRegistration(set = "FDN", collectorNumber = "164")
 @CardRegistration(set = "LCC", collectorNumber = "172")
+@CardRegistration(set = "VOC", collectorNumber = "114")
 public class SpectralSailor extends Card {
 
     public SpectralSailor() {

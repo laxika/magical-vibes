@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 
 @CardRegistration(set = "SOK", collectorNumber = "42")
 @CardRegistration(set = "SLD", collectorNumber = "260")
+@CardRegistration(set = "VOC", collectorNumber = "107")
 public class KamiOfTheCrescentMoon extends Card {
 
     public KamiOfTheCrescentMoon() {

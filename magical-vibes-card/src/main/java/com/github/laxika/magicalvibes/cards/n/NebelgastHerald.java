@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "INR", collectorNumber = "364")
 @CardRegistration(set = "EMN", collectorNumber = "71")
 @CardRegistration(set = "SIR", collectorNumber = "83")
+@CardRegistration(set = "VOC", collectorNumber = "109")
 public class NebelgastHerald extends Card {
 
     public NebelgastHerald() {

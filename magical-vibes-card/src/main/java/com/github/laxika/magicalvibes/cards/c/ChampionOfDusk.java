@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffe
 
 @CardRegistration(set = "RIX", collectorNumber = "64")
 @CardRegistration(set = "LCC", collectorNumber = "188")
+@CardRegistration(set = "VOC", collectorNumber = "124")
 public class ChampionOfDusk extends Card {
 
     public ChampionOfDusk() {

@@ -56,6 +56,7 @@
 | equipped attack trigger chooses damage to any target or a free instant/sorcery cast from hand capped by attached Equipment mana value | `t/TetsuoImperialChampion.java` + `ConditionalEffect(new Equipped(), new ChooseOneEffect(...))` + `GreatestManaValueAmongAttachedEquipment` |
 | artifact gains all activated abilities of lands on the battlefield and may spend mana as any color for them | `m/ManascapeRefractor.java` + STATIC `GainActivatedAbilitiesOfAllLandsEffect()` + `SpendManaAsAnyColorForActivatedAbilitiesEffect()` + `EntersTappedEffect()` |
 - chosen creature type, copy each matching nontoken creature entering under your control, temporary hasty copy | `ChooseSubtypeOnEnterEffect` + `TriggeringPermanentConditionalEffect(PermanentAllOfPredicate(PermanentHasSourceChosenSubtypePredicate, PermanentNotPredicate(PermanentIsTokenPredicate)), CreateTokenCopyOfEnteringPermanentEffect(true, true))`
+| paired creatures each create a hasty copy of themselves at the beginning of combat, with soulbond omitted and copies exiled at end of combat | `SourceIsPaired` + `GrantTriggeredAbilityEffect(BEGINNING_OF_COMBAT_TRIGGERED, CreateTokenCopyOfSourceEffect.withoutSourceEffects(..., HASTE, true), SELF_AND_PAIRED)` + soulbond pairing effects | `m/MiragePhalanx.java` |
 | Aura attachment-count boost plus target-sensitive Equip/Aura cost reductions | `s/StrongBack.java` + `StrongBackTest.java` |
 | X-powered ETB puts X +1/+1 counters on itself and destroys any number of target artifacts/enchantments with combined mana value X or less | `r/RampagingYaoGuai.java` + `EnterWithCountersEffect(XValue)` + `DestroyTargetPermanentsWithinTotalManaValueEffect.withinTotalManaValue(...)` |
 | playtest artifact that replaces normal turns with sequential phases | `r/RunedTerror.java` + `RunedTerrorEffect` + turn progression phase-cycle support |
@@ -174,6 +175,7 @@
 | becomes blocked by a creature and perpetually reduces that blocker's power | `w/WizenedGithzerai.java` + `PerpetuallyBoostCombatOpponentEffect` |
 | target creature power damage, then perpetually boost a creature card by excess damage | `r/RavenousPursuit.java` and `TargetCreatureDealsPowerDamageToTargetCreatureThenApplyPerpetualPowerToughnessEffect` |
 | ETB exiles one instant or sorcery from each eligible graveyard and casts one random copy if at least two were exiled | `m/MysteriousStranger.java` + `ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect.forRandomSingleCopy()` |
+| ETB offers a free instant or sorcery from your graveyard with mana value at most the number of Spirits you control, exiling it if it would go to a graveyard | `s/SpectralArcanist.java` + `CastCardFromGraveyardEffect` + `CardManaValueAtMostControlledCountPredicate` (VOC 15) |
 | target creature power damage, then create Elf Warrior tokens for excess damage | `w/WindswiftSlice.java` and `TargetDealsPowerDamageToTargetEffect.recordingExcessDamage()` followed by `CreateTokenEffect(new EventValue(), ...)` |
 | destroy all creatures, then perpetually boost every creature card in hand | `b/BeginAnew.java` + `PerpetuallyBoostMatchingHandCardsEffect` |
 | ETB perpetually boosts creature cards currently in your graveyard | `b/BlightedNightmare.java` + `PerpetuallyBoostCreatureCardsInGraveyardEffect` |
@@ -337,6 +339,8 @@ This index has been split into smaller files for faster lookup. Each file is und
 | X-tiered spell that performs one branch at X=1/2/3 and all branches plus life gain at X>=4 | `v/VariableSolutions.java` + `ConditionalEffect(SpellXAtLeast/AllOf)` + seek, sacrifice, and random-conjure effects |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md; CARD_PATTERNS_PERMANENTS_STATIC.md for static draw replacements |
 | each player may discard and draw, then damage accepting opponents | `s/Snort.java` + `EachPlayerMayDiscardHandThenDrawEffect` + `DealDamageToPlayersEffect.selectedOpponents` |
+| draw X, discard X, then create one flying Spirit for each distinct discarded card type | `o/OccultEpiphany.java` + `DrawDiscardThenEffect` + `CreateTokensForDistinctDiscardedCardTypesEffect` |
+| each player may discard and draw an amount based on their own commander | `i/ImposingGrandeur.java` + `EachPlayerMayDiscardHandThenDrawEffect(new GreatestManaValueAmongOwnedCommanders())` |
 | each player may discard, then each discarder may search a basic land to hand | `b/BorderlandExplorer.java` + `EachPlayerMayDiscardThenSearchBasicLandToHandEffect` |
 | spellbook, draft from a spellbook, digital card offer | `DraftCardFromSpellbookEffect` + shared `LibraryRevealChoice` + `PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffect` (`y/SupportSkyforge.java`, YDFT 26) |
 | seek one or more cards and discard those exact cards later | `SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect` + `DiscardSpecificCardEffect` |
@@ -390,6 +394,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | targeted opponent-graveyard reanimation followed by exiling that player's graveyard | `n/NurglesConscription.java` + `ExileGraveyardOfTargetCardOwnerEffect` |
 | exile any number of graveyard cards with a collective card-type threshold, then return a permanent from among them with a counter | `w/WinterCynicalOpportunist.java` + `ExileAnyNumberOfOwnGraveyardCardsWithFourCardTypesThenPutPermanentOntoBattlefieldEffect` |
 | target player's graveyard to bottom in random order | CARD_PATTERNS_CREATURES_ETB.md |
+| exactly three targeted graveyard creatures, randomly return two and bottom the other | `ReturnTargetCardsFromGraveyardToBattlefieldEffect.sinisterWaltz(CardTypePredicate(CREATURE))` | Sinister Waltz (VOC 30) |
 | modal, choose one, fight, bite | CARD_PATTERNS_LANDS_SPELLS.md |
 | beginning-of-combat modal with a commander-enabled second mode and up-to-two non-targeting counter recipients | `s/SOLDIERMilitaryProgram.java` | commander-gated `ChooseOneEffect` / `ChooseOneEffect.oneOrMore` plus `PutCounterOnChosenPermanentsEffect` |
 | Case, solve, solved | CARD_PATTERNS_PERMANENTS_STATIC.md |

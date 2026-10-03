@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "59")
+@CardRegistration(set = "VOC", collectorNumber = "104")
 public class FloodOfTears extends Card {
 
     public FloodOfTears() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "C19", collectorNumber = "22")
+@CardRegistration(set = "VOC", collectorNumber = "141")
 public class AnjesRavager extends Card {
 
     public AnjesRavager() {

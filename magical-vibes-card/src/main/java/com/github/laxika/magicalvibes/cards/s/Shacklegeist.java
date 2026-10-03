@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "70")
 @CardRegistration(set = "M21", collectorNumber = "353")
+@CardRegistration(set = "VOC", collectorNumber = "112")
 public class Shacklegeist extends Card {
 
     public Shacklegeist() {

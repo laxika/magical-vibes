@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2501")
+@CardRegistration(set = "VOC", collectorNumber = "2")
+@CardRegistration(set = "VOC", collectorNumber = "40")
 public class StrefanMaurerProgenitor extends Card {
 
     private static final CardAllOfPredicate VAMPIRE_CREATURE = new CardAllOfPredicate(List.of(

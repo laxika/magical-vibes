@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "167")
+@CardRegistration(set = "VOC", collectorNumber = "153")
 public class DovinGrandArbiter extends Card {
 
     public DovinGrandArbiter() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "2")
 @CardRegistration(set = "SIS", collectorNumber = "1")
+@CardRegistration(set = "VOC", collectorNumber = "77")
 public class AngelOfFlightAlabaster extends Card {
 
     public AngelOfFlightAlabaster() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "C20", collectorNumber = "54")
+@CardRegistration(set = "VOC", collectorNumber = "148")
 public class MoltenEchoes extends Card {
 
     public MoltenEchoes() {

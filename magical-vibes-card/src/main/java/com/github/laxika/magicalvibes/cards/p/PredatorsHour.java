@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "OTC", collectorNumber = "147")
+@CardRegistration(set = "VOC", collectorNumber = "21")
+@CardRegistration(set = "VOC", collectorNumber = "59")
 public class PredatorsHour extends Card {
 
     public PredatorsHour() {

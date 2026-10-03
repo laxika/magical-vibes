@@ -30,6 +30,8 @@ import java.util.List;
 @CardRegistration(set = "WHO", collectorNumber = "804")
 @CardRegistration(set = "WHO", collectorNumber = "1059")
 @CardRegistration(set = "LCC", collectorNumber = "102")
+@CardRegistration(set = "VOC", collectorNumber = "32")
+@CardRegistration(set = "VOC", collectorNumber = "70")
 public class WeddingRing extends Card {
 
     public WeddingRing() {
