@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CursedLand.class, Forest.class, GrizzlyBears.class})
+@CardUsed({CursedLand.class, Forest.class, GrizzlyBears.class, Disenchant.class})
 class CursedLandTest extends BaseCardTest {
 
     // ===== Targeting =====
@@ -123,6 +124,40 @@ class CursedLandTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore - 1);
+    }
+
+    @Test
+    void canEnchantOwnLandAndDamageItsController() {
+        Permanent land = addLand(player1);
+        harness.setHand(player1, List.of(new CursedLand()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    void damageTriggerResolvesAfterAuraIsDestroyed() {
+        Permanent land = addLand(player2);
+        attachCursedLand(land);
+        Permanent aura = findPermanent(player1, "Cursed Land");
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        advanceToUpkeep(player2);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Cursed Land");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
     // ===== Helpers =====
