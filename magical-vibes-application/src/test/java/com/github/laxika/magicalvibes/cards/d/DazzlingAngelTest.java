@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DazzlingAngel.class})
 class DazzlingAngelTest extends BaseCardTest {
 
     @Test
@@ -17,10 +15,8 @@ class DazzlingAngelTest extends BaseCardTest {
     void gainsLifeOnAnotherAllyCreatureEnter() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new DazzlingAngel());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new DazzlingAngel(), "{2}{W}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -31,24 +27,49 @@ class DazzlingAngelTest extends BaseCardTest {
     @DisplayName("Does not gain life when an opponent's creature enters")
     void noLifeOnOpponentCreatureEnter() {
         harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new DazzlingAngel());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new DazzlingAngel());
 
-        harness.passBothPriorities();
-
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test
     @DisplayName("Does not trigger for itself entering")
     void noLifeOnSelfEntering() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new DazzlingAngel()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DazzlingAngel(), "{2}{W}");
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each existing Angel triggers independently and gains life only on resolution")
+    void multipleAngelsTriggerIndependently() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new DazzlingAngel());
+        harness.addToBattlefield(player1, new DazzlingAngel());
+        harness.castFromHand(player1, new DazzlingAngel(), "{2}{W}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
