@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.v.VioletPall;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BurrentonShieldBearers.class, BurrentonBombardier.class})
+@CardUsed({BurrentonShieldBearers.class, BurrentonBombardier.class, VioletPall.class})
 class BurrentonShieldBearersTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,58 @@ class BurrentonShieldBearersTest extends BaseCardTest {
 
         assertThat(bearer.getToughnessModifier()).isEqualTo(3);
         assertThat(bearer.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Can boost a friendly creature that is not attacking")
+    void canTargetFriendlyNonattacker() {
+        Permanent bearer = addCreatureReady(player1, new BurrentonShieldBearers());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(bearer.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attack trigger resolves after its source is destroyed")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent bearer = addCreatureReady(player1, new BurrentonShieldBearers());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
+        harness.setHand(player2, List.of(new VioletPall()));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player2, 0, bearer.getId());
+        harness.assertInGraveyard(player1, "Burrenton Shield-Bearers");
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Attack trigger does not boost another creature when its target is destroyed")
+    void destroyedTargetDoesNotRedirectBoost() {
+        Permanent bearer = addCreatureReady(player1, new BurrentonShieldBearers());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
+        harness.setHand(player2, List.of(new VioletPall()));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Burrenton Bombardier");
+        assertThat(bearer.getEffectivePower()).isEqualTo(3);
+        assertThat(bearer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
