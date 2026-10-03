@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TangledIslet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragToTheBottom.class, AvatarOfMight.class, GrizzlyBears.class, Forest.class, Island.class, Plains.class})
+@CardUsed({DragToTheBottom.class, AvatarOfMight.class, GrizzlyBears.class, Forest.class, Island.class, Plains.class, TangledIslet.class})
 class DragToTheBottomTest extends BaseCardTest {
 
     @Test
@@ -77,9 +78,7 @@ class DragToTheBottomTest extends BaseCardTest {
         castDragToTheBottom();
         assertThat(avatar.getEffectivePower()).isEqualTo(6);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(avatar.getEffectivePower()).isEqualTo(8);
         assertThat(avatar.getEffectiveToughness()).isEqualTo(8);
@@ -89,5 +88,61 @@ class DragToTheBottomTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DragToTheBottom()));
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    @Test
+    @DisplayName("Gives -1/-1 even when the caster controls no lands")
+    void debuffsWithNoBasicLandTypes() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castDragToTheBottom();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(1);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts both basic land types of a nonbasic dual land")
+    void countsTypesOnNonbasicLands() {
+        Permanent avatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        harness.addToBattlefield(player1, new TangledIslet());
+        harness.addToBattlefield(player1, new Forest());
+
+        castDragToTheBottom();
+
+        assertThat(avatar.getEffectivePower()).isEqualTo(5);
+        assertThat(avatar.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Determines domain on resolution rather than when cast")
+    void evaluatesDomainOnResolution() {
+        Permanent avatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new DragToTheBottom()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castSorcery(player1, 0, 0);
+        harness.addToBattlefield(player1, new Island());
+
+        harness.passBothPriorities();
+
+        assertThat(avatar.getEffectivePower()).isEqualTo(5);
+        assertThat(avatar.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Later lands and creatures do not change the resolved effect")
+    void locksAmountAndAffectedCreaturesOnResolution() {
+        Permanent avatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        harness.addToBattlefield(player1, new Forest());
+
+        castDragToTheBottom();
+        harness.addToBattlefield(player1, new Island());
+        Permanent laterBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(avatar.getEffectivePower()).isEqualTo(6);
+        assertThat(avatar.getEffectiveToughness()).isEqualTo(6);
+        assertThat(laterBears.getEffectivePower()).isEqualTo(2);
+        assertThat(laterBears.getEffectiveToughness()).isEqualTo(2);
     }
 }
