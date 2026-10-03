@@ -50,13 +50,65 @@ class CrashTest extends BaseCardTest {
     @Test
     @DisplayName("Alternate cost fails when sacrificing a non-Mountain")
     void alternateCostFailsWithNonMountain() {
-        harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BargainingTable());
         harness.setHand(player1, List.of(new Crash()));
 
         assertThatThrownBy(() ->
-                harness.castInstantWithAlternateCost(player1, 0, null, List.of(island.getId())))
+                harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(island.getId())))
                 .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertInHand(player1, "Crash");
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain can pay the alternate cost, which is paid before resolution")
+    void sacrificesTappedMountainBeforeResolution() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BargainingTable());
+        harness.setHand(player1, List.of(new Crash()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(mountain.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Bargaining Table");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bargaining Table");
+        harness.assertInGraveyard(player1, "Crash");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Mountain")
+    void cannotSacrificeOpponentsMountain() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BargainingTable());
+        harness.setHand(player1, List.of(new Crash()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, target.getId(), List.of(mountain.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertInHand(player1, "Crash");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the caster")
+    void destroysOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BargainingTable());
+        harness.setHand(player1, List.of(new Crash()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Bargaining Table");
+        harness.assertInGraveyard(player1, "Bargaining Table");
     }
 
     @Test
