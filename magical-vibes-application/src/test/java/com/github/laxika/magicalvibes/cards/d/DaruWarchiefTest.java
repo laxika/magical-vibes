@@ -19,11 +19,8 @@ class DaruWarchiefTest extends BaseCardTest {
     @Test
     @DisplayName("Soldier creatures you control get +1/+2, including Daru Warchief")
     void boostsOwnSoldiers() {
-        harness.addToBattlefield(player1, new DaruWarchief());
-        harness.addToBattlefield(player1, new NobleTemplar());
-
-        Permanent warchief = findPermanent(player1, "Daru Warchief");
-        Permanent soldier = findPermanent(player1, "Noble Templar");
+        Permanent warchief = harness.addToBattlefieldAndReturn(player1, new DaruWarchief());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new NobleTemplar());
 
         assertThat(gqs.getEffectivePower(gd, warchief)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, warchief)).isEqualTo(3);
@@ -35,11 +32,8 @@ class DaruWarchiefTest extends BaseCardTest {
     @DisplayName("Does not boost non-Soldiers or an opponent's Soldiers")
     void onlyBoostsOwnSoldiers() {
         harness.addToBattlefield(player1, new DaruWarchief());
-        harness.addToBattlefield(player1, new DaruSpiritualist());
-        harness.addToBattlefield(player2, new NobleTemplar());
-
-        Permanent nonSoldier = findPermanent(player1, "Daru Spiritualist");
-        Permanent opponentSoldier = findPermanent(player2, "Noble Templar");
+        Permanent nonSoldier = harness.addToBattlefieldAndReturn(player1, new DaruSpiritualist());
+        Permanent opponentSoldier = harness.addToBattlefieldAndReturn(player2, new NobleTemplar());
 
         assertThat(gqs.getEffectivePower(gd, nonSoldier)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, nonSoldier)).isEqualTo(1);
@@ -74,6 +68,7 @@ class DaruWarchiefTest extends BaseCardTest {
     @Test
     @DisplayName("Cost reduction does not apply to an opponent's Soldier spells")
     void doesNotReduceOpponentSoldierSpellCost() {
+        harness.forceActivePlayer(player2);
         harness.addToBattlefield(player1, new DaruWarchief());
         harness.setHand(player2, List.of(new NobleTemplar()));
         harness.addMana(player2, ManaColor.COLORLESS, 4);
@@ -81,5 +76,62 @@ class DaruWarchiefTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Warchiefs stack their bonuses and Soldier cost reductions")
+    void multipleWarchiefsStack() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DaruWarchief());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DaruWarchief());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new NobleTemplar());
+
+        for (Permanent warchief : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, warchief)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, warchief)).isEqualTo(5);
+        }
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(10);
+
+        harness.setHand(player1, List.of(new NobleTemplar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Soldier cost reductions cannot pay colored mana requirements")
+    void doesNotReduceColoredManaRequirements() {
+        harness.addToBattlefield(player1, new DaruWarchief());
+        harness.addToBattlefield(player1, new DaruWarchief());
+        harness.addToBattlefield(player1, new DaruWarchief());
+        harness.setHand(player1, List.of(new DaruWarchief()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Warchief spell does not reduce its own casting cost")
+    void doesNotReduceItsOwnCostFromHand() {
+        harness.setHand(player1, List.of(new DaruWarchief()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
     }
 }
