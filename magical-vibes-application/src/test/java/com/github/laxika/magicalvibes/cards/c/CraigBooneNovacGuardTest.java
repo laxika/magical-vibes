@@ -82,4 +82,93 @@ class CraigBooneNovacGuardTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    void damageUsesQuestCounterCountWhenReflexiveAbilityResolves() {
+        Permanent craig = addCreatureReady(player1, new CraigBooneNovacGuard());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1, 2));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        craig.setCounterCount(CounterType.QUEST, 5);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 25);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void damageUsesLastKnownQuestCountersAfterCraigLeavesBattlefield() {
+        Permanent craig = addCreatureReady(player1, new CraigBooneNovacGuard());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        craig.setCounterCount(CounterType.QUEST, 3);
+
+        declareAttackers(player1, List.of(1, 2));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        craig.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Craig Boone, Novac Guard");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 25);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void canTargetOwnCreatureAndGainLifeFromCreatureDamage() {
+        Permanent craig = addCreatureReady(player1, new CraigBooneNovacGuard());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1, 2));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, craig.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(craig.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void threeAttackersStillPutOnlyTwoQuestCounters() {
+        Permanent craig = addCreatureReady(player1, new CraigBooneNovacGuard());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1, 2, 3));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(craig.getCounterCount(CounterType.QUEST)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsAttackDoesNotPutQuestCountersOnCraig() {
+        Permanent craig = addCreatureReady(player1, new CraigBooneNovacGuard());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0, 1));
+        harness.passBothPriorities();
+
+        assertThat(craig.getCounterCount(CounterType.QUEST)).isZero();
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
 }
