@@ -33,8 +33,7 @@ class DichotomancyTest extends BaseCardTest {
 
         harness.setLibrary(player2, List.of(new GossamerPhantasm(), new DuneriderOutlaw()));
 
-        castDichotomancy();
-        harness.passBothPriorities();
+        castAndResolveDichotomancy();
 
         PendingInteraction.LibrarySearch firstSearch =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -69,8 +68,7 @@ class DichotomancyTest extends BaseCardTest {
         secondPhantasm.tap();
         harness.setLibrary(player2, List.of(new GossamerPhantasm(), new GossamerPhantasm()));
 
-        castDichotomancy();
-        harness.passBothPriorities();
+        castAndResolveDichotomancy();
 
         PendingInteraction.LibrarySearch firstSearch =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -100,8 +98,7 @@ class DichotomancyTest extends BaseCardTest {
         land.tap();
         harness.setLibrary(player2, List.of(new DuneriderOutlaw()));
 
-        castDichotomancy();
-        harness.passBothPriorities();
+        castAndResolveDichotomancy();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -118,8 +115,7 @@ class DichotomancyTest extends BaseCardTest {
                 new GossamerPhantasm(), new GossamerPhantasm(), new GossamerPhantasm(),
                 new GossamerPhantasm(), new AvenMindcensor()));
 
-        castDichotomancy();
-        harness.passBothPriorities();
+        castAndResolveDichotomancy();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -194,9 +190,86 @@ class DichotomancyTest extends BaseCardTest {
         return card;
     }
 
-    private void castDichotomancy() {
+    @Test
+    @DisplayName("Keeps found cards off the battlefield until every search is finished")
+    void foundCardsEnterOnlyAfterAllSearches() {
+        Permanent phantasm = harness.addToBattlefieldAndReturn(player2, new GossamerPhantasm());
+        phantasm.tap();
+        Permanent outlaw = harness.addToBattlefieldAndReturn(player2, new DuneriderOutlaw());
+        outlaw.tap();
+        harness.setLibrary(player2, List.of(new GossamerPhantasm(), new DuneriderOutlaw()));
+
+        castAndResolveDichotomancy();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Gossamer Phantasm");
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Gossamer Phantasm");
+        harness.assertOnBattlefield(player1, "Dunerider Outlaw");
+    }
+
+    @Test
+    @DisplayName("Failing to find one name still allows finding the next name")
+    void canDeclineOneSearchAndContinue() {
+        Permanent phantasm = harness.addToBattlefieldAndReturn(player2, new GossamerPhantasm());
+        phantasm.tap();
+        Permanent outlaw = harness.addToBattlefieldAndReturn(player2, new DuneriderOutlaw());
+        outlaw.tap();
+        harness.setLibrary(player2, List.of(new GossamerPhantasm(), new DuneriderOutlaw()));
+
+        castAndResolveDichotomancy();
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Gossamer Phantasm");
+        harness.assertOnBattlefield(player1, "Dunerider Outlaw");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting("name")
+                .containsExactly("Gossamer Phantasm");
+    }
+
+    @Test
+    @DisplayName("Shuffles only once after all searches finish")
+    void shufflesAfterAllSearchesRatherThanBetweenPicks() {
+        Permanent phantasm = harness.addToBattlefieldAndReturn(player2, new GossamerPhantasm());
+        phantasm.tap();
+        Permanent outlaw = harness.addToBattlefieldAndReturn(player2, new DuneriderOutlaw());
+        outlaw.tap();
+        harness.setLibrary(player2, List.of(new GossamerPhantasm(), new DuneriderOutlaw()));
+
+        castAndResolveDichotomancy();
+        int logStart = gd.gameLog.size();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()))
+                .noneMatch(entry -> entry.plainText().contains("library is shuffled"));
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()).stream()
+                .filter(entry -> entry.plainText().contains("library is shuffled")))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Dichotomancy in exile without time counters")
+    void canDeclineSuspendedSpell() {
+        Dichotomancy card = suspendDichotomancy();
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castAndResolveDichotomancy() {
         harness.setHand(player1, List.of(new Dichotomancy()));
         harness.addMana(player1, ManaColor.BLUE, 9);
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }
