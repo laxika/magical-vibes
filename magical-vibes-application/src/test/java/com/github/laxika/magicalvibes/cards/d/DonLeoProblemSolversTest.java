@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DonLeoProblemSolvers.class, Ornithopter.class, GrizzlyBears.class})
+@CardUsed({DonLeoProblemSolvers.class, Ornithopter.class, GrizzlyBears.class, SoulWarden.class})
 class DonLeoProblemSolversTest extends BaseCardTest {
 
     @Test
@@ -77,10 +78,98 @@ class DonLeoProblemSolversTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("An artifact creature can be chosen for both targets and returns once")
+    void canChooseSameArtifactCreatureForBothTargets() {
+        harness.addToBattlefield(player1, new DonLeoProblemSolvers());
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        beginEndStepTrigger();
+        harness.handlePermanentChosen(player1, artifactCreature.getId());
+
+        PendingInteraction.PermanentChoice creatureChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(creatureChoice.validPermanentIds()).contains(artifactCreature.getId());
+        harness.handlePermanentChosen(player1, artifactCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Ornithopter").getId()).isNotEqualTo(artifactCreature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Ornithopter"))
+                .hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both targets return together under their owners' control")
+    void stolenWardenSeesArtifactReturnUnderOwnersControl() {
+        harness.addToBattlefield(player1, new DonLeoProblemSolvers());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        SoulWarden wardenCard = new SoulWarden();
+        wardenCard.setOwnerId(player2.getId());
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, wardenCard);
+        gd.stolenCreatures.put(warden.getId(), player2.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        beginEndStepTrigger();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handlePermanentChosen(player1, warden.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Soul Warden");
+        harness.assertOnBattlefield(player2, "Soul Warden");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    @DisplayName("Can choose only the creature, including Don and Leo itself")
+    void canDeclineArtifactAndFlickerItself() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DonLeoProblemSolvers());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        beginEndStepTrigger();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Don & Leo, Problem Solvers").getId()).isNotEqualTo(source.getId());
+        assertThat(findPermanent(player1, "Ornithopter").getId()).isEqualTo(artifact.getId());
+    }
+
+    @Test
+    @DisplayName("Can choose only the artifact")
+    void canDeclineCreatureAndFlickerArtifact() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DonLeoProblemSolvers());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        beginEndStepTrigger();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Don & Leo, Problem Solvers").getId()).isEqualTo(source.getId());
+        assertThat(findPermanent(player1, "Ornithopter").getId()).isNotEqualTo(artifact.getId());
+    }
+
+    @Test
+    @DisplayName("Does not trigger on an opponent's end step")
+    void doesNotTriggerOnOpponentsEndStep() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DonLeoProblemSolvers());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Don & Leo, Problem Solvers").getId()).isEqualTo(source.getId());
+    }
+
     private void beginEndStepTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }
