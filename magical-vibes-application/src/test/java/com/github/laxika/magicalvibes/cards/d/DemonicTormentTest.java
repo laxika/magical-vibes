@@ -30,6 +30,46 @@ class DemonicTormentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's enchanted creature can't attack")
+    void opponentsEnchantedCreatureCannotAttack() {
+        Permanent creature = addCreatureReady(player2, new AzureDrake());
+        castDemonicTorment(player1, creature);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted blocker deals no combat damage")
+    void opponentsEnchantedBlockerDealsNoCombatDamage() {
+        Permanent blocker = addCreatureReady(player2, new AzureDrake());
+        castDemonicTorment(player1, blocker);
+        Permanent attacker = addCreatureReady(player1, new AzureDrake());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing Demonic Torment restores attacking and combat damage")
+    void removingAuraRestoresAttackingAndDamage() {
+        Permanent creature = addCreatureReady(player1, new AzureDrake());
+        castDemonicTorment(player1, creature);
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Demonic Torment"));
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new DemonicTorment());
