@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +18,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DescentIntoMadness.class, GrizzlyBears.class, SavannahLions.class, Naturalize.class})
 class DescentIntoMadnessTest extends BaseCardTest {
 
     @Test
@@ -106,6 +110,119 @@ class DescentIntoMadnessTest extends BaseCardTest {
         assertThat(exiledCardIds()).containsExactly(bears.getCard().getId());
     }
 
+    @Test
+    @DisplayName("A player can mix permanents and hand cards in one exile choice")
+    void mixesPermanentsAndHandCards() {
+        emptyHands();
+        Permanent descent = addDescent(player1);
+        descent.setCounterCount(CounterType.DESPAIR, 1);
+        Permanent bears = addCreature(player1, new GrizzlyBears());
+        Card handCard = new SavannahLions();
+        harness.setHand(player1, List.of(handCard));
+
+        triggerUpkeep(player1);
+        answerChoice(player1, bears.getCard().getId(), handCard.getId());
+
+        assertThat(battlefield(player1)).containsExactly(descent);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(exiledCardIds()).containsExactlyInAnyOrder(bears.getCard().getId(), handCard.getId());
+    }
+
+    @Test
+    @DisplayName("Players with fewer than X objects exile their entire battlefield and hand")
+    void exilesAllAvailableObjectsWhenCountIsTooLarge() {
+        emptyHands();
+        Permanent descent = addDescent(player1);
+        descent.setCounterCount(CounterType.DESPAIR, 4);
+        Permanent bears = addCreature(player1, new GrizzlyBears());
+        Card handCard = new SavannahLions();
+        harness.setHand(player2, List.of(handCard));
+
+        triggerUpkeep(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(battlefield(player1)).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(exiledCardIds()).containsExactlyInAnyOrder(
+                descent.getCard().getId(), bears.getCard().getId(), handCard.getId());
+    }
+
+    @Test
+    @DisplayName("The enchantment does not trigger during its opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        emptyHands();
+        Permanent descent = addDescent(player1);
+
+        triggerUpkeep(player2);
+
+        assertThat(descent.getCounterCount(CounterType.DESPAIR)).isZero();
+        assertThat(battlefield(player1)).containsExactly(descent);
+        assertThat(exiledCardIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All players choose before any selected objects are exiled")
+    void waitsForBothPlayersBeforeExiling() {
+        emptyHands();
+        Permanent descent = addDescent(player1);
+        Permanent bears = addCreature(player1, new GrizzlyBears());
+        Permanent lions = addCreature(player2, new SavannahLions());
+        Permanent otherBears = addCreature(player2, new GrizzlyBears());
+
+        triggerUpkeep(player1);
+        answerChoice(player1, descent.getCard().getId());
+
+        assertThat(exiledCardIds()).isEmpty();
+        assertThat(battlefield(player1)).containsExactly(descent, bears);
+        assertThat(battlefield(player2)).containsExactly(lions, otherBears);
+        answerChoice(player2, lions.getCard().getId());
+
+        assertThat(battlefield(player1)).containsExactly(bears);
+        assertThat(battlefield(player2)).containsExactly(otherBears);
+        assertThat(exiledCardIds()).containsExactlyInAnyOrder(descent.getCard().getId(), lions.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Removing the enchantment in response uses its last battlefield counter count")
+    void usesLastKnownCountersWhenSourceIsDestroyed() {
+        emptyHands();
+        Permanent descent = addDescent(player1);
+        descent.setCounterCount(CounterType.DESPAIR, 1);
+        Permanent bears = addCreature(player1, new GrizzlyBears());
+        Permanent lions = addCreature(player2, new SavannahLions());
+        harness.setHand(player1, List.of(new Naturalize()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, descent.getId());
+        harness.passBothPriorities();
+        assertThat(battlefield(player1)).doesNotContain(descent);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(battlefield(player1)).isEmpty();
+        assertThat(battlefield(player2)).isEmpty();
+        assertThat(exiledCardIds()).containsExactlyInAnyOrder(bears.getCard().getId(), lions.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("An exile choice cannot exceed the required number of objects")
+    void rejectsTooManyExileChoices() {
+        emptyHands();
+        Permanent descent = addDescent(player1);
+        Permanent bears = addCreature(player1, new GrizzlyBears());
+
+        triggerUpkeep(player1);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(descent.getCard().getId(), bears.getCard().getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(exiledCardIds()).isEmpty();
+        answerChoice(player1, bears.getCard().getId());
+        assertThat(battlefield(player1)).containsExactly(descent);
+    }
+
     /** Hand cards are legal picks, so the default starting hands must be cleared to isolate a case. */
     private void emptyHands() {
         harness.setHand(player1, List.of());
@@ -117,9 +234,7 @@ class DescentIntoMadnessTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player owner, Card card) {
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(owner, card);
     }
 
     private List<Permanent> battlefield(Player player) {
@@ -131,10 +246,7 @@ class DescentIntoMadnessTest extends BaseCardTest {
     }
 
     private void triggerUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UNTAP -> UPKEEP queues the trigger
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities(); // resolve the trigger
     }
 
