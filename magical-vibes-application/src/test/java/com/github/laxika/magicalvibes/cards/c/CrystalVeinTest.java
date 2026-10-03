@@ -54,4 +54,37 @@ class CrystalVeinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Tapping for one mana prevents sacrificing for two without untapping")
+    void cannotUseBothManaAbilitiesWithoutUntapping() {
+        harness.addToBattlefield(player1, new CrystalVein());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS))
+                .isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Crystal Vein");
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice mana ability resolves immediately for its controller")
+    void sacrificeManaResolvesImmediatelyForItsController() {
+        harness.addToBattlefield(player2, new CrystalVein());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(harness.getGameData().playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS))
+                .isEqualTo(2);
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS))
+                .isZero();
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Crystal Vein");
+        harness.assertInGraveyard(player2, "Crystal Vein");
+    }
 }
