@@ -19,6 +19,50 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DefiantElfTest extends BaseCardTest {
 
     @Test
+    void trampleCanAssignAllDamageToBlocker() {
+        harness.setLife(player2, 20);
+        Permanent elf = addCreatureReady(player1, new DefiantElf());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, elf.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 4));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elf);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void trampleCannotDealPlayerDamageWithoutEnoughPowerToKillBlocker() {
+        harness.setLife(player2, 20);
+        Permanent elf = addCreatureReady(player1, new DefiantElf());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(player2.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Trample");
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elf);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         Permanent elf = addCreatureReady(player1, new DefiantElf());
