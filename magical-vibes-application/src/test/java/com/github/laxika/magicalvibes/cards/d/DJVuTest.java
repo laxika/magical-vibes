@@ -106,4 +106,23 @@ class DJVuTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(otherSorcery.getId()))
                 .noneMatch(c -> c.getId().equals(targetSorcery.getId()));
     }
+
+    @Test
+    @DisplayName("Can return another copy of Deja Vu without returning the resolving spell")
+    void returnsAnotherCopyButNotResolvingSpell() {
+        Card target = new DJVu();
+        Card spell = new DJVu();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(target.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(spell.getId());
+        assertThat(gd.stack).isEmpty();
+    }
 }
