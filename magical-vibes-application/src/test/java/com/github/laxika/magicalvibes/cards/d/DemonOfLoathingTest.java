@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.ZephyrGull;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DemonOfLoathing.class, GrizzlyBears.class, Forest.class})
+@CardUsed({DemonOfLoathing.class, ZephyrGull.class, Forest.class})
 class DemonOfLoathingTest extends BaseCardTest {
 
     @Test
@@ -22,9 +22,9 @@ class DemonOfLoathingTest extends BaseCardTest {
     void damagedPlayerChoosesCreature() {
         Permanent demon = addCreatureReady(player1, new DemonOfLoathing());
         demon.setAttacking(true);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent otherEnemyCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new ZephyrGull());
+        Permanent enemyCreature = addCreatureReady(player2, new ZephyrGull());
+        Permanent otherEnemyCreature = addCreatureReady(player2, new ZephyrGull());
         harness.addToBattlefield(player2, new Forest());
 
         resolveCombat();
@@ -43,7 +43,7 @@ class DemonOfLoathingTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .contains(otherEnemyCreature)
                 .doesNotContain(enemyCreature);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Zephyr Gull");
         harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
@@ -54,7 +54,7 @@ class DemonOfLoathingTest extends BaseCardTest {
     void noTriggerWhenBlocked() {
         Permanent demon = addCreatureReady(player1, new DemonOfLoathing());
         demon.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new ZephyrGull());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         harness.addToBattlefield(player2, new Forest());
@@ -67,7 +67,7 @@ class DemonOfLoathingTest extends BaseCardTest {
     }
 
     @Test
-    void noTriggerWhenDamagedPlayerControlsNoCreatures() {
+    void resolvesWithoutSacrificeWhenDamagedPlayerControlsNoCreatures() {
         Permanent demon = addCreatureReady(player1, new DemonOfLoathing());
         demon.setAttacking(true);
 
@@ -75,5 +75,58 @@ class DemonOfLoathingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void trampleDamageTriggersSacrificeOfSurvivingCreature() {
+        Permanent demon = addCreatureReady(player1, new DemonOfLoathing());
+        demon.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new ZephyrGull());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        Permanent survivor = addCreatureReady(player2, new ZephyrGull());
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 1, player2.getId(), 6));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker, survivor);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(blocker.getCard(), survivor.getCard());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void triggerStillResolvesAfterDemonLeavesBattlefield() {
+        Permanent demon = addCreatureReady(player1, new DemonOfLoathing());
+        demon.setAttacking(true);
+        Permanent victim = addCreatureReady(player2, new ZephyrGull());
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(demon);
+        gd.playerGraveyards.get(player1.getId()).add(demon.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
+        harness.assertInGraveyard(player2, "Zephyr Gull");
+    }
+
+    @Test
+    void creatureEnteringAfterDamageCanBeSacrificed() {
+        Permanent demon = addCreatureReady(player1, new DemonOfLoathing());
+        demon.setAttacking(true);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        Permanent victim = addCreatureReady(player2, new ZephyrGull());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
+        harness.assertInGraveyard(player2, "Zephyr Gull");
     }
 }
