@@ -62,21 +62,47 @@ class DesolationOfSmaugTest extends BaseCardTest {
     @DisplayName("Dragon spell-only mana cannot cast a non-Dragon spell")
     void dragonSpellOnlyManaCannotCastNonDragonSpell() {
         castDesolationOfSmaug();
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        chooseFourManaColors(ManaColor.GREEN.name());
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Dragon spell-only mana cannot pay for a Dragon's activated ability")
+    void dragonSpellOnlyManaCannotActivateDragonAbility() {
+        harness.addToBattlefield(player1, new ShivanDragon());
+
+        castDesolationOfSmaug();
+        chooseFourManaColors(ManaColor.RED.name());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.DRAGON))).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not damage players and gives mana only to the caster")
+    void doesNotDamagePlayersOrGiveOpponentMana() {
+        castDesolationOfSmaug();
+        chooseFourManaColors(ManaColor.BLACK.name());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.BLACK)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player2.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.DRAGON))).isZero();
+        harness.assertInGraveyard(player1, "Desolation of Smaug");
+    }
+
     private void castDesolationOfSmaug() {
         harness.setHand(player1, List.of(new DesolationOfSmaug()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void chooseFourManaColors(String color) {
