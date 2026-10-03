@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.m.MightSliver;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DemonicCollusion.class, MightSliver.class, Plains.class, Swamp.class})
+@CardUsed({DemonicCollusion.class, Cancel.class, MightSliver.class, Plains.class, Swamp.class})
 class DemonicCollusionTest extends BaseCardTest {
 
     @Test
@@ -98,6 +99,83 @@ class DemonicCollusionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(handNames(player1)).containsExactly("Demonic Collusion", "Plains");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Buyback discards are paid before resolution and the spell waits for the search choice")
+    void buybackCostsArePaidBeforeResolution() {
+        harness.setLibrary(player1, List.of(new MightSliver()));
+        harness.setHand(player1, List.of(new Plains(), new DemonicCollusion(), new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castInstantWithDiscardBuyback(player1, 1, null, List.of(2, 0));
+
+        assertThat(handNames(player1)).isEmpty();
+        assertThat(graveyardNames(player1)).containsExactlyInAnyOrder("Plains", "Swamp");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.assertNotInHand(player1, "Demonic Collusion");
+        harness.assertNotInGraveyard(player1, "Demonic Collusion");
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(handNames(player1)).containsExactlyInAnyOrder("Demonic Collusion", "Might Sliver");
+        assertThat(graveyardNames(player1)).containsExactlyInAnyOrder("Plains", "Swamp");
+    }
+
+    @Test
+    @DisplayName("Countering Demonic Collusion does not return it or refund its buyback discards")
+    void counteredSpellDoesNotReturnWithBuyback() {
+        DemonicCollusion spell = new DemonicCollusion();
+        harness.setLibrary(player1, List.of(new MightSliver()));
+        harness.setHand(player1, List.of(spell, new Plains(), new Swamp()));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstantWithDiscardBuyback(player1, 0, null, List.of(1, 2));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(handNames(player1)).isEmpty();
+        assertThat(graveyardNames(player1)).containsExactlyInAnyOrder("Demonic Collusion", "Plains", "Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).containsExactly("Might Sliver");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same card cannot pay both buyback discards")
+    void buybackRejectsDuplicateDiscard() {
+        harness.setHand(player1, List.of(new DemonicCollusion(), new Plains(), new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castInstantWithDiscardBuyback(player1, 0, null, List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(handNames(player1)).containsExactly("Demonic Collusion", "Plains", "Swamp");
+        assertThat(graveyardNames(player1)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Demonic Collusion cannot discard itself to pay buyback")
+    void buybackRejectsDiscardingItself() {
+        harness.setHand(player1, List.of(new DemonicCollusion(), new Plains(), new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castInstantWithDiscardBuyback(player1, 0, null, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(handNames(player1)).containsExactly("Demonic Collusion", "Plains", "Swamp");
+        assertThat(graveyardNames(player1)).isEmpty();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
     }
 
