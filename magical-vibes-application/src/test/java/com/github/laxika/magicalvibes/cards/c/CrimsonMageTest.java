@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrimsonMage.class, GoblinPiker.class})
 class CrimsonMageTest extends BaseCardTest {
 
     @Test
@@ -76,17 +78,90 @@ class CrimsonMageTest extends BaseCardTest {
         assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
+    @Test
+    @DisplayName("A summoning-sick Crimson Mage can target itself")
+    void summoningSickMageCanTargetItself() {
+        Permanent mage = harness.addToBattlefieldAndReturn(player1, new CrimsonMage());
+        mage.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, mage.getId());
+
+        assertThat(mage.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(mage.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(mage.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Crimson Mage can activate its ability")
+    void tappedMageCanActivate() {
+        Permanent mage = addReadyMage(player1);
+        mage.setTapped(true);
+        Permanent target = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(mage.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Crimson Mage leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent mage = addReadyMage(player1);
+        Permanent target = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(mage);
+        gd.playerGraveyards.get(player1.getId()).add(mage.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Target must still be controlled by the ability controller at resolution")
+    void targetChangingControllerDoesNotGainHaste() {
+        addReadyMage(player1);
+        Permanent target = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability requires red mana")
+    void cannotActivateWithoutRedMana() {
+        addReadyMage(player1);
+        Permanent target = addReadyCreature(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyMage(Player player) {
-        Permanent perm = new Permanent(new CrimsonMage());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CrimsonMage());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new FugitiveWizard());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GoblinPiker());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
