@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,8 +15,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChaosIsMyPlaything.class, GiantGrowth.class, GrizzlyBears.class})
+@CardUsed({ChaosIsMyPlaything.class, GiantGrowth.class, GrizzlyBears.class, Pacifism.class})
 class ChaosIsMyPlaythingTest extends BaseCardTest {
 
     @Test
@@ -64,5 +66,82 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownPermanent);
+    }
+
+    @Test
+    void auraRemainsInLibraryWhenNoCreatureCanBeEnchantedAfterExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card skipped = new GiantGrowth();
+        Card aura = new Pacifism();
+        Card unrevealed = new GiantGrowth();
+        harness.setLibrary(player1, List.of(skipped, aura, unrevealed));
+        harness.setLibrary(player2, List.of(new GiantGrowth()));
+
+        resolveScheme(List.of(target.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura, unrevealed, skipped);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(aura);
+    }
+
+    @Test
+    void libraryWithoutPermanentsRetainsAllItsCardsAndOtherPlayerStillGetsAPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card first = new GiantGrowth();
+        Card second = new GiantGrowth();
+        Card opponentPermanent = new GrizzlyBears();
+        Card unrevealed = new GiantGrowth();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(opponentPermanent, unrevealed));
+
+        resolveScheme(List.of(target.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == opponentPermanent);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(unrevealed);
+    }
+
+    @Test
+    void doesNotRevealCardsWhenTheOnlyTargetHasLeftTheBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card firstPermanent = new GrizzlyBears();
+        Card secondPermanent = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstPermanent));
+        harness.setLibrary(player2, List.of(secondPermanent));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
+        resolveScheme(List.of(target.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstPermanent);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondPermanent);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotChooseZeroTargetsWhenAnOpponentHasNoPermanent() {
+        ChaosIsMyPlaything scheme = new ChaosIsMyPlaything();
+
+        assertThatThrownBy(() -> harness.getTargetLegalityService().validateMultiSpellTargets(
+                gd, scheme, List.of(), player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void resolveScheme(List<UUID> targetIds) {
+        ChaosIsMyPlaything scheme = new ChaosIsMyPlaything();
+        gd.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                scheme,
+                player1.getId(),
+                scheme.getName(),
+                scheme.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL),
+                (UUID) null,
+                targetIds));
+        harness.passBothPriorities();
     }
 }
