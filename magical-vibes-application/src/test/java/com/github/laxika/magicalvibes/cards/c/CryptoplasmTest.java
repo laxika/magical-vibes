@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.cards.b.BlisterstickShaman;
+import com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,14 +16,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Cryptoplasm.class, GrizzlyBears.class, ProdigalPyromancer.class,
+        BlisterstickShaman.class, ThrunTheLastTroll.class})
 class CryptoplasmTest extends BaseCardTest {
-
-    // ===== Upkeep trigger: mandatory target selection =====
 
     @Test
     @DisplayName("Upkeep trigger presents target selection (not may prompt)")
     void upkeepTriggerPresentsTargetSelection() {
-        addReadyCryptoplasm(player1);
+        addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
@@ -36,7 +36,7 @@ class CryptoplasmTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing target puts copy ability on the stack")
     void choosingTargetPutsAbilityOnStack() {
-        addReadyCryptoplasm(player1);
+        addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
@@ -50,12 +50,10 @@ class CryptoplasmTest extends BaseCardTest {
                 .isEqualTo(bearsId);
     }
 
-    // ===== Resolution: may choice =====
-
     @Test
     @DisplayName("Accepting may on resolution makes Cryptoplasm a copy of the target")
     void acceptingMayMakesCopy() {
-        Permanent cryptoplasm = addReadyCryptoplasm(player1);
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
@@ -72,7 +70,7 @@ class CryptoplasmTest extends BaseCardTest {
     @Test
     @DisplayName("Declining may on resolution does not change Cryptoplasm")
     void decliningMayDoesNotChangeCryptoplasm() {
-        Permanent cryptoplasm = addReadyCryptoplasm(player1);
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
@@ -87,7 +85,7 @@ class CryptoplasmTest extends BaseCardTest {
     @Test
     @DisplayName("Copy retains upkeep copy ability (except it has this ability)")
     void copyRetainsUpkeepCopyAbility() {
-        Permanent cryptoplasm = addReadyCryptoplasm(player1);
+        addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
@@ -96,14 +94,17 @@ class CryptoplasmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(cryptoplasm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED))
-                .anyMatch(e -> e instanceof BecomeCopyOfTargetCreatureEffect);
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, bearsId);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     @Test
     @DisplayName("Copy acquires target creature's activated abilities")
     void copyAcquiresTargetAbilities() {
-        Permanent cryptoplasm = addReadyCryptoplasm(player1);
+        addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new ProdigalPyromancer());
         UUID pyromancerId = harness.getPermanentId(player2, "Prodigal Pyromancer");
 
@@ -112,13 +113,16 @@ class CryptoplasmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(cryptoplasm.getCard().getActivatedAbilities()).isNotEmpty();
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     @Test
     @DisplayName("Can copy again on subsequent upkeep after becoming a copy")
     void canCopyAgainOnSubsequentUpkeep() {
-        Permanent cryptoplasm = addReadyCryptoplasm(player1);
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player1, new ProdigalPyromancer());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -141,17 +145,15 @@ class CryptoplasmTest extends BaseCardTest {
         assertThat(cryptoplasm.getCard().getName()).isEqualTo("Prodigal Pyromancer");
     }
 
-    // ===== Targeting constraints =====
-
     @Test
-    @DisplayName("Trigger does not fire when no other creatures exist")
-    void triggerDoesNotFireWithNoOtherCreatures() {
-        addReadyCryptoplasm(player1);
+    @DisplayName("Trigger is removed from the stack when no legal target exists")
+    void triggerIsRemovedWithNoOtherCreatures() {
+        addCreatureReady(player1, new Cryptoplasm());
         // No other creatures on the battlefield
 
         advanceToUpkeep(player1);
 
-        // The ability should not trigger at all (CR 603.3c: no legal target)
+        // Without a legal target, the triggered ability cannot remain on the stack.
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
@@ -159,7 +161,7 @@ class CryptoplasmTest extends BaseCardTest {
     @Test
     @DisplayName("Can target opponent's creatures")
     void canTargetOpponentCreatures() {
-        addReadyCryptoplasm(player1);
+        addCreatureReady(player1, new Cryptoplasm());
         addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
@@ -177,7 +179,7 @@ class CryptoplasmTest extends BaseCardTest {
     @Test
     @DisplayName("Copy effect fizzles if target is removed before resolution")
     void copyFizzlesIfTargetRemoved() {
-        Permanent cryptoplasm = addReadyCryptoplasm(player1);
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = bears.getId();
 
@@ -193,13 +195,65 @@ class CryptoplasmTest extends BaseCardTest {
         assertThat(cryptoplasm.getCard().getName()).isEqualTo("Cryptoplasm");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Copying does not cause enters abilities to trigger")
+    void copyingDoesNotTriggerEntersAbility() {
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
+        Permanent shaman = addCreatureReady(player2, new BlisterstickShaman());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
 
-    private Permanent addReadyCryptoplasm(Player player) {
-        Cryptoplasm card = new Cryptoplasm();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, shaman.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cryptoplasm.getCard().getName()).isEqualTo("Blisterstick Shaman");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Opponent's hexproof creature is not a legal upkeep target")
+    void opponentHexproofCreatureIsNotLegalTarget() {
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
+        Permanent thrun = addCreatureReady(player2, new ThrunTheLastTroll());
+        Permanent shaman = addCreatureReady(player2, new BlisterstickShaman());
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(shaman.getId())
+                .doesNotContain(cryptoplasm.getId(), thrun.getId());
+    }
+
+    @Test
+    @DisplayName("Each copy trigger still affects its source after an earlier trigger changes its copy")
+    void multipleCopyTriggersStillFindSourceAfterFirstCopy() {
+        Permanent cryptoplasm = addCreatureReady(player1, new Cryptoplasm());
+        Permanent other = addCreatureReady(player2, new Cryptoplasm());
+        Permanent shaman = addCreatureReady(player2, new BlisterstickShaman());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, other.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // Copying another Cryptoplasm gives two instances of the upkeep ability.
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, shaman.getId());
+        harness.handlePermanentChosen(player1, other.getId());
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cryptoplasm.getCard().getName()).isEqualTo("Blisterstick Shaman");
     }
 }
