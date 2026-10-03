@@ -109,4 +109,56 @@ class BroodstarTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Broodstar");
         harness.assertInGraveyard(player1, "Broodstar");
     }
+
+    @Test
+    @DisplayName("Tapped artifacts count for affinity and power and toughness, with excess reduction capped")
+    void tappedArtifactsAndExcessAffinityReduction() {
+        for (int i = 0; i < 10; i++) {
+            Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+            artifact.setTapped(true);
+        }
+        harness.setHand(player1, List.of(new Broodstar()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.passBothPriorities();
+        Permanent broodstar = findPermanent(player1, "Broodstar");
+        assertThat(gqs.getEffectivePower(gd, broodstar)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, broodstar)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Broodstar dies when its controller loses their last artifact")
+    void diesWhenLastControlledArtifactLeaves() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Broodstar());
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, artifact));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Broodstar");
+        harness.assertInGraveyard(player1, "Broodstar");
+    }
+
+    @Test
+    @DisplayName("Broodstar's defining power and toughness ability works in hand and graveyard")
+    void definingAbilityWorksOutsideBattlefield() {
+        Broodstar inHand = new Broodstar();
+        Broodstar inGraveyard = new Broodstar();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player1, List.of(inGraveyard));
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isEqualTo(2);
+    }
 }
