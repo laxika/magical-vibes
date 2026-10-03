@@ -114,4 +114,61 @@ class CrystalSeerTest extends BaseCardTest {
     private void castCrystalSeer() {
         harness.castFromHand(player1, new CrystalSeer(), "{4}{U}");
     }
+
+    @Test
+    @DisplayName("Crystal Seer lets only its controller see the sole card in their library")
+    void looksAtSingleAvailableCardPrivately() {
+        Card onlyCard = new CrystalSeer();
+        harness.setLibrary(player1, List.of(onlyCard));
+        castCrystalSeer();
+        harness.clearMessages();
+
+        resolveAllTriggers();
+
+        String cardId = onlyCard.getId().toString();
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains(cardId));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains(cardId));
+    }
+
+    @Test
+    @DisplayName("Crystal Seer's enter trigger resolves normally with an empty library")
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        castCrystalSeer();
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Crystal Seer");
+    }
+
+    @Test
+    @DisplayName("Crystal Seer's enter trigger still reorders its controller's library after it returns to hand")
+    void enterTriggerResolvesAfterSourceReturnsToHand() {
+        Card first = new CrystalSeer();
+        Card second = new CrystalSeer();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.enterBattlefieldAndReturn(player1, new CrystalSeer());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Crystal Seer");
+        harness.assertInHand(player1, "Crystal Seer");
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(first, second);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }
