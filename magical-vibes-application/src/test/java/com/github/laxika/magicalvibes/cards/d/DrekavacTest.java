@@ -78,10 +78,32 @@ class DrekavacTest extends BaseCardTest {
         harness.assertInHand(player1, "Guardian of the Guildpact");
     }
 
+    @Test
+    @DisplayName("An empty hand sacrifices Drekavac")
+    void emptyHandSacrificesDrekavac() {
+        castDrekavac(List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Drekavac");
+        harness.assertInGraveyard(player1, "Drekavac");
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature card cannot satisfy the discard")
+    void opponentsNoncreatureCardCannotSatisfyDiscard() {
+        harness.setHand(player2, List.of(new InfernalTutor()));
+        castDrekavac(List.of(new GuardianOfTheGuildpact()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Drekavac");
+        harness.assertInGraveyard(player1, "Drekavac");
+        harness.assertInHand(player1, "Guardian of the Guildpact");
+        harness.assertInHand(player2, "Infernal Tutor");
+    }
+
     private void castDrekavac(List<Card> hand) {
         harness.castFromHand(player1, new Drekavac(), "{1}{B}");
         harness.setHand(player1, hand);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
