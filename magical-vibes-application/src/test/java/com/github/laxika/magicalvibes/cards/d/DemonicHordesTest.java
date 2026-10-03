@@ -124,4 +124,55 @@ class DemonicHordesTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(firstLand.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(secondLand.getId()));
     }
+
+    @Test
+    @DisplayName("Unpaid upkeep still sacrifices a land when Demonic Hordes is already tapped")
+    void unpaidUpkeepWhileTappedStillSacrificesLand() {
+        Permanent hordes = addCreatureReady(player1, new DemonicHordes());
+        harness.addToBattlefield(player1, new Island());
+
+        advanceToUpkeep(player1);
+        hordes.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(hordes.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Can destroy a land in response to its own upkeep trigger")
+    void activatesInResponseToUpkeepTrigger() {
+        Permanent hordes = addCreatureReady(player1, new DemonicHordes());
+        harness.addToBattlefield(player1, new Island());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, null, opposingLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(hordes.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Island");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertOnBattlefield(player1, "Demonic Hordes");
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent hordes = addCreatureReady(player1, new DemonicHordes());
+        harness.addToBattlefield(player1, new Island());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(hordes.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Island");
+    }
 }
