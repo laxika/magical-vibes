@@ -154,6 +154,46 @@ class DiviningWitchTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A library smaller than six is entirely exiled even when it contains the named card")
+    void shortLibraryExilesAllCardsWithoutFindingNamedCard() {
+        addReadyWitch();
+        Card namedCard = new MindSlash();
+        List<Card> deck = List.of(new Massacre(), namedCard, new Massacre());
+        harness.setLibrary(player1, deck);
+
+        activateWithDiscard(new Massacre());
+        harness.handleListChoice(player1, "Mind Slash");
+
+        UUID playerId = player1.getId();
+        assertThat(gd.playerHands.get(playerId)).isEmpty();
+        assertThat(gd.playerDecks.get(playerId)).isEmpty();
+        assertThat(gd.getPlayerExiledCards(playerId)).containsExactlyElementsOf(deck);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can name a card absent from the game and exile the whole library")
+    void canNameCardAbsentFromGame() {
+        addReadyWitch();
+        List<Card> deck = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            deck.add(new Massacre());
+        }
+        harness.setLibrary(player1, deck);
+
+        activateWithDiscard(new Massacre());
+        harness.handleListChoice(player1, "Mind Slash");
+
+        UUID playerId = player1.getId();
+        assertThat(gd.playerHands.get(playerId)).isEmpty();
+        assertThat(gd.playerDecks.get(playerId)).isEmpty();
+        assertThat(gd.getPlayerExiledCards(playerId)).containsExactlyElementsOf(deck);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addReadyWitch() {
         return addCreatureReady(player1, new DiviningWitch());
     }
