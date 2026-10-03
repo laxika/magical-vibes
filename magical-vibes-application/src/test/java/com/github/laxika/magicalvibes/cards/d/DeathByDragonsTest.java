@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(DeathByDragons.class)
 class DeathByDragonsTest extends BaseCardTest {
@@ -24,8 +25,7 @@ class DeathByDragonsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player2, "Dragon")).isEmpty();
         List<Permanent> dragons = findPermanents(player1, "Dragon");
@@ -39,16 +39,33 @@ class DeathByDragonsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("May target the controller, leaving only the other player without a Dragon")
+    @DisplayName("May target the controller, giving only the other player a Dragon")
     void targetingControllerExcludesController() {
         harness.setHand(player1, List.of(new DeathByDragons()));
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Dragon")).isEmpty();
         assertThat(findPermanents(player2, "Dragon")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature instead of a player")
+    void cannotTargetCreature() {
+        harness.setHand(player1, List.of(new DeathByDragons(), new DeathByDragons()));
+        harness.addMana(player1, ManaColor.RED, 12);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
+        Permanent dragon = findPermanents(player1, "Dragon").getFirst();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, dragon.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Dragon")).hasSize(1);
+        assertThat(findPermanents(player2, "Dragon")).isEmpty();
+        harness.assertInHand(player1, "Death by Dragons");
+        assertThat(gd.stack).isEmpty();
     }
 }
