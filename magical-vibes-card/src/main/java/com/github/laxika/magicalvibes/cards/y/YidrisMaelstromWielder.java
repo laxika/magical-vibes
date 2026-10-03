@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "455")
+@CardRegistration(set = "C16", collectorNumber = "50")
 public class YidrisMaelstromWielder extends Card {
 
     public YidrisMaelstromWielder() {

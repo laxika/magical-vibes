@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "MOC", collectorNumber = "199")
 @CardRegistration(set = "C19", collectorNumber = "68")
 @CardRegistration(set = "C18", collectorNumber = "70")
+@CardRegistration(set = "C16", collectorNumber = "73")
 public class PhyrexianRebirth extends Card {
 
     public PhyrexianRebirth() {

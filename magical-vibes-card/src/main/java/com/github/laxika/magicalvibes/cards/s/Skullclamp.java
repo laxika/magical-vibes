@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "MSC", collectorNumber = "451")
 @CardRegistration(set = "C14", collectorNumber = "268")
 @CardRegistration(set = "C15", collectorNumber = "267")
+@CardRegistration(set = "C16", collectorNumber = "271")
 @CardRegistration(set = "C20", collectorNumber = "251")
 @CardRegistration(set = "PIP", collectorNumber = "238")
 @CardRegistration(set = "PIP", collectorNumber = "766")

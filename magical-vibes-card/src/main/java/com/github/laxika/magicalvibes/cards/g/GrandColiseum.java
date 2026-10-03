@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "319")
 @CardRegistration(set = "VMA", collectorNumber = "298")
 @CardRegistration(set = "TMC", collectorNumber = "68")
+@CardRegistration(set = "C16", collectorNumber = "299")
 public class GrandColiseum extends Card {
 
     public GrandColiseum() {

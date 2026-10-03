@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "FRF", collectorNumber = "8")
 @CardRegistration(set = "C21", collectorNumber = "85")
 @CardRegistration(set = "MIC", collectorNumber = "81")
+@CardRegistration(set = "C16", collectorNumber = "62")
 public class CitadelSiege extends Card {
 
     private static final String KHANS = "Khans";

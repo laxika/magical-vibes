@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "TDC", collectorNumber = "100")
+@CardRegistration(set = "C16", collectorNumber = "32")
 public class IkraShidiqiTheUsurper extends Card {
 
     public IkraShidiqiTheUsurper() {

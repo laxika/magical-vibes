@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "HOP", collectorNumber = "113")
 @CardRegistration(set = "MM2", collectorNumber = "211")
 @CardRegistration(set = "MMA", collectorNumber = "206")
+@CardRegistration(set = "C16", collectorNumber = "252")
 public class EtchedOracle extends Card {
 
     public EtchedOracle() {

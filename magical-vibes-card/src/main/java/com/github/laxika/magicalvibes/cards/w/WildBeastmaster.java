@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "139")
 @CardRegistration(set = "MIC", collectorNumber = "146")
+@CardRegistration(set = "C16", collectorNumber = "176")
 public class WildBeastmaster extends Card {
 
     public WildBeastmaster() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 @CardRegistration(set = "DSC", collectorNumber = "104")
 @CardRegistration(set = "SLD", collectorNumber = "2316")
 @CardRegistration(set = "SLD", collectorNumber = "2331")
+@CardRegistration(set = "C16", collectorNumber = "77")
 public class SphereOfSafety extends Card {
 
     public SphereOfSafety() {

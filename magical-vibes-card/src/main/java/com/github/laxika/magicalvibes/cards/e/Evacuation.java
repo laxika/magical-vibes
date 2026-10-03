@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "CMM", collectorNumber = "487")
 @CardRegistration(set = "M3C", collectorNumber = "184")
 @CardRegistration(set = "LCC", collectorNumber = "156")
+@CardRegistration(set = "C16", collectorNumber = "91")
 public class Evacuation extends Card {
 
     public Evacuation() {

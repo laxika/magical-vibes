@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "HA2", collectorNumber = "10")
 @CardRegistration(set = "WOT", collectorNumber = "38")
 @CardRegistration(set = "TMC", collectorNumber = "132")
+@CardRegistration(set = "C16", collectorNumber = "117")
 public class WasteNot extends Card {
 
     public WasteNot() {

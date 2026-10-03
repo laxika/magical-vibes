@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "325")
 @CardRegistration(set = "CMM", collectorNumber = "573")
+@CardRegistration(set = "C16", collectorNumber = "25")
 public class StonehoofChieftain extends Card {
 
     public StonehoofChieftain() {

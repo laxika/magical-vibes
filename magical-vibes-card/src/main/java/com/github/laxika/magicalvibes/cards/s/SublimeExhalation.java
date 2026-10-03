@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "60")
 @CardRegistration(set = "CMM", collectorNumber = "475")
+@CardRegistration(set = "C16", collectorNumber = "5")
 public class SublimeExhalation extends Card {
 
     public SublimeExhalation() {

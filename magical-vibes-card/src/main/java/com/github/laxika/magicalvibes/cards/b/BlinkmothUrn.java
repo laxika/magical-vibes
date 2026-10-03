@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "145")
 @CardRegistration(set = "C18", collectorNumber = "197")
+@CardRegistration(set = "C16", collectorNumber = "244")
 public class BlinkmothUrn extends Card {
 
     public BlinkmothUrn() {

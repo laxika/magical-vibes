@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FIC", collectorNumber = "268")
 @CardRegistration(set = "C20", collectorNumber = "123")
 @CardRegistration(set = "WHO", collectorNumber = "810")
+@CardRegistration(set = "C16", collectorNumber = "94")
 public class Propaganda extends Card {
 
     public Propaganda() {

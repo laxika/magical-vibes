@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "26")
 @CardRegistration(set = "MOC", collectorNumber = "222")
+@CardRegistration(set = "C16", collectorNumber = "90")
 public class EtherswornAdjudicator extends Card {
 
     public EtherswornAdjudicator() {

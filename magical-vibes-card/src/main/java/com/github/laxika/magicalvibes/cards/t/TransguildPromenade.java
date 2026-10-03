@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "249")
 @CardRegistration(set = "C13", collectorNumber = "330")
+@CardRegistration(set = "C16", collectorNumber = "334")
 public class TransguildPromenade extends Card {
 
     public TransguildPromenade() {

@@ -744,7 +744,16 @@ public sealed interface TriggerContext {
     }
 
     /** Context for a controller's commander entering the command zone. */
-    record CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId) implements TriggerContext {}
+    record CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId,
+                                       Map<CounterType, Integer> commanderCounters) implements TriggerContext {
+        public CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId) {
+            this(commander, commanderOwnerId, Map.of());
+        }
+
+        public CommanderPutIntoCommandZone {
+            commanderCounters = commanderCounters == null ? Map.of() : Map.copyOf(commanderCounters);
+        }
+    }
 
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}

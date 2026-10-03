@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Map;
+
 /**
  * Death trigger for "When this creature dies, put a {@code counterType} counter on target creature
  * for each {@code counterType} counter on this creature" (e.g. Grief Tyrant, which enters with four
@@ -30,7 +32,7 @@ public record PutCounterOnTargetForEachDyingSourceCounterEffect(
         boolean optional,
         PermanentPredicate targetPredicate,
         boolean modular
-) implements CardEffect {
+) implements CardEffect, DyingCreatureCountersAwareEffect, LeavingPermanentCountersAwareEffect {
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, int count, boolean optional) {
         this(counterType, count, optional, null, false);
@@ -65,5 +67,20 @@ public record PutCounterOnTargetForEachDyingSourceCounterEffect(
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.permanent(),
                 targetPredicate != null ? targetPredicate : new PermanentIsCreaturePredicate());
+    }
+
+    @Override
+    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
+        return withCounterCount(counters);
+    }
+
+    @Override
+    public CardEffect boundToLeavingPermanentCounters(Map<CounterType, Integer> counters) {
+        return withCounterCount(counters);
+    }
+
+    private CardEffect withCounterCount(Map<CounterType, Integer> counters) {
+        return new PutCounterOnTargetForEachDyingSourceCounterEffect(
+                counterType, counters.getOrDefault(counterType, 0), optional, targetPredicate, modular);
     }
 }

@@ -462,6 +462,13 @@ public class TriggerCollectionService {
     /** Fires triggers watching the source controller's commander entering the command zone. */
     public void checkYourCommanderPutIntoCommandZoneTriggers(GameData gameData, Card commander,
                                                                UUID commanderOwnerId) {
+        checkYourCommanderPutIntoCommandZoneTriggers(gameData, commander, commanderOwnerId, null);
+    }
+
+    /** Fires commander-zone triggers, optionally retaining the departing permanent's counters. */
+    public void checkYourCommanderPutIntoCommandZoneTriggers(GameData gameData, Card commander,
+                                                               UUID commanderOwnerId,
+                                                               Permanent commanderPermanent) {
         if (commander == null || commanderOwnerId == null
                 || gameData.playerCommanders.getOrDefault(commanderOwnerId, List.of()).stream()
                 .noneMatch(card -> card.getId().equals(commander.getId())
@@ -471,14 +478,21 @@ public class TriggerCollectionService {
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(commanderOwnerId);
-        if (battlefield == null || battlefield.isEmpty()) {
+        if ((battlefield == null || battlefield.isEmpty()) && commanderPermanent == null) {
             return;
         }
 
         TriggerContext context = new TriggerContext.CommanderPutIntoCommandZone(
-                commander, commanderOwnerId);
-        for (Permanent permanent : new ArrayList<>(battlefield)) {
+                commander, commanderOwnerId,
+                commanderPermanent == null ? Map.of() : snapshotCountersOnPermanent(commanderPermanent));
+        for (Permanent permanent : battlefield == null ? List.<Permanent>of() : new ArrayList<>(battlefield)) {
             dispatchSlot(gameData, permanent, commanderOwnerId,
+                    EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE, context);
+        }
+        if (commanderPermanent != null
+                && (battlefield == null || battlefield.stream()
+                .noneMatch(permanent -> permanent.getId().equals(commanderPermanent.getId())))) {
+            dispatchSlot(gameData, new Permanent(commanderPermanent), commanderOwnerId,
                     EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE, context);
         }
     }
@@ -7095,13 +7109,19 @@ public class TriggerCollectionService {
             }
 
             CardEffect resolvedEffect = watcher.effect();
-            if (targetId != null && (slot == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
+            if (targetId != null && (slot == EffectSlot.ON_ANY_CREATURE_BLOCKS
+                    || slot == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
                     || slot == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)
                     && resolvedEffect instanceof TriggeringPermanentConditionalEffect conditional) {
                 Permanent triggeringPermanent = gameQueryService.findPermanentById(gameData, targetId);
                 if (triggeringPermanent == null
-                        || !predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, triggeringPermanent, conditional.predicate())) {
+                        || (conditional.predicate() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        triggeringPermanent,
+                        conditional.predicate(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(watcher.sourceCard().getId())
+                                .withSourceControllerId(watcher.controllerId())))) {
                     continue;
                 }
                 resolvedEffect = conditional.wrapped();

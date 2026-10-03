@@ -591,7 +591,8 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         for (Card leaving : target.cardsLeavingBattlefield()) {
             gameData.playerCommandZones.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).add(leaving);
-            triggerCollectionService.checkYourCommanderPutIntoCommandZoneTriggers(gameData, leaving, ownerId);
+            triggerCollectionService.checkYourCommanderPutIntoCommandZoneTriggers(
+                    gameData, leaving, ownerId, target);
         }
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);

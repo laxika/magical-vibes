@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 
 @CardRegistration(set = "M15", collectorNumber = "15")
 @CardRegistration(set = "PIO", collectorNumber = "322")
+@CardRegistration(set = "C16", collectorNumber = "68")
 public class HushwingGryff extends Card {
 
     public HushwingGryff() {

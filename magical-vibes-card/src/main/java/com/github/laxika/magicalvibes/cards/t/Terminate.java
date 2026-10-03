@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "AFC", collectorNumber = "193")
 @CardRegistration(set = "DMC", collectorNumber = "172")
 @CardRegistration(set = "C20", collectorNumber = "231")
+@CardRegistration(set = "C16", collectorNumber = "225")
 public class Terminate extends Card {
 
     public Terminate() {

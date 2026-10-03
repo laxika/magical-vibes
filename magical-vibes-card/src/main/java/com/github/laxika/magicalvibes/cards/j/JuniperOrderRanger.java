@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "CSP", collectorNumber = "130")
+@CardRegistration(set = "C16", collectorNumber = "207")
 @CardRegistration(set = "DDG", collectorNumber = "21")
 @CardRegistration(set = "MOC", collectorNumber = "330")
 @CardRegistration(set = "MIC", collectorNumber = "153")

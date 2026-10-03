@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaThenSear
 
 @CardRegistration(set = "SLD", collectorNumber = "1009")
 @CardRegistration(set = "CMD", collectorNumber = "147")
+@CardRegistration(set = "C16", collectorNumber = "145")
 public class CollectiveVoyage extends Card {
 
     public CollectiveVoyage() {

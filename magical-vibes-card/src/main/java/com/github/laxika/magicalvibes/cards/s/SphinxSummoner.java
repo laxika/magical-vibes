@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "127")
 @CardRegistration(set = "2XM", collectorNumber = "220")
+@CardRegistration(set = "C16", collectorNumber = "223")
 public class SphinxSummoner extends Card {
 
     public SphinxSummoner() {

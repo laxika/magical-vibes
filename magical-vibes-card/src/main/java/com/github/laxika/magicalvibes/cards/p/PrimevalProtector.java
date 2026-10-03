@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEC", collectorNumber = "124")
+@CardRegistration(set = "C16", collectorNumber = "23")
 public class PrimevalProtector extends Card {
 
     public PrimevalProtector() {

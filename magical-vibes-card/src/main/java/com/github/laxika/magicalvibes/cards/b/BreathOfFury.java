@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "116")
 @CardRegistration(set = "SLD", collectorNumber = "2347")
+@CardRegistration(set = "C16", collectorNumber = "121")
 public class BreathOfFury extends Card {
 
     public BreathOfFury() {

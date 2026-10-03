@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersE
 @CardRegistration(set = "TMC", collectorNumber = "56")
 @CardRegistration(set = "PIP", collectorNumber = "214")
 @CardRegistration(set = "PIP", collectorNumber = "742")
+@CardRegistration(set = "C16", collectorNumber = "190")
 public class CorpsejackMenace extends Card {
 
     public CorpsejackMenace() {

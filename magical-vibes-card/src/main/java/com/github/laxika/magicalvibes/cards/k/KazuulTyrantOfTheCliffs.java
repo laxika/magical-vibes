@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "NCC", collectorNumber = "270")
 @CardRegistration(set = "SLD", collectorNumber = "2403")
 @CardRegistration(set = "MKC", collectorNumber = "157")
+@CardRegistration(set = "C16", collectorNumber = "130")
 public class KazuulTyrantOfTheCliffs extends Card {
 
     public KazuulTyrantOfTheCliffs() {

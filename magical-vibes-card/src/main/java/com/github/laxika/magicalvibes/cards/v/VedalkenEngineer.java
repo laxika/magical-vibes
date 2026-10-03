@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "DST", collectorNumber = "35")
 @CardRegistration(set = "HOP", collectorNumber = "15")
 @CardRegistration(set = "NEC", collectorNumber = "100")
+@CardRegistration(set = "C16", collectorNumber = "103")
 public class VedalkenEngineer extends Card {
 
     public VedalkenEngineer() {

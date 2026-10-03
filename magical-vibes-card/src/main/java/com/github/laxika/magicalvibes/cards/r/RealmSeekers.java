@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "226")
 @CardRegistration(set = "LTC", collectorNumber = "258")
+@CardRegistration(set = "C16", collectorNumber = "162")
 public class RealmSeekers extends Card {
 
     public RealmSeekers() {

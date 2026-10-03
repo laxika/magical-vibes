@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "BLC", collectorNumber = "286")
 @CardRegistration(set = "MIC", collectorNumber = "163")
 @CardRegistration(set = "C18", collectorNumber = "225")
+@CardRegistration(set = "C16", collectorNumber = "276")
 public class SwiftfootBoots extends Card {
 
     public SwiftfootBoots() {

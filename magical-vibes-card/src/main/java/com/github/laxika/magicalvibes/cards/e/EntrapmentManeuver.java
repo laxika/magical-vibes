@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "PIP", collectorNumber = "688")
 @CardRegistration(set = "PIP", collectorNumber = "977")
 @CardRegistration(set = "40K", collectorNumber = "185")
+@CardRegistration(set = "C16", collectorNumber = "2")
 public class EntrapmentManeuver extends Card {
 
     public EntrapmentManeuver() {

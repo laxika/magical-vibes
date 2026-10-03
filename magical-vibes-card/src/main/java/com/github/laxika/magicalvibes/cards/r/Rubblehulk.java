@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "GTC", collectorNumber = "191")
 @CardRegistration(set = "GK2", collectorNumber = "95")
 @CardRegistration(set = "C18", collectorNumber = "189")
+@CardRegistration(set = "C16", collectorNumber = "219")
 public class Rubblehulk extends Card {
 
     public Rubblehulk() {

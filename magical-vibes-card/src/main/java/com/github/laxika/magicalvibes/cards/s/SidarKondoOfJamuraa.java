@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "TDC", collectorNumber = "303")
 @CardRegistration(set = "MKC", collectorNumber = "219")
+@CardRegistration(set = "C16", collectorNumber = "42")
 public class SidarKondoOfJamuraa extends Card {
 
     public SidarKondoOfJamuraa() {

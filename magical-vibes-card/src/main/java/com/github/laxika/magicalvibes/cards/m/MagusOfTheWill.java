@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "2XM", collectorNumber = "98")
+@CardRegistration(set = "C16", collectorNumber = "14")
 public class MagusOfTheWill extends Card {
 
     public MagusOfTheWill() {

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "FCA", collectorNumber = "13")
 @CardRegistration(set = "CMM", collectorNumber = "227")
 @CardRegistration(set = "CMM", collectorNumber = "537")
+@CardRegistration(set = "C16", collectorNumber = "125")
 public class GodoBanditWarlord extends Card {
 
     public GodoBanditWarlord() {
