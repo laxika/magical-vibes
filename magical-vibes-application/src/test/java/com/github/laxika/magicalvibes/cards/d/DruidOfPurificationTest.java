@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Propaganda;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DruidOfPurificationTest extends BaseCardTest {
 
     @Test
-    void eachPlayerChoosesOpponentArtifactOrEnchantmentStartingWithController() {
+    void eachPlayerChoosesArtifactOrEnchantmentNotControlledByAbilityController() {
         Permanent player1Orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
         Permanent player1Propaganda = harness.addToBattlefieldAndReturn(player1, new Propaganda());
         Permanent player1Bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -26,10 +25,7 @@ class DruidOfPurificationTest extends BaseCardTest {
         Permanent player2Propaganda = harness.addToBattlefieldAndReturn(player2, new Propaganda());
         Permanent player2Bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new DruidOfPurification()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DruidOfPurification(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -45,16 +41,78 @@ class DruidOfPurificationTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(secondChoice).isNotNull();
         assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
-        assertThat(secondChoice.validIds()).containsExactly(player1Orb.getId(), player1Propaganda.getId());
+        assertThat(secondChoice.validIds()).containsExactly(player2Orb.getId(), player2Propaganda.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(player2Propaganda);
 
-        harness.handleMultiplePermanentsChosen(player2, List.of(player1Orb.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(player2Orb.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .contains(player1Propaganda, player1Bear)
-                .doesNotContain(player1Orb);
+                .contains(player1Orb, player1Propaganda, player1Bear);
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .contains(player2Orb, player2Bear)
-                .doesNotContain(player2Propaganda);
+                .contains(player2Bear)
+                .doesNotContain(player2Orb, player2Propaganda);
+    }
+
+    @Test
+    void bothPlayersMayChooseTheSamePermanent() {
+        Permanent ownOrb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
+        Permanent opponentOrb = harness.addToBattlefieldAndReturn(player2, new ZuranOrb());
+        Permanent opponentPropaganda = harness.addToBattlefieldAndReturn(player2, new Propaganda());
+
+        harness.castFromHand(player1, new DruidOfPurification(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(opponentOrb.getId()));
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).contains(opponentOrb.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentOrb);
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentOrb.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownOrb);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(opponentPropaganda).doesNotContain(opponentOrb);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsOnly(opponentOrb.getCard());
+    }
+
+    @Test
+    void everyPlayerMayDeclineToChoose() {
+        Permanent ownOrb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
+        Permanent opponentOrb = harness.addToBattlefieldAndReturn(player2, new ZuranOrb());
+
+        harness.castFromHand(player1, new DruidOfPurification(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownOrb);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentOrb);
+    }
+
+    @Test
+    void controllerPermanentsAreIneligibleEvenWhenOpponentsHaveNoPermanents() {
+        Permanent ownOrb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
+        Permanent ownPropaganda = harness.addToBattlefieldAndReturn(player1, new Propaganda());
+
+        harness.castFromHand(player1, new DruidOfPurification(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownOrb, ownPropaganda);
+        assertThat(gd.stack).isEmpty();
     }
 }
