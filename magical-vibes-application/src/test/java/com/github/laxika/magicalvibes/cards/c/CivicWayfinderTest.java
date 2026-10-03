@@ -116,6 +116,41 @@ class CivicWayfinderTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
+    @Test
+    @DisplayName("A restricted search may find nothing even when a basic land is available")
+    void mayFailToFindAnAvailableBasicLand() {
+        setupAndCast();
+        Forest forest = new Forest();
+        CivicWayfinder otherCard = new CivicWayfinder();
+        harness.setLibrary(player1, List.of(forest, otherCard));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, otherCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library still shuffles and completes")
+    void acceptingMayWithEmptyLibraryCompletes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
     private void setupAndCast() {
         harness.setHand(player1, List.of(new CivicWayfinder()));
         harness.addMana(player1, ManaColor.GREEN, 3);
