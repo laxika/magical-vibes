@@ -74,4 +74,69 @@ class DemolisherSpawnTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(
                 new GrizzlyBears(), new Forest(), new Shock(), new Millstone()));
     }
+
+    @Test
+    @DisplayName("Delirium must still be present when the attack trigger resolves")
+    void losingDeliriumBeforeResolutionPreventsBoost() {
+        setUpDelirium();
+        addCreatureReady(player1, new DemolisherSpawn());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0, 1)));
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock()));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Gaining delirium after attacking does not create an attack trigger")
+    void gainingDeliriumAfterAttackDoesNotBoost() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock()));
+        addCreatureReady(player1, new DemolisherSpawn());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0, 1)));
+        assertThat(gd.stack).isEmpty();
+        setUpDelirium();
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An enchantment creature contributes two types toward delirium")
+    void deliriumCountsMultipleTypesOnOneCard() {
+        harness.setGraveyard(player1, List.of(new DemolisherSpawn(), new Forest(), new Shock()));
+        addCreatureReady(player1, new DemolisherSpawn());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Attacking Spawns boost one another and their boosts stack on other attackers")
+    void multipleSpawnsBoostEachOther() {
+        setUpDelirium();
+        Permanent firstSpawn = addCreatureReady(player1, new DemolisherSpawn());
+        Permanent secondSpawn = addCreatureReady(player1, new DemolisherSpawn());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        assertThat(firstSpawn.getPowerModifier()).isEqualTo(4);
+        assertThat(firstSpawn.getToughnessModifier()).isEqualTo(4);
+        assertThat(secondSpawn.getPowerModifier()).isEqualTo(4);
+        assertThat(secondSpawn.getToughnessModifier()).isEqualTo(4);
+        assertThat(attacker.getPowerModifier()).isEqualTo(8);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(8);
+    }
 }
