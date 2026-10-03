@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.Terminate;
+import com.github.laxika.magicalvibes.cards.b.BronzeWalrus;
+import com.github.laxika.magicalvibes.cards.e.EyesOfTheBeholder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DraconicMuralists.class, Terminate.class, DragonHatchling.class, GrizzlyBears.class})
+@CardUsed({DraconicMuralists.class, EyesOfTheBeholder.class, BronzeWalrus.class})
 class DraconicMuralistsTest extends BaseCardTest {
 
     @Test
@@ -33,24 +32,24 @@ class DraconicMuralistsTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the search offers only Dragon cards and puts the chosen card into hand")
     void acceptingSearchFindsDragon() {
-        harness.setLibrary(player1, List.of(new DragonHatchling(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new DraconicMuralists(), new BronzeWalrus()));
         killMuralists();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .singleElement().extracting(Card::getName).isEqualTo("Dragon Hatchling");
+                .singleElement().extracting(Card::getName).isEqualTo("Draconic Muralists");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals())
                 .isTrue();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertInHand(player1, "Dragon Hatchling");
+        harness.assertInHand(player1, "Draconic Muralists");
     }
 
     @Test
     @DisplayName("Declining the search does not search the library")
     void decliningSearchSkipsSearch() {
-        harness.setLibrary(player1, List.of(new DragonHatchling()));
+        harness.setLibrary(player1, List.of(new DraconicMuralists()));
         killMuralists();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -62,13 +61,46 @@ class DraconicMuralistsTest extends BaseCardTest {
     @Test
     @DisplayName("A library without a Dragon completes the search without finding a card")
     void searchWithNoDragonCompletes() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BronzeWalrus()));
         killMuralists();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Draconic Muralists");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .noneMatch(entry -> entry.contains("Dragon Hatchling"));
+                .anyMatch(entry -> entry.contains("shuffled"));
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a Dragon is available")
+    void mayFailToFindAvailableDragon() {
+        Card dragon = new DraconicMuralists();
+        harness.setLibrary(player1, List.of(dragon));
+        killMuralists();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(dragon);
+        harness.assertNotInHand(player1, "Draconic Muralists");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("shuffled"));
+    }
+
+    @Test
+    @DisplayName("Accepting a search with an empty library completes without finding a card")
+    void emptyLibrarySearchCompletes() {
+        harness.setLibrary(player1, List.of());
+        killMuralists();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertNotInHand(player1, "Draconic Muralists");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("shuffled"));
     }
 
     private void killMuralists() {
@@ -77,11 +109,10 @@ class DraconicMuralistsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new Terminate()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Draconic Muralists"));
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new EyesOfTheBeholder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Draconic Muralists"));
         harness.passBothPriorities();
     }
 }
