@@ -52,8 +52,7 @@ class CounterspellTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, rider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, rider.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(rider.getId()));
@@ -76,8 +75,7 @@ class CounterspellTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, island.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, hoodwink.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hoodwink.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(hoodwink.getId()));
@@ -105,8 +103,7 @@ class CounterspellTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.castInstant(player1, 0, hoodwink.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hoodwink.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(hoodwink.getId()));
@@ -188,13 +185,56 @@ class CounterspellTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, island.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, wreakHavoc.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, wreakHavoc.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(island.getCard().getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(island.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Can counter a spell controlled by its own caster")
+    void countersOwnSpell() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Hoodwink hoodwink = new Hoodwink();
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player1, List.of(hoodwink, counterspell));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, island.getId());
+        harness.castAndResolveInstant(player1, 0, hoodwink.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(hoodwink, counterspell);
+        harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("A second counter removes the target before the first counter resolves")
+    void targetCounteredBeforeResolution() {
+        JhovallRider rider = new JhovallRider();
+        harness.castFromHand(player1, rider, "{4}{W}");
+        Counterspell firstCounter = new Counterspell();
+        Counterspell secondCounter = new Counterspell();
+        harness.setHand(player2, List.of(firstCounter, secondCounter));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, rider.getId());
+        harness.castAndResolveInstant(player2, 0, rider.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(firstCounter);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rider);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(secondCounter);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rider);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstCounter, secondCounter);
+        harness.assertNotOnBattlefield(player1, "Jhovall Rider");
     }
 }
