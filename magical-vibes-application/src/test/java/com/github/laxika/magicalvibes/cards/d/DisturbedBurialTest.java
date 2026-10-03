@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DisturbedBurial.class, Disenchant.class, HornedTurtle.class})
+@CardUsed({DisturbedBurial.class, Counterspell.class, Disenchant.class, HornedTurtle.class})
 class DisturbedBurialTest extends BaseCardTest {
 
     @Test
@@ -88,6 +89,29 @@ class DisturbedBurialTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Disturbed Burial");
+    }
+
+    @Test
+    @DisplayName("Countering Disturbed Burial prevents both the return and buyback")
+    void counteredBuybackGoesToGraveyard() {
+        Card creature = new HornedTurtle();
+        DisturbedBurial burial = new DisturbedBurial();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(burial));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorceryWithBuyback(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, burial.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(creature.getId(), burial.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     @Test
