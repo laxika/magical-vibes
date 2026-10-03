@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DryadGreenseeker.class, Forest.class, GreenwoodSentinel.class})
 class DryadGreenseekerTest extends BaseCardTest {
 
     @Test
@@ -21,7 +22,7 @@ class DryadGreenseekerTest extends BaseCardTest {
     void acceptsTopLand() {
         addReadyDryad();
         Card topLand = new Forest();
-        harness.setLibrary(player1, List.of(topLand, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(topLand, new GreenwoodSentinel()));
 
         activateAbility();
 
@@ -37,7 +38,7 @@ class DryadGreenseekerTest extends BaseCardTest {
     void declinesTopLand() {
         addReadyDryad();
         Card topLand = new Forest();
-        harness.setLibrary(player1, List.of(topLand, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(topLand, new GreenwoodSentinel()));
 
         activateAbility();
         harness.handleMayAbilityChosen(player1, false);
@@ -50,7 +51,7 @@ class DryadGreenseekerTest extends BaseCardTest {
     @DisplayName("A nonland top card stays on top without offering a choice")
     void nonlandTopCardStaysOnTop() {
         addReadyDryad();
-        Card topCard = new GrizzlyBears();
+        Card topCard = new GreenwoodSentinel();
         harness.setLibrary(player1, List.of(topCard, new Forest()));
 
         activateAbility();
@@ -60,10 +61,54 @@ class DryadGreenseekerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
     }
 
+    @Test
+    @DisplayName("The controller privately sees a nonland top card")
+    void privatelyLooksAtNonland() {
+        addReadyDryad();
+        Card topCard = new GreenwoodSentinel();
+        harness.setLibrary(player1, List.of(topCard, new Forest()));
+        harness.clearMessages();
+
+        activateAbility();
+
+        assertThat(harness.getConn2().getMessagesContaining(topCard.getName())).isEmpty();
+        assertThat(harness.getConn1().getMessagesContaining(topCard.getName())).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library causes no choice or card movement")
+    void emptyLibraryDoesNothing() {
+        addReadyDryad();
+        harness.setLibrary(player1, List.of());
+        List<Card> originalHand = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        activateAbility();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(originalHand);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after the Dryad leaves the battlefield")
+    void resolvesWithoutSource() {
+        addReadyDryad();
+        Card topLand = new Forest();
+        harness.setLibrary(player1, List.of(topLand, new GreenwoodSentinel()));
+
+        harness.activateAbility(player1, 0, null, null);
+        Card source = gd.playerBattlefields.get(player1.getId()).removeFirst().getCard();
+        gd.playerGraveyards.get(player1.getId()).add(source);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topLand);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topLand);
+    }
+
     private void addReadyDryad() {
-        Permanent dryad = new Permanent(new DryadGreenseeker());
-        dryad.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(dryad);
+        addCreatureReady(player1, new DryadGreenseeker());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

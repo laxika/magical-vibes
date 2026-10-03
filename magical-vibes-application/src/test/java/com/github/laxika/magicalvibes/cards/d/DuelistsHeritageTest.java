@@ -41,6 +41,61 @@ class DuelistsHeritageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple attackers produce one trigger that grants double strike to only one creature")
+    void multipleAttackersTriggerOnlyOnce() {
+        harness.addToBattlefield(player1, new DuelistsHeritage());
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0, 1));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(first.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(second.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller's own attack also triggers the ability")
+    void grantsDoubleStrikeToOwnAttacker() {
+        harness.addToBattlefield(player1, new DuelistsHeritage());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target that stops attacking before resolution does not gain double strike")
+    void targetMustStillBeAttackingOnResolution() {
+        harness.addToBattlefield(player1, new DuelistsHeritage());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        attacker.setAttacking(false);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
+
+        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Declining the optional keyword grant does nothing")
     void mayDeclineGrant() {
         harness.addToBattlefield(player1, new DuelistsHeritage());

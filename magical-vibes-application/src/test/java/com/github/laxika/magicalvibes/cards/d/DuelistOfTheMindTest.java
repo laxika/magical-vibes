@@ -42,8 +42,7 @@ class DuelistOfTheMindTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -64,8 +63,7 @@ class DuelistOfTheMindTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
@@ -82,16 +80,90 @@ class DuelistOfTheMindTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest(), new Forest())));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Targeting yourself is not a crime and does not consume the trigger")
+    void selfTargetingDoesNotConsumeCrimeTrigger() {
+        harness.addToBattlefield(player1, new DuelistOfTheMind());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("An opponent's crime does not trigger Duelist of the Mind")
+    void opponentCrimeDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DuelistOfTheMind());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("The drawn card can be discarded and still increases power")
+    void discardingDrawnCardStillIncreasesPower() {
+        Permanent duelist = harness.addToBattlefieldAndReturn(player1, new DuelistOfTheMind());
+        harness.setHand(player1, List.of(new Shock(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, duelist)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, duelist)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Power in hand uses its owner's draws rather than the opponent's draws")
+    void powerInHandTracksOwnerDraws() {
+        DuelistOfTheMind duelist = new DuelistOfTheMind();
+        harness.setHand(player1, List.of(duelist));
+        gd.cardsDrawnThisTurn.put(player1.getId(), 2);
+        gd.cardsDrawnThisTurn.put(player2.getId(), 5);
+
+        assertThat(gqs.getEffectiveCardPower(gd, duelist)).isEqualTo(2);
+
+        gd.cardsDrawnThisTurn.put(player1.getId(), 0);
+        assertThat(gqs.getEffectiveCardPower(gd, duelist)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Duelist has its own once-per-turn crime trigger")
+    void eachDuelistTriggersIndependently() {
+        harness.addToBattlefield(player1, new DuelistOfTheMind());
+        harness.addToBattlefield(player1, new DuelistOfTheMind());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
     }
 }

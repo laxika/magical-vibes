@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DryadsCaress.class, ZephyrSpirit.class, OvergrownTomb.class})
@@ -45,11 +43,8 @@ class DryadsCaressTest extends BaseCardTest {
         opposingCreature.tap();
 
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new DryadsCaress()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new DryadsCaress(), "{3}{W}{G}{G}");
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 22);
         assertThat(ownCreature.isTapped()).isFalse();
@@ -65,14 +60,54 @@ class DryadsCaressTest extends BaseCardTest {
         ownLand.tap();
 
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new DryadsCaress()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new DryadsCaress(), "{3}{W}{G}{G}");
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(ownLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolves with no creatures and gains no life")
+    void resolvesWithEmptyBattlefield() {
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new DryadsCaress(), "{4}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counts and untaps creatures present at resolution")
+    void usesBattlefieldAtResolution() {
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new DryadsCaress(), "{3}{W}{G}{G}");
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ZephyrSpirit());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new ZephyrSpirit());
+        ownCreature.tap();
+        opposingCreature.tap();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(ownCreature.isTapped()).isFalse();
+        assertThat(opposingCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("White mana added after casting does not enable untapping")
+    void unspentWhiteManaDoesNotUntapCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ZephyrSpirit());
+        ownCreature.tap();
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new DryadsCaress(), "{4}{G}{G}");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(ownCreature.isTapped()).isTrue();
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DruidsRepository.class, GrizzlyBears.class})
 class DruidsRepositoryTest extends BaseCardTest {
 
     @Test
@@ -44,9 +46,8 @@ class DruidsRepositoryTest extends BaseCardTest {
     void opponentAttackersDoNotTrigger() {
         Permanent repository = addRepository();
 
-        Permanent oppBears = new Permanent(new GrizzlyBears());
+        Permanent oppBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         oppBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(oppBears);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -93,17 +94,81 @@ class DruidsRepositoryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void tappedRepositoryCanProduceEveryColorRepeatedlyWithoutUsingTheStack() {
+        Permanent repository = addRepository();
+        repository.setTapped(true);
+        repository.setCounterCount(CounterType.CHARGE, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN)) {
+            int before = gd.playerManaPools.get(player1.getId()).get(color);
+            int countersBefore = repository.getCounterCount(CounterType.CHARGE);
+            harness.activateAbility(player1, 0, null, null);
+
+            assertThat(repository.getCounterCount(CounterType.CHARGE)).isEqualTo(countersBefore - 1);
+            assertThat(gd.stack).isEmpty();
+            harness.handleListChoice(player1, color.name());
+
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(before + 1);
+            assertThat(gd.stack).isEmpty();
+            assertThat(repository.isTapped()).isTrue();
+        }
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void eachRepositoryGetsItsOwnCounterFromAnAttack() {
+        Permanent first = addRepository();
+        Permanent second = addRepository();
+        Permanent attacker = addReadyBears();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of(2));
+        assertThat(first.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(second.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(attacker.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void attackTriggerDoesNotPutCountersOnTheAttackerWhenRepositoryLeaves() {
+        Permanent repository = addRepository();
+        Permanent attacker = addReadyBears();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of(1));
+        gd.playerBattlefields.get(player1.getId()).remove(repository);
+        gd.playerGraveyards.get(player1.getId()).add(repository.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(repository.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
     private Permanent addRepository() {
-        Permanent perm = new Permanent(new DruidsRepository());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new DruidsRepository());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyBears() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
         return bears;
     }
 }

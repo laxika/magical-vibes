@@ -60,6 +60,52 @@ class DryadSophisticateTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Attacking player's nonbasic land does not prevent blocking")
+    void canBeBlockedWhenOnlyAttackerControlsNonbasicLand() {
+        harness.addToBattlefield(player1, new GodlessShrine());
+        Permanent blocker = addCreatureReady(player2, new WildCantor());
+        Permanent attacker = addCreatureReady(player1, new DryadSophisticate());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can be blocked after defending player's last nonbasic land leaves")
+    void canBeBlockedAfterNonbasicLandLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new GodlessShrine());
+        Permanent blocker = addCreatureReady(player2, new WildCantor());
+        Permanent attacker = addCreatureReady(player1, new DryadSophisticate());
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        gd.playerGraveyards.get(player2.getId()).add(land.getCard());
+
+        prepareDeclareBlockers(player1);
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A basic land does not cancel nonbasic landwalk when both lands are controlled")
+    void cannotBeBlockedWithMixedLands() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new GodlessShrine());
+        Permanent blocker = addCreatureReady(player2, new WildCantor());
+        Permanent attacker = addCreatureReady(player1, new DryadSophisticate());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
     private void declareBlock(Permanent blocker, Permanent attacker) {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),

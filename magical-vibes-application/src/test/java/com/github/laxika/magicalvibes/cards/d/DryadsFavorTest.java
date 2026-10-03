@@ -4,11 +4,14 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,38 +20,33 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DryadsFavor.class, RuneclawBear.class, Mountain.class, Forest.class})
 class DryadsFavorTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Dryad's Favor puts it on the stack as enchantment spell")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new RuneclawBear());
 
         harness.setHand(player1, List.of(new DryadsFavor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Dryad's Favor");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(DryadsFavor.class);
     }
 
     @Test
     @DisplayName("Resolving Dryad's Favor attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new RuneclawBear());
 
         harness.setHand(player1, List.of(new DryadsFavor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -58,18 +56,13 @@ class DryadsFavorTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Forestwalk =====
-
     @Test
     @DisplayName("Enchanted creature has forestwalk")
     void enchantedCreatureHasForestwalk() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new RuneclawBear());
 
-        Permanent favorPerm = new Permanent(new DryadsFavor());
+        Permanent favorPerm = harness.addToBattlefieldAndReturn(player1, new DryadsFavor());
         favorPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(favorPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FORESTWALK)).isTrue();
     }
@@ -77,17 +70,12 @@ class DryadsFavorTest extends BaseCardTest {
     @Test
     @DisplayName("Dryad's Favor does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new RuneclawBear());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherBears = addCreatureReady(player1, new RuneclawBear());
 
-        Permanent favorPerm = new Permanent(new DryadsFavor());
+        Permanent favorPerm = harness.addToBattlefieldAndReturn(player1, new DryadsFavor());
         favorPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(favorPerm);
 
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FORESTWALK)).isFalse();
     }
@@ -95,13 +83,10 @@ class DryadsFavorTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses forestwalk when Dryad's Favor is removed")
     void creatureLosesForestwalkWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new RuneclawBear());
 
-        Permanent favorPerm = new Permanent(new DryadsFavor());
+        Permanent favorPerm = harness.addToBattlefieldAndReturn(player1, new DryadsFavor());
         favorPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(favorPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FORESTWALK)).isTrue();
 
@@ -112,19 +97,15 @@ class DryadsFavorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FORESTWALK)).isFalse();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Dryad's Favor fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new RuneclawBear());
 
         harness.setHand(player1, List.of(new DryadsFavor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         // Remove the target before resolution
         gd.playerBattlefields.get(player1.getId()).clear();
@@ -136,31 +117,17 @@ class DryadsFavorTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dryad's Favor");
     }
 
-    // ===== Orphaned aura =====
-
     @Test
     @DisplayName("Dryad's Favor goes to graveyard when enchanted creature dies")
     void goesToGraveyardWhenCreatureDies() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
 
-        Permanent favorPerm = new Permanent(new DryadsFavor());
+        Permanent favorPerm = harness.addToBattlefieldAndReturn(player2, new DryadsFavor());
         favorPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(favorPerm);
 
-        Permanent attackerPerm = new Permanent(new GrizzlyBears());
-        attackerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(attackerPerm);
+        addCreatureReady(player1, new RuneclawBear());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -168,13 +135,11 @@ class DryadsFavorTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Dryad's Favor");
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RuneclawBear());
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new DryadsFavor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -184,5 +149,53 @@ class DryadsFavorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+    @ParameterizedTest
+    @CsvSource({"true, false, false", "false, false, true", "false, true, true"})
+    @DisplayName("Only a Forest controlled by the defending player prevents blocking")
+    void forestwalkDependsOnDefendingPlayersForest(boolean defenderHasForest,
+                                                  boolean attackerHasForest,
+                                                  boolean canBlock) {
+        Permanent attacker = addCreatureReady(player1, new RuneclawBear());
+        Permanent blocker = addCreatureReady(player2, new RuneclawBear());
+        if (defenderHasForest) {
+            harness.addToBattlefield(player2, new Forest());
+        } else {
+            harness.addToBattlefield(player2, new Mountain());
+        }
+        if (attackerHasForest) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        harness.setHand(player1, List.of(new DryadsFavor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        if (canBlock) {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            assertThat(blocker.isBlocking()).isTrue();
+        } else {
+            assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                    List.of(new BlockerAssignment(0, 0))))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("can't be blocked");
+        }
+    }
+
+    @Test
+    @DisplayName("Dryad's Favor can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new RuneclawBear());
+        harness.setHand(player1, List.of(new DryadsFavor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Dryad's Favor");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FORESTWALK)).isTrue();
     }
 }
