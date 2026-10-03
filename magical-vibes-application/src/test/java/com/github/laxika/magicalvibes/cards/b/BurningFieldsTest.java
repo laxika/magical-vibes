@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BurningFields.class)
+@CardUsed({BurningFields.class, JaceBeleren.class, ShuFootSoldiers.class})
 class BurningFieldsTest extends BaseCardTest {
 
     private void addManaForBurningFields() {
@@ -31,14 +31,12 @@ class BurningFieldsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BurningFields()));
         addManaForBurningFields();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player2, 15);
     }
 
     @Test
-    @CardUsed(JaceBeleren.class)
     @DisplayName("Deals 5 damage to a planeswalker")
     void dealsDamageToPlaneswalker() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
@@ -47,8 +45,7 @@ class BurningFieldsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BurningFields()));
         addManaForBurningFields();
 
-        harness.castSorcery(player1, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
@@ -65,7 +62,6 @@ class BurningFieldsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cannot target an opponent's creature — only opponent or planeswalker")
-    @CardUsed(ShuFootSoldiers.class)
     void cannotTargetCreature() {
         Permanent creature = addCreatureReady(player2, new ShuFootSoldiers());
         harness.setHand(player1, List.of(new BurningFields()));
@@ -73,5 +69,44 @@ class BurningFieldsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Lethal damage puts an opponent's planeswalker into its owner's graveyard")
+    void destroysOpponentsPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BurningFields()));
+        addManaForBurningFields();
+
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Jace Beleren");
+        harness.assertInGraveyard(player2, "Jace Beleren");
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Burning Fields");
+    }
+
+    @Test
+    @DisplayName("Does not redirect damage to a player when the targeted planeswalker leaves")
+    void doesNotDamagePlayerWhenPlaneswalkerTargetLeaves() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BurningFields()));
+        addManaForBurningFields();
+
+        harness.castSorcery(player1, 0, planeswalker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        gd.playerHands.get(player2.getId()).add(planeswalker.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Jace Beleren");
+        harness.assertInGraveyard(player1, "Burning Fields");
+        assertThat(gd.stack).isEmpty();
     }
 }
