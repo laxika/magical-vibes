@@ -28,8 +28,7 @@ class DematerializeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Dematerialize()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInHand(player2, "Forest");
@@ -69,8 +68,7 @@ class DematerializeTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Dematerialize()));
         harness.addMana(player1, ManaColor.BLUE, 7);
 
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Aven Fisher");
         harness.assertInHand(player2, "Aven Fisher");
@@ -80,4 +78,74 @@ class DematerializeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Dematerialize"));
     }
+
+    @Test
+    @DisplayName("Can return a permanent controlled by the caster")
+    void returnsOwnPermanent() {
+        harness.addToBattlefield(player1, new Forest());
+        UUID targetId = harness.getPermanentId(player1, "Forest");
+        harness.setHand(player1, List.of(new Dematerialize()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Dematerialize");
+    }
+
+    @Test
+    @DisplayName("Returns a permanent to its owner rather than its controller")
+    void returnsPermanentToOwnerRatherThanController() {
+        Forest forest = new Forest();
+        forest.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, forest);
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+        harness.setHand(player1, List.of(new Dematerialize()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Flashback requires two blue mana")
+    void flashbackRequiresTwoBlueMana() {
+        harness.addToBattlefield(player2, new Forest());
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+        harness.setGraveyard(player1, List.of(new Dematerialize()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Not enough mana");
+
+        harness.assertInGraveyard(player1, "Dematerialize");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback still exiles the spell when its target leaves before resolution")
+    void flashbackExilesSpellWhenTargetLeaves() {
+        var target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setGraveyard(player1, List.of(new Dematerialize()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castFlashback(player1, 0, target.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(harness.getGameData(), target));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotInHand(player2, "Forest");
+        harness.assertNotInGraveyard(player1, "Dematerialize");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Dematerialize"));
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
 }
