@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -41,12 +40,7 @@ class DragonsRageChannelerTest extends BaseCardTest {
     void deliriumRequiresAttack() {
         addChanneler(List.of(new GrizzlyBears(), new Forest(), new Shock(), new Millstone()));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -130,14 +124,84 @@ class DragonsRageChannelerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, channeler)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, channeler, Keyword.FLYING)).isTrue();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
 
+    @Test
+    @DisplayName("Surveil may leave the top card in the library")
+    void surveilCanKeepTopCard() {
+        addChanneler(List.of());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger surveil")
+    void opponentSpellDoesNotTriggerSurveil() {
+        addChanneler(List.of());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Delirium bonuses and the attack requirement disappear below four types")
+    void losingDeliriumRemovesBonusesAndAttackRequirement() {
+        Permanent channeler = addChanneler(List.of(
+                new GrizzlyBears(), new Forest(), new Shock(), new Millstone()));
+        assertThat(gqs.getEffectivePower(gd, channeler)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.FLYING)).isTrue();
+
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock()));
+
+        assertThat(gqs.getEffectivePower(gd, channeler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, channeler)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.FLYING)).isFalse();
+        declareAttackers(List.of());
+        assertThat(channeler.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Four cards of fewer than four types do not enable delirium")
+    void deliriumCountsDistinctTypesRatherThanCards() {
+        Permanent channeler = addChanneler(List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new Forest(), new Shock()));
+
+        assertThat(gqs.getEffectivePower(gd, channeler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, channeler)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Surveilling the fourth card type immediately enables delirium")
+    void surveilEnablesDelirium() {
+        Permanent channeler = addChanneler(List.of(new GrizzlyBears(), new Forest(), new Millstone()));
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(gqs.getEffectivePower(gd, channeler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, channeler)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.FLYING)).isTrue();
+    }
 }
