@@ -52,7 +52,7 @@ class PiaNalaarChiefMechanicTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(aetherjet.getCard().hasType(CardType.ARTIFACT)).isTrue();
-        assertThat(aetherjet.getCard().hasSubtype(CardSubtype.VEHICLE)).isTrue();
+        assertThat(aetherjet.getCard().getSubtypes()).contains(CardSubtype.VEHICLE);
         assertThat(aetherjet.getCard().hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(aetherjet.getEffectivePower()).isEqualTo(3);
         assertThat(aetherjet.getEffectiveToughness()).isEqualTo(3);
