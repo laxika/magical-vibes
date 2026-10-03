@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DistemperOfTheBlood.class, GrizzlyBears.class, FountainOfYouth.class, RavensCrime.class})
 class DistemperOfTheBloodTest extends BaseCardTest {
 
     private DistemperOfTheBlood discardViaRavensCrime() {
@@ -28,8 +30,7 @@ class DistemperOfTheBloodTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return distemper;
     }
@@ -106,5 +107,41 @@ class DistemperOfTheBloodTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getId().equals(distemper.getId()));
+    }
+
+    @Test
+    @DisplayName("Declining madness moves the discarded card from exile to the graveyard")
+    void decliningMadnessPutsCardInGraveyard() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        DistemperOfTheBlood distemper = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThat(gd.findExiledCard(distemper.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(distemper);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(distemper.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(distemper);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Madness cannot cast without a legal creature target and does not spend mana")
+    void madnessWithoutLegalTargetPutsCardInGraveyard() {
+        DistemperOfTheBlood distemper = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(distemper.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(distemper);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
