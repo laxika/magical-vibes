@@ -85,13 +85,91 @@ class CurseOfSilenceTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Curse of Silence");
         harness.assertInGraveyard(player1, "Curse of Silence");
         harness.assertInHand(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("The sacrifice decision is made on resolution, after players can respond")
+    void sacrificeChoiceWaitsForTriggerResolution() {
+        castCurseOfSilence();
+        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.setLibrary(player1, List.of(new Shock()));
+
+        preparePlayer2MainPhase();
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Curse of Silence");
+        harness.assertNotInHand(player1, "Shock");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A nonexistent card name cannot be chosen")
+    void rejectsNonexistentCardName() {
+        castCurseOfSilence();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "This Is Not An Oracle Card Name 123456789"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.assertNotOnBattlefield(player1, "Curse of Silence");
+
+        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Curse of Silence");
+    }
+
+    @Test
+    @DisplayName("Declining the sacrifice leaves the Curse in play and draws nothing")
+    void decliningSacrificeKeepsCurse() {
+        castCurseOfSilence();
+        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.setLibrary(player1, List.of(new Shock()));
+
+        preparePlayer2MainPhase();
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.castCreature(player2, 0);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Curse of Silence");
+        harness.assertNotInGraveyard(player1, "Curse of Silence");
+        harness.assertNotInHand(player1, "Shock");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Overlapping triggers cannot sacrifice the same Curse twice")
+    void overlappingTriggersDrawOnlyOnce() {
+        castCurseOfSilence();
+        harness.handleListChoice(player1, "Shock");
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        preparePlayer2MainPhase();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Curse of Silence");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player1, 16);
     }
 
     private void castCurseOfSilence() {
