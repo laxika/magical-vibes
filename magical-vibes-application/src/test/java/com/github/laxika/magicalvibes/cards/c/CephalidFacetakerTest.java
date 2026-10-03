@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CephalidFacetaker.class, GrizzlyBears.class})
+@CardUsed({CephalidFacetaker.class, GrizzlyBears.class, Clone.class})
 class CephalidFacetakerTest extends BaseCardTest {
 
     @Test
@@ -57,8 +57,7 @@ class CephalidFacetakerTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.ensurePriority(player1);
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(facetaker.getCard().getName()).isEqualTo("Cephalid Facetaker");
     }
@@ -78,10 +77,75 @@ class CephalidFacetakerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Does not trigger during the opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        addCreatureReady(player1, new CephalidFacetaker());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToBeginningOfCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("No copy choice is offered when there is no other creature")
+    void noOtherCreature() {
+        Permanent facetaker = addCreatureReady(player1, new CephalidFacetaker());
+
+        advanceToBeginningOfCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, facetaker)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A subsequent copy inherits the unblockable exception")
+    void unblockableExceptionIsCopiable() {
+        Permanent first = addCreatureReady(player1, new CephalidFacetaker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, first.getId());
+        resolveAllTriggers();
+
+        Permanent second = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
+                .findFirst().orElseThrow();
+
+        assertThat(second.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.CLEANUP);
+
+        assertThat(first.getCard().getName()).isEqualTo("Cephalid Facetaker");
+        assertThat(second.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
+    }
+
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
