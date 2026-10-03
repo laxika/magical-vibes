@@ -87,6 +87,87 @@ class DesertWereWormTest extends BaseCardTest {
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Opponent's Mountains do not increase the Were-Worm's power")
+    void ignoresOpponentsMountains() {
+        Permanent worm = addCreatureReady(player1, new DesertWereWorm());
+        addMountains(1);
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+
+        assertThat(gqs.getEffectivePower(gd, worm)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exactly twelve power qualifies even when the Were-Worm does not attack")
+    void exactThresholdDoesNotRequireSourceToAttack() {
+        Permanent source = addCreatureReady(player1, new DesertWereWorm());
+        Permanent attacker = addCreatureReady(player1, new DesertWereWorm());
+        addMountains(6);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            assertThat(gd.stack).hasSize(2);
+            resolveAllTriggers();
+        });
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Losing power after attackers are declared does not stop the trigger")
+    void powerConditionIsNotCheckedAgainAtResolution() {
+        Permanent worm = addCreatureReady(player1, new DesertWereWorm());
+        addMountains(6);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            gd.playerBattlefields.get(player1.getId())
+                    .removeIf(permanent -> permanent.getCard() instanceof Mountain);
+            resolveAllTriggers();
+        });
+
+        assertThat(worm.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature removed from combat is not untapped by the attack trigger")
+    void doesNotUntapCreatureNoLongerAttacking() {
+        Permanent worm = addCreatureReady(player1, new DesertWereWorm());
+        addMountains(6);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            worm.setAttacking(false);
+            resolveAllTriggers();
+        });
+
+        assertThat(worm.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Were-Worm entering after the first qualifying attack cannot trigger that turn")
+    void newlyEnteredSourceDoesNotTriggerOnLaterQualifyingAttack() {
+        addCreatureReady(player1, new DesertWereWorm());
+        addMountains(6);
+        gd.combatPhasesThisTurn = 1;
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new DesertWereWorm());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addMountains(int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player1, new Mountain());
