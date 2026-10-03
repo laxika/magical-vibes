@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcehideGolem;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,11 +12,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeadOfWinter.class, GrizzlyBears.class, SnowCoveredSwamp.class})
+@CardUsed({DeadOfWinter.class, GrizzlyBears.class, IcehideGolem.class, SnowCoveredSwamp.class})
 class DeadOfWinterTest extends BaseCardTest {
 
     @Test
@@ -69,14 +68,76 @@ class DeadOfWinterTest extends BaseCardTest {
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Opponent's snow permanents do not cause a debuff when the controller has none")
+    void zeroSnowPermanentsDoesNotDebuffCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SnowCoveredSwamp());
+
+        castDeadOfWinter();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Snow artifact creatures count once toward X and are themselves unaffected")
+    void countsSnowCreatureWithoutDebuffingIt() {
+        Permanent snowCreature = harness.addToBattlefieldAndReturn(player1, new IcehideGolem());
+        Permanent nonsnowCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castDeadOfWinter();
+
+        assertThat(nonsnowCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(nonsnowCreature.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Icehide Golem");
+        assertThat(snowCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(snowCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counts snow permanents at resolution rather than when cast")
+    void countsSnowPermanentsAtResolution() {
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        putDeadOfWinterOnStack();
+        harness.addToBattlefield(player1, new IcehideGolem());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Icehide Golem");
+    }
+
+    @Test
+    @DisplayName("Later snow permanents and creatures do not change the resolved debuff")
+    void locksAmountAndAffectedCreaturesAtResolution() {
+        Permanent originalCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+
+        castDeadOfWinter();
+        harness.enterBattlefieldAndReturn(player1, new IcehideGolem());
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, originalCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, originalCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void castDeadOfWinter() {
+        putDeadOfWinterOnStack();
+        harness.passBothPriorities();
+    }
+
+    private void putDeadOfWinterOnStack() {
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new DeadOfWinter()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new DeadOfWinter(), "{2}{B}");
     }
 }
