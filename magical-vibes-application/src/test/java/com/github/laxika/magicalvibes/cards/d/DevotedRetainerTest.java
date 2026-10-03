@@ -77,6 +77,45 @@ class DevotedRetainerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bushido waits for its triggered ability to resolve")
+    void bushidoBonusIsNotAppliedImmediately() {
+        Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
+        retainer.setAttacking(true);
+        addCreatureReady(player2, new HumbleBudoka());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(retainer.getPowerModifier()).isZero();
+        assertThat(retainer.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(retainer.getPowerModifier()).isEqualTo(1);
+        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bushido's bonus remains after combat ends")
+    void bushidoBonusLastsBeyondCombat() {
+        Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
+        retainer.setAttacking(true);
+        addCreatureReady(player2, new HumbleBudoka());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(retainer.getPowerModifier()).isEqualTo(1);
+        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Devoted Retainer's Bushido bonus wears off at end of turn")
     void bushidoBonusWearsOffAtEndOfTurn() {
         Permanent retainer = addCreatureReady(player1, new DevotedRetainer());
