@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,10 +15,7 @@ class DakkonBlackbladeTest extends BaseCardTest {
     @Test
     @DisplayName("Dakkon dies to state-based actions with no lands")
     void diesWithNoLands() {
-        harness.setHand(player1, java.util.List.of(new DakkonBlackblade()));
-        addManaForDakkon();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DakkonBlackblade(), "{2}{W}{U}{U}{B}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Dakkon Blackblade");
@@ -68,10 +64,49 @@ class DakkonBlackbladeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, dakkon)).isEqualTo(0);
     }
 
-    private void addManaForDakkon() {
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Dakkon survives resolution with a land and dies when the last land leaves")
+    void survivesWithLandThenDiesWithoutLands() {
+        harness.addToBattlefield(player1, new DiamondValley());
+        harness.castFromHand(player1, new DakkonBlackblade(), "{2}{W}{U}{U}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dakkon Blackblade");
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().hasType(CardType.LAND));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Dakkon Blackblade");
+        harness.assertInGraveyard(player1, "Dakkon Blackblade");
+    }
+
+    @Test
+    @DisplayName("Dakkon's characteristic-defining ability works in hand")
+    void countsOwnersLandsInHand() {
+        DakkonBlackblade dakkon = new DakkonBlackblade();
+        harness.setHand(player1, java.util.List.of(dakkon));
+        harness.addToBattlefield(player1, new DiamondValley());
+        harness.addToBattlefield(player2, new DiamondValley());
+        harness.addToBattlefield(player2, new DiamondValley());
+
+        assertThat(gqs.getEffectiveCardPower(gd, dakkon)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, dakkon)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dakkon's characteristic-defining ability updates in the graveyard")
+    void countsOwnersLandsInGraveyard() {
+        DakkonBlackblade dakkon = new DakkonBlackblade();
+        harness.setGraveyard(player1, java.util.List.of(dakkon));
+        harness.addToBattlefield(player2, new DiamondValley());
+
+        assertThat(gqs.getEffectiveCardPower(gd, dakkon)).isEqualTo(0);
+        assertThat(gqs.getEffectiveCardToughness(gd, dakkon)).isEqualTo(0);
+
+        harness.addToBattlefield(player1, new DiamondValley());
+        harness.addToBattlefield(player1, new DiamondValley());
+
+        assertThat(gqs.getEffectiveCardPower(gd, dakkon)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, dakkon)).isEqualTo(2);
     }
 }
