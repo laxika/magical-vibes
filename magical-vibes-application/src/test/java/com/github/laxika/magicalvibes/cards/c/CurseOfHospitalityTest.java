@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,8 +19,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CurseOfHospitality.class, Divination.class, GrizzlyBears.class})
+@CardUsed({CurseOfHospitality.class, Divination.class, GrizzlyBears.class, Island.class, ActOfAggression.class})
 class CurseOfHospitalityTest extends BaseCardTest {
 
     @Test
@@ -79,6 +83,161 @@ class CurseOfHospitalityTest extends BaseCardTest {
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
     }
 
+    @Test
+    @DisplayName("Curse can be cast attached to a player")
+    void canEnchantPlayer() {
+        harness.setHand(player1, List.of(new CurseOfHospitality()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Curse of Hospitality").getAttachedTo())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Each damaging creature exiles one card, regardless of damage amount")
+    void eachCreatureExilesOneCard() {
+        placeCurseOnPlayer2();
+        addAttacker(player1, player2);
+        addAttacker(player1, player2);
+        Card first = new Island();
+        Card second = new Island();
+        Card third = new Island();
+        harness.setLibrary(player2, List.of(first, second, third));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.findExiledCard(first.getId())).isNotNull();
+        assertThat(gd.findExiledCard(second.getId())).isNotNull();
+        assertThat(gd.findExiledCard(third.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
+        assertThat(gd.exilePlayPermissions.get(first.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissions.get(second.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Damage to an unenchanted player does not exile a card")
+    void damageToOtherPlayerDoesNotTrigger() {
+        Permanent curse = placeCurseOnPlayer2();
+        curse.setAttachedTo(player1.getId());
+        addAttacker(player1, player2);
+        Card topCard = new Island();
+        harness.setLibrary(player2, List.of(topCard));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("An empty library exiles nothing and does not cause a loss")
+    void emptyLibraryDoesNothing() {
+        placeCurseOnPlayer2();
+        addAttacker(player1, player2);
+        harness.setLibrary(player2, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The creature controller can play an exiled land during their main phase")
+    void canPlayExiledLand() {
+        placeCurseOnPlayer2();
+        addAttacker(player1, player2);
+        Card land = new Island();
+        harness.setLibrary(player2, List.of(land));
+
+        resolveCombatAndTrigger();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromExile(player1, land.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(land.getId()));
+        assertThat(gd.findExiledCard(land.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Exiled sorceries still require sorcery timing")
+    void permissionDoesNotOverrideTiming() {
+        placeCurseOnPlayer2();
+        addAttacker(player1, player2);
+        Card spell = new Divination();
+        harness.setLibrary(player2, List.of(spell));
+
+        resolveCombatAndTrigger();
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Unplayed cards remain exiled after permission expires at cleanup")
+    void permissionExpiresAtCleanup() {
+        placeCurseOnPlayer2();
+        addAttacker(player1, player2);
+        Card topCard = new Divination();
+        harness.setLibrary(player2, List.of(topCard));
+
+        resolveCombatAndTrigger();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayAnyManaType).doesNotContain(topCard.getId());
+    }
+
+    @Test
+    @DisplayName("Removing the curse after damage does not stop its trigger")
+    void triggerSurvivesCurseLeaving() {
+        Permanent curse = placeCurseOnPlayer2();
+        addAttacker(player1, player2);
+        Card topCard = new Island();
+        harness.setLibrary(player2, List.of(topCard));
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(curse);
+        gd.playerGraveyards.get(player1.getId()).add(curse.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Play permission belongs to the creature's controller when the trigger resolves")
+    void permissionUsesControllerAtResolution() {
+        placeCurseOnPlayer2();
+        Permanent attacker = addAttacker(player1, player2);
+        Card topCard = new Island();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setHand(player2, List.of(new ActOfAggression()));
+
+        resolveCombat();
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player2.getId());
+    }
+
     private Permanent placeCurseOnPlayer2() {
         Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfHospitality());
         curse.setAttachedTo(player2.getId());
@@ -95,6 +254,6 @@ class CurseOfHospitalityTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
     }
 }
