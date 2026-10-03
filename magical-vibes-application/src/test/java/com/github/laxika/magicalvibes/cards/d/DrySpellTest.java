@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.event.GameEventFact.GameResult;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -56,9 +57,8 @@ class DrySpellTest extends BaseCardTest {
         harness.castFromHand(player1, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -70,6 +70,36 @@ class DrySpellTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(artifact.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void drawsWhenBothPlayersHaveOneLife() {
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 1);
+
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.gameResult).isEqualTo(GameResult.DRAW);
+    }
+
+    @Test
+    void damageAccumulatesAcrossSpellsInTheSameTurn() {
+        harness.addToBattlefield(player2, new BeastWalkers());
+
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Beast Walkers");
+
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Beast Walkers");
+        harness.assertInGraveyard(player2, "Beast Walkers");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
