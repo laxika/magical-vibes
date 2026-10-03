@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -58,5 +60,60 @@ class DreamstoneHedronTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Dreamstone Hedron");
+    }
+
+    @Test
+    @DisplayName("A tapped Dreamstone Hedron cannot produce mana again")
+    void cannotActivateManaAbilityWhileTapped() {
+        Permanent hedron = harness.addToBattlefieldAndReturn(player1, new DreamstoneHedron());
+        hedron.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Dreamstone Hedron");
+    }
+
+    @Test
+    @DisplayName("Mana produced by Dreamstone Hedron cannot pay for its own draw ability while it is tapped")
+    void cannotActivateDrawAbilityAfterTappingForMana() {
+        harness.addToBattlefield(player1, new DreamstoneHedron());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Dreamstone Hedron");
+        harness.assertNotInGraveyard(player1, "Dreamstone Hedron");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colored mana pays the generic draw cost and only the controller draws")
+    void coloredManaPaysForDrawAbility() {
+        harness.addToBattlefield(player1, new DreamstoneHedron());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        DreamstoneHedron first = new DreamstoneHedron();
+        DreamstoneHedron second = new DreamstoneHedron();
+        DreamstoneHedron third = new DreamstoneHedron();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        GameData gd = harness.getGameData();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.assertInGraveyard(player1, "Dreamstone Hedron");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
     }
 }
