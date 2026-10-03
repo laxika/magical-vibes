@@ -24,7 +24,7 @@ class AllStarKickerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent kicker = findPermanent("All-Star Kicker");
+        Permanent kicker = findPermanent(player1, "All-Star Kicker");
         assertThat(kicker.getEffectivePower()).isEqualTo(2);
         assertThat(kicker.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, kicker, Keyword.HASTE)).isFalse();
@@ -41,7 +41,7 @@ class AllStarKickerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent kicker = findPermanent("All-Star Kicker");
+        Permanent kicker = findPermanent(player1, "All-Star Kicker");
         assertThat(kicker.getEffectivePower()).isEqualTo(3);
         assertThat(kicker.getEffectiveToughness()).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, kicker, Keyword.HASTE)).isTrue();
@@ -61,15 +61,33 @@ class AllStarKickerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    void kickedAbilityAffectsOnlyOwnCreaturesPresentWhenItResolves() {
+        Permanent opponentCreature = addCreatureReady(player2, new AllStarKicker());
+        harness.setHand(player1, List.of(new AllStarKicker()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent beforeResolution = addCreatureReady(player1, new AllStarKicker());
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreatureReady(player1, new AllStarKicker());
+
+        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
+        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
+        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
+        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
+        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
+    }
+
     private void addBaseMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
     }
 
-    private Permanent findPermanent(String name) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow();
-    }
 }

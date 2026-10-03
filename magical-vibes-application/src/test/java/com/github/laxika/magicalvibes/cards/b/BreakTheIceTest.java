@@ -65,6 +65,70 @@ class BreakTheIceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
     }
 
+    @Test
+    @DisplayName("A tapped colorless-producing land remains a legal target")
+    void destroysTappedColorlessProducingLand() {
+        Permanent wastes = harness.addToBattlefieldAndReturn(player2, new Wastes());
+        wastes.setTapped(true);
+
+        castBreakTheIce(wastes.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wastes);
+        harness.assertInGraveyard(player2, "Wastes");
+    }
+
+    @Test
+    @DisplayName("Normal casting destroys only the chosen land, including your own land")
+    void destroysOnlyChosenLandYouControl() {
+        Permanent ownWastes = harness.addToBattlefieldAndReturn(player1, new Wastes());
+        Permanent otherWastes = harness.addToBattlefieldAndReturn(player2, new Wastes());
+        Permanent snowForest = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
+
+        castBreakTheIce(ownWastes.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownWastes);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherWastes, snowForest);
+        harness.assertInGraveyard(player1, "Wastes");
+    }
+
+    @Test
+    @DisplayName("Overload also destroys your qualifying lands")
+    void overloadDestroysQualifyingLandsOfBothPlayers() {
+        Permanent ownWastes = harness.addToBattlefieldAndReturn(player1, new Wastes());
+        Permanent ownSnowForest = harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest());
+        Permanent otherWastes = harness.addToBattlefieldAndReturn(player2, new Wastes());
+        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.setHand(player1, List.of(new BreakTheIce()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownWastes, ownSnowForest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownForest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(otherWastes);
+        harness.assertInGraveyard(player1, "Wastes");
+        harness.assertInGraveyard(player1, "Snow-Covered Forest");
+        harness.assertInGraveyard(player2, "Wastes");
+    }
+
+    @Test
+    @DisplayName("Overload can be cast and resolve without any qualifying land")
+    void overloadResolvesWithoutQualifyingLands() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new BreakTheIce()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+        harness.assertInGraveyard(player1, "Break the Ice");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castBreakTheIce(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new BreakTheIce()));
         harness.addMana(player1, ManaColor.BLACK, 2);

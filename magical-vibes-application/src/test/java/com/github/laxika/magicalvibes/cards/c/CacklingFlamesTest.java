@@ -63,6 +63,31 @@ class CacklingFlamesTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    void dealsFiveDamageWhenHandBecomesEmptyBeforeResolution() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new CacklingFlames(), new CacklingFlames()));
+        addMana();
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void canTargetItsControllerAndUsesTheirHandForHellbent() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new CacklingFlames()));
+        harness.setHand(player2, List.of(new CacklingFlames()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 15);
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AerathiBerserker.class, BarbaryApes.class})
+@CardUsed({AerathiBerserker.class, BarbaryApes.class, Boomerang.class})
 class AerathiBerserkerTest extends BaseCardTest {
 
     @Test
@@ -79,7 +81,45 @@ class AerathiBerserkerTest extends BaseCardTest {
         assertThat(berserker.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Rampage counts blockers when its trigger resolves")
+    void blockerReturnedBeforeResolutionReducesBonus() {
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent berserker = addBerserkerAndDeclareBlockers(2, false);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(berserker.getEffectivePower()).isEqualTo(2);
+        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(berserker.getEffectivePower()).isEqualTo(2);
+        assertThat(berserker.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Removing a blocker after rampage resolves does not change its bonus")
+    void blockerReturnedAfterResolutionDoesNotReduceBonus() {
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent berserker = addBerserkerAndDeclareBlockers(2);
+
+        assertThat(berserker.getEffectivePower()).isEqualTo(5);
+        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(berserker.getEffectivePower()).isEqualTo(5);
+        assertThat(berserker.getEffectiveToughness()).isEqualTo(7);
+    }
+
     private Permanent addBerserkerAndDeclareBlockers(int blockerCount) {
+        return addBerserkerAndDeclareBlockers(blockerCount, true);
+    }
+
+    private Permanent addBerserkerAndDeclareBlockers(int blockerCount, boolean resolveTrigger) {
         Permanent berserker = addCreatureReady(player1, new AerathiBerserker());
         for (int i = 0; i < blockerCount; i++) {
             addCreatureReady(player2, new BarbaryApes());
@@ -91,7 +131,9 @@ class AerathiBerserkerTest extends BaseCardTest {
         }
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, assignments);
-        harness.passBothPriorities();
+        if (resolveTrigger) {
+            harness.passBothPriorities();
+        }
         return berserker;
     }
 }

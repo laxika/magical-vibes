@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AmuletOfKroog.class, GrizzlyBears.class, CrawWurm.class, LightningBolt.class})
+@CardUsed({AmuletOfKroog.class, GrizzlyBears.class, CrawWurm.class, LightningBolt.class, Disenchant.class})
 class AmuletOfKroogTest extends BaseCardTest {
 
     private void addAmuletReady() {
@@ -59,8 +60,7 @@ class AmuletOfKroogTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
@@ -77,8 +77,7 @@ class AmuletOfKroogTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, wurm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wurm.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wurm);
         assertThat(wurm.getMarkedDamage()).isEqualTo(2);
@@ -100,10 +99,74 @@ class AmuletOfKroogTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Consumed shield does not prevent a later damage event")
+    void shieldOnlyPreventsOneDamageTotal() {
+        addAmuletReady();
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Two Amulets prevent two damage to the same player")
+    void shieldsFromMultipleAmuletsAccumulate() {
+        addAmuletReady();
+        addAmuletReady();
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if the Amulet is destroyed in response")
+    void abilitySurvivesSourceDestruction() {
+        Permanent amulet = harness.addToBattlefieldAndReturn(player1, new AmuletOfKroog());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.setHand(player1, List.of(new Disenchant(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, amulet.getId());
+        harness.assertNotOnBattlefield(player1, "Amulet of Kroog");
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact is not a legal target")
+    void cannotTargetNoncreatureArtifact() {
+        Permanent amulet = harness.addToBattlefieldAndReturn(player1, new AmuletOfKroog());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, amulet.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

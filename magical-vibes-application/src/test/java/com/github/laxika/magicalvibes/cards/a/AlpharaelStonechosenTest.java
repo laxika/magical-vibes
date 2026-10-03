@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StarfieldShepherd;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TezzeretCruelCaptain;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,10 +16,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AlpharaelStonechosen.class, GrizzlyBears.class, Shock.class, StarfieldShepherd.class, Swamp.class})
+@CardUsed({AlpharaelStonechosen.class, GrizzlyBears.class, Shock.class, StarfieldShepherd.class, Swamp.class,
+        TezzeretCruelCaptain.class})
 class AlpharaelStonechosenTest extends BaseCardTest {
 
     @Test
@@ -132,10 +136,133 @@ class AlpharaelStonechosenTest extends BaseCardTest {
         assertThat(alpharael.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Ward counters the spell when its controller declines to discard")
+    void wardCountersWhenDiscardIsDeclined() {
+        Permanent alpharael = addReadyAlpharael();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Shock(), new Swamp()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, alpharael.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInHand(player2, "Swamp");
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(alpharael.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ward does not trigger for the controller's own spell")
+    void wardDoesNotTriggerForOwnSpell() {
+        Permanent alpharael = addReadyAlpharael();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock(), new Swamp()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, alpharael.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Swamp");
+        assertThat(alpharael.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ward counters an opponent's activated ability when they cannot discard")
+    void wardCountersOpponentsActivatedAbility() {
+        Permanent alpharael = addReadyAlpharael();
+        alpharael.tap();
+        Permanent tezzeret = harness.addToBattlefieldAndReturn(player2, new TezzeretCruelCaptain());
+        tezzeret.setCounterCount(CounterType.LOYALTY, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player2, 0, 0, null, alpharael.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, this::resolveAllTriggers);
+
+        assertThat(alpharael.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyAlpharael() {
-        Permanent alpharael = new Permanent(new AlpharaelStonechosen());
-        alpharael.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(alpharael);
-        return alpharael;
+        return addCreatureReady(player1, new AlpharaelStonechosen());
+    }
+
+    @Test
+    @DisplayName("Void uses the defending player's life total at resolution")
+    void voidUsesLifeTotalAtResolution() {
+        addReadyAlpharael();
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new StarfieldShepherd());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, shepherd));
+        harness.setLife(player2, 19);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.setLife(player2, 24);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        harness.assertLife(player2, 12);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Void still resolves after Alpharael leaves combat and the battlefield")
+    void voidResolvesAfterSourceLeavesBattlefield() {
+        Permanent alpharael = addReadyAlpharael();
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new StarfieldShepherd());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, shepherd));
+        harness.setLife(player2, 19);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, alpharael));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        harness.assertLife(player2, 9);
+    }
+
+    @Test
+    @DisplayName("Void makes the defending player lose life when attacking a planeswalker")
+    void voidWhenAttackingPlaneswalker() {
+        attackPlaneswalker(false);
+    }
+
+    @Test
+    @DisplayName("Void still makes the defending player lose life after the attacked planeswalker leaves")
+    void voidWhenAttackedPlaneswalkerLeavesBeforeResolution() {
+        attackPlaneswalker(true);
+    }
+
+    private void attackPlaneswalker(boolean removeBeforeResolution) {
+        addReadyAlpharael();
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new StarfieldShepherd());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, shepherd));
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TezzeretCruelCaptain());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setLife(player2, 19);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId())));
+        assertThat(gd.stack).hasSize(1);
+        if (removeBeforeResolution) {
+            harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                    .removePermanentToGraveyard(gd, planeswalker));
+        }
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        harness.assertLife(player2, 9);
     }
 }

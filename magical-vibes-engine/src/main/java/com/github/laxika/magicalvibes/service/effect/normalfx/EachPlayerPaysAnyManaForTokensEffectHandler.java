@@ -52,7 +52,8 @@ public class EachPlayerPaysAnyManaForTokensEffectHandler implements NormalEffect
             state.reset();
             state.active = true;
             state.sourceSetCode = entry.getCard().getSetCode();
-            seedApnapOrder(gameData, state);
+            seedPaymentOrder(gameData, state,
+                    payEffect.eachPlayerCreatesTotal() ? entry.getControllerId() : gameData.activePlayerId);
             promptOrFinish(gameData, payEffect, cardName);
             return;
         }
@@ -85,10 +86,10 @@ public class EachPlayerPaysAnyManaForTokensEffectHandler implements NormalEffect
         promptOrFinish(gameData, payEffect, cardName);
     }
 
-    /** Active player first, then the remaining players in turn order (CR 101.4). */
-    private static void seedApnapOrder(GameData gameData, EachPlayerPayManaState state) {
+    /** Prompts the designated first player, followed by the remaining players in turn order. */
+    private static void seedPaymentOrder(GameData gameData, EachPlayerPayManaState state, UUID firstPlayerId) {
         int size = gameData.orderedPlayerIds.size();
-        int start = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
+        int start = Math.max(0, gameData.orderedPlayerIds.indexOf(firstPlayerId));
         for (int i = 0; i < size; i++) {
             UUID playerId = gameData.orderedPlayerIds.get((start + i) % size);
             state.order.add(playerId);

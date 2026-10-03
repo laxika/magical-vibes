@@ -74,12 +74,48 @@ class BattleFrenzyTest extends BaseCardTest {
 
         castBattleFrenzy();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(findPermanent(player1, "Balduvian Bears").getEffectivePower()).isEqualTo(2);
         assertThat(findPermanent(player1, "Balduvian Bears").getEffectiveToughness()).isEqualTo(2);
         assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Affects creatures present at resolution, but not creatures entering afterward")
+    void locksInCreaturesAtResolution() {
+        harness.castFromHand(player1, new BattleFrenzy(), "{2}{R}");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent barbarians = harness.addToBattlefieldAndReturn(player1, new BalduvianBarbarians());
+
+        harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(barbarians.getEffectivePower()).isEqualTo(4);
+        assertThat(barbarians.getEffectiveToughness()).isEqualTo(2);
+
+        Permanent laterBears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent laterBarbarians = harness.addToBattlefieldAndReturn(player1, new BalduvianBarbarians());
+
+        assertThat(laterBears.getEffectivePower()).isEqualTo(2);
+        assertThat(laterBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(laterBarbarians.getEffectivePower()).isEqualTo(3);
+        assertThat(laterBarbarians.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Battle Frenzies give cumulative bonuses")
+    void multipleCastsStack() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent barbarians = harness.addToBattlefieldAndReturn(player1, new BalduvianBarbarians());
+
+        castBattleFrenzy();
+        castBattleFrenzy();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(barbarians.getEffectivePower()).isEqualTo(5);
+        assertThat(barbarians.getEffectiveToughness()).isEqualTo(2);
     }
 }

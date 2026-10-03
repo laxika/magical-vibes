@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -81,5 +82,62 @@ class ChargeAcrossTheArabaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(controlledPlains);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(plainsCard);
+    }
+    @Test
+    @DisplayName("Returning only some eligible Plains counts only those returned")
+    void returningSomePlainsCountsOnlyThoseReturned() {
+        Permanent creature = addCreatureReady(player1, new MatsuTribeBirdstalker());
+        Permanent returnedPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent retainedPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        harness.castFromHand(player1, new ChargeAcrossTheAraba(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(returnedPlains.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(retainedPlains)
+                .doesNotContain(returnedPlains);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(returnedPlains.getCard());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Resolves without a choice or a boost when you control no Plains")
+    void resolvesWithoutPlains() {
+        Permanent creature = addCreatureReady(player1, new MatsuTribeBirdstalker());
+        Permanent opposingPlains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent nonPlainsLand = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
+
+        harness.castFromHand(player1, new ChargeAcrossTheAraba(), "{4}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonPlainsLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingPlains);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost affects only creatures present at resolution and expires at cleanup")
+    void boostExcludesLaterCreaturesAndExpiresAtCleanup() {
+        Permanent creature = addCreatureReady(player1, new MatsuTribeBirdstalker());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        harness.castFromHand(player1, new ChargeAcrossTheAraba(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(plains.getId()));
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new MatsuTribeBirdstalker());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

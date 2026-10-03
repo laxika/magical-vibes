@@ -26,21 +26,18 @@ class AlignedHeartTest extends BaseCardTest {
                 new LightningBolt(), new LightningBolt(), new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(heart.getCounterCount(CounterType.RALLY)).isZero();
         assertThat(countPermanents(player1, "Monk")).isZero();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(heart.getCounterCount(CounterType.RALLY)).isEqualTo(1);
         assertThat(countPermanents(player1, "Monk")).isEqualTo(1);
 
         Permanent monk = findPermanent(player1, "Monk");
         assertThat(gqs.hasKeyword(gd, monk, Keyword.PROWESS)).isTrue();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(countPermanents(player1, "Monk")).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(2);
     }
@@ -78,9 +75,47 @@ class AlignedHeartTest extends BaseCardTest {
     }
 
     private void castTwoSpells() {
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+    }
+
+    @Test
+    void triggersOnOpponentsTurnButOnlyForControllersSpells() {
+        Permanent heart = harness.addToBattlefieldAndReturn(player1, new AlignedHeart());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(heart.getCounterCount(CounterType.RALLY)).isZero();
+        assertThat(countPermanents(player1, "Monk")).isZero();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(heart.getCounterCount(CounterType.RALLY)).isZero();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(heart.getCounterCount(CounterType.RALLY)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Monk")).isEqualTo(1);
+        Permanent monk = findPermanent(player1, "Monk");
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(1);
+    }
+
+    @Test
+    void enteringAsSecondSpellDoesNotTriggerForItselfOrThirdSpell() {
+        harness.setHand(player1, List.of(new LightningBolt(), new AlignedHeart(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        Permanent heart = findPermanent(player1, "Aligned Heart");
+        assertThat(heart.getCounterCount(CounterType.RALLY)).isZero();
+        assertThat(countPermanents(player1, "Monk")).isZero();
     }
 }

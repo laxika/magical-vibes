@@ -99,6 +99,60 @@ class BalothNullTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
     }
 
+    @Test
+    @DisplayName("Choosing one of several creatures returns only the selected card")
+    void returnsOnlyOneSelectedCreature() {
+        Card selected = new BalothNull();
+        Card unselected = new BalothNull();
+        harness.setGraveyard(player1, List.of(selected, unselected));
+        harness.setHand(player1, List.of(new BalothNull()));
+
+        castBalothNull();
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselected);
+    }
+
+    @Test
+    @DisplayName("Opponent's creature cards are excluded from the target choice")
+    void excludesOpponentsGraveyard() {
+        Card ownCreature = new BalothNull();
+        Card opposingCreature = new BalothNull();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player1, List.of(new BalothNull()));
+
+        castBalothNull();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    @DisplayName("The remaining legal target returns when another target leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card removedCreature = new BalothNull();
+        Card remainingCreature = new BalothNull();
+        harness.setGraveyard(player1, List.of(removedCreature, remainingCreature));
+        harness.setHand(player1, List.of(new BalothNull()));
+
+        castBalothNull();
+        harness.handleMultipleCardsChosen(player1,
+                List.of(removedCreature.getId(), remainingCreature.getId()));
+        harness.setGraveyard(player1, List.of(remainingCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void castBalothNull() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

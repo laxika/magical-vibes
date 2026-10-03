@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CatharsCompanion.class, GrizzlyBears.class, LightningBolt.class})
 class CatharsCompanionTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class CatharsCompanionTest extends BaseCardTest {
 
         Permanent companion = findPermanent(player1, "Cathar's Companion");
         UUID companionId = companion.getId();
-        harness.castInstant(player1, 0, companionId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, companionId);
 
         assertThat(gqs.hasKeyword(gd, companion, Keyword.INDESTRUCTIBLE)).isTrue();
 
@@ -58,8 +59,7 @@ class CatharsCompanionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         Permanent companion = findPermanent(player1, "Cathar's Companion");
-        harness.castInstant(player1, 0, companion.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, companion.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -67,5 +67,42 @@ class CatharsCompanionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, companion, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not grant indestructible")
+    void opponentSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new CatharsCompanion());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        Permanent companion = findPermanent(player1, "Cathar's Companion");
+        harness.castAndResolveInstant(player2, 0, companion.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(companion);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof CatharsCompanion);
+    }
+
+    @Test
+    @DisplayName("Removal in response to the trigger can destroy the companion")
+    void removalBeforeTriggerResolvesDestroysCompanion() {
+        harness.addToBattlefield(player1, new CatharsCompanion());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        Permanent companion = findPermanent(player1, "Cathar's Companion");
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gqs.hasKeyword(gd, companion, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.castAndResolveInstant(player2, 0, companion.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(companion);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(companion);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 }

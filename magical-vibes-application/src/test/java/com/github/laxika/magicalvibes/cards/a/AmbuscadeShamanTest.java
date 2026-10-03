@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AmbuscadeShaman.class, GrizzlyBears.class, FugitiveWizard.class})
+@CardUsed({AmbuscadeShaman.class, GrizzlyBears.class, FugitiveWizard.class, UltimatePrice.class})
 class AmbuscadeShamanTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class AmbuscadeShamanTest extends BaseCardTest {
         addManaForNormalCast();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent shaman = findPermanent(player1, "Ambuscade Shaman");
         assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(4);
@@ -41,8 +41,7 @@ class AmbuscadeShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
@@ -75,8 +74,7 @@ class AmbuscadeShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
@@ -98,19 +96,110 @@ class AmbuscadeShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent shaman = findPermanent(player1, "Ambuscade Shaman");
         assertThat(shaman.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Ambuscade Shaman");
         harness.assertNotOnBattlefield(player1, "Ambuscade Shaman");
+    }
+
+    @Test
+    @DisplayName("Normal casting grants no haste and does not return the Shaman at end step")
+    void normalCastStaysOnBattlefieldAtEndStep() {
+        harness.setHand(player1, List.of(new AmbuscadeShaman()));
+        addManaForNormalCast();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent shaman = findPermanent(player1, "Ambuscade Shaman");
+        assertThat(gqs.hasKeyword(gd, shaman, Keyword.HASTE)).isFalse();
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Ambuscade Shaman");
+        harness.assertNotInHand(player1, "Ambuscade Shaman");
+    }
+
+    @Test
+    @DisplayName("Each Shaman boosts an entering Shaman, without boosting the existing one")
+    void multipleShamansStackBoostsOnEnteringCreature() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new AmbuscadeShaman());
+        harness.setHand(player1, List.of(new AmbuscadeShaman()));
+        addManaForNormalCast();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(existing.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Dash schedules its return during spell resolution, without an additional entry trigger")
+    void dashOnlyCreatesThePrintedEntryTrigger() {
+        harness.setHand(player1, List.of(new AmbuscadeShaman()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ambuscade Shaman");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Dash returns the creature only when its end-step trigger resolves")
+    void dashReturnAllowsResponsesAtEndStep() {
+        harness.setHand(player1, List.of(new AmbuscadeShaman()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Ambuscade Shaman");
+        harness.assertNotInHand(player1, "Ambuscade Shaman");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Ambuscade Shaman");
+        harness.assertNotOnBattlefield(player1, "Ambuscade Shaman");
+    }
+
+    @Test
+    @DisplayName("An entry boost still resolves after its source is destroyed")
+    void boostSurvivesItsSourceLeaving() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new AmbuscadeShaman());
+        harness.setHand(player1, List.of(new AmbuscadeShaman()));
+        harness.setHand(player2, List.of(new UltimatePrice()));
+        addManaForNormalCast();
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, existing.getId());
+        resolveAllTriggers();
+
+        Permanent entering = findPermanent(player1, "Ambuscade Shaman");
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(6);
+        harness.assertInGraveyard(player1, "Ambuscade Shaman");
     }
 
     private void addManaForNormalCast() {

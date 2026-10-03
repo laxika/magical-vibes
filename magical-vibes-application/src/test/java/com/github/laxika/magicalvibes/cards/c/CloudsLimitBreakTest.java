@@ -87,6 +87,61 @@ class CloudsLimitBreakTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(validTarget, untappedTarget);
     }
 
+    @Test
+    @DisplayName("Blade Beam can be cast without targets")
+    void bladeBeamCanHaveNoTargets() {
+        Permanent survivor = tappedCreature(player2);
+
+        cast(1, 3);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(survivor);
+        harness.assertInGraveyard(player1, "Cloud's Limit Break");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cross-Slash does not destroy a creature that untaps before resolution")
+    void crossSlashTargetUntapsBeforeResolution() {
+        Permanent target = tappedCreature(player2);
+        harness.setHand(player1, List.of(new CloudsLimitBreak()));
+        addMana(2);
+        harness.castInstant(player1, 0, 0, target.getId());
+
+        target.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertInGraveyard(player1, "Cloud's Limit Break");
+    }
+
+    @Test
+    @DisplayName("Blade Beam still destroys its legal target when another target untaps")
+    void bladeBeamResolvesForRemainingLegalTarget() {
+        Permanent ownTarget = tappedCreature(player1);
+        Permanent opposingTarget = tappedCreature(player2);
+        harness.setHand(player1, List.of(new CloudsLimitBreak()));
+        addMana(3);
+        harness.castModalInstant(player1, 0, 1, List.of(ownTarget.getId(), opposingTarget.getId()));
+
+        ownTarget.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownTarget);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingTarget);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Omnislash leaves tapped noncreature permanents alone")
+    void omnislashDoesNotDestroyTappedLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        land.tap();
+        Permanent target = tappedCreature(player2);
+
+        cast(2, 6);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land).doesNotContain(target);
+    }
     private Permanent tappedCreature(com.github.laxika.magicalvibes.model.Player player) {
         Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.tap();

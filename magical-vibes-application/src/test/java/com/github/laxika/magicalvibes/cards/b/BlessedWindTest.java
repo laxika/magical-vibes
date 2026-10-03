@@ -38,8 +38,7 @@ class BlessedWindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        harness.addToBattlefield(player2, new PygmyRazorback());
-        Permanent boar = findPermanent(player2, "Pygmy Razorback");
+        Permanent boar = harness.addToBattlefieldAndReturn(player2, new PygmyRazorback());
         prepareCard();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, boar.getId()))
@@ -55,6 +54,37 @@ class BlessedWindTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Setting a lower life total to 20 counts as gaining the difference")
+    void gainsExactlyTheDifference() {
+        harness.setLife(player2, 7);
+        castTargeting(player2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.lifeGainedThisTurn.getOrDefault(player2.getId(), 0)).isEqualTo(13);
+        assertThat(gd.lifeGainedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Setting a life total already at 20 does not gain life")
+    void unchangedLifeTotalDoesNotGainLife() {
+        harness.setLife(player2, 20);
+        castTargeting(player2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.lifeGainedThisTurn.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can reduce an opponent's life total without gaining life")
+    void reducesOpponentsLifeTotal() {
+        harness.setLife(player2, 35);
+        castTargeting(player2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.lifeGainedThisTurn.getOrDefault(player2.getId(), 0)).isZero();
     }
 
     private void castTargeting(Player target) {

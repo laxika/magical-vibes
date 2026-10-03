@@ -15,6 +15,7 @@ public class DestroyBlockedCreatureAndSelfEffectHandler implements NormalEffectH
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,13 +25,10 @@ public class DestroyBlockedCreatureAndSelfEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                if (attacker != null) {
-                    destructionSupport.tryDestroyAndLog(gameData, attacker, entry.getCard().getName());
-                }
-
-                Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                if (self != null) {
-                    destructionSupport.tryDestroyAndLog(gameData, self, entry.getCard().getName());
-                }
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        java.util.List<Permanent> toDestroy = new java.util.ArrayList<>();
+        if (attacker != null) toDestroy.add(attacker);
+        if (self != null) toDestroy.add(self);
+        destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(), false);
     }
 }

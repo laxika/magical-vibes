@@ -93,6 +93,10 @@ class ConsumingFerocityTest extends BaseCardTest {
         Permanent regeneration = harness.addToBattlefieldAndReturn(player1, new Regeneration());
         regeneration.setAttachedTo(creature.getId());
 
+        runUpkeep();
+        runUpkeep();
+        advanceToUpkeep(player1);
+
         harness.addMana(player1, ManaColor.GREEN, 1);
         int regenerationIndex = gd.playerBattlefields.get(player1.getId()).indexOf(regeneration);
         harness.activateAbility(player1, regenerationIndex, null, null);
@@ -100,9 +104,7 @@ class ConsumingFerocityTest extends BaseCardTest {
 
         assertThat(creature.getRegenerationShield()).isEqualTo(1);
 
-        runUpkeep();
-        runUpkeep();
-        runUpkeep();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Femeref Scouts");
         harness.assertInGraveyard(player1, "Femeref Scouts");
@@ -151,8 +153,7 @@ class ConsumingFerocityTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aura.getId());
 
         harness.assertNotOnBattlefield(player1, "Consuming Ferocity");
         harness.assertInGraveyard(player1, "Consuming Ferocity");
@@ -166,6 +167,52 @@ class ConsumingFerocityTest extends BaseCardTest {
         Permanent creature = addCreatureReady(creatureController, new FemerefScouts());
         castConsumingFerocity(creature);
         return creature;
+    }
+
+    @Test
+    @DisplayName("Only the Aura controller's upkeep adds a counter")
+    void opponentsUpkeepDoesNotAddCounter() {
+        Permanent creature = castOnFemerefScouts(player2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Femeref Scouts");
+    }
+
+    @Test
+    @DisplayName("Existing +1/+0 counters count toward the threshold")
+    void existingCountersCountTowardThreshold() {
+        Permanent creature = castOnFemerefScouts(player1);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 3);
+
+        runUpkeep();
+
+        harness.assertLife(player1, 14);
+        harness.assertInGraveyard(player1, "Femeref Scouts");
+        harness.assertInGraveyard(player1, "Consuming Ferocity");
+    }
+
+    @Test
+    @DisplayName("Removing the Aura before the third trigger resolves removes its power bonus")
+    void removedAuraDoesNotContributeToThresholdDamage() {
+        Permanent creature = castOnFemerefScouts(player1);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 2);
+        Permanent aura = findPermanent(player1, "Consuming Ferocity");
+
+        advanceToUpkeep(player1);
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertInGraveyard(player1, "Femeref Scouts");
+        harness.assertInGraveyard(player1, "Consuming Ferocity");
     }
 
     private void castConsumingFerocity(Permanent creature) {

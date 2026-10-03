@@ -116,6 +116,9 @@ public class GameData {
     private int greatestStackSourceCountThisTurn;
     /** Whether the turn currently in progress was taken from the extra-turn queue. */
     public boolean currentTurnIsExtraTurn;
+
+    /** Most recent normal turn, used to resume turn order after extra turns. */
+    public UUID lastNormalTurnPlayerId;
     /** Whether the current turn's untap step was skipped by an extra-turn or similar effect. */
     public boolean turnUntapStepSkipped;
     /** Whether Power-up abilities are prohibited during the current turn. */
@@ -297,6 +300,8 @@ public class GameData {
     public final Map<UUID, UUID> ringBearerIds = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Tracks which players declared at least one token as an attacker this turn. */
+    public final Set<UUID> playersWhoAttackedWithTokenThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks which players declared a commander as an attacker this turn. */
     public final Set<UUID> playersWhoAttackedWithCommanderThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs declared as attackers in the current combat. */
@@ -528,6 +533,9 @@ public class GameData {
     };
     /** Latest graveyard-entry identity for each card, used by effects that require continuous graveyard presence. */
     public final Map<UUID, Long> graveyardEntryVersions = new ConcurrentHashMap<>();
+    public final Map<UUID, Long> exileEntryVersions = new ConcurrentHashMap<>();
+    /** Affected permanent mapped to the player whose next turn ends the attack restriction. */
+    public final Map<UUID, Set<UUID>> permanentsCantAttackUntilNextTurn = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
     /** Cards in each player's command zone (CR 903.6). Used by Eminence and similar command-zone abilities. */
     public final Map<UUID, List<Card>> playerCommandZones = new ConcurrentHashMap<>();
@@ -3229,6 +3237,11 @@ public class GameData {
     public synchronized long markGraveyardEntry(Card card) {
         long version = ++graveyardEntryVersion;
         graveyardEntryVersions.put(card.getId(), version);
+        java.util.stream.Stream.of(stack, pendingManaAbilityTriggers, suspendedZoneTriggers)
+                .flatMap(java.util.Collection::stream)
+                .filter(entry -> card.getId().equals(entry.getTriggeringCardId())
+                        && entry.getTriggeringCardGraveyardEntryVersion() == -1L)
+                .forEach(entry -> entry.setTriggeringCardGraveyardEntryVersion(version));
         return version;
     }
 
@@ -3323,6 +3336,17 @@ public class GameData {
     }
 
     private void notifyCardsExiled(Card card, boolean faceDown) {
+        if (card != null) {
+            long version = exileEntryVersions.merge(card.getId(), 1L, Long::sum);
+            java.util.stream.Stream.of(stack, pendingManaAbilityTriggers, suspendedZoneTriggers)
+                    .flatMap(java.util.Collection::stream)
+                    .filter(entry -> card.getId().equals(entry.getTriggeringCardId())
+                            && entry.getTriggeringCardExileEntryVersion() == -1L
+                            && entry.getEffectsToResolve().stream().anyMatch(effect -> effect instanceof
+                            com.github.laxika.magicalvibes.model.effect.ReturnEarthbendedLandEffect earthbend
+                            && earthbend.fromExile()))
+                    .forEach(entry -> entry.setTriggeringCardExileEntryVersion(version));
+        }
         if (card == null || card.isToken()) {
             return;
         }
@@ -5622,8 +5646,7 @@ public class GameData {
 
     /** Adds a card to the ante zone, represented by an untracked exile entry. */
     public void addToAnte(UUID ownerId, Card card) {
-        if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
-        addToExile(ownerId, card);
+        exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
         markCardAsAnted(card);
     }
 
@@ -6417,6 +6440,7 @@ public class GameData {
         copy.greatestManaValueNotedForPermanentThisTurn.putAll(
                 this.greatestManaValueNotedForPermanentThisTurn);
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
+        copy.lastNormalTurnPlayerId = this.lastNormalTurnPlayerId;
         copy.turnUntapStepSkipped = this.turnUntapStepSkipped;
         copy.powerUpAbilitiesCantBeActivatedThisTurn = this.powerUpAbilitiesCantBeActivatedThisTurn;
         copy.cardsExiledThisTurn = this.cardsExiledThisTurn;
@@ -6754,6 +6778,9 @@ public class GameData {
         copy.turnStartTimestamp = this.turnStartTimestamp;
         copy.graveyardEntryVersion = this.graveyardEntryVersion;
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
+        copy.exileEntryVersions.putAll(this.exileEntryVersions);
+        this.permanentsCantAttackUntilNextTurn.forEach((permanentId, controllers) ->
+                copy.permanentsCantAttackUntilNextTurn.put(permanentId, new java.util.HashSet<>(controllers)));
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamageFirstestStrikeStepComplete = this.combatDamageFirstestStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
@@ -7088,6 +7115,7 @@ public class GameData {
                 .addAll(this.playersWhoControlledPermanentThatExploredThisTurn);
         copy.playersWhoWereWayBehindThisTurn.addAll(this.playersWhoWereWayBehindThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
+        copy.playersWhoAttackedWithTokenThisTurn.addAll(this.playersWhoAttackedWithTokenThisTurn);
         copy.playersWhoAttackedWithCommanderThisTurn.addAll(this.playersWhoAttackedWithCommanderThisTurn);
         copy.declaredAttackerIdsThisCombat.addAll(this.declaredAttackerIdsThisCombat);
         this.ragingRiverBlockRestrictionsThisCombat.forEach((attackerId, restrictions) ->

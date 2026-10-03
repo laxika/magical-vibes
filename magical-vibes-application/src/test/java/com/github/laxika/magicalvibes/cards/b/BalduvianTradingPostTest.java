@@ -147,11 +147,64 @@ class BalduvianTradingPostTest extends BaseCardTest {
     @DisplayName("Damage ability can't target a non-attacking creature")
     void damageAbilityRejectsNonAttackingCreature() {
         harness.addToBattlefield(player1, new BalduvianTradingPost());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's Mountain cannot pay the entry cost")
+    void opponentsMountainCannotPayEntryCost() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new BalduvianTradingPost()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Balduvian Trading Post");
+        harness.assertInGraveyard(player1, "Balduvian Trading Post");
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain cannot be chosen when an untapped Mountain is available")
+    void rejectsTappedMountainChoice() {
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        tapped.tap();
+        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new BalduvianTradingPost()));
+
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, tapped.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, untapped.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tapped).doesNotContain(untapped);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player1, "Balduvian Trading Post");
+    }
+
+    @Test
+    @DisplayName("Damage ability can target an attacking creature you control and pays its costs")
+    void damagesOwnAttackerAndPaysCosts() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new BalduvianTradingPost());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 }

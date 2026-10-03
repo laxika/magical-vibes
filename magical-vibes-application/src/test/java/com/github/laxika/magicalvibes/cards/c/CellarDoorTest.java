@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CellarDoor.class, WalkingCorpse.class, BumpInTheNight.class})
 class CellarDoorTest extends BaseCardTest {
-
-    // ===== Activating ability =====
 
     @Test
     @DisplayName("Activating ability targeting player puts it on the stack")
@@ -60,8 +63,6 @@ class CellarDoorTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
-
-    // ===== Bottom card to graveyard =====
 
     @Test
     @DisplayName("Puts the bottom card of target player's library into their graveyard")
@@ -125,8 +126,6 @@ class CellarDoorTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Zombie");
     }
 
-    // ===== Conditional token creation =====
-
     @Test
     @DisplayName("Creates a 2/2 black Zombie token when bottom card is a creature")
     void createsZombieTokenWhenCreature() {
@@ -134,9 +133,7 @@ class CellarDoorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         // Put a creature card at the bottom of the library
-        List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
-        deck.clear();
-        deck.add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new WalkingCorpse()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -156,9 +153,7 @@ class CellarDoorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         // Put a non-creature card at the bottom of the library
-        List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
-        deck.clear();
-        deck.add(new Shock());
+        harness.setLibrary(player2, List.of(new BumpInTheNight()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -177,9 +172,7 @@ class CellarDoorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         // Put a creature at the bottom of player2's library
-        List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
-        deck.clear();
-        deck.add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new WalkingCorpse()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -196,9 +189,7 @@ class CellarDoorTest extends BaseCardTest {
         addReadyCellarDoor(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new WalkingCorpse()));
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
@@ -208,8 +199,6 @@ class CellarDoorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         harness.assertOnBattlefield(player1, "Zombie");
     }
-
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate ability without enough mana")
@@ -234,13 +223,53 @@ class CellarDoorTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Checks the bottom card when the ability resolves")
+    void checksBottomCardAtResolution() {
+        addReadyCellarDoor(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card creature = new WalkingCorpse();
+        Card sorcery = new BumpInTheNight();
+        harness.setLibrary(player2, List.of(creature));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.setLibrary(player2, List.of(creature, sorcery));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(sorcery);
+        harness.assertNotOnBattlefield(player1, "Zombie");
+    }
+
+    @Test
+    @DisplayName("Resolves after Cellar Door leaves and creates exactly one black Zombie creature")
+    void resolvesAfterSourceLeavesBattlefield() {
+        addReadyCellarDoor(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card creature = new WalkingCorpse();
+        harness.setLibrary(player2, List.of(creature));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Card token = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        assertThat(token.isToken()).isTrue();
+        assertThat(token.getName()).isEqualTo("Zombie");
+        assertThat(token.hasType(CardType.CREATURE)).isTrue();
+        assertThat(token.getColor()).isEqualTo(CardColor.BLACK);
+        assertThat(token.getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
+        assertThat(token.getPower()).isEqualTo(2);
+        assertThat(token.getToughness()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Zombie");
+    }
 
     private Permanent addReadyCellarDoor(Player player) {
-        CellarDoor card = new CellarDoor();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CellarDoor());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoneyardParley.class, GrizzlyBears.class, LlanowarElves.class, LeoninScimitar.class, SoulWarden.class})
 class BoneyardParleyTest extends BaseCardTest {
 
     // ===== Casting and targeting =====
@@ -116,8 +119,8 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cards should be exiled from graveyards
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears") || c.getName().equals("Llanowar Elves"));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Opponent (player2) should be prompted to separate into piles
@@ -323,5 +326,84 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles") && log.contains("Grizzly Bears"));
+    }
+
+    @Test
+    void creaturesInChosenPileSeeEachOtherEnterSimultaneously() {
+        Card first = new SoulWarden();
+        Card second = new SoulWarden();
+        harness.setLife(player1, 20);
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new BoneyardParley()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(first.getId(), second.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void choosingZeroTargetsLeavesCreatureCardsInGraveyards() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new BoneyardParley()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Boneyard Parley");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+    }
+
+    @Test
+    void choosingEmptyPileReturnsAllCardsToTheirOwnersGraveyards() {
+        Card mine = new GrizzlyBears();
+        Card opponents = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(mine));
+        harness.setGraveyard(player2, List.of(opponents));
+        harness.setHand(player1, List.of(new BoneyardParley()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(mine.getId(), opponents.getId()));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void targetThatLeavesGraveyardIsExcludedFromPiles() {
+        Card remaining = new GrizzlyBears();
+        Card removed = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(remaining, removed));
+        harness.setHand(player1, List.of(new BoneyardParley()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(remaining.getId(), removed.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(remaining.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(remaining.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(removed.getId()));
     }
 }

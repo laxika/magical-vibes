@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -33,7 +32,6 @@ class CoralHelmTest extends BaseCardTest {
         harness.activateAbility(player1, helmIndex, null, bearId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
@@ -50,7 +48,6 @@ class CoralHelmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bearId);
-        GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
@@ -119,13 +116,47 @@ class CoralHelmTest extends BaseCardTest {
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
     }
+    @Test
+    @DisplayName("A tapped Helm can activate repeatedly and its boosts add together")
+    void tappedHelmCanActivateRepeatedly() {
+        Permanent helm = harness.addToBattlefieldAndReturn(player1, new CoralHelm());
+        helm.setTapped(true);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bear.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(6);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(helm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with less than three mana and does not discard")
+    void cannotActivateWithInsufficientMana() {
+        harness.addToBattlefield(player1, new CoralHelm());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, "Coral Helm"), null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private int battlefieldIndex(com.github.laxika.magicalvibes.model.Player player, String cardName) {
-        List<Permanent> battlefield = harness.getGameData().playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals(cardName)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("Permanent not found: " + cardName);
+        return gd.playerBattlefields.get(player.getId()).indexOf(findPermanent(player, cardName));
     }
 }

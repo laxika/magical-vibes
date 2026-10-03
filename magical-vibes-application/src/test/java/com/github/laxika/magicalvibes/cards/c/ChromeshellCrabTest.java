@@ -101,6 +101,61 @@ class ChromeshellCrabTest extends BaseCardTest {
     }
 
     @Test
+    void crabCanExchangeItselfForAnOpponentsCreature() {
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new AvenEnvoy());
+        harness.setHand(player1, List.of(new ChromeshellCrab()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent crab = findPermanent(player1, "Chromeshell Crab");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crab));
+        harness.handlePermanentChosen(player1, crab.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Chromeshell Crab");
+        harness.assertNotOnBattlefield(player1, "Chromeshell Crab");
+        harness.assertOnBattlefield(player1, "Aven Envoy");
+        harness.assertNotOnBattlefield(player2, "Aven Envoy");
+        assertThat(crab.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void exchangeStillResolvesIfTheCrabLeavesAndNeitherTargetDoes() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new AvenEnvoy());
+        harness.setHand(player1, List.of(new ChromeshellCrab()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent crab = findPermanent(player1, "Chromeshell Crab");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crab));
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, crab));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertOnBattlefield(player1, "Aven Envoy");
+        harness.assertNotOnBattlefield(player2, "Aven Envoy");
+        harness.assertInGraveyard(player1, "Chromeshell Crab");
+    }
+
+    @Test
     void exchangeDoesNothingIfAChosenCreatureLeavesBeforeResolution() {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new AvenEnvoy());

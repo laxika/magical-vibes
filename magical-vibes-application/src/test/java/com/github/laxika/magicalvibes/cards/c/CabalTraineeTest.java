@@ -22,8 +22,7 @@ class CabalTraineeTest extends BaseCardTest {
     @DisplayName("Sacrificing Cabal Trainee weakens the target creature")
     void sacrificesAndWeakensTargetCreature() {
         harness.addToBattlefield(player1, new CabalTrainee());
-        harness.addToBattlefield(player2, new Brawn());
-        UUID targetId = harness.getPermanentId(player2, "Brawn");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Brawn()).getId();
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
@@ -39,8 +38,7 @@ class CabalTraineeTest extends BaseCardTest {
     @DisplayName("The power reduction wears off at end of turn")
     void debuffWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new CabalTrainee());
-        harness.addToBattlefield(player2, new Brawn());
-        UUID targetId = harness.getPermanentId(player2, "Brawn");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Brawn()).getId();
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
@@ -58,8 +56,7 @@ class CabalTraineeTest extends BaseCardTest {
     @DisplayName("Can target a creature its controller controls")
     void canTargetOwnCreature() {
         harness.addToBattlefield(player1, new CabalTrainee());
-        harness.addToBattlefield(player1, new Brawn());
-        UUID targetId = harness.getPermanentId(player1, "Brawn");
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Brawn()).getId();
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
@@ -86,8 +83,7 @@ class CabalTraineeTest extends BaseCardTest {
     @DisplayName("Sacrifice is paid even when the target leaves before resolution")
     void sacrificeIsPaidWhenTargetLeavesBeforeResolution() {
         harness.addToBattlefield(player1, new CabalTrainee());
-        harness.addToBattlefield(player2, new GiantWarthog());
-        UUID targetId = harness.getPermanentId(player2, "Giant Warthog");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GiantWarthog()).getId();
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.assertNotOnBattlefield(player1, "Cabal Trainee");
@@ -98,5 +94,54 @@ class CabalTraineeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Giant Warthog");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick without paying mana")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent trainee = harness.addToBattlefieldAndReturn(player1, new CabalTrainee());
+        trainee.tap();
+        trainee.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Brawn());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Cabal Trainee");
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can target itself before sacrificing itself as the cost")
+    void canTargetItself() {
+        UUID traineeId = harness.addToBattlefieldAndReturn(player1, new CabalTrainee()).getId();
+
+        harness.activateAbility(player1, 0, null, traineeId);
+
+        harness.assertNotOnBattlefield(player1, "Cabal Trainee");
+        harness.assertInGraveyard(player1, "Cabal Trainee");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reductions stack below zero power without reducing toughness")
+    void reductionsStackBelowZeroPower() {
+        harness.addToBattlefield(player1, new CabalTrainee());
+        harness.addToBattlefield(player1, new CabalTrainee());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Brawn());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Brawn");
     }
 }

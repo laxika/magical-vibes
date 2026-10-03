@@ -107,6 +107,53 @@ class BlisteringFirecatTest extends BaseCardTest {
     }
 
     @Test
+    void canAttackTheTurnItIsCastFaceDownAndTurnedFaceUp() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BlisteringFirecat()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.turnFaceUp(player1, 0);
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void turningFaceUpDuringTheEndStepWaitsUntilTheNextEndStepToSacrifice() {
+        harness.setHand(player1, List.of(new BlisteringFirecat()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Blistering Firecat");
+        harness.assertNotInGraveyard(player1, "Blistering Firecat");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blistering Firecat");
+        harness.assertInGraveyard(player1, "Blistering Firecat");
+    }
+
+    @Test
     void sacrificesAtTheBeginningOfTheEndStepAfterBeingTurnedFaceUp() {
         harness.setHand(player1, List.of(new BlisteringFirecat()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

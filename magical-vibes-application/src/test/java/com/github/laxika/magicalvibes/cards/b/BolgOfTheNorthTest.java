@@ -51,8 +51,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
         addManaForBolg();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
@@ -72,6 +71,46 @@ class BolgOfTheNorthTest extends BaseCardTest {
         assertThat(choice.validIds()).contains(target.getId()).doesNotContain(bolg.getId());
     }
 
+    @Test
+    void exactlyLethalDamageDoesNotAmass() {
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castAndResolve(sacrificed, target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+    }
+
+    @Test
+    void previouslyMarkedDamageIncreasesExcess() {
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setMarkedDamage(1);
+        castAndResolve(sacrificed, target);
+        harness.assertInGraveyard(player2, "Air Elemental");
+        assertThat(findPermanent(player1, "Goblin Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void modifiedPowerIsRememberedAfterSacrifice() {
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        sacrificed.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castAndResolve(sacrificed, target);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        assertThat(findPermanent(player1, "Goblin Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canDamageAnotherCreatureYouControl() {
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castAndResolve(sacrificed, target);
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Goblin Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void castAndResolve(Permanent sacrificed, Permanent target) {
         castToSacrificeChoice();
         harness.handlePermanentChosen(player1, sacrificed.getId());
@@ -84,8 +123,7 @@ class BolgOfTheNorthTest extends BaseCardTest {
         addManaForBolg();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         return findPermanent(player1, "Bolg of the North");
     }

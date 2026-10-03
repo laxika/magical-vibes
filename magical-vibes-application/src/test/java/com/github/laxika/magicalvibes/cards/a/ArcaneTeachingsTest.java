@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BattlewiseAven;
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,10 +16,87 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArcaneTeachings.class, BattlewiseAven.class, CabalTrainee.class, GrizzlyBears.class, NantukoMonastery.class})
+@CardUsed({ArcaneTeachings.class, BattlewiseAven.class, CabalTrainee.class, NantukoMonastery.class})
 class ArcaneTeachingsTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
+    @Test
+    @DisplayName("Granted ability still resolves after the Aura leaves the battlefield")
+    void grantedAbilitySurvivesAuraRemoval() {
+        Permanent creature = addCreatureReady(player1, new BattlewiseAven());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
+        aura.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.damageDealtThisTurnBySource.get(creature.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Granted ability still resolves after its creature is sacrificed")
+    void grantedAbilitySurvivesCreatureSacrifice() {
+        Permanent creature = addCreatureReady(player1, new CabalTrainee());
+        Permanent otherCreature = addCreatureReady(player1, new BattlewiseAven());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
+        aura.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, otherCreature.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Cabal Trainee");
+        harness.assertInGraveyard(player1, "Arcane Teachings");
+    }
+
+    @Test
+    @DisplayName("Aura does not resolve if its targeted creature leaves the battlefield")
+    void auraDoesNotResolveAfterTargetIsSacrificed() {
+        Permanent creature = addCreatureReady(player1, new CabalTrainee());
+        Permanent otherCreature = addCreatureReady(player1, new BattlewiseAven());
+        harness.setHand(player1, List.of(new ArcaneTeachings()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.activateAbility(player1, 0, null, otherCreature.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Arcane Teachings");
+        harness.assertInGraveyard(player1, "Arcane Teachings");
+    }
+
+    @Test
+    @DisplayName("Granted damage ability cannot target a noncreature land")
+    void grantedAbilityCannotTargetNoncreatureLand() {
+        Permanent creature = addCreatureReady(player1, new BattlewiseAven());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
+        aura.setAttachedTo(creature.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new NantukoMonastery());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enchanted creature can target itself and receives exactly one damage")
+    void grantedAbilityCanDamageItsOwnSource() {
+        Permanent creature = addCreatureReady(player1, new BattlewiseAven());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.isTapped()).isTrue();
+    }
 
     @Test
     @DisplayName("Casting Arcane Teachings puts it on the stack")
@@ -30,7 +106,7 @@ class ArcaneTeachingsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcaneTeachings()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -44,7 +120,7 @@ class ArcaneTeachingsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcaneTeachings()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -52,8 +128,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
                 .anyMatch(p -> p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
     }
-
-    // ===== +2/+2 boost =====
 
     @Test
     @DisplayName("Enchanted creature gets +2/+2")
@@ -66,8 +140,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
-
-    // ===== Granted activated ability: deal 1 damage to creature =====
 
     @Test
     @DisplayName("Enchanted creature can tap to deal 1 damage to target creature")
@@ -123,8 +195,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(trainee.getId()));
     }
 
-    // ===== Granted activated ability: deal 1 damage to player =====
-
     @Test
     @DisplayName("Enchanted creature can tap to deal 1 damage to a player")
     void grantedAbilityDeals1DamageToPlayer() {
@@ -142,8 +212,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
     }
 
-    // ===== Summoning sickness =====
-
     @Test
     @DisplayName("Summoning sick creature cannot use granted tap ability")
     void summoningSickCreatureCannotUseGrantedAbility() {
@@ -156,8 +224,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
-
-    // ===== Already tapped =====
 
     @Test
     @DisplayName("Already tapped creature cannot use granted tap ability")
@@ -172,8 +238,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
-
-    // ===== Effects stop when aura is removed =====
 
     @Test
     @DisplayName("Creature loses boost and granted ability when Arcane Teachings is removed")
@@ -200,8 +264,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
                 .hasMessageContaining("no activated ability");
     }
 
-    // ===== Does not affect other creatures =====
-
     @Test
     @DisplayName("Arcane Teachings does not affect other creatures")
     void doesNotAffectOtherCreatures() {
@@ -216,8 +278,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Can target a creature with Arcane Teachings")
@@ -243,8 +303,6 @@ class ArcaneTeachingsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Can enchant opponent's creature =====
-
     @Test
     @DisplayName("Can enchant opponent's creature and grant it the ability")
     void canEnchantOpponentCreature() {
@@ -262,7 +320,7 @@ class ArcaneTeachingsTest extends BaseCardTest {
     @DisplayName("Enchanted opponent's creature can use the granted ability")
     void opponentControlsEnchantedCreatureCanUseGrantedAbility() {
         harness.setLife(player1, 20);
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new BattlewiseAven());
 
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new ArcaneTeachings());
         auraPerm.setAttachedTo(bearsPerm.getId());

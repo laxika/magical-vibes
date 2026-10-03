@@ -1,14 +1,19 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
+import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Aethertow.class, SafeholdElite.class, BriarberryCohort.class})
 class AethertowTest extends BaseCardTest {
 
     @Test
@@ -30,10 +36,10 @@ class AethertowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Safehold Elite");
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
-        assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(deck.getFirst().getName()).isEqualTo("Safehold Elite");
     }
 
     @Test
@@ -45,16 +51,16 @@ class AethertowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Safehold Elite");
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName())
-                .isEqualTo("Grizzly Bears");
+                .isEqualTo("Safehold Elite");
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new SafeholdElite());
+        UUID targetId = harness.getPermanentId(player2, "Safehold Elite");
 
         harness.setHand(player1, List.of(new Aethertow()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -76,10 +82,101 @@ class AethertowTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    void fizzlesWhenTargetStopsAttackingButRemainsOnBattlefield() {
+        Permanent attacker = addAttacker(player2);
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        castAethertow(attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Safehold Elite");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize);
+        harness.assertInGraveyard(player1, "Aethertow");
+    }
+
+    @Test
+    void canTargetOwnAttackingCreatureAndPayWithBlueMana() {
+        Permanent attacker = addAttacker(player1);
+        attacker.setAttackTarget(player2.getId());
+        harness.setHand(player1, List.of(new Aethertow()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Safehold Elite");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(attacker.getCard());
+    }
+
+    @Test
+    void stolenAttackerReturnsToOwnersLibrary() {
+        SafeholdElite card = new SafeholdElite();
+        card.setOwnerId(player1.getId());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, card);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), attacker,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
+        attacker.setAttacking(true);
+        int controllerLibrarySize = gd.playerDecks.get(player2.getId()).size();
+
+        castAethertow(attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Safehold Elite");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(attacker.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerLibrarySize);
+    }
+
+    @Test
+    void conspireWithWhiteAndBlueCreaturesCanRetargetCopy() {
+        Permanent attacker = addAttacker(player2);
+        Permanent blocker = addBlocker(player2);
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new SafeholdElite());
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        harness.setHand(player1, List.of(new Aethertow()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castWithConspire(player1, 0, attacker.getId(),
+                List.of(whiteCreature.getId(), blueCreature.getId()));
+        assertThat(whiteCreature.isTapped()).isTrue();
+        assertThat(blueCreature.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()).subList(0, 2))
+                .containsExactly(attacker.getCard(), blocker.getCard());
+        harness.assertInGraveyard(player1, "Aethertow");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Aethertow")).hasSize(1);
+    }
+
+    @Test
+    void conspireCanKeepOriginalTargetAndOriginalThenFizzles() {
+        Permanent attacker = addAttacker(player2);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SafeholdElite());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SafeholdElite());
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+        harness.setHand(player1, List.of(new Aethertow()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castWithConspire(player1, 0, attacker.getId(), List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize + 1);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(attacker.getCard());
+        harness.assertInGraveyard(player1, "Aethertow");
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
 
     private void castAethertow(UUID targetId) {
         harness.setHand(player1, List.of(new Aethertow()));
@@ -89,18 +186,14 @@ class AethertowTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent attacker = findPermanent(owner, "Grizzly Bears");
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, new SafeholdElite());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
     }
 
     private Permanent addBlocker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent blocker = findPermanent(owner, "Grizzly Bears");
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(owner, new SafeholdElite());
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());
         return blocker;

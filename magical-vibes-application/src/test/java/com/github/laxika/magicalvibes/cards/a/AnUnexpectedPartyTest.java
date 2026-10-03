@@ -22,11 +22,9 @@ class AnUnexpectedPartyTest extends BaseCardTest {
     void choosesCreatureTypeAndBoostsMatchingCreatures() {
         Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new StaunchShieldmate());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new AnUnexpectedParty()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent opposingDwarf = harness.addToBattlefieldAndReturn(player2, new StaunchShieldmate());
 
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AnUnexpectedParty(), "{2}{W}{W}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, CardSubtype.DWARF.name());
 
@@ -39,6 +37,8 @@ class AnUnexpectedPartyTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, dwarf)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingDwarf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDwarf)).isEqualTo(3);
     }
 
     @Test
@@ -74,6 +74,8 @@ class AnUnexpectedPartyTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, 0, Map.of());
         harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -81,8 +83,43 @@ class AnUnexpectedPartyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, CardSubtype.DWARF.name());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("An Unexpected Party"));
+        harness.assertOnBattlefield(player1, "An Unexpected Party");
         assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void boostsAdventureTokensAlreadyPresentAndCreatedLater() {
+        AnUnexpectedParty card = new AnUnexpectedParty();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAdventure(player1, 0, 1, Map.of());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.DWARF.name());
+
+        List<Permanent> existingTokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(existingTokens).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, existingTokens.getFirst())).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existingTokens.getFirst())).isEqualTo(4);
+
+        harness.setHand(player1, List.of(new AnUnexpectedParty()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAdventure(player1, 0, 1, Map.of());
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(2);
+        assertThat(tokens).allSatisfy(token -> {
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+        });
     }
 }

@@ -60,4 +60,51 @@ class AvenFarseerTest extends BaseCardTest {
         assertThat(faceDownTemple.isFaceDown()).isFalse();
         assertThat(farseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    void eachFarseerGetsOneCounterForEachPermanentTurnedFaceUp() {
+        Permanent ownFarseer = addCreatureReady(player1, new AvenFarseer());
+        Permanent opposingFarseer = addCreatureReady(player2, new AvenFarseer());
+        Permanent first = addCreatureReady(player1, new ScornfulEgotist());
+        Permanent second = addCreatureReady(player2, new ScornfulEgotist());
+        first.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        second.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, first);
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, second);
+
+        assertThat(ownFarseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingFarseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        resolveAllTriggers();
+
+        assertThat(ownFarseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(opposingFarseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void faceDownFarseerDoesNotTriggerForAnotherPermanent() {
+        Permanent farseer = addCreatureReady(player1, new AvenFarseer());
+        Permanent egotist = addCreatureReady(player2, new ScornfulEgotist());
+        farseer.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        egotist.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, egotist);
+        resolveAllTriggers();
+
+        assertThat(farseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void triggerResolvesAfterTurnedPermanentLeavesTheBattlefield() {
+        Permanent farseer = addCreatureReady(player1, new AvenFarseer());
+        Permanent egotist = addCreatureReady(player2, new ScornfulEgotist());
+        egotist.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, egotist);
+        gd.playerBattlefields.get(player2.getId()).remove(egotist);
+        gd.playerGraveyards.get(player2.getId()).add(egotist.getCard());
+        resolveAllTriggers();
+
+        assertThat(farseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }

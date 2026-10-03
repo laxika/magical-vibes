@@ -43,4 +43,76 @@ class ChitteringIlluminatorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(shock);
     }
+
+    @Test
+    @DisplayName("Can cast itself from the library top without a copy on the battlefield")
+    void castsItselfFromLibraryTop() {
+        Card illuminator = new ChitteringIlluminator();
+        harness.setLibrary(player1, List.of(illuminator));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveFromLibraryTop(player1);
+
+        harness.assertOnBattlefield(player1, "Chittering Illuminator");
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(illuminator);
+    }
+
+    @Test
+    @DisplayName("Its owner can privately see it on top without a copy on the battlefield")
+    void seesItselfFromLibraryTop() {
+        harness.setLibrary(player1, List.of(new ChitteringIlluminator()));
+
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Chittering Illuminator"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    @DisplayName("A creature on top is visible only to the controller")
+    void privatelySeesCreatureOnTop() {
+        harness.addToBattlefield(player1, new ChitteringIlluminator());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    @DisplayName("A noncreature on top remains hidden even with Illuminator on the battlefield")
+    void cannotSeeNoncreatureOnTop() {
+        harness.addToBattlefield(player1, new ChitteringIlluminator());
+        harness.setLibrary(player1, List.of(new Shock()));
+
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    @DisplayName("An opponent's Illuminator does not grant permission to cast from your library")
+    void opponentDoesNotGrantCastingPermission() {
+        harness.addToBattlefield(player2, new ChitteringIlluminator());
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
+    }
 }

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TravelingPhilosopher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CoastlineChimera.class, TravelingPhilosopher.class})
 class CoastlineChimeraTest extends BaseCardTest {
 
     @Test
@@ -90,10 +92,41 @@ class CoastlineChimeraTest extends BaseCardTest {
         ))).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("One activation does not allow blocking three creatures")
+    void cannotBlockThreeCreaturesAfterOneActivation() {
+        Permanent chimera = addChimera();
+        addAttackers(3);
+        activate(chimera);
+        beginBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(chimera);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIdx, 0),
+                new BlockerAssignment(blockerIdx, 1),
+                new BlockerAssignment(blockerIdx, 2)
+        ))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activating one Chimera does not grant additional blocks to another")
+    void grantAppliesOnlyToSource() {
+        Permanent source = addChimera();
+        Permanent other = addChimera();
+        addAttackers(2);
+        activate(source);
+        beginBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(other);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIdx, 0),
+                new BlockerAssignment(blockerIdx, 1)
+        ))).isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addChimera() {
-        Permanent perm = new Permanent(new CoastlineChimera());
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, new CoastlineChimera());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
         return perm;
     }
 
@@ -106,11 +139,10 @@ class CoastlineChimeraTest extends BaseCardTest {
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent attacker = new Permanent(new GrizzlyBears());
+            Permanent attacker = harness.addToBattlefieldAndReturn(player1, new TravelingPhilosopher());
             attacker.setSummoningSick(false);
             attacker.setAttacking(true);
             attacker.setAttackTarget(player2.getId());
-            gd.playerBattlefields.get(player1.getId()).add(attacker);
         }
     }
 

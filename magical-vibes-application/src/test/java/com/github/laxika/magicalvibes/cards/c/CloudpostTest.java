@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Cloudpost.class, Forest.class, Glimmerpost.class})
 class CloudpostTest extends BaseCardTest {
@@ -52,5 +53,53 @@ class CloudpostTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A lone Cloudpost counts itself and produces mana without using the stack")
+    void countsItselfAndResolvesImmediately() {
+        harness.addToBattlefield(player1, new Cloudpost());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cloudpost counts tapped Loci controlled by an opponent")
+    void countsTappedOpponentLocus() {
+        harness.addToBattlefield(player1, new Cloudpost());
+        harness.enterBattlefieldAndReturn(player2, new Cloudpost());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cloudpost ignores Loci outside the battlefield")
+    void ignoresLociInOtherZones() {
+        harness.addToBattlefield(player1, new Cloudpost());
+        harness.setHand(player1, List.of(new Cloudpost()));
+        harness.setGraveyard(player2, List.of(new Cloudpost()));
+        harness.setExile(player1, List.of(new Cloudpost()));
+        harness.setLibrary(player2, List.of(new Cloudpost()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cloudpost cannot produce mana while tapped after entering")
+    void cannotActivateWhileTapped() {
+        harness.enterBattlefieldAndReturn(player1, new Cloudpost());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

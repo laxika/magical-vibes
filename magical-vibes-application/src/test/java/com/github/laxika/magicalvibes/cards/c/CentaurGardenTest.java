@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,9 @@ class CentaurGardenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Centaur Garden");
     }
 
@@ -90,6 +93,89 @@ class CentaurGardenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void thresholdAbilityPaysCostsBeforeResolution() {
+        harness.addToBattlefield(player1, new CentaurGarden());
+        Permanent halberdier = harness.addToBattlefieldAndReturn(player1, new Halberdier());
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, halberdier.getId());
+
+        harness.assertNotOnBattlefield(player1, "Centaur Garden");
+        harness.assertInGraveyard(player1, "Centaur Garden");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, halberdier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, halberdier)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, halberdier)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, halberdier)).isEqualTo(4);
+    }
+
+    @Test
+    void thresholdAbilityStillResolvesAfterGraveyardDropsBelowSevenCards() {
+        harness.addToBattlefield(player1, new CentaurGarden());
+        Permanent halberdier = harness.addToBattlefieldAndReturn(player2, new Halberdier());
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, halberdier.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, halberdier)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, halberdier)).isEqualTo(4);
+    }
+
+    @Test
+    void thresholdBoostExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new CentaurGarden());
+        Permanent halberdier = harness.addToBattlefieldAndReturn(player2, new Halberdier());
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, halberdier.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, halberdier)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, halberdier)).isEqualTo(4);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, halberdier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, halberdier)).isEqualTo(1);
+    }
+
+    @Test
+    void thresholdAbilityRequiresGreenMana() {
+        harness.addToBattlefield(player1, new CentaurGarden());
+        Permanent halberdier = harness.addToBattlefieldAndReturn(player2, new Halberdier());
+        harness.setGraveyard(player1, cards(7));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, halberdier.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        harness.assertOnBattlefield(player1, "Centaur Garden");
+        harness.assertNotInGraveyard(player1, "Centaur Garden");
+    }
+
+    @Test
+    void thresholdAbilityCannotUseTheLandAfterTappingItForMana() {
+        harness.addToBattlefield(player1, new CentaurGarden());
+        Permanent halberdier = harness.addToBattlefieldAndReturn(player2, new Halberdier());
+        harness.setGraveyard(player1, cards(7));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, halberdier.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        harness.assertOnBattlefield(player1, "Centaur Garden");
     }
 
     private List<Card> cards(int count) {

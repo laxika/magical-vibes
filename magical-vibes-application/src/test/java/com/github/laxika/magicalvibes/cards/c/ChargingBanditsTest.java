@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ChargingBandits.class)
+@CardUsed({ChargingBandits.class})
 class ChargingBanditsTest extends BaseCardTest {
 
     @Test
@@ -68,5 +68,38 @@ class ChargingBanditsTest extends BaseCardTest {
 
         assertThat(bandits.getPowerModifier()).isEqualTo(0);
         assertThat(bandits.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Each attacking Bandits receives exactly its own boost")
+    void simultaneousAttackersEachGetTheirOwnBoost() {
+        Permanent first = addCreatureReady(player1, new ChargingBandits());
+        Permanent second = addCreatureReady(player1, new ChargingBandits());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An attack trigger cannot boost a new permanent representing the same card")
+    void sourceLeavingAndReturningDoesNotReceiveOldBoost() {
+        ChargingBandits card = new ChargingBandits();
+        Permanent original = addCreatureReady(player1, card);
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = addCreatureReady(player1, card);
+        resolveAllTriggers();
+
+        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

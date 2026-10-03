@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.s.SoulsFire;
 import com.github.laxika.magicalvibes.cards.t.TokTokVolcanoBorn;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AkkiLavarunner.class, TokTokVolcanoBorn.class, GrizzlyBears.class, SoulsFire.class})
+@CardUsed({AkkiLavarunner.class, TokTokVolcanoBorn.class, GrizzlyBears.class, SoulsFire.class,
+        BoundByMoonsilver.class})
 class AkkiLavarunnerTest extends BaseCardTest {
 
     @Test
@@ -37,8 +39,7 @@ class AkkiLavarunnerTest extends BaseCardTest {
         Permanent akki = addCreatureReady(player1, new AkkiLavarunner());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -74,5 +75,24 @@ class AkkiLavarunnerTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(akki.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A restriction on transforming does not prevent flipping")
+    void flipsWhileEnchantedByBoundByMoonsilver() {
+        Permanent akki = addCreatureReady(player1, new AkkiLavarunner());
+        harness.setHand(player1, List.of(new BoundByMoonsilver()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, akki.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new SoulsFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, List.of(akki.getId(), player2.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(akki.isTransformed()).isTrue();
     }
 }

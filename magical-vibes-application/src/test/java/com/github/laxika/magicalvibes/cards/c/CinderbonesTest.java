@@ -97,6 +97,71 @@ class CinderbonesTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Cinderbones");
     }
 
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regenerationDoesNotRequireTappingOrHaste() {
+        Permanent cinderbones = harness.addToBattlefieldAndReturn(player1, new Cinderbones());
+        cinderbones.setSummoningSick(true);
+        cinderbones.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(cinderbones.getRegenerationShield()).isEqualTo(1);
+        assertThat(cinderbones.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap the creature")
+    void creatingShieldDoesNotTapCreature() {
+        Permanent cinderbones = addCinderbonesReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(cinderbones.getRegenerationShield()).isEqualTo(1);
+        assertThat(cinderbones.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wither deals ordinary life loss to a player")
+    void witherDealsOrdinaryDamageToPlayer() {
+        Permanent cinderbones = addCinderbonesReady(player1);
+        cinderbones.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot save Cinderbones from zero toughness caused by wither")
+    void regenerationCannotReplaceDeathFromWitherCounters() {
+        Permanent blocker = addCinderbonesReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(blocker.getRegenerationShield()).isEqualTo(1);
+
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        Permanent attacker = addCinderbonesReady(player2);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Cinderbones");
+        harness.assertInGraveyard(player1, "Cinderbones");
+        harness.assertInGraveyard(player2, "Cinderbones");
+    }
+
     private Permanent addCinderbonesReady(Player player) {
         return addCreatureReady(player, new Cinderbones());
     }

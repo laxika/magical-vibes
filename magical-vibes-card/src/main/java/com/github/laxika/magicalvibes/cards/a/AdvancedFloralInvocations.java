@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -26,7 +27,7 @@ public class AdvancedFloralInvocations extends Card {
 
     public AdvancedFloralInvocations() {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                new MillEffect(2, MillRecipient.CONTROLLER));
+                new MillEffect(2, MillRecipient.CONTROLLER), TriggerMode.INDEPENDENT);
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -51,7 +52,7 @@ public class AdvancedFloralInvocations extends Card {
 
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1)));
+                new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1)), TriggerMode.INDEPENDENT);
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),

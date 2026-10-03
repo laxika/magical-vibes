@@ -85,4 +85,70 @@ class AysenBureaucratsTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent bureaucrats = harness.addToBattlefieldAndReturn(player1, new AysenBureaucrats());
+        Permanent target = addCreatureReady(player2, new Narwhal());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bureaucrats.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Bureaucrats cannot activate again")
+    void tappedSourceCannotActivate() {
+        Permanent bureaucrats = addCreatureReady(player1, new AysenBureaucrats());
+        bureaucrats.setTapped(true);
+        Permanent target = addCreatureReady(player2, new Narwhal());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability can tap a creature its controller controls")
+    void canTargetFriendlyCreature() {
+        addCreatureReady(player1, new AysenBureaucrats());
+        Permanent target = addCreatureReady(player1, new Narwhal());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bureaucrats can target itself even though the tap cost taps it first")
+    void canTargetItself() {
+        Permanent bureaucrats = addCreatureReady(player1, new AysenBureaucrats());
+
+        harness.activateAbility(player1, 0, null, bureaucrats.getId());
+        harness.passBothPriorities();
+
+        assertThat(bureaucrats.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after its source leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent bureaucrats = addCreatureReady(player1, new AysenBureaucrats());
+        Permanent target = addCreatureReady(player2, new Narwhal());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bureaucrats);
+        gd.playerGraveyards.get(player1.getId()).add(bureaucrats.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
 }

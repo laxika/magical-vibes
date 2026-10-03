@@ -25,15 +25,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Benthicore.class, DeeptreadMerrow.class, Tarfire.class})
 class BenthicoreTest extends BaseCardTest {
 
-    // ===== ETB: creates two Merfolk Wizard tokens =====
-
     @Test
     @DisplayName("ETB creates two 1/1 blue Merfolk Wizard tokens")
     void etbCreatesTwoMerfolkWizardTokens() {
         castAndResolveBenthicore();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
-        assertThat(countMerfolkWizardTokens(player1)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Merfolk Wizard").stream()
+                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.MERFOLK))
+                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.WIZARD))
+                .toList()).hasSize(2);
     }
 
     @Test
@@ -41,7 +42,7 @@ class BenthicoreTest extends BaseCardTest {
     void merfolkWizardTokensHaveCorrectStats() {
         castAndResolveBenthicore();
 
-        Permanent token = findMerfolkWizardToken(player1);
+        Permanent token = findPermanent(player1, "Merfolk Wizard");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
@@ -50,11 +51,65 @@ class BenthicoreTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.MERFOLK, CardSubtype.WIZARD);
     }
 
-    // ===== Activated ability =====
-
     @Nested
+    @CardUsed({Benthicore.class, DeeptreadMerrow.class, Tarfire.class})
     @DisplayName("Activated ability")
     class ActivatedAbilityTests {
+
+        @Test
+        @DisplayName("Newly created Merfolk tokens can pay the cost while Benthicore is summoning sick")
+        void newlyCreatedTokensCanPayCost() {
+            castAndResolveBenthicore();
+            Permanent benthicore = findPermanent(player1, "Benthicore");
+            benthicore.tap();
+
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
+
+            assertThat(findPermanents(player1, "Merfolk Wizard")).allMatch(Permanent::isTapped);
+            assertThat(benthicore.isTapped()).isTrue();
+            assertThat(gqs.hasKeyword(gd, benthicore, Keyword.SHROUD)).isFalse();
+
+            resolveAllTriggers();
+
+            assertThat(benthicore.isTapped()).isFalse();
+            assertThat(gqs.hasKeyword(gd, benthicore, Keyword.SHROUD)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Ability can be activated again while Benthicore already has shroud")
+        void canActivateWhileAlreadyShrouded() {
+            Permanent benthicore = addBenthicoreReady(player1);
+            addMerfolk(player1, 2);
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
+            resolveAllTriggers();
+            addMerfolk(player1, 2);
+            benthicore.tap();
+
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
+            resolveAllTriggers();
+
+            assertThat(benthicore.isTapped()).isFalse();
+            assertThat(gqs.hasKeyword(gd, benthicore, Keyword.SHROUD)).isTrue();
+            assertThat(findPermanents(player1, "Deeptread Merrow")).allMatch(Permanent::isTapped);
+        }
+
+        @Test
+        @DisplayName("Gaining shroud in response makes a spell's existing target illegal")
+        void shroudInvalidatesSpellAlreadyOnStack() {
+            Permanent benthicore = addBenthicoreReady(player1);
+            addMerfolk(player1, 2);
+            harness.setHand(player2, List.of(new Tarfire()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castInstant(player2, 0, benthicore.getId());
+
+            harness.activateAbility(player1, battlefieldIndex(benthicore), null, null);
+            resolveAllTriggers();
+
+            assertThat(benthicore.getMarkedDamage()).isZero();
+            assertThat(gqs.hasKeyword(gd, benthicore, Keyword.SHROUD)).isTrue();
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(benthicore);
+            assertThat(gd.stack).isEmpty();
+        }
 
         @Test
         @DisplayName("Activating ability puts it on the stack")
@@ -184,8 +239,6 @@ class BenthicoreTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
-
     private void castAndResolveBenthicore() {
         harness.castFromHand(player1, new Benthicore(), "{6}{U}");
         resolveAllTriggers();
@@ -199,21 +252,6 @@ class BenthicoreTest extends BaseCardTest {
         for (int i = 0; i < count; i++) {
             addCreatureReady(player, new DeeptreadMerrow());
         }
-    }
-
-    private int countMerfolkWizardTokens(Player player) {
-        return (int) gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Merfolk Wizard"))
-                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.MERFOLK))
-                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.WIZARD))
-                .count();
-    }
-
-    private Permanent findMerfolkWizardToken(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Merfolk Wizard"))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No Merfolk Wizard token found"));
     }
 
     private void tapMerfolk(Player player, int count) {

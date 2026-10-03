@@ -48,6 +48,61 @@ class CosmogoyfTest extends BaseCardTest {
         assertStats(cosmogoyf, 1, 2);
     }
 
+    @Test
+    @DisplayName("Power and toughness update as more owned cards enter exile")
+    void updatesWhenExiledCardArrives() {
+        Permanent cosmogoyf = addCreatureReady(player1, new Cosmogoyf());
+        assertStats(cosmogoyf, 0, 1);
+
+        harness.setExile(player1, List.of(new Forest(), new Cosmogoyf()));
+
+        assertStats(cosmogoyf, 2, 3);
+    }
+
+    @Test
+    @DisplayName("Face-down cards owned by the controller count in exile")
+    void countsFaceDownExiledCards() {
+        Permanent cosmogoyf = addCreatureReady(player1, new Cosmogoyf());
+        gd.addToExile(player1.getId(), new Forest(), null, true);
+        gd.addToExile(player2.getId(), new Forest(), null, true);
+
+        assertStats(cosmogoyf, 1, 2);
+    }
+
+    @Test
+    @DisplayName("Changing control makes Cosmogoyf count its new controller's exiled cards")
+    void countsNewControllersExile() {
+        Cosmogoyf card = new Cosmogoyf();
+        card.setOwnerId(player1.getId());
+        Permanent cosmogoyf = addCreatureReady(player1, card);
+        harness.setExile(player1, List.of(new Forest()));
+        harness.setExile(player2, List.of(new Forest(), new Cosmogoyf()));
+        assertStats(cosmogoyf, 1, 2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(cosmogoyf);
+        gd.playerBattlefields.get(player2.getId()).add(cosmogoyf);
+
+        assertStats(cosmogoyf, 2, 3);
+    }
+
+    @Test
+    @DisplayName("The characteristic-defining ability works in hand and counts itself in exile")
+    void definesStatsOutsideBattlefield() {
+        Cosmogoyf card = new Cosmogoyf();
+        harness.setHand(player1, List.of(card));
+        harness.setExile(player1, List.of(new Forest()));
+        harness.setExile(player2, List.of(new Forest(), new Cosmogoyf()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(2);
+
+        harness.setHand(player1, List.of());
+        harness.setExile(player1, List.of(card));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(3);
+    }
+
     private void assertStats(Permanent cosmogoyf, int power, int toughness) {
         assertThat(gqs.getEffectivePower(gd, cosmogoyf)).isEqualTo(power);
         assertThat(gqs.getEffectiveToughness(gd, cosmogoyf)).isEqualTo(toughness);

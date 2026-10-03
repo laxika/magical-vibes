@@ -120,6 +120,46 @@ class ClockworkVorracTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
     }
 
+    @Test
+    @DisplayName("Summoning sickness prevents activating the tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent vorrac = castVorrac();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(vorrac.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(vorrac.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can add a counter in response to the end-of-combat removal to survive")
+    void canRespondToEndOfCombatRemoval() {
+        addCreatureReady(player1, new YotianSoldier());
+        Permanent vorrac = addCreatureReady(player2, new ClockworkVorrac());
+        vorrac.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackersAndPrepareBlockers(List.of(0));
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(vorrac);
+            assertThat(vorrac.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+            harness.activateAbility(player2, 0, 0, null);
+            harness.passBothPriorities();
+
+            assertThat(vorrac.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+            harness.passBothPriorities();
+
+            assertThat(vorrac.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(vorrac);
+        });
+    }
+
     private Permanent castVorrac() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

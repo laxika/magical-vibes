@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChandraFlamesFury.class, GrizzlyBears.class, GiantSpider.class})
 class ChandraFlamesFuryTest extends BaseCardTest {
 
     @Test
@@ -71,11 +73,124 @@ class ChandraFlamesFuryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("+1 can damage a creature")
+    void plusOneDamagesCreature() {
+        addReadyChandra(player1, 4);
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+
+        harness.activateAbility(player1, 0, 0, null, spider.getId());
+        harness.passBothPriorities();
+
+        assertThat(spider.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("+1 can target Chandra herself")
+    void plusOneCanTargetSourcePlaneswalker() {
+        Permanent chandra = addReadyChandra(player1, 4);
+
+        harness.activateAbility(player1, 0, 0, null, chandra.getId());
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("-2 can target your creature and damages you")
+    void minusTwoCanTargetOwnCreature() {
+        addReadyChandra(player1, 4);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("-2 cannot target a player")
+    void minusTwoRequiresCreatureTarget() {
+        Permanent chandra = addReadyChandra(player1, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("-2 deals no damage when its only target leaves the battlefield")
+    void minusTwoDoesNotDamageControllerWhenTargetLeaves() {
+        Permanent chandra = addReadyChandra(player1, 4);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, bear.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bear);
+        gd.playerGraveyards.get(player2.getId()).add(bear.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("-8 can target you and does not damage your planeswalker")
+    void minusEightCanTargetController() {
+        Permanent chandra = addReadyChandra(player1, 9);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GiantSpider());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 2, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Chandra, Flame's Fury");
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("-8 cannot target a planeswalker")
+    void minusEightCannotTargetPlaneswalker() {
+        Permanent chandra = addReadyChandra(player1, 9);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, chandra.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("-2 damages the creature's controller at resolution")
+    void minusTwoUsesCurrentCreatureController() {
+        addReadyChandra(player1, 4);
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+
+        harness.activateAbility(player1, 0, 1, null, spider.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(spider);
+        gd.playerBattlefields.get(player1.getId()).add(spider);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+    }
+
     private Permanent addReadyChandra(Player player, int loyalty) {
-        Permanent perm = new Permanent(new ChandraFlamesFury());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChandraFlamesFury());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

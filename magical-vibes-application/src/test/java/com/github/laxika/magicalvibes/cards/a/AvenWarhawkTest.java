@@ -49,6 +49,38 @@ class AvenWarhawkTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("May reveal no cards even when eligible cards are in hand")
+    void mayDeclineToRevealEligibleCards() {
+        harness.setHand(player1, List.of(new AvenWarhawk(), new AvenRedeemer(), new DaruStinger()));
+        payMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(findPermanent(player1, "Aven Warhawk")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInHand(player1, "Aven Redeemer");
+        harness.assertInHand(player1, "Daru Stinger");
+    }
+
+    @Test
+    @DisplayName("May reveal only some eligible cards and leaves revealed cards in hand")
+    void mayRevealSubsetOfEligibleCards() {
+        AvenRedeemer revealed = new AvenRedeemer();
+        harness.setHand(player1, List.of(new AvenWarhawk(), revealed, new DaruStinger()));
+        payMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+
+        assertThat(findPermanent(player1, "Aven Warhawk")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInHand(player1, "Aven Redeemer");
+        harness.assertInHand(player1, "Daru Stinger");
+    }
     private void payMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

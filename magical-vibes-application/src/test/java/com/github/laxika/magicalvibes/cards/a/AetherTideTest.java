@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,5 +119,86 @@ class AetherTideTest extends BaseCardTest {
                 harness.castSorceryWithDiscards(player1, 0, 2, List.of(targetId), List.of(1, 2)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must target between");
+    }
+
+    @Test
+    void discardsArePaidBeforeResolutionAndTargetsCanHaveDifferentControllers() {
+        harness.addToBattlefield(player1, new RagingGoblin());
+        harness.addToBattlefield(player2, new RagingGoblin());
+        harness.setHand(player1, List.of(new RagingGoblin(), new AetherTide(), new RagingGoblin()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        List<UUID> targets = List.of(harness.getPermanentId(player1, "Raging Goblin"),
+                harness.getPermanentId(player2, "Raging Goblin"));
+        harness.castSorceryWithDiscards(player1, 1, 2, targets, List.of(0, 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Raging Goblin");
+        harness.assertOnBattlefield(player2, "Raging Goblin");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        harness.assertInHand(player1, "Raging Goblin");
+        harness.assertInHand(player2, "Raging Goblin");
+        harness.assertInGraveyard(player1, "Aether Tide");
+    }
+
+    @Test
+    void cannotPayWithFewerDiscardsThanX() {
+        harness.addToBattlefield(player1, new RagingGoblin());
+        harness.addToBattlefield(player2, new RagingGoblin());
+        harness.setHand(player1, List.of(new AetherTide(), new RagingGoblin(), new RagingGoblin()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        List<UUID> targets = List.of(harness.getPermanentId(player1, "Raging Goblin"),
+                harness.getPermanentId(player2, "Raging Goblin"));
+        assertThatThrownBy(() -> harness.castSorceryWithDiscards(player1, 0, 2, targets, List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must discard 2");
+    }
+
+    @Test
+    void cannotDiscardTheSameCreatureCardTwice() {
+        harness.addToBattlefield(player1, new RagingGoblin());
+        harness.addToBattlefield(player2, new RagingGoblin());
+        harness.setHand(player1, List.of(new AetherTide(), new RagingGoblin(), new RagingGoblin()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        List<UUID> targets = List.of(harness.getPermanentId(player1, "Raging Goblin"),
+                harness.getPermanentId(player2, "Raging Goblin"));
+        assertThatThrownBy(() -> harness.castSorceryWithDiscards(player1, 0, 2, targets, List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Duplicate discard");
+    }
+
+    @Test
+    void xAboveOneHundredStillReturnsExactlyXCreatures() {
+        List<Card> hand = new ArrayList<>();
+        hand.add(new AetherTide());
+        List<Integer> discards = new ArrayList<>();
+        for (int i = 1; i <= 101; i++) {
+            hand.add(new RagingGoblin());
+            discards.add(i);
+            harness.addToBattlefield(player2, new RagingGoblin());
+        }
+        harness.setHand(player1, hand);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 101);
+        List<UUID> targets = gd.playerBattlefields.get(player2.getId()).stream()
+                .map(permanent -> permanent.getId()).toList();
+
+        harness.castSorceryWithDiscards(player1, 0, 101, targets, discards);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(101);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Raging Goblin")).hasSize(101);
     }
 }

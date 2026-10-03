@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.e.ElementalBond;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AmbitiousAugmenter.class, GrizzlyBears.class, Hurricane.class, Shock.class, WrathOfGod.class})
 class AmbitiousAugmenterTest extends BaseCardTest {
 
     private Permanent addAugmenter(Player player) {
@@ -36,6 +39,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Increment")
+    @CardUsed({AmbitiousAugmenter.class, GrizzlyBears.class, Hurricane.class, Shock.class})
     class IncrementTests {
 
         @Test
@@ -60,8 +64,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
 
             harness.addMana(player1, ManaColor.RED, 1);
             harness.setHand(player1, List.of(new Shock()));
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
 
             assertThat(augmenter.getPlusOnePlusOneCounters()).isZero();
         }
@@ -83,8 +86,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
             // Three-mana spell ({2}{G} Hurricane with X=2): 3 > 2 -> counter added.
             harness.addMana(player1, ManaColor.GREEN, 3);
             harness.setHand(player1, List.of(new Hurricane()));
-            harness.castSorcery(player1, 0, 2);
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 2);
             assertThat(augmenter.getPlusOnePlusOneCounters()).isEqualTo(2);
         }
 
@@ -107,6 +109,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Death trigger")
+    @CardUsed({AmbitiousAugmenter.class, WrathOfGod.class})
     class DeathTriggerTests {
 
         // The opponent casts the removal so Increment (a controller-casts-spell trigger) does not
@@ -121,7 +124,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.setHand(player2, List.of(new WrathOfGod()));
             harness.addMana(player2, ManaColor.WHITE, 4);
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+            harness.castSorcery(player2, 0);
             harness.passBothPriorities(); // Wrath resolves — augmenter dies, death trigger goes on stack
             harness.passBothPriorities(); // Death trigger resolves
 
@@ -144,12 +147,91 @@ class AmbitiousAugmenterTest extends BaseCardTest {
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.setHand(player2, List.of(new WrathOfGod()));
             harness.addMana(player2, ManaColor.WHITE, 4);
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+            harness.castSorcery(player2, 0);
             harness.passBothPriorities(); // Wrath resolves — augmenter dies, no death trigger fires
 
             GameData gd = harness.getGameData();
             assertThat(gd.stack).isEmpty();
             harness.assertNotOnBattlefield(player1, "Fractal");
         }
+    }
+
+    @Test
+    void deathTransfersEveryCounterType() {
+        Permanent augmenter = addAugmenter(player1);
+        augmenter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        augmenter.setCounterCount(CounterType.FLYING, 1);
+        augmenter.setCounterCount(CounterType.STUN, 3);
+        setUpMainPhase(player2);
+        harness.setHand(player2, List.of(new WrathOfGod()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.passBothPriorities();
+
+        List<Permanent> fractals = findPermanents(player1, "Fractal");
+        assertThat(fractals).hasSize(1);
+        assertThat(fractals.getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(fractals.getFirst().getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(fractals.getFirst().getCounterCount(CounterType.STUN)).isEqualTo(3);
+    }
+
+    @Test
+    void deathWithOnlyNonStatCountersStillTriggers() {
+        Permanent augmenter = addAugmenter(player1);
+        augmenter.setCounterCount(CounterType.STUN, 1);
+        setUpMainPhase(player2);
+        harness.setHand(player2, List.of(new WrathOfGod()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        // The resulting 0/0 Fractal dies after the ability finishes resolving.
+        harness.assertNotOnBattlefield(player1, "Fractal");
+    }
+
+    @Test
+    void incrementRechecksStatsAtResolution() {
+        Permanent augmenter = addAugmenter(player1);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        augmenter.setPowerModifier(1);
+        augmenter.setToughnessModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(augmenter.getPlusOnePlusOneCounters()).isZero();
+    }
+
+    @Test
+    void incrementCanCompareAgainstToughnessAlone() {
+        Permanent augmenter = addAugmenter(player1);
+        augmenter.setPowerModifier(2);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(augmenter.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({ElementalBond.class})
+    void fractalEntersBeforeReceivingCounters() {
+        Permanent augmenter = addAugmenter(player1);
+        augmenter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefield(player1, new ElementalBond());
+        setUpMainPhase(player2);
+        harness.setHand(player2, List.of(new WrathOfGod()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.passBothPriorities();
+
+        List<Permanent> fractals = findPermanents(player1, "Fractal");
+        assertThat(fractals).hasSize(1);
+        assertThat(fractals.getFirst().getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }

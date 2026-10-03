@@ -97,6 +97,40 @@ class ClockworkBeetleTest extends BaseCardTest {
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("End-of-combat counter removal uses the stack and can be responded to")
+    void counterRemovalWaitsForDelayedTriggerToResolve() {
+        Permanent beetle = addCreatureReady(player1, new ClockworkBeetle());
+        beetle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing its last counter puts Clockwork Beetle into the graveyard")
+    void lastCounterRemovalCausesDeath() {
+        Permanent beetle = addCreatureReady(player1, new ClockworkBeetle());
+        beetle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(beetle);
+        harness.assertInGraveyard(player1, "Clockwork Beetle");
+        harness.assertLife(player2, 19);
+    }
+
     private void leaveEndOfCombat() {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();

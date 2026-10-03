@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BaylenTheHaymaker.class)
+@CardUsed({BaylenTheHaymaker.class, Forest.class})
 class BaylenTheHaymakerTest extends BaseCardTest {
 
     @Test
@@ -41,9 +42,7 @@ class BaylenTheHaymakerTest extends BaseCardTest {
     void tapsThreeTokensToDraw() {
         addBaylen();
         List<Permanent> tokens = addTokens(3);
-        Card libraryCard = new Card() {
-        };
-        libraryCard.setName("Drawn card");
+        Card libraryCard = new Forest();
         harness.setLibrary(player1, List.of(libraryCard));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -93,6 +92,72 @@ class BaylenTheHaymakerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void summoningSickTokensCanPayForTappedBaylensAbility() {
+        Permanent baylen = addBaylen();
+        baylen.setSummoningSick(true);
+        baylen.tap();
+        List<Permanent> tokens = addTokens(2);
+        tokens.forEach(token -> token.setSummoningSick(true));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(tokens).allMatch(Permanent::isTapped);
+        assertThat(baylen.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsTokensCannotPayTheCost() {
+        addBaylen();
+        Permanent ownToken = addToken(player1);
+        Permanent opposingToken = addToken(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ownToken.isTapped()).isFalse();
+        assertThat(opposingToken.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void noncreatureTokensCanPayTheCost() {
+        addBaylen();
+        Forest first = new Forest();
+        first.setToken(true);
+        Forest second = new Forest();
+        second.setToken(true);
+        Permanent firstToken = harness.addToBattlefieldAndReturn(player1, first);
+        Permanent secondToken = harness.addToBattlefieldAndReturn(player1, second);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+
+        assertThat(firstToken.isTapped()).isTrue();
+        assertThat(secondToken.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    void growthDoesNotAffectBaylenThatReplacesTheSourceBeforeResolution() {
+        Permanent original = addBaylen();
+        List<Permanent> tokens = addTokens(4);
+        harness.activateAbility(player1, 0, 2, null, null);
+        assertThat(tokens).allMatch(Permanent::isTapped);
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new BaylenTheHaymaker());
+        harness.passBothPriorities();
+
+        assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addBaylen() {
         return addCreature(player1, new BaylenTheHaymaker(), true);
     }
@@ -123,9 +188,8 @@ class BaylenTheHaymakerTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player, Card card, boolean ready) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(!ready);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

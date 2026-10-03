@@ -70,8 +70,7 @@ class BurnDownTheHouseTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, devil.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, devil.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -79,11 +78,82 @@ class BurnDownTheHouseTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
+    @Test
+    @DisplayName("Damage mode leaves players unharmed and does not create Devils")
+    void damageModeDoesNotDamagePlayersOrCreateTokens() {
+        castBurnDownTheHouse(0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(findPermanents(player1, "Devil")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Token mode leaves existing creatures and planeswalkers unharmed")
+    void tokenModeDoesNotDealMassDamage() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+
+        castBurnDownTheHouse(1);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(findPermanents(player1, "Devil")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("New Devils can attack immediately and each deals one combat damage")
+    void devilsCanAttackOnTheTurnTheyAreCreated() {
+        castBurnDownTheHouse(1);
+
+        declareAttackers(List.of(0, 1, 2));
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A Devil's death trigger can damage a creature")
+    void devilDeathCanTargetCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castBurnDownTheHouse(1);
+        Permanent devil = findPermanents(player1, "Devil").getFirst();
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, devil.getId());
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Devil")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A Devil's death trigger can remove loyalty from a planeswalker")
+    void devilDeathCanTargetPlaneswalker() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        castBurnDownTheHouse(1);
+        Permanent devil = findPermanents(player1, "Devil").getFirst();
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, devil.getId());
+        harness.handlePermanentChosen(player1, chandra.getId());
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(findPermanents(player1, "Devil")).hasSize(2);
+    }
+
     private void castBurnDownTheHouse(int mode) {
         harness.setHand(player1, List.of(new BurnDownTheHouse()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, mode);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, mode);
     }
 }

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Chillerpillar.class)
+@CardUsed({Chillerpillar.class})
 class ChillerpillarTest extends BaseCardTest {
 
     @Test
@@ -33,18 +33,65 @@ class ChillerpillarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chillerpillar cannot activate monstrosity after becoming monstrous")
+    @DisplayName("A monstrous Chillerpillar can activate monstrosity again without gaining counters")
     void monstrosityOnlyResolvesOnce() {
-        addReadyChillerpillar(player1);
+        Permanent chillerpillar = addReadyChillerpillar(player1);
         addMonstrosityMana(player1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         addMonstrosityMana(player1);
 
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(chillerpillar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(chillerpillar.isMonstrous()).isTrue();
+        assertThat(gqs.hasKeyword(gd, chillerpillar, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two pending monstrosity activations only add counters once")
+    void multiplePendingActivationsOnlyAddCountersOnce() {
+        Permanent chillerpillar = addReadyChillerpillar(player1);
+        addMonstrosityMana(player1);
+        addMonstrosityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(chillerpillar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(chillerpillar.isMonstrous()).isTrue();
+        assertThat(gqs.hasKeyword(gd, chillerpillar, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Monstrosity does not require tapping or being free of summoning sickness")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent chillerpillar = harness.addToBattlefieldAndReturn(player1, new Chillerpillar());
+        chillerpillar.setSummoningSick(true);
+        chillerpillar.setTapped(true);
+        addMonstrosityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(chillerpillar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, chillerpillar, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("One snow mana is insufficient even with enough total mana")
+    void requiresTwoSnowMana() {
+        addReadyChillerpillar(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 1);
+
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("already monstrous");
+                .hasMessageContaining("Not enough mana");
     }
 
     @Test
@@ -59,9 +106,8 @@ class ChillerpillarTest extends BaseCardTest {
     }
 
     private Permanent addReadyChillerpillar(Player player) {
-        Permanent chillerpillar = new Permanent(new Chillerpillar());
+        Permanent chillerpillar = harness.addToBattlefieldAndReturn(player, new Chillerpillar());
         chillerpillar.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(chillerpillar);
         return chillerpillar;
     }
 

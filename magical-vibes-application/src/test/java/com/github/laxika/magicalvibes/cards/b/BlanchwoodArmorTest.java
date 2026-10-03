@@ -13,12 +13,48 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 
-@CardUsed({BlanchwoodArmor.class, Forest.class, GrizzlyBears.class, Island.class, GloriousAnthem.class, GoblinRaider.class, Swamp.class})
+@CardUsed({BlanchwoodArmor.class, Forest.class, GrizzlyBears.class, Island.class, Swamp.class})
 class BlanchwoodArmorTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Multiple Blanchwood Armors each grant their own Forest bonus")
+    void multipleArmorsStackTheirBonuses() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new BlanchwoodArmor(), new BlanchwoodArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof BlanchwoodArmor)
+                .hasSize(2)
+                .allMatch(p -> bears.getId().equals(p.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Blanchwood Armor goes to the graveyard when its enchanted creature leaves")
+    void goesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BlanchwoodArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Blanchwood Armor");
+        harness.assertNotOnBattlefield(player1, "Blanchwood Armor");
+    }
 
     @Test
     @DisplayName("Casting Blanchwood Armor puts it on the stack")

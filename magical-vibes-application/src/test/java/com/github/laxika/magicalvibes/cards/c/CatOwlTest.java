@@ -20,7 +20,7 @@ class CatOwlTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking untaps target creature")
     void attackingUntapsTargetCreature() {
-        addReadyCatOwl();
+        addCreatureReady(player1, new CatOwl());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         creature.tap();
 
@@ -34,7 +34,7 @@ class CatOwlTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking untaps target artifact")
     void attackingUntapsTargetArtifact() {
-        addReadyCatOwl();
+        addCreatureReady(player1, new CatOwl());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
         artifact.tap();
 
@@ -48,7 +48,7 @@ class CatOwlTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent that is neither an artifact nor a creature")
     void cannotTargetNonArtifactNonCreature() {
-        addReadyCatOwl();
+        addCreatureReady(player1, new CatOwl());
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
 
         declareAttackers(player1, List.of(0));
@@ -58,9 +58,48 @@ class CatOwlTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
     }
 
-    private Permanent addReadyCatOwl() {
-        Permanent catOwl = harness.addToBattlefieldAndReturn(player1, new CatOwl());
-        catOwl.setSummoningSick(false);
-        return catOwl;
+    @Test
+    @DisplayName("Cat-Owl can target itself and untaps only when its trigger resolves")
+    void canUntapItself() {
+        Permanent catOwl = addCreatureReady(player1, new CatOwl());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(catOwl.isTapped()).isTrue();
+        harness.handlePermanentChosen(player1, catOwl.getId());
+        harness.passBothPriorities();
+
+        assertThat(catOwl.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking untaps only the chosen friendly creature")
+    void untapsOnlyChosenFriendlyCreature() {
+        Permanent attacker = addCreatureReady(player1, new CatOwl());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CatOwl());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new CatOwl());
+        target.tap();
+        other.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already untapped creature is a legal target")
+    void canTargetUntappedCreature() {
+        Permanent attacker = addCreatureReady(player1, new CatOwl());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CatOwl());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(attacker.isTapped()).isTrue();
     }
 }

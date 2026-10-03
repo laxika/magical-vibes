@@ -105,6 +105,51 @@ class AlleyGriftersTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("The defending player chooses which card to discard")
+    void defendingPlayerChoosesDiscard() {
+        harness.setHand(player2, new ArrayList<>(List.of(new AlleyGrifters(), new Forest())));
+        addAttackingGrifters();
+        addCreatureReady(player2, new AlleyGrifters());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Alley Grifters");
+        harness.assertNotInHand(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each blocked Alley Grifters causes a separate discard")
+    void twoBlockedGriftersEachCauseDiscard() {
+        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new Forest(), new Forest())));
+        addAttackingGrifters();
+        addAttackingGrifters();
+        addCreatureReady(player2, new AlleyGrifters());
+        addCreatureReady(player2, new AlleyGrifters());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private void addAttackingGrifters() {
         Permanent perm = addCreatureReady(player1, new AlleyGrifters());
         perm.setAttacking(true);

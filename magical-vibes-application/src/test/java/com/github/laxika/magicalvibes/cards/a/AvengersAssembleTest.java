@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HydraulicHelper;
+import com.github.laxika.magicalvibes.cards.i.IronheartCleverChampion;
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AvengersAssemble.class, AgentMariaHill.class, GrizzlyBears.class})
+@CardUsed({AvengersAssemble.class, AgentMariaHill.class, GrizzlyBears.class,
+        HydraulicHelper.class, IronheartCleverChampion.class, MaskwoodNexus.class})
 class AvengersAssembleTest extends BaseCardTest {
 
     @Test
@@ -64,6 +68,97 @@ class AvengersAssembleTest extends BaseCardTest {
         resolveEndStep(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void drawsOnlyOneCardWhenBothConditionsAreMet() {
+        harness.addToBattlefield(player1, new AvengersAssemble());
+        addCreatureReady(player1, new AgentMariaHill());
+        harness.enterBattlefieldAndReturn(player1, new IronheartCleverChampion());
+        harness.setLibrary(player1, List.of(new AvengersAssemble(), new AvengersAssemble()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player1, List.of(1));
+        resolveEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    void doesNotDrawForAnOpponentsHeroEntering() {
+        harness.addToBattlefield(player1, new AvengersAssemble());
+        harness.enterBattlefieldAndReturn(player2, new AgentMariaHill());
+        harness.setLibrary(player1, List.of(new AvengersAssemble()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void doesNotDrawForANonHeroEntering() {
+        harness.addToBattlefield(player1, new AvengersAssemble());
+        harness.enterBattlefieldAndReturn(player1, new HydraulicHelper());
+        harness.setLibrary(player1, List.of(new AvengersAssemble()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void doesNotDrawWhenOnlyAnOpponentAttackedWithAHero() {
+        harness.addToBattlefield(player1, new AvengersAssemble());
+        addCreatureReady(player2, new AgentMariaHill());
+        harness.setLibrary(player1, List.of(new AvengersAssemble()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player2, List.of(0));
+        resolveEndStep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void drawsForAHeroThatEnteredBeforeTheEnchantment() {
+        harness.enterBattlefieldAndReturn(player1, new AgentMariaHill());
+        harness.addToBattlefield(player1, new AvengersAssemble());
+        harness.setLibrary(player1, List.of(new AvengersAssemble()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    void canBeCastDuringAnOpponentsTurnAndBoostsHeroesImmediately() {
+        Permanent hero = addCreatureReady(player1, new AgentMariaHill());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new AvengersAssemble(), "{4}{W}");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(3);
+    }
+
+    @Test
+    void drawsWhenANonHeroEntersAsAHeroDueToMaskwoodNexus() {
+        harness.addToBattlefield(player1, new AvengersAssemble());
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        harness.enterBattlefieldAndReturn(player1, new HydraulicHelper());
+        harness.setLibrary(player1, List.of(new AvengersAssemble()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     private void resolveEndStep(Player activePlayer) {

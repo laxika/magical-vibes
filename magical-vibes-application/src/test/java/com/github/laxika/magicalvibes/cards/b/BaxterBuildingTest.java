@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -69,5 +70,68 @@ class BaxterBuildingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("toughness 4 or greater");
+    }
+
+    @Test
+    void canChooseTheSameColorForAllFourMana() {
+        var building = harness.addToBattlefieldAndReturn(player1, new BaxterBuilding());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        for (int i = 0; i < 4; i++) {
+            harness.handleListChoice(player1, "RED");
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(building.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsLargeCreatureDoesNotEnableDrawing() {
+        harness.addToBattlefield(player1, new BaxterBuilding());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("toughness 4 or greater");
+    }
+
+    @Test
+    void countersCanEnableTheDrawAbility() {
+        harness.addToBattlefield(player1, new BaxterBuilding());
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        var drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    void toughnessRestrictionIsNotCheckedAgainOnResolution() {
+        var building = harness.addToBattlefieldAndReturn(player1, new BaxterBuilding());
+        var spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        var drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
+        assertThat(building.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        spider.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 }

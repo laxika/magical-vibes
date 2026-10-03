@@ -58,6 +58,51 @@ class ChargingSlatebackTest extends BaseCardTest {
     }
 
     @Test
+    void turningFaceUpRequiresFullGenericManaCost() {
+        harness.setHand(player1, List.of(new ChargingSlateback()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent slateback = findPermanent(player1, "Charging Slateback");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(slateback.isFaceDown()).isTrue();
+    }
+
+    @Test
+    void turningFaceUpBeforeBlockingRestoresBlockingRestriction() {
+        harness.setHand(player1, List.of(new ChargingSlateback()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent slateback = findPermanent(player1, "Charging Slateback");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.turnFaceUp(player1, 0);
+        assertThat(slateback.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        Permanent attacker = addCreatureReady(player2, new ChargingSlateback());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+        assertThat(slateback.isBlocking()).isFalse();
+    }
+
+    @Test
     void faceDownCreatureCanBlock() {
         harness.setHand(player1, List.of(new ChargingSlateback()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

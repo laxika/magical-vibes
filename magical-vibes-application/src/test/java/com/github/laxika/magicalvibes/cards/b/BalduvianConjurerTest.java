@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
+import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,11 +16,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalduvianConjurer.class, SnowCoveredPlains.class, AdarkarWastes.class, BalduvianBears.class})
+@CardUsed({BalduvianConjurer.class, SnowCoveredPlains.class, AdarkarWastes.class, BalduvianBears.class,
+        SwordsToPlowshares.class})
 class BalduvianConjurerTest extends BaseCardTest {
 
     @Test
@@ -114,5 +118,47 @@ class BalduvianConjurerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Conjurer cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new BalduvianConjurer());
+        Permanent snowLand = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, snowLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Conjurer cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent conjurer = addCreatureReady(player1, new BalduvianConjurer());
+        Permanent snowLand = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        conjurer.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, snowLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Animation persists after the Conjurer leaves the battlefield")
+    void animationPersistsWithoutConjurer() {
+        Permanent conjurer = addCreatureReady(player1, new BalduvianConjurer());
+        Permanent snowLand = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        harness.activateAbility(player1, 0, null, snowLand.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, conjurer.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(conjurer);
+        assertThat(gqs.isCreature(gd, snowLand)).isTrue();
+        assertThat(gqs.isLand(gd, snowLand)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, snowLand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, snowLand)).isEqualTo(2);
     }
 }

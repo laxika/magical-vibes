@@ -27,9 +27,7 @@ class ArboriaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Arboria());
         addCreatureReady(player1, new DurkwoodBoars());
 
-        beginAttack(player1);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -83,9 +81,7 @@ class ArboriaTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, token);
         gd.snapshotPlayerActionsForLastTurn(player2.getId());
 
-        beginAttack(player1);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -99,9 +95,7 @@ class ArboriaTest extends BaseCardTest {
         gd.recordSpellCast(player2.getId(), new DurkwoodBoars());
         gd.snapshotPlayerActionsForLastTurn(player2.getId());
 
-        beginAttack(player1);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -127,6 +121,45 @@ class ArboriaTest extends BaseCardTest {
         addCreatureReady(player1, new DurkwoodBoars());
 
         declareAttackers(List.of(0));
+    }
+
+    @Test
+    @DisplayName("Protection returns after the player's next turn without a qualifying action")
+    void protectionReturnsAfterInactiveTurn() {
+        harness.addToBattlefield(player1, new Arboria());
+        addCreatureReady(player1, new DurkwoodBoars());
+        harness.forceActivePlayer(player2);
+        gd.recordSpellCast(player2.getId(), new DurkwoodBoars());
+        gd.snapshotPlayerActionsForLastTurn(player2.getId());
+        gd.snapshotPlayerActionsForLastTurn(player2.getId());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Arboria stops protecting players when it leaves the battlefield")
+    void leavingBattlefieldEndsProtection() {
+        Permanent arboria = harness.addToBattlefieldAndReturn(player2, new Arboria());
+        addCreatureReady(player1, new DurkwoodBoars());
+        gd.playerBattlefields.get(player2.getId()).remove(arboria);
+
+        declareAttackers(List.of(0));
+    }
+
+    @Test
+    @DisplayName("An off-turn nontoken permanent does not qualify")
+    void nontokenPermanentDuringAnotherPlayersTurnDoesNotQualify() {
+        harness.addToBattlefield(player1, new Arboria());
+        addCreatureReady(player1, new DurkwoodBoars());
+        harness.forceActivePlayer(player1);
+        harness.enterBattlefieldAndReturn(player2, new DurkwoodBoars());
+        gd.snapshotPlayerActionsForLastTurn(player2.getId());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 
     private void beginAttack(Player attacker) {

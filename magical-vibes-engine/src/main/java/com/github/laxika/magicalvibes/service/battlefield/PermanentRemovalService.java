@@ -533,7 +533,7 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         if (!commanderChoice) triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.HAND);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.HAND);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -576,7 +576,7 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.COMMAND);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.COMMAND);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -828,7 +828,7 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -886,7 +886,7 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -969,7 +969,7 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY);
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -1103,6 +1103,9 @@ public class PermanentRemovalService {
      * @return {@code true} if any attachment changed (the SBA loop must re-check)
      */
     public boolean removeOrphanedAuras(GameData gameData) {
+        if (gameData.effectResolutionDepth > 0 || gameData.deferPlayerLossCheck) {
+            return false;
+        }
         var result = auraAttachmentService.removeOrphanedAuras(gameData);
         for (var removal : result.removals()) {
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
@@ -1560,7 +1563,18 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                target.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, target));
+                target.setLastKnownColors(Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
+        target.setLastKnownPower(gameQueryService.getEffectivePower(gameData, target));
                 for (StackEntry entry : gameData.stack) {
+                    for (Permanent attacker : entry.getAttackingPermanentSnapshots()) {
+                        if (target.getId().equals(attacker.getId())) {
+                            attacker.setLastKnownPower(target.getLastKnownPower());
+                        }
+                    }
+                    if (target.getId().equals(entry.getSourcePermanentId())) {
+                        entry.setSourcePermanentSnapshot(new Permanent(target));
+                    }
                     if (entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.getLastKnownTargetColors().put(target.getId(),
                                 Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
@@ -1583,6 +1597,8 @@ public class PermanentRemovalService {
                     }
                     if (target.getId().equals(entry.getTriggeringPermanentId())) {
                         entry.getRemovedPermanentControllers().put(target.getId(), playerId);
+                        entry.setTriggeringPermanentPowerAtTrigger(
+                                gameQueryService.getEffectivePower(gameData, target));
                         entry.setTriggeringPermanentToughnessAtTrigger(
                                 gameQueryService.getEffectiveToughness(gameData, target));
                         if (entry.getEffectsToResolve().stream().anyMatch(effect ->
@@ -2164,7 +2180,7 @@ public class PermanentRemovalService {
             if (wasEnchantment && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
-            if (target.getCard().hasType(CardType.LAND) && !creatureDeathTriggersSuppressed) {
+            if (wasLand && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkLandPutIntoGraveyardByOpponentTriggers(
                         gameData, target.getOriginalCard(), ownerId, gameData.currentlyResolvingControllerId);
                 triggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(

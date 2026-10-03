@@ -113,4 +113,44 @@ class ConclavesBlessingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("A lone enchanted creature receives no boost, then gains toughness as creatures enter")
+    void updatesFromZeroWhenCreaturesEnter() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        harness.setHand(player1, List.of(new ConclavesBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+
+        harness.addToBattlefield(player2, new CourierHawk());
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new CourierHawk());
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Convoke can pay the entire cost, including white mana, using the target creature")
+    void castsEntirelyWithConvokeIncludingTarget() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        harness.setHand(player1, List.of(new ConclavesBlessing()));
+
+        gs.playCard(gd, player1, 0, 0, host.getId(), null, List.of(),
+                List.of(host.getId(), second.getId(), third.getId(), fourth.getId()));
+        harness.passBothPriorities();
+
+        assertThat(List.of(host, second, third, fourth)).allMatch(Permanent::isTapped);
+        Permanent aura = findPermanent(player1, "Conclave's Blessing");
+        assertThat(aura.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(8);
+    }
 }

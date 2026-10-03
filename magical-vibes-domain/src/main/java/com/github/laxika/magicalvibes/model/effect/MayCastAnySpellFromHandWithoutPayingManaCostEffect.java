@@ -22,7 +22,8 @@ import java.util.List;
  */
 public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                   DynamicAmount maxManaValue,
-                                                                  CardEffect afterSuccessfulCastEffect)
+                                                                  CardEffect afterSuccessfulCastEffect,
+                                                                  boolean drawnCardsOnly, boolean revealDrawnCards)
         implements CardEffect, CombatDamageAmountAwareEffect {
 
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
@@ -33,9 +34,7 @@ public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate s
     public MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                DynamicAmount maxManaValue,
                                                                CardEffect afterSuccessfulCastEffect) {
-        this.spellFilter = spellFilter;
-        this.maxManaValue = maxManaValue;
-        this.afterSuccessfulCastEffect = afterSuccessfulCastEffect;
+        this(spellFilter, maxManaValue, afterSuccessfulCastEffect, false, false);
     }
 
     /** Any nonland spell (Maelstrom Archangel). */
@@ -68,6 +67,6 @@ public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate s
                 ? manaValueFilter
                 : new CardAllOfPredicate(List.of(spellFilter, manaValueFilter));
         return new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
-                combinedFilter, null, afterSuccessfulCastEffect);
+                combinedFilter, null, afterSuccessfulCastEffect, drawnCardsOnly, revealDrawnCards);
     }
 }

@@ -84,4 +84,50 @@ class ArcticMerfolkTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("return cost");
     }
+
+    @Test
+    @DisplayName("A tapped creature can pay kicker and is returned before the spell resolves")
+    void returnsTappedCreatureDuringCasting() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AncientSpider());
+        creature.tap();
+        harness.setHand(player1, List.of(new ArcticMerfolk()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castKickedCreatureWithPermanent(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ancient Spider");
+        harness.assertInHand(player1, "Ancient Spider");
+        harness.assertNotOnBattlefield(player1, "Arctic Merfolk");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Arctic Merfolk")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Kicker returns a controlled creature to its owner's hand")
+    void returnsControlledCreatureToOpponentsHand() {
+        AncientSpider spider = new AncientSpider();
+        spider.setOwnerId(player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, spider);
+        harness.setHand(player1, List.of(new ArcticMerfolk()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castKickedCreatureWithPermanent(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ancient Spider");
+        harness.assertInHand(player2, "Ancient Spider");
+        harness.assertNotInHand(player1, "Ancient Spider");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Arctic Merfolk")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }

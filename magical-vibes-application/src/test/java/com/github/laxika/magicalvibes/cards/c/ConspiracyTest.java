@@ -107,4 +107,53 @@ class ConspiracyTest extends BaseCardTest {
         assertThat(gqs.cardHasSubtype(handCreature, CardSubtype.HORROR, gd, player1.getId())).isFalse();
         assertThat(gqs.cardHasSubtype(handCreature, CardSubtype.MERCENARY, gd, player1.getId())).isFalse();
     }
+
+    @Test
+    void mostRecentConspiracyReplacesTheEarlierChoiceInAllZones() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CateranBrute());
+
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        CateranBrute handCreature = new CateranBrute();
+        harness.setHand(player1, List.of(handCreature));
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.ELF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.MERCENARY)).isFalse();
+        assertThat(gqs.getCardSubtypes(handCreature, gd, player1.getId()))
+                .containsExactly(CardSubtype.ELF);
+
+        harness.castFromHand(player1, new CateranBrute(), "{2}{B}");
+        assertThat(gqs.getCardSubtypes(gd.stack.getFirst().getCard(), gd, player1.getId()))
+                .containsExactly(CardSubtype.ELF);
+    }
+
+    @Test
+    void originalCreatureTypesReturnWhenConspiracyLeavesTheBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CateranBrute());
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        CateranBrute graveyardCreature = new CateranBrute();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.getCardSubtypes(graveyardCreature, gd, player1.getId()))
+                .containsExactly(CardSubtype.GOBLIN);
+
+        Permanent conspiracy = findPermanent(player1, "Conspiracy");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, conspiracy));
+
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.HORROR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.MERCENARY)).isTrue();
+        assertThat(gqs.getCardSubtypes(graveyardCreature, gd, player1.getId()))
+                .containsExactlyInAnyOrder(CardSubtype.HORROR, CardSubtype.MERCENARY);
+    }
 }

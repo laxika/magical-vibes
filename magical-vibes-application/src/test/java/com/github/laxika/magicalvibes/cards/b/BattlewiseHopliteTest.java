@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BattlewiseHoplite.class, GiantGrowth.class, Shock.class, Forest.class})
 class BattlewiseHopliteTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class BattlewiseHopliteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID hopliteId = harness.getPermanentId(player1, "Battlewise Hoplite");
-        harness.castInstant(player1, 0, hopliteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hopliteId);
 
         Permanent hoplite = findPermanent(player1, "Battlewise Hoplite");
         assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -52,8 +53,7 @@ class BattlewiseHopliteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         Permanent hoplite = findPermanent(player1, "Battlewise Hoplite");
         assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -69,11 +69,69 @@ class BattlewiseHopliteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         UUID hopliteId = harness.getPermanentId(player1, "Battlewise Hoplite");
-        harness.castInstant(player2, 0, hopliteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hopliteId);
 
         Permanent hoplite = findPermanent(player1, "Battlewise Hoplite");
         assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Heroic can put the top card on the bottom after adding the counter")
+    void heroicScriesToBottom() {
+        harness.addToBattlefield(player1, new BattlewiseHoplite());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        Forest top = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Battlewise Hoplite"));
+
+        assertThat(findPermanent(player1, "Battlewise Hoplite")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, top);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Heroic still adds its counter with an empty library")
+    void heroicWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new BattlewiseHoplite());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Battlewise Hoplite"));
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Battlewise Hoplite")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell targeting an opponent's Hoplite does not trigger your Hoplite")
+    void targetingAnotherHopliteDoesNotTriggerHeroic() {
+        harness.addToBattlefield(player1, new BattlewiseHoplite());
+        harness.addToBattlefield(player2, new BattlewiseHoplite());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Battlewise Hoplite"));
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Battlewise Hoplite")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player2, "Battlewise Hoplite")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

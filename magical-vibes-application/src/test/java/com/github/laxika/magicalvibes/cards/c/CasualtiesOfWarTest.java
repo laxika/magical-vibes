@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.l.LazotepPlating;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CasualtiesOfWar.class, Spellbook.class, GrizzlyBears.class, GloriousAnthem.class,
-        Forest.class, JaceBeleren.class, Ornithopter.class})
+        Forest.class, JaceBeleren.class, Ornithopter.class, LazotepPlating.class})
 class CasualtiesOfWarTest extends BaseCardTest {
 
     @Test
@@ -61,6 +62,72 @@ class CasualtiesOfWarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalSorceryWithModes(
                 player1, 0, 1, 5, new int[]{0}, List.of(creature.getId()), null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Choosing only the land mode leaves unselected permanent types intact")
+    void choosesOnlyLandMode() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        cast(new int[]{3}, List.of(land.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Spellbook");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can destroy a permanent controlled by the caster")
+    void destroysOwnLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        cast(new int[]{3}, List.of(land.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Resolves the legal land mode when the artifact target gains hexproof")
+    void resolvesRemainingLegalTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new CasualtiesOfWar()));
+        addMana();
+        harness.castModalSorceryWithModes(player1, 0, 1, 5,
+                new int[]{0, 3}, List.of(artifact.getId(), land.getId()), null);
+
+        harness.castFromHand(player2, new LazotepPlating(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+        harness.assertNotInGraveyard(player2, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Casualties of War");
+    }
+
+    @Test
+    @DisplayName("Does not destroy anything when every selected target gains hexproof")
+    void allTargetsBecomeIllegal() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new CasualtiesOfWar()));
+        addMana();
+        harness.castModalSorceryWithModes(player1, 0, 1, 5,
+                new int[]{0, 3}, List.of(artifact.getId(), land.getId()), null);
+
+        harness.castFromHand(player2, new LazotepPlating(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Casualties of War");
     }
 
     private void cast(int[] modes, List<java.util.UUID> targets) {

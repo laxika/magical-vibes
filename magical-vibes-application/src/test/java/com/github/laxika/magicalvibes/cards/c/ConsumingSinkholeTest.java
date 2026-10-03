@@ -47,9 +47,8 @@ class ConsumingSinkholeTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 4 damage to a target planeswalker")
     void dealsDamageToPlaneswalker() {
-        Permanent chandra = new Permanent(new ChandraNalaar());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, 6);
-        gd.playerBattlefields.get(player2.getId()).add(chandra);
 
         cast(1, chandra.getId());
         harness.passBothPriorities();
@@ -64,6 +63,73 @@ class ConsumingSinkholeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> cast(0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can deal 4 damage to its own controller")
+    void dealsDamageToController() {
+        cast(1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Rejects an unanimated land for the exile mode")
+    void rejectsNonCreatureLand() {
+        Permanent mutavault = harness.addToBattlefieldAndReturn(player2, new Mutavault());
+
+        assertThatThrownBy(() -> cast(0, mutavault.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rejects a creature for the damage mode")
+    void rejectsCreatureForDamageMode() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> cast(1, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiles an opponent's animated land without dealing player damage")
+    void exilesOpponentsLandCreature() {
+        Permanent mutavault = harness.addToBattlefieldAndReturn(player2, new Mutavault());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        cast(0, mutavault.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(mutavault);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(mutavault.getCard());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An exile spell does nothing when a response has already exiled its target")
+    void doesNothingWhenTargetAlreadyExiled() {
+        Permanent mutavault = harness.addToBattlefieldAndReturn(player2, new Mutavault());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        cast(0, mutavault.getId());
+        cast(0, mutavault.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(mutavault);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(mutavault.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(2)
+                .allMatch(card -> card instanceof ConsumingSinkhole);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private void cast(int mode, UUID targetId) {

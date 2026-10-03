@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -85,10 +86,62 @@ class AlarumTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    private void castAlarum(Permanent target) {
+    @Test
+    @DisplayName("Can boost a blocking creature without removing it from combat")
+    void canTargetBlockingCreature() {
+        Permanent attacker = addCreatureReady(player1, new BayFalcon());
+        Permanent blocker = addCreatureReady(player2, new BayFalcon());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        prepareAlarum();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(blocker.getPowerModifier()).isEqualTo(1);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Only the chosen creature is untapped and boosted")
+    void affectsOnlyChosenCreature() {
+        Permanent target = addTappedCreature(player1);
+        Permanent other = addTappedCreature(player1);
+
+        castAlarum(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not affect a creature that leaves and returns before resolution")
+    void doesNotAffectReturnedCreature() {
+        Permanent target = addTappedCreature(player2);
         prepareAlarum();
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        Permanent returned = harness.addToBattlefieldAndReturn(player2, target.getCard());
+        returned.tap();
+
         harness.passBothPriorities();
+
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(returned.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Alarum");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castAlarum(Permanent target) {
+        prepareAlarum();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareAlarum() {

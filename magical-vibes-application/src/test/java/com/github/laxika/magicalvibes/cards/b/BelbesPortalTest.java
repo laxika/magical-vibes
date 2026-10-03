@@ -103,6 +103,50 @@ class BelbesPortalTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Belbe's Percher");
     }
 
+    @Test
+    @DisplayName("No matching creature leaves the hand unchanged and still pays the activation cost")
+    void noMatchingCreatureDoesNothing() {
+        Permanent portal = addChosenPortal();
+        harness.setHand(player1, List.of(new RootwaterCommando(), new SealOfCleansing()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Rootwater Commando");
+        harness.assertInHand(player1, "Seal of Cleansing");
+        harness.assertNotOnBattlefield(player1, "Rootwater Commando");
+        harness.assertNotOnBattlefield(player1, "Seal of Cleansing");
+        assertThat(portal.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("One activation puts exactly one matching creature onto the battlefield untapped")
+    void putsOnlyOneCreatureOntoBattlefieldUntapped() {
+        addChosenPortal();
+        BelbesPercher first = new BelbesPercher();
+        BelbesPercher second = new BelbesPercher();
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent creature = findPermanent(player1, "Belbe's Percher");
+        assertThat(creature.getCard().getId()).isEqualTo(first.getId());
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addChosenPortal() {
         harness.setHand(player1, List.of(new BelbesPortal()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);

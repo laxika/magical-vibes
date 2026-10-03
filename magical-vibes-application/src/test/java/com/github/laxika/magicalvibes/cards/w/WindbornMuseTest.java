@@ -23,6 +23,8 @@ class WindbornMuseTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
 
         assertThatCode(() -> declareAttackers(List.of(0))).doesNotThrowAnyException();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }

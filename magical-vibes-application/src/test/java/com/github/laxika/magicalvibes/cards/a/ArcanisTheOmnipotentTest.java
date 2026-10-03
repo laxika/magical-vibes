@@ -95,6 +95,53 @@ class ArcanisTheOmnipotentTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
     }
 
+    @Test
+    @DisplayName("Draw ability still resolves after Arcanis returns to hand")
+    void drawAbilityResolvesAfterSourceReturnsToHand() {
+        ArcanisTheOmnipotent card = new ArcanisTheOmnipotent();
+        card.setOwnerId(player1.getId());
+        Permanent arcanis = addCreatureReady(player1, card);
+        harness.setHand(player1, List.of());
+        List<ArcanisTheOmnipotent> library = List.of(
+                new ArcanisTheOmnipotent(), new ArcanisTheOmnipotent(), new ArcanisTheOmnipotent());
+        harness.setLibrary(player1, library);
+        forceMainPhase(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(arcanis.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card).containsAll(library).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Return ability requires two blue mana in addition to its generic cost")
+    void returnAbilityRejectsInsufficientBlueMana() {
+        Permanent arcanis = harness.addToBattlefieldAndReturn(player1, new ArcanisTheOmnipotent());
+        harness.setHand(player1, List.of());
+        forceMainPhase(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(arcanis);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
     private void forceMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

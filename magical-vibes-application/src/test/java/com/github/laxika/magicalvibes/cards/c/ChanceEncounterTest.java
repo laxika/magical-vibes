@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.SorcerersStrongbox;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -10,9 +11,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChanceEncounter.class, SorcerersStrongbox.class})
+@CardUsed({ChanceEncounter.class, SorcerersStrongbox.class, Naturalize.class})
 class ChanceEncounterTest extends BaseCardTest {
 
     @Test
@@ -90,6 +93,58 @@ class ChanceEncounterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         chanceEncounter.setCounterCount(CounterType.LUCK, 9);
+        resolveAllTriggers();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Wins at upkeep with more than ten luck counters")
+    void winsWithMoreThanTenLuckCounters() {
+        Permanent chanceEncounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+        chanceEncounter.setCounterCount(CounterType.LUCK, 11);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Destroying Chance Encounter with ten counters does not prevent its upkeep win")
+    void winsUsingLastKnownCountersAfterDestruction() {
+        Permanent chanceEncounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+        chanceEncounter.setCounterCount(CounterType.LUCK, 10);
+        harness.setHand(player2, List.of(new Naturalize()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, chanceEncounter.getId());
+        harness.assertInGraveyard(player1, "Chance Encounter");
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Last known counters below ten prevent the upkeep win after destruction")
+    void doesNotWinUsingLastKnownCountersBelowTen() {
+        Permanent chanceEncounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+        chanceEncounter.setCounterCount(CounterType.LUCK, 10);
+        harness.setHand(player2, List.of(new Naturalize()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        chanceEncounter.setCounterCount(CounterType.LUCK, 9);
+
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, chanceEncounter.getId());
+        harness.assertInGraveyard(player1, "Chance Encounter");
         resolveAllTriggers();
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);

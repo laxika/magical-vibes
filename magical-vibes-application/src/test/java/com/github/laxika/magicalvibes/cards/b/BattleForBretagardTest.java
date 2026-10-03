@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.v.VoiceOfResurgence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,8 +18,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BattleForBretagard.class)
+@CardUsed({BattleForBretagard.class, VoiceOfResurgence.class})
 class BattleForBretagardTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Casting the Saga triggers chapter I as it enters")
+    void enteringTriggersChapterI() {
+        harness.castFromHand(player1, new BattleForBretagard(), "{1}{G}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countOf("Human Warrior Token")).isEqualTo(1);
+        assertThat(countOf("Elf Warrior Token")).isZero();
+        assertThat(saga().getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Chapters I and II create Human Warrior and Elf Warrior tokens")
@@ -28,10 +41,10 @@ class BattleForBretagardTest extends BaseCardTest {
         saga.setCounterCount(CounterType.LORE, 0);
 
         advanceToNextChapter();
-        assertThat(countOf("Human Warrior")).isEqualTo(1);
+        assertThat(countOf("Human Warrior Token")).isEqualTo(1);
 
         advanceToNextChapter();
-        assertThat(countOf("Elf Warrior")).isEqualTo(1);
+        assertThat(countOf("Elf Warrior Token")).isEqualTo(1);
     }
 
     @Test
@@ -63,6 +76,65 @@ class BattleForBretagardTest extends BaseCardTest {
         assertThat(countOf("Land Token")).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Chapter III allows choosing no tokens and then sacrifices the Saga")
+    void chapterIIICanChooseNoTokens() {
+        harness.addToBattlefield(player1, new BattleForBretagard());
+        harness.addToBattlefield(player1, token("Bear Token", CardType.CREATURE, 2, 2));
+        saga().setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(countOf("Bear Token")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Battle for Bretagard");
+        harness.assertInGraveyard(player1, "Battle for Bretagard");
+    }
+
+    @Test
+    @DisplayName("Chapter III ignores opposing tokens and nontoken creatures")
+    void chapterIIIWithNoEligibleTokens() {
+        harness.addToBattlefield(player1, new BattleForBretagard());
+        harness.addToBattlefield(player2, token("Bear Token", CardType.CREATURE, 2, 2));
+        Card nontoken = token("Bear Token", CardType.CREATURE, 2, 2);
+        nontoken.setToken(false);
+        harness.addToBattlefield(player1, nontoken);
+        harness.addToBattlefield(player1, token("Land Token", CardType.LAND, 0, 0));
+        saga().setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countOf("Bear Token")).isEqualTo(1);
+        assertThat(countOf("Land Token")).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Battle for Bretagard");
+    }
+
+    @Test
+    @DisplayName("Chapter III preserves every color of a multicolored token copy")
+    void chapterIIIPreservesMultipleColors() {
+        harness.addToBattlefield(player1, new BattleForBretagard());
+        VoiceOfResurgence tokenCopy = new VoiceOfResurgence();
+        tokenCopy.setToken(true);
+        Permanent original = harness.addToBattlefieldAndReturn(player1, tokenCopy);
+        original.setTapped(true);
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        saga().setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.handleMultiplePermanentsChosen(player1, List.of(original.getId()));
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Voice of Resurgence"))
+                .filter(permanent -> !permanent.getId().equals(original.getId()))
+                .findFirst().orElseThrow();
+        assertThat(harness.getGameQueryService().getEffectiveColors(gd, copy))
+                .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void advanceToNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -72,10 +144,8 @@ class BattleForBretagardTest extends BaseCardTest {
     }
 
     private Permanent saga() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Battle for Bretagard"))
-                .findFirst()
-                .orElseThrow();
+        return harness.getGameQueryService().findPermanentById(
+                gd, harness.getPermanentId(player1, "Battle for Bretagard"));
     }
 
     private long countOf(String name) {

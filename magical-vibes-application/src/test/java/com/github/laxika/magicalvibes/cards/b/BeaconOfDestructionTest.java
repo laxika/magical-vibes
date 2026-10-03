@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.w.WanShiTongAllKnowing;
 import com.github.laxika.magicalvibes.cards.c.CranialPlating;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +23,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BeaconOfDestruction.class, DrossCrocodile.class, ChandraNalaar.class, CranialPlating.class})
+@CardUsed({BeaconOfDestruction.class, DrossCrocodile.class, ChandraNalaar.class, CranialPlating.class,
+        Cancel.class, Unsummon.class, WanShiTongAllKnowing.class})
 class BeaconOfDestructionTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -186,5 +190,63 @@ class BeaconOfDestructionTest extends BaseCardTest {
 
         assertThat(harness.getGameData().stack).isEmpty();
     }
-}
 
+    @Test
+    @DisplayName("An illegal sole target prevents both damage and shuffling")
+    void illegalTargetDoesNotShuffleBeacon() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        BeaconOfDestruction beacon = new BeaconOfDestruction();
+        harness.setHand(player1, List.of(beacon));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Dross Crocodile");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(beacon);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(beacon);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A countered Beacon neither deals damage nor shuffles into the library")
+    void counteredBeaconDoesNotShuffle() {
+        BeaconOfDestruction beacon = new BeaconOfDestruction();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(beacon));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player2, 0, beacon.getId());
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(beacon);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(beacon);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shuffling Beacon into a library triggers Wan Shi Tong exactly once")
+    void shufflingBeaconTriggersCardsPutIntoLibraryAbility() {
+        harness.addToBattlefield(player2, new WanShiTongAllKnowing());
+        BeaconOfDestruction beacon = new BeaconOfDestruction();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(beacon));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 15);
+        assertThat(gd.playerDecks.get(player1.getId())).containsOnlyOnce(beacon);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Spirit")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+}

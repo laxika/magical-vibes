@@ -24,7 +24,7 @@ class BalefulBeholderTest extends BaseCardTest {
     void antimagicConeHasEachOpponentSacrificeAnEnchantment() {
         Permanent firstEnchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         Permanent secondEnchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         castBeholder();
         harness.handleListChoice(player1,
@@ -68,6 +68,52 @@ class BalefulBeholderTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, beholder, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void antimagicConeDoesNotSacrificeYourEnchantmentWhenOpponentHasNone() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castBeholder();
+        harness.handleListChoice(player1,
+                "Antimagic Cone — Each opponent sacrifices an enchantment of their choice");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
+    @Test
+    void antimagicConeSacrificesOpponentsOnlyEnchantmentAndLeavesYours() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+
+        castBeholder();
+        harness.handleListChoice(player1,
+                "Antimagic Cone — Each opponent sacrifices an enchantment of their choice");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    void fearRayOnlyGrantsMenaceToCreaturesPresentWhenItResolves() {
+        castBeholder();
+        harness.handleListChoice(player1,
+                "Fear Ray — Creatures you control gain menace until end of turn");
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.MENACE)).isFalse();
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.MENACE)).isFalse();
     }
 
     private void castBeholder() {

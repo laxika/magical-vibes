@@ -99,12 +99,52 @@ class AvalancheRidersTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Avalanche Riders");
     }
 
+    @Test
+    @DisplayName("Echo still applies when Avalanche Riders enters with no lands available")
+    void echoAppliesWithoutAnyLandTargets() {
+        harness.enterBattlefieldAndReturn(player1, new AvalancheRiders());
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Avalanche Riders");
+        harness.assertInGraveyard(player1, "Avalanche Riders");
+    }
+
+    @Test
+    @DisplayName("Echo still applies when the land-destruction target leaves before resolution")
+    void echoAppliesWhenLandDestructionTriggerFizzles() {
+        harness.addToBattlefield(player2, new GhituEncampment());
+        UUID landId = harness.getPermanentId(player2, "Ghitu Encampment");
+        harness.setHand(player1, List.of(new AvalancheRiders()));
+        addCastMana();
+        harness.castCreature(player1, 0, 0, landId);
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, findPermanent(player2, "Ghitu Encampment")));
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Avalanche Riders");
+        harness.assertInHand(player2, "Ghitu Encampment");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Avalanche Riders");
+        harness.assertInGraveyard(player1, "Avalanche Riders");
+    }
+
     private void castAndResolveAvalancheRiders(UUID targetId) {
         harness.setHand(player1, List.of(new AvalancheRiders()));
         addCastMana();
         harness.castCreature(player1, 0, 0, targetId);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addCastMana() {

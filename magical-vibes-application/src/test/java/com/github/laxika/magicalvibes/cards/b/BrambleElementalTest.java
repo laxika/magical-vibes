@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.m.MoldervineCloak;
+import com.github.laxika.magicalvibes.cards.p.Putrefy;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BrambleElemental.class, MoldervineCloak.class})
+@CardUsed({BrambleElemental.class, MoldervineCloak.class, Putrefy.class})
 class BrambleElementalTest extends BaseCardTest {
 
     @Test
@@ -56,16 +57,86 @@ class BrambleElementalTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Saproling")).hasSize(2);
     }
 
+    @Test
+    void eachAdditionalAuraCreatesTwoMoreSaprolings() {
+        Permanent elemental = addCreatureReady(player1, new BrambleElemental());
+
+        attachMoldervineCloak(player1, elemental);
+        attachMoldervineCloak(player1, elemental);
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(4);
+        assertThat(findPermanents(player1, "Moldervine Cloak")).hasSize(2);
+    }
+
+    @Test
+    void tokensAreCreatedByATriggerAfterTheAuraResolves() {
+        Permanent elemental = addCreatureReady(player1, new BrambleElemental());
+        prepareMoldervineCloak(player1);
+
+        harness.castEnchantment(player1, 0, elemental.getId());
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Moldervine Cloak").getAttachedTo()).isEqualTo(elemental.getId());
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+    }
+
+    @Test
+    void attachmentTriggerStillCreatesTokensAfterElementalIsDestroyed() {
+        Permanent elemental = addCreatureReady(player1, new BrambleElemental());
+        prepareMoldervineCloak(player1);
+        harness.castEnchantment(player1, 0, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Putrefy()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, elemental.getId());
+
+        assertThat(findPermanents(player1, "Bramble Elemental")).isEmpty();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
+    @Test
+    void auraWhoseTargetIsDestroyedBeforeResolutionDoesNotCreateTokens() {
+        Permanent elemental = addCreatureReady(player1, new BrambleElemental());
+        prepareMoldervineCloak(player1);
+        harness.castEnchantment(player1, 0, elemental.getId());
+
+        harness.setHand(player2, List.of(new Putrefy()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, elemental.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bramble Elemental")).isEmpty();
+        assertThat(findPermanents(player1, "Moldervine Cloak")).isEmpty();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
     private void attachMoldervineCloak(Player controller, Permanent target) {
+        prepareMoldervineCloak(controller);
+        harness.castEnchantment(controller, 0, target.getId());
+        resolveAllTriggers();
+    }
+
+    private void prepareMoldervineCloak(Player controller) {
         harness.forceActivePlayer(controller);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(controller, List.of(new MoldervineCloak()));
         harness.addMana(controller, ManaColor.GREEN, 1);
         harness.addMana(controller, ManaColor.COLORLESS, 2);
-
-        harness.castEnchantment(controller, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 }

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "252")
+@CardRegistration(set = "BRC", collectorNumber = "6")
+@CardRegistration(set = "BRC", collectorNumber = "53")
 public class ScholarOfNewHorizons extends Card {
 
     public ScholarOfNewHorizons() {

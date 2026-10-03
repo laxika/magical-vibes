@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.ChromeshellCrab;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
@@ -9,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,11 +21,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // GrizzlyBears = {1}{G} (mana value 2, even); LlanowarElves = {G} (mana value 1, odd).
+@CardUsed({AshlingsPrerogative.class, GrizzlyBears.class, LlanowarElves.class,
+        ChromeshellCrab.class, HowlingMine.class, MarchOfTheMachines.class})
 class AshlingsPrerogativeTest extends BaseCardTest {
 
     private Permanent addPrerogativeWithParity(com.github.laxika.magicalvibes.model.Player owner, ManaValueParity parity) {
-        harness.addToBattlefield(owner, new AshlingsPrerogative());
-        Permanent perm = findPermanent(owner, "Ashling's Prerogative");
+        Permanent perm = harness.addToBattlefieldAndReturn(owner, new AshlingsPrerogative());
         perm.setChosenManaValueParity(parity);
         return perm;
     }
@@ -35,11 +40,7 @@ class AshlingsPrerogativeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving awaits an odd/even choice")
     void resolvingAwaitsParityChoice() {
-        harness.setHand(player1, List.of(new AshlingsPrerogative()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AshlingsPrerogative(), "{1}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -50,11 +51,7 @@ class AshlingsPrerogativeTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing odd stores the parity on the permanent")
     void choosingSetsParity() {
-        harness.setHand(player1, List.of(new AshlingsPrerogative()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AshlingsPrerogative(), "{1}{R}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ODD");
 
@@ -110,10 +107,7 @@ class AshlingsPrerogativeTest extends BaseCardTest {
     @DisplayName("Even chosen: an odd-MV creature enters tapped")
     void unmatchedParityCreatureEntersTapped() {
         addPrerogativeWithParity(player1, ManaValueParity.EVEN);
-        harness.setHand(player1, List.of(new LlanowarElves())); // MV 1, odd
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarElves(), "{G}");
         harness.passBothPriorities();
 
         assertThat(find(player1, "Llanowar Elves").isTapped()).isTrue();
@@ -123,11 +117,7 @@ class AshlingsPrerogativeTest extends BaseCardTest {
     @DisplayName("Even chosen: an even-MV creature enters untapped")
     void matchedParityCreatureEntersUntapped() {
         addPrerogativeWithParity(player1, ManaValueParity.EVEN);
-        harness.setHand(player1, List.of(new GrizzlyBears())); // MV 2, even
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(find(player1, "Grizzly Bears").isTapped()).isFalse();
@@ -137,13 +127,11 @@ class AshlingsPrerogativeTest extends BaseCardTest {
     @DisplayName("Enters-tapped applies to opponents' creatures too")
     void unmatchedParityOpponentCreatureEntersTapped() {
         addPrerogativeWithParity(player1, ManaValueParity.EVEN);
-        harness.setHand(player2, List.of(new LlanowarElves())); // MV 1, odd
-        harness.addMana(player2, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new LlanowarElves(), "{G}");
         harness.passBothPriorities();
 
         assertThat(find(player2, "Llanowar Elves").isTapped()).isTrue();
@@ -153,13 +141,96 @@ class AshlingsPrerogativeTest extends BaseCardTest {
     @DisplayName("Odd chosen: an even-MV creature enters tapped")
     void oddChosenEvenCreatureEntersTapped() {
         addPrerogativeWithParity(player1, ManaValueParity.ODD);
-        harness.setHand(player1, List.of(new GrizzlyBears())); // MV 2, even
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(find(player1, "Grizzly Bears").isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Odd chosen: an odd-mana-value creature enters untapped with haste")
+    void oddChosenOddCreatureEntersUntappedWithHaste() {
+        addPrerogativeWithParity(player1, ManaValueParity.ODD);
+        harness.castFromHand(player1, new LlanowarElves(), "{G}");
+        harness.passBothPriorities();
+
+        Permanent elves = find(player1, "Llanowar Elves");
+        assertThat(elves.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Even chosen: a face-down creature enters untapped and has haste")
+    void faceDownCreatureUsesZeroManaValueForEvenChoice() {
+        addPrerogativeWithParity(player1, ManaValueParity.EVEN);
+        harness.setHand(player1, List.of(new ChromeshellCrab()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent crab = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown).findFirst().orElseThrow();
+        assertThat(crab.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, crab, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Odd chosen: a face-down creature enters tapped without haste")
+    void faceDownCreatureUsesZeroManaValueForOddChoice() {
+        addPrerogativeWithParity(player1, ManaValueParity.ODD);
+        harness.setHand(player1, List.of(new ChromeshellCrab()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent crab = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown).findFirst().orElseThrow();
+        assertThat(crab.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, crab, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An artifact entering as a creature uses the enters-tapped replacement")
+    void animatedArtifactOfUnchosenParityEntersTapped() {
+        addPrerogativeWithParity(player1, ManaValueParity.ODD);
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.castFromHand(player1, new HowlingMine(), "{2}");
+        harness.passBothPriorities();
+
+        assertThat(find(player1, "Howling Mine").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opposite choices on two Prerogatives give every creature haste and tapped entry")
+    void oppositeChoicesApplyIndependently() {
+        addPrerogativeWithParity(player1, ManaValueParity.EVEN);
+        addPrerogativeWithParity(player2, ManaValueParity.ODD);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new LlanowarElves(), "{G}");
+        harness.passBothPriorities();
+
+        Permanent bears = find(player1, "Grizzly Bears");
+        Permanent elves = find(player1, "Llanowar Elves");
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(elves.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing even on resolution grants haste to matching creatures already in play")
+    void choosingEvenAppliesToExistingCreatures() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.castFromHand(player1, new AshlingsPrerogative(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "EVEN");
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.HASTE)).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(elves.isTapped()).isFalse();
+    }
+
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Gravecrawler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Moonlace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AyaraFirstOfLocthwain.class, Forest.class, Gravecrawler.class, GrizzlyBears.class})
+@CardUsed({AyaraFirstOfLocthwain.class, Forest.class, Gravecrawler.class, GrizzlyBears.class, Moonlace.class})
 class AyaraFirstOfLocthwainTest extends BaseCardTest {
 
     @Test
@@ -104,9 +105,73 @@ class AyaraFirstOfLocthwainTest extends BaseCardTest {
     }
 
     private Permanent addAyaraReady(Player player) {
-        Permanent permanent = new Permanent(new AyaraFirstOfLocthwain());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new AyaraFirstOfLocthwain());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    @CardUsed({AyaraFirstOfLocthwain.class, Moonlace.class})
+    @DisplayName("Ayara triggers for its own entry even when its spell became colorless")
+    void colorlessAyaraStillTriggersForItself() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new AyaraFirstOfLocthwain(), new Moonlace()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castInstant(player1, 0, gd.stack.getFirst().getCard().getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Ayara cannot activate its tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent ayara = harness.addToBattlefieldAndReturn(player1, new AyaraFirstOfLocthwain());
+        ayara.setSummoningSick(true);
+        harness.addToBattlefield(player1, new Gravecrawler());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Gravecrawler");
+        assertThat(ayara.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Ayara cannot activate or sacrifice a creature")
+    void tappedAyaraCannotActivate() {
+        Permanent ayara = addAyaraReady(player1);
+        ayara.tap();
+        harness.addToBattlefield(player1, new Gravecrawler());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Gravecrawler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ayara cannot sacrifice an opponent's black creature")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent ayara = addAyaraReady(player1);
+        harness.addToBattlefield(player2, new Gravecrawler());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Gravecrawler");
+        assertThat(ayara.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

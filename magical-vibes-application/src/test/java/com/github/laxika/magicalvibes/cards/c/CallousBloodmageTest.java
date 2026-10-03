@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CallousBloodmage.class, Forest.class, Shock.class})
 class CallousBloodmageTest extends BaseCardTest {
 
     @Test
@@ -56,12 +58,52 @@ class CallousBloodmageTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new Forest(), new Shock()));
 
         castBloodmage(2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Can exile its controller's graveyard without affecting the opponent's")
+    void exilesOwnGraveyard() {
+        CallousBloodmage ownCard = new CallousBloodmage();
+        CallousBloodmage opponentCard = new CallousBloodmage();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        castBloodmage(2);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Pest");
+    }
+
+    @Test
+    @DisplayName("Can target an empty graveyard without selecting another mode")
+    void exilesEmptyGraveyard() {
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(new CallousBloodmage()));
+
+        castBloodmage(2);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Pest");
     }
 
     private void castBloodmage(int mode) {

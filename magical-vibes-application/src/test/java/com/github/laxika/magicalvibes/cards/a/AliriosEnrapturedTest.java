@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.s.SpiritMirror;
+import com.github.laxika.magicalvibes.cards.s.SternDismissal;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AliriosEnraptured.class, SpiritMirror.class})
+@CardUsed({AliriosEnraptured.class, SternDismissal.class})
 class AliriosEnrapturedTest extends BaseCardTest {
 
     @Test
@@ -25,7 +25,9 @@ class AliriosEnrapturedTest extends BaseCardTest {
         Permanent alirios = castAlirios(player1);
         assertThat(alirios.isTapped()).isTrue();
 
+        assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
         Permanent reflection = findPermanent(player1, "Reflection");
+        assertThat(reflection.getCard().isToken()).isTrue();
         assertThat(reflection.getEffectivePower()).isEqualTo(3);
         assertThat(reflection.getEffectiveToughness()).isEqualTo(2);
         assertThat(reflection.getCard().getColor()).isEqualTo(CardColor.BLUE);
@@ -37,7 +39,7 @@ class AliriosEnrapturedTest extends BaseCardTest {
     void doesNotUntapWithReflection() {
         Permanent alirios = castAlirios(player1);
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(alirios.isTapped()).isTrue();
     }
@@ -48,7 +50,7 @@ class AliriosEnrapturedTest extends BaseCardTest {
         Permanent alirios = addCreatureReady(player1, new AliriosEnraptured());
         alirios.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(alirios.isTapped()).isFalse();
     }
@@ -56,16 +58,54 @@ class AliriosEnrapturedTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's Reflection does not prevent Alirios from untapping")
     void opponentReflectionDoesNotCount() {
-        harness.addToBattlefield(player2, new SpiritMirror());
-        advanceToUpkeep(player2);
-        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castAlirios(player2);
+        assertThat(countPermanents(player2, "Reflection")).isEqualTo(1);
 
         Permanent alirios = addCreatureReady(player1, new AliriosEnraptured());
         alirios.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(alirios.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untaps after the Reflection leaves the battlefield")
+    void untapsAfterReflectionLeaves() {
+        Permanent alirios = castAlirios(player1);
+        Permanent reflection = findPermanent(player1, "Reflection");
+        harness.performUntapStep(player1);
+        assertThat(alirios.isTapped()).isTrue();
+
+        harness.setHand(player2, List.of(new SternDismissal()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, reflection.getId());
+        assertThat(countPermanents(player1, "Reflection")).isZero();
+
+        harness.performUntapStep(player1);
+        assertThat(alirios.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Reflection trigger resolves even if Alirios leaves first")
+    void createsReflectionAfterAliriosLeaves() {
+        harness.setHand(player1, List.of(new AliriosEnraptured()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent alirios = findPermanent(player1, "Alirios, Enraptured");
+        assertThat(alirios.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Reflection")).isZero();
+
+        harness.setHand(player2, List.of(new SternDismissal()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, alirios.getId());
+        assertThat(countPermanents(player1, "Alirios, Enraptured")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
     }
 
     private Permanent castAlirios(Player player) {
@@ -78,14 +118,4 @@ class AliriosEnrapturedTest extends BaseCardTest {
         return findPermanent(player, "Alirios, Enraptured");
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

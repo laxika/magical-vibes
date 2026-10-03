@@ -87,4 +87,56 @@ class AirdropCondorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent condor = harness.addToBattlefieldAndReturn(player1, new AirdropCondor());
+        condor.setSummoningSick(true);
+        condor.tap();
+        addCreatureReady(player1, new GoblinPiledriver());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Goblin Piledriver");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Airdrop Condor");
+    }
+
+    @Test
+    @DisplayName("Uses the chosen Goblin's power when several Goblins can be sacrificed")
+    void usesChosenGoblinsPower() {
+        addCreatureReady(player1, new AirdropCondor());
+        Permanent remaining = addCreatureReady(player1, new GoblinPiledriver());
+        Permanent sacrificed = addCreatureReady(player1, new GoblinPiledriver());
+        sacrificed.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remaining).doesNotContain(sacrificed);
+        harness.assertInGraveyard(player1, "Goblin Piledriver");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("The targeted Goblin can be sacrificed as the cost, leaving an illegal target")
+    void canSacrificeTargetedGoblin() {
+        addCreatureReady(player1, new AirdropCondor());
+        Permanent goblin = addCreatureReady(player1, new GoblinPiledriver());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.assertInGraveyard(player1, "Goblin Piledriver");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Airdrop Condor");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 }

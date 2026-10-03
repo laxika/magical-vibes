@@ -41,9 +41,44 @@ class CoralTricksterTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
     }
 
+    @Test
+    void mayDeclineUntappingATappedPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        target.tap();
+        turnFaceUpCoralTricksterAndChooseTarget(target);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        turnFaceUpCoralTrickster(target);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void castingFaceUpDoesNotTriggerTheAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new CoralTrickster()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Coral Trickster");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
     private void turnFaceUpCoralTrickster(Permanent target) {
         turnFaceUpCoralTricksterAndChooseTarget(target);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     private void turnFaceUpCoralTricksterAndChooseTarget(Permanent target) {

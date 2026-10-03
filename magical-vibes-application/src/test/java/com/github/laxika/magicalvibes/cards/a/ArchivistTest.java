@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Archivist.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Archivist.class, Forest.class, GrizzlyBears.class, Boomerang.class})
 class ArchivistTest extends BaseCardTest {
 
     @Test
@@ -91,4 +93,44 @@ class ArchivistTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Ability draws for its controller during the opponent's turn")
+    void drawsForControllerDuringOpponentsTurn() {
+        addCreatureReady(player2, new Archivist());
+        Card drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawnCard));
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still draws after Archivist returns to hand in response")
+    void drawsAfterSourceLeavesBattlefield() {
+        Permanent archivist = addCreatureReady(player1, new Archivist());
+        Card drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player2, 0, archivist.getId());
+
+        harness.assertNotOnBattlefield(player1, "Archivist");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(archivist.getCard());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(archivist.getCard(), drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 }

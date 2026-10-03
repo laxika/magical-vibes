@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BanishingBetrayal.class, GrizzlyBears.class, AngelicChorus.class, Island.class})
 class BanishingBetrayalTest extends BaseCardTest {
-
-    // ===== Bounce + surveil accepted =====
 
     @Test
     @DisplayName("Bounces target creature, then surveil puts top card into graveyard when accepted")
@@ -34,8 +34,7 @@ class BanishingBetrayalTest extends BaseCardTest {
         Card topCard = new GrizzlyBears();
         gd.playerDecks.get(player1.getId()).add(0, topCard);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleMayAbilityChosen(player1, true); // surveil: put top card into graveyard
 
         GameData gd = harness.getGameData();
@@ -45,8 +44,6 @@ class BanishingBetrayalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
     }
-
-    // ===== Bounce + surveil declined =====
 
     @Test
     @DisplayName("Surveil leaves top card on the library when declined")
@@ -60,8 +57,7 @@ class BanishingBetrayalTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).add(0, topCard);
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleMayAbilityChosen(player1, false); // surveil: leave on top
 
         GameData gd = harness.getGameData();
@@ -70,8 +66,6 @@ class BanishingBetrayalTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
-
-    // ===== Nonland coverage =====
 
     @Test
     @DisplayName("Bounces target enchantment")
@@ -83,15 +77,12 @@ class BanishingBetrayalTest extends BaseCardTest {
 
         gd.playerDecks.get(player1.getId()).add(0, new GrizzlyBears());
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertInHand(player2, "Angelic Chorus");
     }
-
-    // ===== Cannot target lands =====
 
     @Test
     @DisplayName("Cannot target a land")
@@ -106,8 +97,6 @@ class BanishingBetrayalTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a nonland permanent");
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
@@ -127,5 +116,61 @@ class BanishingBetrayalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Banishing Betrayal");
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents surveil as well as the bounce")
+    void illegalTargetSkipsSurveil() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new BanishingBetrayal()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playersWhoSurveilledThisTurn).doesNotContain(player1.getId());
+        harness.assertInGraveyard(player1, "Banishing Betrayal");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the bounce or the surveil event")
+    void resolvesWithEmptyLibrary() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new BanishingBetrayal()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playersWhoSurveilledThisTurn).contains(player1.getId());
+        harness.assertInGraveyard(player1, "Banishing Betrayal");
+    }
+
+    @Test
+    @DisplayName("A permanent controlled by the opponent returns to its owner's hand")
+    void returnsToOwnerRatherThanController() {
+        Card creature = new GrizzlyBears();
+        creature.setOwnerId(player1.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, creature).getId();
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setHand(player1, List.of(new BanishingBetrayal()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(creature);
     }
 }

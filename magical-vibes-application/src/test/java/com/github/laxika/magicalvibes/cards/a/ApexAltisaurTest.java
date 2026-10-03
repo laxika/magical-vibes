@@ -39,8 +39,7 @@ class ApexAltisaurTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, apex.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, apex.getId());
         harness.handlePermanentChosen(player2, bears.getId());
         harness.passBothPriorities();
 
@@ -61,5 +60,57 @@ class ApexAltisaurTest extends BaseCardTest {
         }
 
         harness.assertOnBattlefield(player1, "Apex Altisaur");
+    }
+
+    @Test
+    void canChooseNoTargetForEntryEvenWithAnOpponentCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ApexAltisaur()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Apex Altisaur").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void canChooseNoTargetForEnrageEvenWithAnOpponentCreature() {
+        Permanent apex = harness.addToBattlefieldAndReturn(player2, new ApexAltisaur());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, apex.getId());
+        harness.handlePermanentChosen(player2, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(apex.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void damageFromEntryFightTriggersAnotherFight() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ApexAltisaur()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Apex Altisaur").getMarkedDamage()).isEqualTo(4);
     }
 }

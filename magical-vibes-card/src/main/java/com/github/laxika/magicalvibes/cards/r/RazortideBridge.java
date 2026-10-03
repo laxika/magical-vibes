@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "281")
 @CardRegistration(set = "PIP", collectorNumber = "809")
 @CardRegistration(set = "EOC", collectorNumber = "171")
+@CardRegistration(set = "BRC", collectorNumber = "195")
 public class RazortideBridge extends Card {
 
     public RazortideBridge() {

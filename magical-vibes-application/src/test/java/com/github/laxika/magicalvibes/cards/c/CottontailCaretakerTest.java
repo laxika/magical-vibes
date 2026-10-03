@@ -22,8 +22,7 @@ class CottontailCaretakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -32,8 +31,7 @@ class CottontailCaretakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castKickedCreature(player1, 1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
@@ -42,5 +40,76 @@ class CottontailCaretakerTest extends BaseCardTest {
                     assertThat(token.getEffectivePower()).isEqualTo(1);
                     assertThat(token.getEffectiveToughness()).isEqualTo(1);
                 });
+    }
+
+    @Test
+    void grantedOffspringIsOptional() {
+        harness.setHand(player1, List.of(new CottontailCaretaker(), new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Glory Seeker");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void resolvesWithoutChoiceWhenThereIsNoWhiteCreatureInHand() {
+        harness.setHand(player1, List.of(new CottontailCaretaker(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Cottontail Caretaker");
+        harness.assertInHand(player2, "Glory Seeker");
+    }
+
+    @Test
+    void resolvesWithoutChoiceWhenHandIsEmpty() {
+        harness.setHand(player1, List.of(new CottontailCaretaker()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Cottontail Caretaker");
+    }
+
+    @Test
+    void payingOneOffspringCostDoesNotPayAnotherGrantedInstance() {
+        harness.setHand(player1, List.of(
+                new CottontailCaretaker(), new CottontailCaretaker(), new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
     }
 }

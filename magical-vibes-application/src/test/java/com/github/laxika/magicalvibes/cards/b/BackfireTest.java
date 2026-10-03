@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,8 +17,64 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Backfire.class, GrizzlyBears.class, HowlingMine.class, ProdigalSorcerer.class})
+@CardUsed({Backfire.class, GrizzlyBears.class, HowlingMine.class, IvoryMask.class,
+        ProdigalSorcerer.class, Unsummon.class})
 class BackfireTest extends BaseCardTest {
+
+    @Test
+    void reflectedDamageDoesNotTargetTheCreaturesController() {
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setHand(player1, List.of(new Backfire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void pendingReflectionResolvesAfterTheCreatureAndAuraLeaveTheBattlefield() {
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        harness.setHand(player1, List.of(new Backfire(), new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, sorcerer.getId());
+        harness.assertInHand(player2, "Prodigal Sorcerer");
+        harness.assertInGraveyard(player1, "Backfire");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void reflectsDamageFromYourOwnEnchantedCreatureToYouOnce() {
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        harness.setHand(player1, List.of(new Backfire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     void reflectedDamageUsesTheCreaturesCurrentController() {

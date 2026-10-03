@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.Set;
 
@@ -14,8 +15,8 @@ import java.util.Set;
 public class AltacBloodseeker extends Card {
 
     public AltacBloodseeker() {
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new BoostSelfEffect(2, 0));
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
-                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.HASTE), GrantScope.SELF));
+        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, SequenceEffect.of(
+                new BoostSelfEffect(2, 0),
+                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.HASTE), GrantScope.SELF)));
     }
 }

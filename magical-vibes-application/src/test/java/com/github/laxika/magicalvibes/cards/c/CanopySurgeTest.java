@@ -16,6 +16,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CanopySurgeTest extends BaseCardTest {
 
     @Test
+    void unkickedStillDamagesPlayersWithoutCreatures() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new CanopySurge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void kickedDamagesFlyingCreatureWithShroud() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new GlimmeringAngel());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new CanopySurge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glimmering Angel");
+        harness.assertInGraveyard(player2, "Glimmering Angel");
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
     void unkickedDealsOneDamageToPlayersAndFlyingCreatures() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

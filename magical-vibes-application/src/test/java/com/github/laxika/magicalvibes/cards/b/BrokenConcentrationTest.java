@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BrokenConcentration.class, FuneralCharm.class, GrizzlyBears.class, LightningBolt.class, RavensCrime.class})
 class BrokenConcentrationTest extends BaseCardTest {
 
     private BrokenConcentration discardViaRavensCrime() {
@@ -25,8 +27,7 @@ class BrokenConcentrationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return concentration;
     }
@@ -44,8 +45,7 @@ class BrokenConcentrationTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Broken Concentration");
@@ -106,5 +106,42 @@ class BrokenConcentrationTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Lightning Bolt");
         harness.assertInGraveyard(player1, "Broken Concentration");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Madness without a legal spell target puts the card into the graveyard without paying mana")
+    void madnessWithoutLegalTargetDoesNotSpendMana() {
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        BrokenConcentration concentration = discardViaRavensCrime();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(concentration.getId()));
+        harness.assertInGraveyard(player1, "Broken Concentration");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters an instant spell for the normal mana cost")
+    void countersInstantSpellForNormalCost() {
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player1, List.of(bolt));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new BrokenConcentration()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bolt.getId());
+
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertInGraveyard(player2, "Broken Concentration");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }

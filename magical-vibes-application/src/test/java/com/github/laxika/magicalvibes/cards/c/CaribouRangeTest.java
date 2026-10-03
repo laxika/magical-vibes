@@ -32,10 +32,7 @@ class CaribouRangeTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, forest.getId());
         harness.passBothPriorities();
 
-        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == range)
-                .findFirst()
-                .orElseThrow();
+        Permanent aura = findPermanent(player1, "Caribou Range");
         assertThat(aura.getAttachedTo()).isEqualTo(forest.getId());
     }
 
@@ -123,11 +120,104 @@ class CaribouRangeTest extends BaseCardTest {
     private record Range(Permanent forest, Permanent aura) {
     }
 
+    @Test
+    @DisplayName("Caribou Range goes to the graveyard when its land changes controller")
+    void auraCannotRemainOnOpponentsLand() {
+        Range range = attachedRange(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(range.forest());
+        gd.playerBattlefields.get(player2.getId()).add(range.forest());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Caribou Range");
+        harness.assertInGraveyard(player1, "Caribou Range");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(range.forest());
+    }
+
+    @Test
+    @DisplayName("An opponent's Caribou cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCaribou() {
+        Range ownRange = attachedRange(player1);
+        attachedRange(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player2, "Caribou")).isEqualTo(1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(ownRange.aura()), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player2, "Caribou")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creating a Caribou requires two white mana")
+    void cannotCreateTokenWithOnlyOneWhiteMana() {
+        Range range = attachedRange(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(range.forest().isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Caribou");
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted land cannot create a Caribou")
+    void tappedLandCannotCreateToken() {
+        Range range = attachedRange(player1);
+        range.forest().setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Caribou");
+    }
+
+    @Test
+    @DisplayName("An activated token ability resolves after Caribou Range leaves")
+    void tokenAbilityResolvesAfterAuraLeaves() {
+        Range range = attachedRange(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.assertNotOnBattlefield(player1, "Caribou");
+
+        gd.playerBattlefields.get(player1.getId()).remove(range.aura());
+        gd.playerGraveyards.get(player1.getId()).add(range.aura().getCard());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Caribou")).isEqualTo(1);
+        assertThat(range.forest().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Caribou is sacrificed as a cost before life is gained")
+    void sacrificeIsPaidBeforeLifeGainResolves() {
+        Range range = attachedRange(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(range.aura()), 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Caribou");
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
     private Range attachedRange(Player player) {
         Permanent forest = harness.addToBattlefieldAndReturn(player, new Forest());
-        Permanent aura = new Permanent(new CaribouRange());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new CaribouRange());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return new Range(forest, aura);
     }
 }

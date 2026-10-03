@@ -61,6 +61,26 @@ class BlindHunterTest extends BaseCardTest {
     }
 
     @Test
+    void hauntedCreatureDeathResolvesLifeLossAndGainTogether() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        Permanent hauntedCreature = harness.addToBattlefieldAndReturn(player2, new DaggerclawImp());
+        castHunterAndChooseTarget(player2.getId());
+
+        destroyWithDouseInGloom(player1, harness.getPermanentId(player1, "Blind Hunter"));
+        harness.handlePermanentChosen(player1, hauntedCreature.getId());
+        harness.passBothPriorities();
+
+        destroyWithDouseInGloom(player2, hauntedCreature.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void hauntOnlyOffersCreatureTargets() {
         Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DaggerclawImp());

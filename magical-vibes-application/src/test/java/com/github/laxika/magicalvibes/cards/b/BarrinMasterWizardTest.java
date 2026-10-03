@@ -79,4 +79,61 @@ class BarrinMasterWizardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can return Barrin itself by sacrificing a land while summoning sick and tapped")
+    void returnsSourceBySacrificingLand() {
+        Permanent barrin = harness.addToBattlefieldAndReturn(player1, new BarrinMasterWizard());
+        barrin.setSummoningSick(true);
+        barrin.tap();
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, barrin.getId());
+        harness.handlePermanentChosen(player1, island.getId());
+
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertOnBattlefield(player1, "Barrin, Master Wizard");
+        harness.assertNotInHand(player1, "Barrin, Master Wizard");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Barrin, Master Wizard");
+        harness.assertInHand(player1, "Barrin, Master Wizard");
+    }
+
+    @Test
+    @DisplayName("Sacrificing the targeted creature leaves it in the graveyard")
+    void sacrificingTargetMakesTargetIllegal() {
+        harness.addToBattlefield(player1, new BarrinMasterWizard());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.assertInGraveyard(player1, "Coral Merfolk");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Barrin, Master Wizard");
+        harness.assertInGraveyard(player1, "Coral Merfolk");
+        harness.assertNotInHand(player1, "Coral Merfolk");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying two mana")
+    void cannotActivateWithInsufficientMana() {
+        harness.addToBattlefield(player1, new BarrinMasterWizard());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Barrin, Master Wizard");
+        harness.assertNotInGraveyard(player1, "Barrin, Master Wizard");
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+        harness.assertNotInHand(player2, "Coral Merfolk");
+    }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AyaraFirstOfLocthwain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Nightmare;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChainerDementiaMaster.class, GrizzlyBears.class, Nightmare.class, Swamp.class, Coercion.class})
+@CardUsed({ChainerDementiaMaster.class, GrizzlyBears.class, Nightmare.class, Swamp.class, Coercion.class,
+        AyaraFirstOfLocthwain.class})
 class ChainerDementiaMasterTest extends BaseCardTest {
 
     @Test
@@ -59,9 +60,7 @@ class ChainerDementiaMasterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        advanceToUpkeep(player2);
 
         assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
         assertThat(creature.getColors()).containsExactly(CardColor.GREEN);
@@ -80,10 +79,8 @@ class ChainerDementiaMasterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
-        Permanent nightmare = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent nightmare = findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent != bears).findFirst().orElseThrow();
 
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, chainer));
@@ -105,5 +102,64 @@ class ChainerDementiaMasterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, noncreature.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(AyaraFirstOfLocthwain.class)
+    @DisplayName("Returned creatures enter already black and trigger Ayara")
+    void entersAlreadyBlack() {
+        harness.addToBattlefield(player1, new ChainerDementiaMaster());
+        harness.addToBattlefield(player1, new AyaraFirstOfLocthwain());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without enough life to pay the cost")
+    void cannotPayWithTwoLife() {
+        harness.addToBattlefield(player1, new ChainerDementiaMaster());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 2);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activation resolves after Chainer's leave trigger without exiling the returned creature")
+    void resolvesAfterChainerLeaves() {
+        Permanent chainer = harness.addToBattlefieldAndReturn(player1, new ChainerDementiaMaster());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+        harness.assertLife(player1, 17);
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, chainer));
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
+        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.NIGHTMARE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Chainer, Dementia Master");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature);
     }
 }

@@ -116,8 +116,7 @@ class AnabaShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -173,6 +172,51 @@ class AnabaShamanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Ability can target Anaba Shaman itself")
+    void canDamageItself() {
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, shaman.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Anaba Shaman");
+        assertThat(shaman.getMarkedDamage()).isEqualTo(1);
+        assertThat(shaman.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if Anaba Shaman leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(shaman);
+        gd.playerGraveyards.get(player1.getId()).add(shaman.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Anaba Shaman");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation requires a target and does not pay costs without one")
+    void cannotActivateWithoutTarget() {
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
 }

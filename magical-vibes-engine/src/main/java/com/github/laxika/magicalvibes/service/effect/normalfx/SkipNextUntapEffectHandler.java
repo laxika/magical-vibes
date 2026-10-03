@@ -53,6 +53,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setSkipUntapCount(Math.max(source.getSkipUntapCount(), e.untapSteps()));
+        if (e.controllerStepOnly()) source.setSkipUntapControllerId(entry.getControllerId());
 
         
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));

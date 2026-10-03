@@ -66,6 +66,31 @@ class BounteousKirinTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Casting Kirin itself does not trigger its battlefield ability")
+    void castingKirinItselfDoesNotTrigger() {
+        harness.castFromHand(player1, new BounteousKirin(), "{5}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bounteous Kirin");
+        harness.assertLife(player1, 20);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Spirit entering without being cast does not trigger")
+    void spiritEnteringWithoutBeingCastDoesNotTrigger() {
+        addBounteousKirin();
+        harness.enterBattlefieldAndReturn(player1, new DeathknellKami());
+
+        harness.assertOnBattlefield(player1, "Deathknell Kami");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void addBounteousKirin() {
         harness.addToBattlefield(player1, new BounteousKirin());
     }

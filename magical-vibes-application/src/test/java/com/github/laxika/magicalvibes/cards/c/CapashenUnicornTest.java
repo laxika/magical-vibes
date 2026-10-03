@@ -112,6 +112,72 @@ class CapashenUnicornTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Sacrifice and tap are paid before the target is destroyed")
+    void paysCostsBeforeResolution() {
+        Permanent unicorn = addReadyUnicorn(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(unicorn.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Capashen Unicorn");
+        harness.assertInGraveyard(player1, "Capashen Unicorn");
+        harness.assertOnBattlefield(player2, "Drake-Skull Cameo");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Drake-Skull Cameo");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only one white mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent unicorn = addReadyUnicorn(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(unicorn.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Capashen Unicorn");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tapped Unicorn")
+    void cannotActivateWhileTapped() {
+        Permanent unicorn = addReadyUnicorn(player1);
+        unicorn.tap();
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Capashen Unicorn");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by its controller")
+    void destroysOwnArtifact() {
+        addReadyUnicorn(player1);
+        Permanent target = addReadyArtifact(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Drake-Skull Cameo");
+        harness.assertInGraveyard(player1, "Drake-Skull Cameo");
+        harness.assertInGraveyard(player1, "Capashen Unicorn");
+    }
+
     private Permanent addReadyUnicorn(Player player) {
         return addCreatureReady(player, new CapashenUnicorn());
     }

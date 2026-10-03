@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +69,80 @@ class CamelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherAttacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An idle Camel does not protect an attacking creature")
+    void idleCamelDoesNotProtectAttacker() {
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        addCreatureReady(player2, new Camel());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        prepareDesertDamage(attacker);
+        harness.activateAbility(player1, battlefieldIndex(player1, desert), 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Protection ends when Camel leaves combat before Desert damage resolves")
+    void protectionEndsWhenCamelLeavesCombat() {
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        Permanent camel = addCreatureReady(player2, new Camel());
+        Permanent bandmate = addCreatureReady(player2, new GrizzlyBears());
+        UUID bandId = UUID.randomUUID();
+        camel.setAttacking(true);
+        camel.setBandId(bandId);
+        bandmate.setAttacking(true);
+        bandmate.setBandId(bandId);
+
+        prepareDesertDamage(bandmate);
+        harness.activateAbility(player1, battlefieldIndex(player1, desert), 1, null, bandmate.getId());
+        camel.setAttacking(false);
+        camel.setBandId(null);
+        harness.passBothPriorities();
+
+        assertThat(bandmate.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Prevents Desert damage even after the Desert leaves the battlefield")
+    void preventsDesertDamageAfterSourceLeavesBattlefield() {
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        Permanent camel = addCreatureReady(player2, new Camel());
+        camel.setAttacking(true);
+
+        prepareDesertDamage(camel);
+        harness.activateAbility(player1, battlefieldIndex(player1, desert), 1, null, camel.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(desert);
+        gd.playerGraveyards.get(player1.getId()).add(desert.getCard());
+        harness.passBothPriorities();
+
+        assertThat(camel.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Camel");
+    }
+
+    @Test
+    @DisplayName("Protects a creature without banding in a band declared through combat")
+    void protectsCreatureInDeclaredBand() {
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        addCreatureReady(player2, new Camel());
+        Permanent bandmate = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService()
+                .declareAttackers(gd, player2, List.of(0, 1), null, List.of(List.of(0, 1))));
+
+        prepareDesertDamage(bandmate);
+        harness.activateAbility(player1, battlefieldIndex(player1, desert), 1, null, bandmate.getId());
+        harness.passBothPriorities();
+
+        assertThat(bandmate.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     private void prepareDesertDamage(Permanent target) {

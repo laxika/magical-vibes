@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CallToMind.class, HolyDay.class, LavaAxe.class, GrizzlyBears.class})
 class CallToMindTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Call to Mind returns target instant from graveyard to hand")
@@ -35,9 +35,8 @@ class CallToMindTest extends BaseCardTest {
         harness.castSorcery(player1, 0, instant.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(instant.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(instant.getId()));
+        harness.assertInHand(player1, "Holy Day");
+        harness.assertNotInGraveyard(player1, "Holy Day");
         harness.assertInGraveyard(player1, "Call to Mind");
     }
 
@@ -52,9 +51,8 @@ class CallToMindTest extends BaseCardTest {
         harness.castSorcery(player1, 0, sorcery.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(sorcery.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(sorcery.getId()));
+        harness.assertInHand(player1, "Lava Axe");
+        harness.assertNotInGraveyard(player1, "Lava Axe");
     }
 
     @Test
@@ -115,5 +113,50 @@ class CallToMindTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getTargetId()).isEqualTo(instant.getId());
         assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
+    }
+
+    @Test
+    @DisplayName("Call to Mind requires a target even with an empty graveyard")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new CallToMind()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Call to Mind");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Call to Mind cannot target the copy being cast")
+    void cannotTargetItselfWhileBeingCast() {
+        Card spell = new CallToMind();
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Call to Mind returns only the chosen copy among multiple sorcery cards")
+    void returnsOnlyChosenCard() {
+        Card target = new CallToMind();
+        Card otherCopy = new CallToMind();
+        Card otherSorcery = new LavaAxe();
+        harness.setGraveyard(player1, List.of(otherCopy, otherSorcery, target));
+        harness.setHand(player1, List.of(new CallToMind()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCopy, otherSorcery)
+                .doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
     }
 }

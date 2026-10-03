@@ -109,6 +109,98 @@ class BraidssFrightfulReturnTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(permanent);
     }
 
+    @Test
+    @DisplayName("Read ahead lets the controller start at chapter III and skip earlier chapters")
+    void readAheadStartsAtChapterThree() {
+        harness.setLibrary(player1, List.of(new BraidssFrightfulReturn()));
+        harness.castFromHand(player1, new BraidssFrightfulReturn(), "{2}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "3");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInHand(player1, "Braids's Frightful Return");
+        harness.assertInGraveyard(player1, "Braids's Frightful Return");
+        harness.assertNotOnBattlefield(player1, "Braids's Frightful Return");
+    }
+
+    @Test
+    @DisplayName("Chapter I cannot make opponents discard when no creature is sacrificed")
+    void chapterIWithoutCreatureDoesNotDiscard() {
+        Shock retained = new Shock();
+        harness.setHand(player2, List.of(retained));
+        addSagaWithLore(0);
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Chapter II does not return a creature card that leaves the graveyard before resolution")
+    void chapterIITargetLeavesGraveyard() {
+        GrizzlyBears targeted = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(targeted));
+        addSagaWithLore(1);
+
+        triggerNextChapter();
+        harness.handleMultipleCardsChosen(player1, List.of(targeted.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(targeted);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Chapter III causes life loss and a draw when the opponent has nothing to sacrifice")
+    void chapterIIIWithoutEligiblePermanentCausesLifeLossAndDraw() {
+        harness.setHand(player1, List.of());
+        BraidssFrightfulReturn drawn = new BraidssFrightfulReturn();
+        harness.setLibrary(player1, List.of(drawn));
+        addSagaWithLore(2);
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Braids's Frightful Return");
+    }
+
+    @Test
+    @DisplayName("Chapter II can target only creature cards in its controller's graveyard")
+    void chapterIITargetsOnlyOwnCreatureCards() {
+        GrizzlyBears eligible = new GrizzlyBears();
+        GrizzlyBears opposingCreature = new GrizzlyBears();
+        Shock noncreature = new Shock();
+        harness.setGraveyard(player1, List.of(eligible, noncreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        addSagaWithLore(1);
+
+        triggerNextChapter();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.cards()).containsExactly(eligible);
+        assertThat(choice.minCount()).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eligible);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new BraidssFrightfulReturn());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -118,7 +210,6 @@ class BraidssFrightfulReturnTest extends BaseCardTest {
     private void triggerNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 }

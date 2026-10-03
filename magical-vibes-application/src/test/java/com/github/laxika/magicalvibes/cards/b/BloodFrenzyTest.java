@@ -109,10 +109,54 @@ class BloodFrenzyTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("Removing the target from combat before resolution prevents both effects")
+    void targetLeavesCombatBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addCreatureReady(player1, new HornedTurtle());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of(new BloodFrenzy()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.castInstant(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Blood Frenzy");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Horned Turtle");
+    }
+
+    @Test
+    @DisplayName("Destruction still happens when the creature stops attacking after resolution")
+    void delayedDestructionDoesNotRequireCreatureToRemainAttacking() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addCreatureReady(player1, new HornedTurtle());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of(new BloodFrenzy()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        drainEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Horned Turtle");
+        harness.assertInGraveyard(player1, "Horned Turtle");
+    }
+
     private void drainEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();

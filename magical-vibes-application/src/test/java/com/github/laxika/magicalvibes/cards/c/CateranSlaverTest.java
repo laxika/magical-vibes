@@ -72,6 +72,97 @@ class CateranSlaverTest extends BaseCardTest {
     }
 
     @Test
+    void cannotFindMercenaryWithManaValueSix() {
+        addCreatureReady(player1, new CateranSlaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setLibrary(player1, List.of(new CateranSlaver()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Cateran Slaver")).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Cateran Slaver");
+    }
+
+    @Test
+    void mayFailToFindEvenWhenEligibleMercenaryExists() {
+        addCreatureReady(player1, new CateranSlaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setLibrary(player1, List.of(new CateranEnforcer(), new CeremonialGuard()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Cateran Enforcer");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Cateran Enforcer", "Ceremonial Guard");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    void chosenMercenaryEntersUntappedAndSummoningSickWithoutPayingItsManaCost() {
+        Permanent slaver = addCreatureReady(player1, new CateranSlaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setLibrary(player1, List.of(new CateranEnforcer()));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(slaver.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent enforcer = findPermanent(player1, "Cateran Enforcer");
+        assertThat(enforcer.isTapped()).isFalse();
+        assertThat(enforcer.isSummoningSick()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Cateran Enforcer");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent slaver = harness.addToBattlefieldAndReturn(player1, new CateranSlaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(slaver.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent slaver = addCreatureReady(player1, new CateranSlaver());
+        slaver.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void controllersSwampDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent attacker = addCreatureReady(player1, new CateranSlaver());
+        Permanent blocker = addCreatureReady(player2, new CeremonialGuard());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
 

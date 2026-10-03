@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TuinvaleTreefolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,15 +18,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CharmingPrince.class, GrizzlyBears.class})
+@CardUsed({CharmingPrince.class, TuinvaleTreefolk.class})
 class CharmingPrinceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Scry mode opens a two-card scry choice")
     void scryMode() {
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.add(0, new GrizzlyBears());
-        deck.add(1, new GrizzlyBears());
+        deck.add(0, new TuinvaleTreefolk());
+        deck.add(1, new TuinvaleTreefolk());
 
         castPrince(0, null);
 
@@ -50,21 +50,85 @@ class CharmingPrinceTest extends BaseCardTest {
     @Test
     @DisplayName("Flicker mode can target an owned creature controlled by an opponent")
     void flickerOwnedCreatureControlledByOpponent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TuinvaleTreefolk());
         gd.stolenCreatures.put(target.getId(), player1.getId());
 
         castPrince(2, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Tuinvale Treefolk");
         advanceToEndStep();
+        harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Tuinvale Treefolk");
+    }
+
+    @Test
+    @DisplayName("Scry mode can reorder the top cards and put a card on the bottom")
+    void scryCanPutCardOnBottom() {
+        Card first = new TuinvaleTreefolk();
+        Card second = new TuinvaleTreefolk();
+        Card third = new TuinvaleTreefolk();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castPrince(0, null);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third, first);
+    }
+
+    @Test
+    @DisplayName("Scry mode works with fewer than two cards in the library")
+    void scryWithOneCard() {
+        Card card = new TuinvaleTreefolk();
+        harness.setLibrary(player1, List.of(card));
+
+        castPrince(0, null);
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).hasSize(1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    @DisplayName("Scry mode works with an empty library")
+    void scryWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        castPrince(0, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Charming Prince");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flicker return uses the stack and returns the creature as a new permanent")
+    void flickerReturnUsesStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TuinvaleTreefolk());
+        target.tap();
+
+        castPrince(2, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Tuinvale Treefolk");
+        advanceToEndStep();
+        harness.assertNotOnBattlefield(player1, "Tuinvale Treefolk");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Tuinvale Treefolk"))
+                .findFirst().orElseThrow();
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(returned.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Flicker mode rejects a creature the controller does not own")
     void flickerUnownedCreatureRejected() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TuinvaleTreefolk());
 
         harness.setHand(player1, List.of(new CharmingPrince()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -83,9 +147,6 @@ class CharmingPrinceTest extends BaseCardTest {
     }
 
     private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }

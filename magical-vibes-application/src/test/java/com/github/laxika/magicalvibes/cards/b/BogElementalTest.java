@@ -2,8 +2,12 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.m.MagetasBoon;
 import com.github.laxika.magicalvibes.cards.r.RhysticCave;
+import com.github.laxika.magicalvibes.cards.s.ShieldDancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BogElemental.class, BogGlider.class, MagetasBoon.class, RhysticCave.class})
+@CardUsed({BogElemental.class, BogGlider.class, MagetasBoon.class, RhysticCave.class, ShieldDancer.class})
 class BogElementalTest extends BaseCardTest {
 
     @Test
@@ -109,5 +113,66 @@ class BogElementalTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from white");
         harness.assertOnBattlefield(player1, "Bog Elemental");
+    }
+
+    @Test
+    @DisplayName("Bog Elemental does not trigger during its opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new BogElemental());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Bog Elemental");
+    }
+
+    @Test
+    @DisplayName("A tapped land can be sacrificed to keep Bog Elemental")
+    void tappedLandCanBeSacrificed() {
+        harness.addToBattlefield(player1, new BogElemental());
+        harness.addToBattlefield(player1, new RhysticCave());
+
+        advanceToUpkeep(player1);
+        Permanent land = findPermanent(player1, "Rhystic Cave");
+        land.setTapped(true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Bog Elemental");
+        harness.assertNotOnBattlefield(player1, "Rhystic Cave");
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+    }
+
+    @Test
+    @DisplayName("A white creature cannot block Bog Elemental")
+    void whiteCreatureCannotBlock() {
+        addCreatureReady(player1, new BogElemental());
+        addCreatureReady(player2, new ShieldDancer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Bog Elemental can block a white creature and takes no combat damage from it")
+    void preventsWhiteCombatDamage() {
+        addCreatureReady(player1, new ShieldDancer());
+        Permanent elemental = addCreatureReady(player2, new BogElemental());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            resolveCombat();
+        });
+
+        harness.assertOnBattlefield(player2, "Bog Elemental");
+        assertThat(elemental.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Shield Dancer");
+        harness.assertLife(player2, 20);
     }
 }

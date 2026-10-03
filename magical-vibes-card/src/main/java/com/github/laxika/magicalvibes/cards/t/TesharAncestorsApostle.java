@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "65")
 @CardRegistration(set = "DMC", collectorNumber = "105")
 @CardRegistration(set = "NEC", collectorNumber = "90")
+@CardRegistration(set = "BRC", collectorNumber = "77")
 public class TesharAncestorsApostle extends Card {
 
     public TesharAncestorsApostle() {

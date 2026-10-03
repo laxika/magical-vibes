@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PsychicBattleRetargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -33,7 +34,7 @@ public class PsychicBattleSupport {
     public StackEntry findTargetEntry(GameData gameData, UUID cardId) {
         for (int i = gameData.stack.size() - 1; i >= 0; i--) {
             StackEntry entry = gameData.stack.get(i);
-            if (entry.getCard().getId().equals(cardId)) {
+            if (entry.getTargetableId().equals(cardId) || entry.getCard().getId().equals(cardId)) {
                 return entry;
             }
         }
@@ -95,6 +96,11 @@ public class PsychicBattleSupport {
     }
 
     public void replaceTarget(StackEntry entry, int targetIndex, UUID targetId) {
+        if (!entry.getDamageAssignments().isEmpty()) {
+            UUID original = targetIds(entry).get(targetIndex);
+            Integer amount = entry.getDamageAssignments().remove(original);
+            if (amount != null) entry.getDamageAssignments().put(targetId, amount);
+        }
         if (entry.getTargetId() != null) {
             if (targetIndex == 0) {
                 entry.setTargetId(targetId);
@@ -155,6 +161,41 @@ public class PsychicBattleSupport {
     }
 
     private boolean isLegalReplacement(GameData gameData, StackEntry entry, int targetIndex, UUID candidate) {
+        if (!entry.getDamageAssignments().isEmpty()) {
+            var divided = entry.getEffectsToResolve().stream()
+                    .filter(com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect.class::cast).findFirst().orElse(null);
+            if (divided != null) {
+                var targetedDamage = new com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect(
+                        divided.totalDamage(), divided.orderedAmounts(), divided.mode(), divided.targetRestriction(),
+                        divided.maxTargets(), divided.canTargetPlayers(), divided.damagedCreaturesCantBlock(), false,
+                        divided.tapDamagedCreatures(), divided.damagedPlayersCantCastNoncreatureSpells(),
+                        divided.canTargetPlaneswalkers());
+                List<CardEffect> effects = List.of(targetedDamage);
+                var ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(false, null,
+                        effects, "retarget", entry.getTargetFilter());
+                try {
+                    targetLegalityService.validateActivatedAbilityTargeting(gameData, entry.getControllerId(),
+                            ability, effects, candidate, entry.getTargetZone(), entry.getCard(), entry.getXValue());
+                    return true;
+                } catch (IllegalStateException ignored) {
+                    return false;
+                }
+            }
+        }
+        if (entry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY) {
+            var ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(false, null,
+                    List.copyOf(entry.getEffectsToResolve()), "retarget", entry.getTargetFilter());
+            try {
+                targetLegalityService.validateActivatedAbilityTargeting(gameData, entry.getControllerId(),
+                        ability, entry.getEffectsToResolve(), candidate, entry.getTargetZone(),
+                        entry.getCard(), entry.getXValue());
+                return true;
+            } catch (IllegalStateException ignored) {
+                return false;
+            }
+        }
         if (!entry.getTargetIds().isEmpty()
                 && entry.getTargetId() == null
                 && !entry.getCard().getSpellTargets().isEmpty()) {

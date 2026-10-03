@@ -16,41 +16,44 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CloudDragon.class, GrizzlyBears.class})
 class CloudDragonTest extends BaseCardTest {
 
-    // ===== Blocking — can block creatures with flying =====
-
     @Test
     @DisplayName("Cloud Dragon can block a creature with flying")
     void canBlockFlyingCreature() {
         Permanent dragonPerm = addCreatureReady(player2, new CloudDragon());
 
-        Permanent atkPerm = addCreatureReady(player1, new CloudDragon());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new CloudDragon());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(dragonPerm.isBlocking()).isTrue();
     }
 
-    // ===== Blocking — cannot block creatures without flying =====
-
     @Test
     @DisplayName("Cloud Dragon cannot block a creature without flying")
     void cannotBlockNonFlyingCreature() {
-        Permanent dragonPerm = addCreatureReady(player2, new CloudDragon());
+        addCreatureReady(player2, new CloudDragon());
 
-        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only block creatures with flying");
     }
 
-    // ===== Combat — flying lets it attack past non-flyers =====
+    @Test
+    @DisplayName("A creature without flying or reach cannot block Cloud Dragon")
+    void cannotBeBlockedByNonFlyingCreature() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new CloudDragon());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
 
     @Test
     @DisplayName("Unblocked Cloud Dragon deals 5 damage to defending player")

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,25 +14,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AdaptiveAutomaton.class, LlanowarElves.class, GoblinPiker.class})
 class AdaptiveAutomatonTest extends BaseCardTest {
 
-    private static Card createCreature(String name, String manaCost, int power, int toughness,
-                                       CardColor color, CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtypes));
-        return card;
-    }
-
     private Permanent addAutomaton(com.github.laxika.magicalvibes.model.Player player, CardSubtype chosen) {
-        Permanent perm = new Permanent(new AdaptiveAutomaton());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AdaptiveAutomaton());
         perm.setChosenSubtype(chosen);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
@@ -55,16 +42,14 @@ class AdaptiveAutomatonTest extends BaseCardTest {
     void isTheChosenTypeItself() {
         Permanent automaton = addAutomaton(player1, CardSubtype.ELF);
 
-        var bonus = gqs.computeStaticBonus(gd, automaton);
-        assertThat(bonus.grantedSubtypes()).contains(CardSubtype.ELF);
-        assertThat(automaton.getCard().getSubtypes()).contains(CardSubtype.CONSTRUCT);
+        assertThat(gqs.hasEffectiveSubtype(gd, automaton, CardSubtype.ELF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, automaton, CardSubtype.CONSTRUCT)).isTrue();
     }
 
     @Test
     @DisplayName("Other creatures you control of the chosen type get +1/+1")
     void boostsOtherOwnCreaturesOfChosenType() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF, CardSubtype.DRUID);
-        harness.addToBattlefield(player1, elf);
+        harness.addToBattlefield(player1, new LlanowarElves());
         addAutomaton(player1, CardSubtype.ELF);
 
         var bonus = gqs.computeStaticBonus(gd, findPermanent(player1, "Llanowar Elves"));
@@ -94,10 +79,33 @@ class AdaptiveAutomatonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Automatons naming Elf boost each other through their added type")
+    void automatonsBoostEachOtherThroughChosenType() {
+        Permanent first = addAutomaton(player1, CardSubtype.ELF);
+        Permanent second = addAutomaton(player1, CardSubtype.ELF);
+
+        assertThat(gqs.computeStaticBonus(gd, first).power()).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, first).toughness()).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, second).power()).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, second).toughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast still gets a type choice")
+    void choosesTypeWhenNotCast() {
+        harness.addToBattlefield(player1, new LlanowarElves());
+        Permanent automaton = harness.enterBattlefieldAndReturn(player1, new AdaptiveAutomaton());
+        harness.handleListChoice(player1, "ELF");
+
+        assertThat(automaton.getChosenSubtype()).isEqualTo(CardSubtype.ELF);
+        assertThat(gqs.computeStaticBonus(gd, findPermanent(player1, "Llanowar Elves")).power())
+                .isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Creatures of a different type are not boosted")
     void doesNotBoostDifferentType() {
-        Card goblin = createCreature("Goblin Piker", "{1}{R}", 2, 1, CardColor.RED, CardSubtype.GOBLIN);
-        harness.addToBattlefield(player1, goblin);
+        harness.addToBattlefield(player1, new GoblinPiker());
         addAutomaton(player1, CardSubtype.ELF);
 
         var bonus = gqs.computeStaticBonus(gd, findPermanent(player1, "Goblin Piker"));
@@ -108,8 +116,7 @@ class AdaptiveAutomatonTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's creatures of the chosen type are not boosted")
     void doesNotBoostOpponentCreatures() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
-        harness.addToBattlefield(player2, elf);
+        harness.addToBattlefield(player2, new LlanowarElves());
         addAutomaton(player1, CardSubtype.ELF);
 
         var bonus = gqs.computeStaticBonus(gd, findPermanent(player2, "Llanowar Elves"));
@@ -120,8 +127,7 @@ class AdaptiveAutomatonTest extends BaseCardTest {
     @Test
     @DisplayName("No boost or subtype grant before a creature type is chosen")
     void noEffectWithoutChoice() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
-        harness.addToBattlefield(player1, elf);
+        harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new AdaptiveAutomaton());
 
         var bonus = gqs.computeStaticBonus(gd, findPermanent(player1, "Llanowar Elves"));
@@ -134,8 +140,7 @@ class AdaptiveAutomatonTest extends BaseCardTest {
     @Test
     @DisplayName("Boost ends when Adaptive Automaton leaves the battlefield")
     void boostRemovedWhenAutomatonLeaves() {
-        Card elf = createCreature("Llanowar Elves", "{G}", 1, 1, CardColor.GREEN, CardSubtype.ELF);
-        harness.addToBattlefield(player1, elf);
+        harness.addToBattlefield(player1, new LlanowarElves());
         Permanent automaton = addAutomaton(player1, CardSubtype.ELF);
 
         Permanent elfPerm = findPermanent(player1, "Llanowar Elves");

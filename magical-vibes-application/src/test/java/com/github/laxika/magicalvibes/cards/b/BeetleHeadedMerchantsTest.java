@@ -73,4 +73,71 @@ class BeetleHeadedMerchantsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(merchants.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("The source and opposing creatures cannot be sacrificed")
+    void noOtherControlledPermanentGivesNoReward() {
+        Permanent merchants = addCreatureReady(player1, new BeetleHeadedMerchants());
+        Permanent opponentCreature = addCreatureReady(player2, new BeetleHeadedMerchants());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new BeetleHeadedMerchants()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(merchants);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(merchants.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Another copy can be sacrificed but opposing creatures cannot")
+    void anotherCopyIsAnEligibleSacrifice() {
+        Permanent merchants = addCreatureReady(player1, new BeetleHeadedMerchants());
+        Permanent otherMerchants = addCreatureReady(player1, new BeetleHeadedMerchants());
+        Permanent opponentCreature = addCreatureReady(player2, new BeetleHeadedMerchants());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new BeetleHeadedMerchants()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(otherMerchants.getId());
+        harness.handlePermanentChosen(player1, otherMerchants.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherMerchants.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(merchants.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger still draws a card if its source leaves the battlefield")
+    void sourceLeavingDoesNotPreventSacrificeAndDraw() {
+        Permanent merchants = addCreatureReady(player1, new BeetleHeadedMerchants());
+        Permanent otherMerchants = addCreatureReady(player1, new BeetleHeadedMerchants());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new BeetleHeadedMerchants()));
+
+        declareAttackers(List.of(0));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, merchants));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, otherMerchants.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(merchants.getCard(), otherMerchants.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(merchants.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(otherMerchants.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

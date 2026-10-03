@@ -57,8 +57,7 @@ class ClockworkBeastTest extends BaseCardTest {
         Permanent beast = addCreatureReady(player2, new ClockworkBeast());
         beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 7);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(7);
 
@@ -141,6 +140,82 @@ class ClockworkBeastTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("Declaring an attacker does not trigger counter removal yet")
+    void attackDoesNotCreatePrematureTrigger() {
+        Permanent beast = addCreatureReady(player1, new ClockworkBeast());
+        beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 7);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("End-of-combat removal waits for its trigger to resolve")
+    void endOfCombatRemovalUsesStack() {
+        Permanent beast = addCreatureReady(player1, new ClockworkBeast());
+        beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 7);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(7);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The controller may choose zero counters even when X is positive")
+    void upkeepAbilityCanChooseZeroCounters() {
+        Permanent beast = addCreatureReady(player1, new ClockworkBeast());
+        beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 2);
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "0");
+
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
+        assertThat(beast.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating at the cap leaves the counters unchanged")
+    void upkeepAbilityAtCapAddsNothing() {
+        Permanent beast = addCreatureReady(player1, new ClockworkBeast());
+        beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 7);
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(7);
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("X may be zero and the tap cost is still paid")
+    void upkeepAbilityWithZeroX() {
+        Permanent beast = addCreatureReady(player1, new ClockworkBeast());
+        beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 2);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
+        assertThat(beast.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void activateUpkeepAbility(int x) {

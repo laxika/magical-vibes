@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "290")
 @CardRegistration(set = "PIP", collectorNumber = "818")
 @CardRegistration(set = "EOC", collectorNumber = "180")
+@CardRegistration(set = "BRC", collectorNumber = "200")
 public class SilverbluffBridge extends Card {
 
     public SilverbluffBridge() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.s.SawItComing;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -7,13 +8,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlrundsEpiphany.class, SawItComing.class})
 class AlrundsEpiphanyTest extends BaseCardTest {
 
     @Test
@@ -24,8 +28,7 @@ class AlrundsEpiphanyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> birds = findPermanents(player1, "Bird");
         assertThat(birds).hasSize(2);
@@ -65,5 +68,48 @@ class AlrundsEpiphanyTest extends BaseCardTest {
         assertThat(gd.extraTurns).containsExactly(player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(epiphany.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot cast a foretold Epiphany during the turn it was foretold")
+    void cannotCastOnForetellTurn() {
+        AlrundsEpiphany epiphany = new AlrundsEpiphany();
+        harness.setHand(player1, List.of(epiphany));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.foretell(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, epiphany.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.findExiledCard(epiphany.getId()).faceDown()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A countered foretold Epiphany goes to the graveyard without tokens or an extra turn")
+    void counteredForetoldSpellDoesNotResolve() {
+        AlrundsEpiphany epiphany = new AlrundsEpiphany();
+        harness.setHand(player1, List.of(epiphany));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        gd.turnNumber++;
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new SawItComing()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castFromExile(player1, epiphany.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, epiphany.getId());
+
+        harness.assertInGraveyard(player1, "Alrund's Epiphany");
+        assertThat(gd.findExiledCard(epiphany.getId())).isNull();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

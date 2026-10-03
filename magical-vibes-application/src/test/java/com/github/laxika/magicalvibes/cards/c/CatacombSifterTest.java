@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -56,5 +57,81 @@ class CatacombSifterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void freshlyCreatedTappedScionCanBeSacrificedForManaAndScryToBottom() {
+        harness.enterBattlefieldAndReturn(player1, new CatacombSifter());
+        harness.passBothPriorities();
+        Permanent scion = findPermanent(player1, "Eldrazi Scion");
+        scion.tap();
+        Card topCard = new CatacombSifter();
+        Card secondCard = new CatacombSifter();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+
+        int scionIndex = gd.playerBattlefields.get(player1.getId()).indexOf(scion);
+        harness.activateAbility(player1, scionIndex, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry.cards()).containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, topCard);
+    }
+
+    @Test
+    void ownDeathDoesNotCauseScry() {
+        Permanent sifter = harness.enterBattlefieldAndReturn(player1, new CatacombSifter());
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new CatacombSifter()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, sifter));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Catacomb Sifter");
+    }
+
+    @Test
+    void simultaneousDeathWithScionStillCausesOneScry() {
+        Permanent sifter = harness.enterBattlefieldAndReturn(player1, new CatacombSifter());
+        harness.passBothPriorities();
+        Permanent scion = findPermanent(player1, "Eldrazi Scion");
+        Card topCard = new CatacombSifter();
+        harness.setLibrary(player1, List.of(topCard));
+        sifter.setMarkedDamage(3);
+        scion.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Catacomb Sifter");
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        harness.passBothPriorities();
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry.cards()).containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificingScionWithEmptyLibraryCompletesWithoutChoice() {
+        harness.enterBattlefieldAndReturn(player1, new CatacombSifter());
+        harness.passBothPriorities();
+        Permanent scion = findPermanent(player1, "Eldrazi Scion");
+        harness.setLibrary(player1, List.of());
+
+        int scionIndex = gd.playerBattlefields.get(player1.getId()).indexOf(scion);
+        harness.activateAbility(player1, scionIndex, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }

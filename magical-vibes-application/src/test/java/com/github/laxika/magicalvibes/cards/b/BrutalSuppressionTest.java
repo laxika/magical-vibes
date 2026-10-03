@@ -110,6 +110,62 @@ class BrutalSuppressionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Each copy requires a separate land sacrifice")
+    void multipleCopiesRequireMultipleLands() {
+        harness.addToBattlefield(player1, new BrutalSuppression());
+        harness.addToBattlefield(player2, new BrutalSuppression());
+        Permanent rebel = addCreatureReady(player2, new RebelInformer());
+        Permanent firstLand = addLand(player2);
+        Permanent secondLand = addLand(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 1, null, rebel.getId());
+        harness.handlePermanentChosen(player2, firstLand.getId());
+
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player2, secondLand.getId());
+        }
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(firstLand, secondLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstLand.getCard(), secondLand.getCard());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(rebel);
+        assertThat(gd.playerDecks.get(player2.getId()).getLast()).isSameAs(rebel.getCard());
+    }
+
+    @Test
+    @DisplayName("Removing Brutal Suppression removes its additional cost")
+    void stopsTaxingAfterLeavingBattlefield() {
+        Permanent suppression = harness.addToBattlefieldAndReturn(player1, new BrutalSuppression());
+        Permanent rebel = addCreatureReady(player2, new RebelInformer());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        gd.playerBattlefields.get(player1.getId()).remove(suppression);
+
+        harness.activateAbility(player2, 0, null, rebel.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(rebel);
+        assertThat(gd.playerDecks.get(player2.getId()).getLast()).isSameAs(rebel.getCard());
+    }
+
+    @Test
+    @DisplayName("A paid ability resolves without another land sacrifice")
+    void paidAbilityResolvesWithNoLandsRemaining() {
+        harness.addToBattlefield(player1, new BrutalSuppression());
+        Permanent rebel = addCreatureReady(player2, new RebelInformer());
+        Permanent land = addLand(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, rebel.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land, rebel);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(land.getCard());
+        assertThat(gd.playerDecks.get(player2.getId()).getLast()).isSameAs(rebel.getCard());
+    }
+
     private Permanent addLand(com.github.laxika.magicalvibes.model.Player player) {
         Permanent land = harness.addToBattlefieldAndReturn(player, new RhysticCave());
         land.setSummoningSick(false);

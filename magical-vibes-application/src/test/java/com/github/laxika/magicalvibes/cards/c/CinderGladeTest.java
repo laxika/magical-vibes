@@ -75,6 +75,45 @@ class CinderGladeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
+    @Test
+    void entersTappedWithoutBasicLands() {
+        playCinderGlade();
+
+        assertThat(findCinderGlade(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWithMoreThanTwoBasicLands() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+
+        playCinderGlade();
+
+        assertThat(findCinderGlade(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedBasicLandsOfTheSameTypeCount() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+
+        playCinderGlade();
+
+        assertThat(findCinderGlade(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void nonbasicLandsWithBasicLandTypesDoNotCount() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new CinderGlade());
+
+        playCinderGlade();
+
+        Permanent enteringLand = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(enteringLand.isTapped()).isTrue();
+    }
+
     private void playCinderGlade() {
         harness.setHand(player1, List.of(new CinderGlade()));
         harness.forceActivePlayer(player1);
@@ -83,9 +122,8 @@ class CinderGladeTest extends BaseCardTest {
     }
 
     private Permanent addReadyCinderGlade(Player player) {
-        Permanent permanent = new Permanent(new CinderGlade());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new CinderGlade());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

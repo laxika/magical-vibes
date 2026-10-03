@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
+import com.github.laxika.magicalvibes.cards.c.Cultivate;
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -22,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AvenMindcensor.class, DiabolicTutor.class, Forest.class, GrizzlyBears.class,
-        Island.class, Plains.class, RampantGrowth.class, Swamp.class})
+        Island.class, Plains.class, RampantGrowth.class, Swamp.class, Cultivate.class, Ovinize.class})
 class AvenMindcensorTest extends BaseCardTest {
 
     @Test
@@ -80,9 +82,7 @@ class AvenMindcensorTest extends BaseCardTest {
     @DisplayName("A restricted search that finds nothing in the top four finds nothing at all")
     void noMatchingCardInTopFourFindsNothing() {
         harness.addToBattlefield(player2, new AvenMindcensor());
-        harness.setHand(player1, List.of(new RampantGrowth()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RampantGrowth(), "{1}{G}");
 
         // Only basic land is a Forest sitting fifth; the top four are all Grizzly Bears.
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
@@ -97,10 +97,63 @@ class AvenMindcensorTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
     }
 
+    @Test
+    @CardUsed({Ovinize.class})
+    void losingAbilitiesStopsRestrictingSearches() {
+        var mindcensor = harness.addToBattlefieldAndReturn(player2, new AvenMindcensor());
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, mindcensor.getId());
+
+        setupTutor(player1);
+        setSixCardLibrary(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .hasSize(6);
+    }
+
+    @Test
+    @CardUsed({Cultivate.class})
+    void laterPicksStayWithinOriginalTopFour() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        harness.castFromHand(player1, new Cultivate(), "{2}{G}");
+        Card plains = new Plains();
+        Card swamp = new Swamp();
+        Card forest = new Forest();
+        Card island = new Island();
+        Card deeperForest = new Forest();
+        harness.setLibrary(player1, List.of(plains, swamp, forest, island, deeperForest));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(swamp, forest, island);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).contains(swamp).doesNotContain(deeperForest);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(deeperForest);
+    }
+
+    @Test
+    void shortLibrarySearchesAllRemainingCards() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        setupTutor(player1);
+        Card forest = new Forest();
+        Card plains = new Plains();
+        harness.setLibrary(player1, List.of(forest, plains));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(forest, plains);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
     private void setupTutor(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new DiabolicTutor()));
-        harness.addMana(player, ManaColor.BLACK, 4);
-        harness.castSorcery(player, 0, 0);
+        harness.castFromHand(player, new DiabolicTutor(), "{2}{B}{B}");
     }
 
     private void setSixCardLibrary(com.github.laxika.magicalvibes.model.Player player) {

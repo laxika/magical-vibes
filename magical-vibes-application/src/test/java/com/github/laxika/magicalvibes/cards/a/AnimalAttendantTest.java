@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -55,6 +57,52 @@ class AnimalAttendantTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void manaFromTwoAttendantsGrantsTwoAdditionalCounters() {
+        addCreatureReady(player1, new AnimalAttendant());
+        activateAnimalAttendant();
+        addCreatureReady(player1, new AnimalAttendant());
+        activateAnimalAttendant();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void manaSpentOnAHumanDoesNotGrantCountersToALaterCreature() {
+        addCreatureReady(player1, new AnimalAttendant());
+        activateAnimalAttendant(ManaColor.BLUE);
+        harness.setHand(player1, List.of(new FugitiveWizard(), new GrizzlyBears()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Fugitive Wizard").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void producesOneManaOfTheChosenColorAndTaps(ManaColor color) {
+        Permanent attendant = addCreatureReady(player1, new AnimalAttendant());
+
+        activateAnimalAttendant(color);
+
+        assertThat(attendant.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void activateAnimalAttendant() {

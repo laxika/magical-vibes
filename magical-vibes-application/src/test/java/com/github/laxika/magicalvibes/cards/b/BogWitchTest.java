@@ -17,6 +17,44 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BogWitchTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Discards only the chosen card and produces mana immediately")
+    void discardsOnlyChosenCard() {
+        Permanent bogWitch = addCreatureReady(player1, new BogWitch());
+        harness.setHand(player1, List.of(new FreshVolunteers(), new BogWitch()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertNotInHand(player1, "Bog Witch");
+        harness.assertInGraveyard(player1, "Bog Witch");
+        harness.assertNotInGraveyard(player1, "Fresh Volunteers");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(bogWitch.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped even with mana and a discard available")
+    void cannotActivateWhileTapped() {
+        Permanent bogWitch = addCreatureReady(player1, new BogWitch());
+        bogWitch.tap();
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.assertNotInGraveyard(player1, "Fresh Volunteers");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(bogWitch.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Paying black mana and discarding a card adds three black mana")
     void paysManaAndDiscardToAddBlackMana() {
         Permanent bogWitch = addCreatureReady(player1, new BogWitch());

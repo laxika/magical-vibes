@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilBasicLandToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class RevealUntilBasicLandToHandRestToGraveyardEffectHandler implements N
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +46,8 @@ public class RevealUntilBasicLandToHandRestToGraveyardEffectHandler implements N
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
             revealed.add(card);
-            if (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)) {
+            if (card.hasType(CardType.LAND)
+                    && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, controllerId)) {
                 basicLand = card;
                 break;
             }

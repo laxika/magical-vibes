@@ -61,6 +61,69 @@ class CentaurVeteranTest extends BaseCardTest {
     }
 
     @Test
+    void discardIsPaidBeforeTheRegenerationAbilityResolves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, new CentaurVeteran());
+        harness.setHand(player1, List.of(new CentaurVeteran()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Centaur Veteran");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(veteran.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(veteran.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void tappedSummoningSickVeteranCanActivateRepeatedly() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, new CentaurVeteran());
+        veteran.setTapped(true);
+        veteran.setSummoningSick(true);
+        harness.setHand(player1, List.of(new CentaurVeteran(), new CentaurVeteran()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(veteran.getRegenerationShield()).isEqualTo(2);
+        assertThat(veteran.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void trampleAssignsExcessDamagePastAnAlreadyDamagedBlocker() {
+        addCreatureReady(player1, new CentaurVeteran());
+        Permanent blocker = addCreatureReady(player2, new CentaurVeteran());
+        blocker.setMarkedDamage(1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 2, player2.getId(), 1));
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Centaur Veteran");
+        harness.assertInGraveyard(player2, "Centaur Veteran");
+    }
+
+    @Test
     void regenerationShieldPreventsLethalCombatDamage() {
         Permanent veteran = addCreatureReady(player1, new CentaurVeteran());
         harness.setHand(player1, List.of(new CentaurVeteran()));

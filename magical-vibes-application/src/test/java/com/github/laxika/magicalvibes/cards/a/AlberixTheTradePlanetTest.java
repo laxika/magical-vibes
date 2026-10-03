@@ -48,6 +48,7 @@ class AlberixTheTradePlanetTest extends BaseCardTest {
         advanceToPrecombatMain();
         harness.passBothPriorities();
         harness.handleListChoice(player1, EXILE_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.getCardsExiledByPermanent(alberixId)).hasSize(6);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -65,8 +66,8 @@ class AlberixTheTradePlanetTest extends BaseCardTest {
         advanceToPrecombatMain();
         harness.passBothPriorities();
         harness.handleListChoice(player1, DISCARD_MODE);
-        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
 
         PendingInteraction.LibraryRevealChoice firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -84,6 +85,79 @@ class AlberixTheTradePlanetTest extends BaseCardTest {
                 .extracting(Card::getId).containsExactly(discard.getId());
     }
 
+    @Test
+    @DisplayName("Trade Routes chooses its mode before opponents can respond")
+    void choosesModeWhenTriggerIsPutOnStack() {
+        castAndResolve(List.of(new Forest(), new Island(), new Forest(), new Island(), new Forest()));
+        advanceToPrecombatMain();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, EXILE_MODE);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Resource returns are part of the resolving ability, without another priority round")
+    void returnsResourcesDuringSameResolution() {
+        UUID alberixId = castAndResolve(List.of(new Forest()));
+        Card discard = new GrizzlyBears();
+        harness.setHand(player1, List.of(discard));
+
+        advanceToPrecombatMain();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(alberixId)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A new controller can trade resources exiled by the previous controller")
+    void tradesResourcesAfterControlChanges() {
+        UUID alberixId = castAndResolve(List.of(new Forest()));
+        var alberix = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(alberix);
+        gd.playerBattlefields.get(player2.getId()).add(alberix);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, DISCARD_MODE);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(alberixId)).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Planet exiles all available cards when fewer than five remain")
+    void exilesShortLibrary() {
+        UUID alberixId = castAndResolve(List.of(new Forest(), new Island()));
+        assertThat(gd.getCardsExiledByPermanent(alberixId)).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing discard with an empty hand does not return resources")
+    void emptyHandDoesNotReturnResources() {
+        UUID alberixId = castAndResolve(List.of(new Forest(), new Island()));
+        harness.setHand(player1, List.of());
+        advanceToPrecombatMain();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(alberixId)).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private UUID castAndResolve(List<Card> library) {
         harness.setLibrary(player1, library);
         harness.setHand(player1, List.of(new AlberixTheTradePlanet()));
@@ -97,7 +171,6 @@ class AlberixTheTradePlanetTest extends BaseCardTest {
     private void advanceToPrecombatMain() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
     }
 }

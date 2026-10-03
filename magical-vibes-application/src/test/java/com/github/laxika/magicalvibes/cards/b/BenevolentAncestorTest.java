@@ -58,6 +58,44 @@ class BenevolentAncestorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two ancestors prevent two successive points of damage, then the shields are exhausted")
+    void preventionShieldsAccumulate() {
+        Permanent firstAncestor = addAncestorReady();
+        Permanent secondAncestor = addAncestorReady();
+        Permanent firstFangtail = addFangtailReady();
+        Permanent secondFangtail = addFangtailReady();
+        Permanent thirdFangtail = addFangtailReady();
+        harness.setLife(player2, 20);
+
+        activateAndResolve(firstAncestor, player2.getId());
+        activateAndResolve(secondAncestor, player2.getId());
+        assertThat(firstAncestor.isTapped()).isTrue();
+        assertThat(secondAncestor.isTapped()).isTrue();
+
+        activateAndResolve(firstFangtail, player2.getId());
+        harness.assertLife(player2, 20);
+        activateAndResolve(secondFangtail, player2.getId());
+        harness.assertLife(player2, 20);
+        activateAndResolve(thirdFangtail, player2.getId());
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Damage to another target does not consume the prevention shield")
+    void shieldOnlyPreventsDamageToChosenTarget() {
+        Permanent ancestor = addAncestorReady();
+        Permanent firstFangtail = addFangtailReady();
+        Permanent secondFangtail = addFangtailReady();
+        harness.setLife(player2, 20);
+
+        activateAndResolve(ancestor, player2.getId());
+        activateAndResolve(firstFangtail, ancestor.getId());
+        assertThat(ancestor.getMarkedDamage()).isEqualTo(1);
+        activateAndResolve(secondFangtail, player2.getId());
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("The prevention shield expires at the end of the turn")
     void preventionExpiresAtEndOfTurn() {
         Permanent ancestor = addAncestorReady();

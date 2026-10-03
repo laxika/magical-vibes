@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.l.LanternSpirit;
+import com.github.laxika.magicalvibes.cards.c.ChoreographedSparks;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AntiquitiesOnTheLoose.class, LanternSpirit.class, ChoreographedSparks.class})
 class AntiquitiesOnTheLooseTest extends BaseCardTest {
 
     private List<Permanent> spiritTokens() {
@@ -31,8 +34,6 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
                 .toList();
     }
 
-    
-
     @Test
     @DisplayName("Normal cast creates two 2/2 red and white Spirit tokens without counters")
     void normalCastCreatesSpiritsWithoutCounters() {
@@ -40,8 +41,7 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> spirits = spiritTokens();
         assertThat(spirits).hasSize(2);
@@ -61,8 +61,7 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         List<Permanent> spirits = spiritTokens();
         assertThat(spirits).hasSize(2);
@@ -79,8 +78,7 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(spiritTokens()).hasSize(2);
         assertThat(spiritsYouControl()).hasSize(3);
@@ -97,8 +95,7 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         harness.assertNotInGraveyard(player1, "Antiquities on the Loose");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -120,5 +117,58 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         assertThat(entry.getCard().getName()).isEqualTo("Antiquities on the Loose");
         assertThat(entry.isCastWithFlashback()).isTrue();
         assertThat(entry.getSourceZone()).isEqualTo(Zone.GRAVEYARD);
+    }
+
+    @Test
+    @DisplayName("Casting from hand does not add counters to existing Spirits")
+    void handCastDoesNotCounterExistingSpirits() {
+        harness.setHand(player1, List.of(new AntiquitiesOnTheLoose(), new AntiquitiesOnTheLoose()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(spiritTokens()).hasSize(4).allSatisfy(spirit ->
+                assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    @DisplayName("Flashback does not put counters on opposing Spirits")
+    void flashbackDoesNotCounterOpposingSpirits() {
+        Permanent opposingSpirit = harness.addToBattlefieldAndReturn(player2, new LanternSpirit());
+        harness.setGraveyard(player1, List.of(new AntiquitiesOnTheLoose()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(opposingSpirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(spiritTokens()).hasSize(2).allSatisfy(spirit ->
+                assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
+    }
+
+    @Test
+    @DisplayName("A copy of a flashback spell creates tokens without counters because it was not cast")
+    void copiedFlashbackSpellDoesNotAddCounters() {
+        AntiquitiesOnTheLoose spell = new AntiquitiesOnTheLoose();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(new ChoreographedSparks()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castFlashback(player1, 0);
+        harness.castInstant(player1, 0, 0, spell.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(spiritTokens()).hasSize(2).allSatisfy(spirit ->
+                assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+
+        harness.passBothPriorities();
+
+        assertThat(spiritTokens()).hasSize(4).allSatisfy(spirit ->
+                assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
     }
 }

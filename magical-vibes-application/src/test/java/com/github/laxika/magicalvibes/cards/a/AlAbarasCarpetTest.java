@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FrostGiant;
 import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -75,5 +76,42 @@ class AlAbarasCarpetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Does not protect the controller's blocking creatures")
+    void doesNotPreventDamageToBlockers() {
+        Permanent carpet = harness.addToBattlefieldAndReturn(player1, new AlAbarasCarpet());
+        addCreatureReady(player1, new FrostGiant());
+        addCreatureReady(player2, new FrostGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(carpet), null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Frost Giant");
+        harness.assertInGraveyard(player2, "Frost Giant");
+    }
+
+    @Test
+    @DisplayName("Does not protect the opponent from the controller's attackers")
+    void doesNotPreventDamageToOpponent() {
+        Permanent carpet = harness.addToBattlefieldAndReturn(player1, new AlAbarasCarpet());
+        addCreatureReady(player1, new FrostGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(carpet), null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(1));
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
     }
 }

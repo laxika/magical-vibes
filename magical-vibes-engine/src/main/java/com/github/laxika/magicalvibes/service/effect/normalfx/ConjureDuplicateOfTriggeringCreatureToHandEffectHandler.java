@@ -34,12 +34,12 @@ public class ConjureDuplicateOfTriggeringCreatureToHandEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID triggeringCardId = entry.getTriggeringCardId();
         StackEntry triggeringSpell = gameQueryService.findStackEntryByCardId(gameData, triggeringCardId);
-        if (triggeringSpell == null || triggeringSpell.getCard() == null
-                || !triggeringSpell.getCard().hasType(CardType.CREATURE)) {
+        Card triggeringCard = triggeringSpell == null ? entry.getTriggeringCardSnapshot() : triggeringSpell.getCard();
+        if (triggeringCard == null || !triggeringCard.hasType(CardType.CREATURE)) {
             return;
         }
 
-        Card duplicate = copySupport.createCopyCard(triggeringSpell.getCard());
+        Card duplicate = copySupport.createCopyCard(triggeringCard);
         EnumSet<Keyword> keywords = duplicate.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)
                 : EnumSet.copyOf(duplicate.getKeywords());
@@ -51,6 +51,6 @@ public class ConjureDuplicateOfTriggeringCreatureToHandEffectHandler implements 
 
         gameLogService.append(gameData,
                 GameLog.cardThen(entry.getCard(), " conjures a duplicate of "
-                        + triggeringSpell.getCard().getName() + " into their hand."));
+                        + triggeringCard.getName() + " into their hand."));
     }
 }

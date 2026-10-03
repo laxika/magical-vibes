@@ -192,7 +192,13 @@ public class ManaCost {
             return this;
         }
         Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        List<HybridSymbol> remainingHybrid = new ArrayList<>(hybridCosts);
         int genericReduction = reduction.genericCost;
+        for (HybridSymbol hybrid : reduction.hybridCosts) {
+            if (!remainingHybrid.remove(hybrid)) {
+                genericReduction += hybrid.genericAlternative() > 0 ? hybrid.genericAlternative() : 1;
+            }
+        }
         for (Map.Entry<ManaColor, Integer> entry : reduction.coloredCosts.entrySet()) {
             int matching = Math.min(remainingColored.getOrDefault(entry.getKey(), 0), entry.getValue());
             if (matching > 0) {
@@ -209,7 +215,7 @@ public class ManaCost {
         }
         return new ManaCost(
                 Math.max(0, genericCost - genericReduction),
-                remainingColored, phyrexianCosts, hybridCosts, snowCost, legendarySourceCost, xSymbolCount,
+                remainingColored, phyrexianCosts, remainingHybrid, snowCost, legendarySourceCost, xSymbolCount,
                 cumulativeUpkeepPayment);
     }
 

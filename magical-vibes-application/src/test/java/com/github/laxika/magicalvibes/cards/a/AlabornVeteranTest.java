@@ -66,7 +66,6 @@ class AlabornVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent grenadier = findPermanent(player1, "Alaborn Grenadier");
@@ -120,6 +119,86 @@ class AlabornVeteranTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
+    }
+
+    @Test
+    @DisplayName("Can target itself")
+    void boostsItself() {
+        setupVeteranOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent veteran = findPermanent(player1, "Alaborn Veteran");
+
+        harness.activateAbility(player1, 0, null, veteran.getId());
+        harness.passBothPriorities();
+
+        assertThat(veteran.getPowerModifier()).isEqualTo(2);
+        assertThat(veteran.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        setupVeteranOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = findPermanent(player1, "Alaborn Grenadier");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Alaborn Veteran"));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateWhileTapped() {
+        setupVeteranOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        UUID targetId = harness.getPermanentId(player1, "Alaborn Grenadier");
+        harness.activateAbility(player1, 0, null, targetId);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        setupVeteranOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent veteran = findPermanent(player1, "Alaborn Veteran");
+        veteran.setSummoningSick(true);
+        UUID targetId = harness.getPermanentId(player1, "Alaborn Grenadier");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(veteran.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase")
+    void cannotActivatePostcombat() {
+        setupVeteranOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+        UUID targetId = harness.getPermanentId(player1, "Alaborn Grenadier");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate before attackers in a second combat phase")
+    void cannotActivateInSecondCombat() {
+        setupVeteranOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 2;
+        UUID targetId = harness.getPermanentId(player1, "Alaborn Grenadier");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupVeteranOnMyTurn(TurnStep step) {

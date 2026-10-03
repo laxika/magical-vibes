@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -155,6 +156,94 @@ class BrothersOfFireTest extends BaseCardTest {
         // Controller does NOT take damage when ability fizzles
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent brothers = harness.addToBattlefieldAndReturn(player1, new BrothersOfFire());
+        brothers.setSummoningSick(true);
+        brothers.setTapped(true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(brothers.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly without tapping")
+    void canActivateRepeatedly() {
+        Permanent brothers = addReadyBrothers(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(brothers.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Ability still deals both damage amounts after its source leaves play")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent brothers = addReadyBrothers(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(brothers);
+        gd.playerGraveyards.get(player1.getId()).add(brothers.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the ability cost with only one red mana")
+    void requiresTwoRedMana() {
+        addReadyBrothers(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both players lose together when the ability deals lethal damage to each")
+    void lethalDamageToBothPlayersDrawsGame() {
+        addReadyBrothers(player1);
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 1);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
     private Permanent addReadyBrothers(Player player) {
         return addCreatureReady(player, new BrothersOfFire());
     }

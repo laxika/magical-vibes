@@ -14,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlessedReversal.class, GiantCockroach.class})
+@CardUsed({BlessedReversal.class, GiantCockroach.class, AjaniGoldmane.class})
 class BlessedReversalTest extends BaseCardTest {
 
     @Test
@@ -52,18 +52,16 @@ class BlessedReversalTest extends BaseCardTest {
     @Test
     @DisplayName("Only counts attackers whose target is you, not another player")
     void ignoresAttackersTargetingAnotherPlayer() {
-        addAttacker(player2, player1.getId());          // attacking you -> counted
-        addAttacker(player1, player2.getId());          // attacking another player -> not counted
+        addAttacker(player1, player2.getId());
 
         harness.setLife(player1, 20);
         harness.castFromHand(player1, new BlessedReversal(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     @Test
-    @CardUsed(AjaniGoldmane.class)
     @DisplayName("Does not count attackers targeting your planeswalker")
     void ignoresAttackersTargetingYourPlaneswalker() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new AjaniGoldmane());
@@ -85,6 +83,35 @@ class BlessedReversalTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Counts only attacking creatures among the opponent's creatures")
+    void ignoresNonattackingCreatures() {
+        addAttacker(player2, player1.getId());
+        addCreatureReady(player2, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new BlessedReversal(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Uses the spell controller to determine who is being attacked")
+    void gainsLifeForSecondPlayerWhenAttacked() {
+        addAttacker(player1, player2.getId());
+        addAttacker(player1, player2.getId());
+
+        harness.setLife(player2, 20);
+        harness.castFromHand(player2, new BlessedReversal(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 26);
+        harness.assertLife(player1, 20);
     }
 
     private Permanent addAttacker(Player player, UUID attackTarget) {

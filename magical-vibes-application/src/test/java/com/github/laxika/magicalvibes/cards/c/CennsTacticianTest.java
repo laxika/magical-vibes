@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CennsTactician.class, StonybrookSchoolmaster.class})
 class CennsTacticianTest extends BaseCardTest {
 
-    // ===== Activated ability =====
-
     @Test
     @DisplayName("{W}, {T}: Put a +1/+1 counter on a target Soldier creature")
     void abilityPutsCounterOnSoldier() {
@@ -78,8 +76,6 @@ class CennsTacticianTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Static: additional block for creatures with a +1/+1 counter =====
-
     @Test
     @DisplayName("A creature you control with a +1/+1 counter can block an additional creature")
     void counteredCreatureCanBlockTwo() {
@@ -134,14 +130,138 @@ class CennsTacticianTest extends BaseCardTest {
                 .hasMessageContaining("too many times");
     }
 
-    // ===== Helpers =====
+    @Test
+    void activationPaysWhiteManaAndTapsSource() {
+        Permanent tactician = addCreatureReady(player1, new CennsTactician());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, tactician.getId());
+
+        assertThat(tactician.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        harness.passBothPriorities();
+        assertThat(tactician.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void summoningSickTacticianCannotActivate() {
+        Permanent tactician = addCreatureReady(player1, new CennsTactician());
+        tactician.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, tactician.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleCountersStillAllowOnlyOneAdditionalBlock() {
+        addCreatureReady(player2, new CennsTactician());
+        Permanent blocker = addCreatureReady(player2, new StonybrookSchoolmaster());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        addAttackers(3);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1),
+                new BlockerAssignment(1, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    void multipleTacticiansEachGrantAnAdditionalBlock() {
+        addCreatureReady(player2, new CennsTactician());
+        addCreatureReady(player2, new CennsTactician());
+        Permanent blocker = addCreatureReady(player2, new StonybrookSchoolmaster());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addAttackers(3);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(2, 0),
+                new BlockerAssignment(2, 1),
+                new BlockerAssignment(2, 2)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void tacticianCanBenefitFromItsOwnStaticAbility() {
+        Permanent blocker = addCreatureReady(player2, new CennsTactician());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addAttackers(2);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void opponentsTacticianDoesNotGrantAdditionalBlocks() {
+        addCreatureReady(player1, new CennsTactician());
+        Permanent blocker = addCreatureReady(player2, new StonybrookSchoolmaster());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addAttackers(2);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    void activatedAbilityResolvesAfterSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new CennsTactician());
+        Permanent target = addCreatureReady(player2, new CennsTactician());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void removingLastCounterEndsAdditionalBlockPermission() {
+        addCreatureReady(player2, new CennsTactician());
+        Permanent blocker = addCreatureReady(player2, new StonybrookSchoolmaster());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addAttackers(2);
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    void additionalBlockPermissionEndsWhenTacticianLeaves() {
+        Permanent tactician = addCreatureReady(player2, new CennsTactician());
+        Permanent blocker = addCreatureReady(player2, new StonybrookSchoolmaster());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addAttackers(2);
+        gd.playerBattlefields.get(player2.getId()).remove(tactician);
+        gd.playerGraveyards.get(player2.getId()).add(tactician.getCard());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent atk = new Permanent(new StonybrookSchoolmaster());
-            atk.setSummoningSick(false);
+            Permanent atk = addCreatureReady(player1, new StonybrookSchoolmaster());
             atk.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atk);
         }
     }
 

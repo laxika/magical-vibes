@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarenbrigSquire;
+import com.github.laxika.magicalvibes.cards.o.OgreErrant;
+import com.github.laxika.magicalvibes.cards.r.RovingKeep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BelovedPrincess.class, GrizzlyBears.class})
+@CardUsed({BelovedPrincess.class, GarenbrigSquire.class, OgreErrant.class, RovingKeep.class})
 class BelovedPrincessTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class BelovedPrincessTest extends BaseCardTest {
     void cannotBeBlockedByPowerThree() {
         Permanent princess = addPrincess();
         princess.setAttacking(true);
-        Permanent blocker = addCreatureWithStats(3, 3);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new OgreErrant());
 
         beginDeclareBlockers();
 
@@ -35,7 +37,7 @@ class BelovedPrincessTest extends BaseCardTest {
     void canBeBlockedByPowerTwo() {
         Permanent princess = addPrincess();
         princess.setAttacking(true);
-        Permanent blocker = addCreatureWithStats(2, 2);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GarenbrigSquire());
 
         beginDeclareBlockers();
         declareBlock(blocker, princess);
@@ -48,7 +50,7 @@ class BelovedPrincessTest extends BaseCardTest {
     void lifelinkGainsLifeFromCombatDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent princess = addPrincess();
+        addPrincess();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -61,21 +63,62 @@ class BelovedPrincessTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
-    private Permanent addPrincess() {
-        Permanent princess = new Permanent(new BelovedPrincess());
-        princess.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(princess);
-        return princess;
+    @Test
+    void cannotBeBlockedByPowerGreaterThanThree() {
+        Permanent princess = addPrincess();
+        princess.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RovingKeep());
+        beginDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, princess))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addCreatureWithStats(int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent blocker = new Permanent(card);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        return blocker;
+    @Test
+    void blockerWithPrintedPowerTwoCannotBlockAfterPowerIncrease() {
+        Permanent princess = addPrincess();
+        princess.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GarenbrigSquire());
+        blocker.setPersistentPowerModifier(1);
+        beginDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, princess))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void blockerWithPrintedPowerThreeCanBlockAfterPowerReduction() {
+        Permanent princess = addPrincess();
+        princess.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new OgreErrant());
+        blocker.setPersistentPowerModifier(-1);
+        beginDeclareBlockers();
+        declareBlock(blocker, princess);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void lifelinkGainsLifeFromDamageToBlockerEvenWhenPrincessDies() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent princess = addPrincess();
+        princess.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GarenbrigSquire());
+        beginDeclareBlockers();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> declareBlock(blocker, princess));
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Beloved Princess");
+        harness.assertOnBattlefield(player2, "Garenbrig Squire");
+    }
+
+    private Permanent addPrincess() {
+        Permanent princess = harness.addToBattlefieldAndReturn(player1, new BelovedPrincess());
+        princess.setSummoningSick(false);
+        return princess;
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {

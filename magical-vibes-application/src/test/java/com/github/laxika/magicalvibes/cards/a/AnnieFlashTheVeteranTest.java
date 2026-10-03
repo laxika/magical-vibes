@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,10 +36,7 @@ class AnnieFlashTheVeteranTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(valid.getId()));
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(valid.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isTapped()).isTrue();
     }
 
@@ -48,7 +44,7 @@ class AnnieFlashTheVeteranTest extends BaseCardTest {
     @DisplayName("Entering the battlefield without being cast does not return a graveyard card")
     void uncastEntryDoesNotReturnCard() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.addToBattlefield(player1, new AnnieFlashTheVeteran());
+        harness.enterBattlefieldAndReturn(player1, new AnnieFlashTheVeteran());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -64,11 +60,7 @@ class AnnieFlashTheVeteranTest extends BaseCardTest {
         Card third = new GrizzlyBears();
         harness.setLibrary(player1, List.of(first, second, third));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
@@ -76,6 +68,70 @@ class AnnieFlashTheVeteranTest extends BaseCardTest {
                 .containsEntry(second.getId(), player1.getId());
         assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
                 .contains(first.getId(), second.getId());
+    }
+
+    @Test
+    void tappingAnotherCreatureDoesNotExileCards() {
+        harness.addToBattlefield(player1, new AnnieFlashTheVeteran());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.setSummoningSick(false);
+        Card top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+    }
+
+    @Test
+    void tappingWithOnlyOneLibraryCardExilesThatCard() {
+        Permanent annie = harness.addToBattlefieldAndReturn(player1, new AnnieFlashTheVeteran());
+        annie.setSummoningSick(false);
+        Card top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).anySatisfy(entry -> {
+            assertThat(entry.card()).isSameAs(top);
+            assertThat(entry.ownerId()).isEqualTo(player1.getId());
+        });
+        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
+    }
+
+    @Test
+    void castWithNoEligibleGraveyardCardStillEnters() {
+        harness.setGraveyard(player1, List.of(new HolyDay(), new SerraAngel()));
+
+        castAnnieFlash();
+
+        harness.assertOnBattlefield(player1, "Annie Flash, the Veteran");
+        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertInGraveyard(player1, "Serra Angel");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentGraveyardCardsCannotBeReturned() {
+        Card ownCard = new GrizzlyBears();
+        Card opposingCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opposingCard));
+
+        castAnnieFlash();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
     }
 
     private void castAnnieFlash() {

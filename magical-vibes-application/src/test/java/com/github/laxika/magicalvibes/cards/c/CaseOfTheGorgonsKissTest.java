@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.m.MacabreReconstruction;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CaseOfTheGorgonsKiss.class, GiantSpider.class, Shock.class})
+@CardUsed({CaseOfTheGorgonsKiss.class, GiantSpider.class, Shock.class, MacabreReconstruction.class})
 class CaseOfTheGorgonsKissTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class CaseOfTheGorgonsKissTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.castEnchantment(player1, 0, List.of(target.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -77,7 +77,85 @@ class CaseOfTheGorgonsKissTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+    }
+
+    @Test
+    void canEnterWithoutChoosingATarget() {
+        harness.setHand(player1, List.of(new CaseOfTheGorgonsKiss()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castEnchantment(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Case of the Gorgon's Kiss");
+    }
+
+    @Test
+    void doesNotSolveWithOnlyTwoCreatureCards() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheGorgonsKiss());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+        });
+
+        resolveEndStepTriggers();
+
+        assertThat(casePermanent.isSolved()).isFalse();
+        assertThat(gqs.isCreature(gd, casePermanent)).isFalse();
+    }
+
+    @Test
+    void doesNotSolveDuringOpponentsEndStep() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheGorgonsKiss());
+        for (int i = 0; i < 3; i++) {
+            Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+            harness.inMutationScope(() ->
+                    harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        }
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(casePermanent.isSolved()).isFalse();
+        assertThat(gqs.isCreature(gd, casePermanent)).isFalse();
+    }
+
+    @Test
+    void countsRepeatedGraveyardEntriesOfTheSameCreatureCard() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheGorgonsKiss());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MacabreReconstruction(), new MacabreReconstruction()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        for (int entry = 0; entry < 3; entry++) {
+            Permanent dyingCreature = creature;
+            harness.inMutationScope(() ->
+                    harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dyingCreature));
+            if (entry < 2) {
+                harness.castSorcery(player1, 0, 0);
+                harness.handleMultipleCardsChosen(player1, List.of(dyingCreature.getCard().getId()));
+                harness.passBothPriorities();
+                harness.castCreature(player1, entry == 0 ? 1 : 0);
+                harness.passBothPriorities();
+                creature = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Giant Spider"));
+            }
+        }
+
+        resolveEndStepTriggers();
+
+        assertThat(casePermanent.isSolved()).isTrue();
+        assertThat(gqs.isCreature(gd, casePermanent)).isTrue();
     }
 }

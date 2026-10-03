@@ -94,4 +94,67 @@ class ConfusticateAndBebotherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, 0, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Counter mode counters when the controller declines an affordable payment")
+    void counterModeCountersWhenPaymentDeclined() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.setHand(player2, List.of(new ConfusticateAndBebother()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, elves.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Three available mana is insufficient to prevent the counter")
+    void counterModeRequiresAllFourMana() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new ConfusticateAndBebother()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, elves.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({ConfusticateAndBebother.class})
+    @DisplayName("Draw mode may discard a card that was in hand before drawing")
+    void drawModeMayDiscardAnExistingCard() {
+        ConfusticateAndBebother existingCard = new ConfusticateAndBebother();
+        ConfusticateAndBebother firstDraw = new ConfusticateAndBebother();
+        ConfusticateAndBebother secondDraw = new ConfusticateAndBebother();
+        harness.setHand(player1, List.of(new ConfusticateAndBebother(), existingCard));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(existingCard, firstDraw, secondDraw);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(existingCard);
+        assertThat(gd.stack).isEmpty();
+    }
 }

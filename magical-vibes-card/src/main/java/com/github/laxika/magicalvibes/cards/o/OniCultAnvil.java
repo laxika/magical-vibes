@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "230")
+@CardRegistration(set = "BRC", collectorNumber = "127")
 public class OniCultAnvil extends Card {
 
     public OniCultAnvil() {

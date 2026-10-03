@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChandraFireOfKaladesh.class, ChandraRoaringFlame.class, ChandraNalaar.class,
+        Shock.class, GrizzlyBears.class})
 class ChandraFireOfKaladeshTest extends BaseCardTest {
 
     @Test
@@ -94,8 +97,7 @@ class ChandraFireOfKaladeshTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(chandra.isTapped()).isFalse();
     }
@@ -116,10 +118,63 @@ class ChandraFireOfKaladeshTest extends BaseCardTest {
         assertThat(chandra.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("A stolen Chandra returns transformed under her owner's control")
+    void returnsToOwnerAfterTransforming() {
+        ChandraFireOfKaladesh card = new ChandraFireOfKaladesh();
+        card.setOwnerId(player2.getId());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, card);
+        chandra.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        for (int i = 0; i < 3; i++) {
+            chandra.untap();
+            harness.activateAbility(player1, indexOf(player1, chandra), null, player2.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Chandra, Fire of Kaladesh");
+        harness.assertNotOnBattlefield(player1, "Chandra, Roaring Flame");
+        harness.assertOnBattlefield(player2, "Chandra, Roaring Flame");
+    }
+
+    @Test
+    @DisplayName("An opponent's red spell does not untap Chandra")
+    void opponentRedSpellDoesNotUntapChandra() {
+        Permanent chandra = addReadyChandra(player1);
+        chandra.tap();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(chandra.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Pending pings still deal damage after Chandra has returned as a new permanent")
+    void pendingPingsDoNotTransformTheReturnedPlaneswalkerAgain() {
+        Permanent chandra = addReadyChandra(player1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        for (int i = 0; i < 2; i++) {
+            chandra.untap();
+            harness.activateAbility(player1, indexOf(player1, chandra), null, player2.getId());
+            harness.passBothPriorities();
+        }
+        harness.activateAbility(player1, indexOf(player1, chandra), null, player2.getId());
+        chandra.untap();
+        harness.activateAbility(player1, indexOf(player1, chandra), null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+        harness.assertNotOnBattlefield(player1, "Chandra, Fire of Kaladesh");
+        harness.assertOnBattlefield(player1, "Chandra, Roaring Flame");
+    }
+
     private Permanent addReadyChandra(Player player) {
-        Permanent perm = new Permanent(new ChandraFireOfKaladesh());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChandraFireOfKaladesh());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

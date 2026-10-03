@@ -139,6 +139,102 @@ class CoralReefTest extends BaseCardTest {
         assertThat(reef.getCounterCount(CounterType.POLYP)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("A tapped Island is sacrificed immediately, but polyp counters are added on resolution")
+    void sacrificeCostIsPaidBeforeCountersAreAdded() {
+        Permanent reef = addReef(player1);
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.tap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(island.getCard());
+        assertThat(reef.getCounterCount(CounterType.POLYP)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(reef.getCounterCount(CounterType.POLYP)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The blue creature tapped as a cost may also be the target")
+    void tappedCreatureCanBeTargetAndCostsArePaidBeforeResolution() {
+        Permanent reef = addReef(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RevekaWizardSavant());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(reef.getCounterCount(CounterType.POLYP)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The toughness counter may be placed on an opponent's nonblue creature")
+    void canTargetOpponentCreature() {
+        addReef(player1);
+        harness.addToBattlefield(player1, new RevekaWizardSavant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraPaladin());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's blue creature cannot pay the tap cost")
+    void cannotTapOpponentCreatureForCost() {
+        Permanent reef = addReef(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RevekaWizardSavant());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(reef.getCounterCount(CounterType.POLYP)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's Island cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentIsland() {
+        Permanent reef = addReef(player1);
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(island);
+        assertThat(reef.getCounterCount(CounterType.POLYP)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The toughness-counter ability requires blue mana")
+    void secondAbilityRequiresBlueMana() {
+        Permanent reef = addReef(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RevekaWizardSavant());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(reef.getCounterCount(CounterType.POLYP)).isEqualTo(4);
+    }
+
     private Permanent addReef(Player player) {
         return harness.enterBattlefieldAndReturn(player, new CoralReef());
     }

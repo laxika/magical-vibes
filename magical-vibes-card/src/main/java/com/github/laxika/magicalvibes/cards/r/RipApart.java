@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "MSC", collectorNumber = "187")
 @CardRegistration(set = "SLD", collectorNumber = "1917")
 @CardRegistration(set = "SLD", collectorNumber = "1922")
+@CardRegistration(set = "ONC", collectorNumber = "124")
 public class RipApart extends Card {
 
     public RipApart() {

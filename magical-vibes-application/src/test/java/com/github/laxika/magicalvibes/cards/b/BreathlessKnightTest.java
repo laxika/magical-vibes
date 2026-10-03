@@ -26,8 +26,7 @@ class BreathlessKnightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, knightCard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, knightCard.getId());
         harness.passBothPriorities();
 
         Permanent knight = findPermanent(player1, "Breathless Knight");
@@ -43,8 +42,7 @@ class BreathlessKnightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -78,6 +76,85 @@ class BreathlessKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenItIsCastFromHand() {
+        harness.setHand(player1, List.of(new BreathlessKnight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Breathless Knight")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenAnOpponentReanimatesACreature() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new BreathlessKnight());
+        Card otherKnight = new BreathlessKnight();
+        harness.setGraveyard(player2, List.of(otherKnight));
+        harness.setHand(player2, List.of(new Zombify()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, otherKnight.getId());
+        resolveAllTriggers();
+
+        assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player2, "Breathless Knight")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void eachKnightGetsOneCounterWhenAnotherKnightIsReanimated() {
+        Permanent existingKnight = harness.addToBattlefieldAndReturn(player1, new BreathlessKnight());
+        Card returningKnight = new BreathlessKnight();
+        harness.setGraveyard(player1, List.of(returningKnight));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, returningKnight.getId());
+        resolveAllTriggers();
+
+        assertThat(existingKnight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Breathless Knight"))
+                .hasSize(2)
+                .allSatisfy(knight -> assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(1));
+    }
+
+    @Test
+    void graveyardCastTriggersOnlyAfterTheCreatureEntersAndTheCounterUsesTheStack() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new BreathlessKnight());
+        harness.setGraveyard(player1, List.of(new WorldheartPhoenix()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castFromGraveyard(player1, 0);
+
+        assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Worldheart Phoenix");
+        assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 }

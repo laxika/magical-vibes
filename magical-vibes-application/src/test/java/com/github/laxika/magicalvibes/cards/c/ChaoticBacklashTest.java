@@ -91,4 +91,50 @@ class ChaoticBacklashTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
+
+    @Test
+    @DisplayName("A permanent that is both white and blue counts only once")
+    void countsWhiteBluePermanentOnce() {
+        var trapper = harness.addToBattlefieldAndReturn(player2, new BallynockTrapper());
+        harness.addToBattlefield(player1, new IndigoFaerie());
+        harness.setHand(player1, List.of(new ChaoticBacklash()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, 0, null, trapper.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Can target the caster and counts that player's permanents")
+    void canTargetCaster() {
+        harness.addToBattlefield(player1, new BallynockTrapper());
+        harness.addToBattlefield(player1, new IndigoFaerie());
+        harness.addToBattlefield(player2, new BallynockTrapper());
+        harness.setHand(player1, List.of(new ChaoticBacklash()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("White and blue cards outside the battlefield do not count")
+    void ignoresCardsOutsideBattlefield() {
+        harness.setHand(player2, List.of(new BallynockTrapper()));
+        harness.setGraveyard(player2, List.of(new IndigoFaerie()));
+        harness.setExile(player2, List.of(new FableOfWolfAndOwl()));
+        harness.setHand(player1, List.of(new ChaoticBacklash()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+    }
 }

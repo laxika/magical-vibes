@@ -3,9 +3,14 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AxegrinderGiant;
 import com.github.laxika.magicalvibes.cards.b.BogStriderAsh;
 import com.github.laxika.magicalvibes.cards.b.BurrentonForgeTender;
-import com.github.laxika.magicalvibes.cards.c.Cloudthresher;
+import com.github.laxika.magicalvibes.cards.b.BrionStoutarm;
+import com.github.laxika.magicalvibes.cards.d.Dread;
+import com.github.laxika.magicalvibes.cards.m.MoongloveWinnower;
 import com.github.laxika.magicalvibes.cards.o.OakgnarlWarrior;
 import com.github.laxika.magicalvibes.cards.p.PloverKnights;
+import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
+import com.github.laxika.magicalvibes.cards.s.SphinxOfJwarIsle;
+import com.github.laxika.magicalvibes.cards.w.WingsOfVelisVel;
 import com.github.laxika.magicalvibes.cards.z.ZodiacRooster;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,7 +32,14 @@ import static org.assertj.core.api.Assertions.assertThat;
         OakgnarlWarrior.class,
         AxegrinderGiant.class,
         BurrentonForgeTender.class,
-        ZodiacRooster.class
+        ZodiacRooster.class,
+        BrionStoutarm.class,
+        Dread.class,
+        MoongloveWinnower.class,
+        ChangelingBerserker.class,
+        SkyhunterSkirmisher.class,
+        SphinxOfJwarIsle.class,
+        WingsOfVelisVel.class
 })
 class CairnWandererTest extends BaseCardTest {
 
@@ -130,5 +142,90 @@ class CairnWandererTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
 
         assertThat(gqs.computeStaticBonus(gd, wanderer).keywords()).doesNotContain(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Gains fear, deathtouch, haste, and lifelink from creature cards in graveyards")
+    void gainsRemainingLrwKeywords() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        harness.setGraveyard(player1, List.of(new Dread(), new MoongloveWinnower()));
+        harness.setGraveyard(player2, List.of(new ChangelingBerserker(), new BrionStoutarm()));
+
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords())
+                .contains(Keyword.FEAR, Keyword.DEATHTOUCH, Keyword.HASTE, Keyword.LIFELINK)
+                .doesNotContain(Keyword.FLASH);
+    }
+
+    @Test
+    @DisplayName("Gains double strike and shroud from creature cards in graveyards")
+    void gainsDoubleStrikeAndShroud() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        harness.setGraveyard(player1, List.of(new SkyhunterSkirmisher()));
+        harness.setGraveyard(player2, List.of(new SphinxOfJwarIsle()));
+
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords())
+                .contains(Keyword.DOUBLE_STRIKE, Keyword.SHROUD, Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Keeps a keyword while another graveyard still contains a creature card with it")
+    void keepsKeywordUntilLastProviderLeaves() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        harness.setGraveyard(player1, List.of(new PloverKnights()));
+        harness.setGraveyard(player2, List.of(new PloverKnights()));
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords()).contains(Keyword.FLYING);
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords()).contains(Keyword.FLYING);
+
+        harness.setGraveyard(player2, List.of());
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords()).doesNotContain(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Does not gain flying from a kindred instant that grants flying")
+    void ignoresNoncreatureCardsInGraveyards() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        harness.setGraveyard(player1, List.of(new WingsOfVelisVel()));
+
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords()).doesNotContain(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Does not share its gained keywords with other creatures")
+    void grantsKeywordsOnlyToItself() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        Permanent giant = addCreatureReady(player1, new AxegrinderGiant());
+        harness.setGraveyard(player2, List.of(new PloverKnights()));
+
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords()).contains(Keyword.FLYING);
+        assertThat(gqs.computeStaticBonus(gd, giant).keywords())
+                .doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("Does not gain keywords from creature cards outside graveyards")
+    void ignoresOtherZones() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        addCreatureReady(player2, new PloverKnights());
+        harness.setHand(player1, List.of(new PloverKnights()));
+        harness.setLibrary(player2, List.of(new PloverKnights()));
+        harness.setExile(player1, List.of(new PloverKnights()));
+
+        assertThat(gqs.computeStaticBonus(gd, wanderer).keywords())
+                .doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("Gains only the protection present in an opponent's graveyard and loses it when removed")
+    void tracksProtectionInOpponentGraveyard() {
+        Permanent wanderer = addCreatureReady(player1, new CairnWanderer());
+        harness.setGraveyard(player2, List.of(new BurrentonForgeTender()));
+
+        assertThat(gqs.hasProtectionFrom(gd, wanderer, CardColor.RED)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, wanderer, CardColor.BLUE)).isFalse();
+
+        harness.setGraveyard(player2, List.of());
+        assertThat(gqs.hasProtectionFrom(gd, wanderer, CardColor.RED)).isFalse();
     }
 }

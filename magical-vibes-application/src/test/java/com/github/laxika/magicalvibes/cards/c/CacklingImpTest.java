@@ -16,7 +16,7 @@ import java.util.HashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CacklingImp.class)
+@CardUsed({CacklingImp.class})
 class CacklingImpTest extends BaseCardTest {
 
     @Test
@@ -86,5 +86,63 @@ class CacklingImpTest extends BaseCardTest {
 
     private Permanent addReadyImp(Player player) {
         return addCreatureReady(player, new CacklingImp());
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new CacklingImp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent imp = addReadyImp(player1);
+        imp.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent imp = addReadyImp(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(imp);
+        gd.playerGraveyards.get(player1.getId()).add(imp.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Ability does not resolve against a player who gains protection from black")
+    void protectionGainedInResponseInvalidatesTarget() {
+        addReadyImp(player1);
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        gd.playerProtectionFromColorsUntilEndOfTurn
+                .computeIfAbsent(player2.getId(), ignored -> new HashSet<>())
+                .add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

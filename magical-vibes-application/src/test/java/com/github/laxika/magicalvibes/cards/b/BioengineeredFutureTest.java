@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -62,7 +61,7 @@ class BioengineeredFutureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanents(player1, "Lander")).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -71,11 +70,56 @@ class BioengineeredFutureTest extends BaseCardTest {
                         && permanent.getCard().hasType(CardType.LAND));
     }
 
+    @Test
+    @DisplayName("Opponent lands do not give counters and later lands do not update existing creatures")
+    void ignoresOpponentLandsAndDoesNotUpdateExistingCreatures() {
+        castBioengineeredFuture();
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        Permanent existingCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(existingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        enterForest();
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(existingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(laterCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple copies each add counters for the lands entered this turn")
+    void multipleCopiesAddCounters() {
+        enterForest();
+        enterForest();
+        castBioengineeredFuture();
+        castBioengineeredFuture();
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(findPermanents(player1, "Lander")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The land found by a Lander counts for subsequently entering creatures")
+    void landerLandCountsForEnteringCreatures() {
+        castBioengineeredFuture();
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent lander = findPermanents(player1, "Lander").getFirst();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(lander), 0, null, null);
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castBioengineeredFuture() {
-        harness.setHand(player1, List.of(new BioengineeredFuture()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new BioengineeredFuture(), "{1}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

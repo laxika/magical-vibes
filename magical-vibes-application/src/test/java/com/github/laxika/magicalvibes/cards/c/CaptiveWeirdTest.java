@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -25,6 +27,10 @@ class CaptiveWeirdTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+
+        assertThat(captive.isTransformed()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(captive.isTransformed()).isTrue();
@@ -59,13 +65,90 @@ class CaptiveWeirdTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    void canCastExiledCardByPayingItsManaCost() {
+        Card topCard = putOnTopOfLibrary(player1);
+        addCaptive();
+        prepareMainPhase(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromExile(player1, topCard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(p -> p.getCard().getId())
+                .contains(topCard.getId());
+    }
+
+    @Test
+    void transformsWithAnEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        Permanent captive = addCaptive();
+        prepareMainPhase(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(captive.isTransformed()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void playPermissionLastsThroughNextTurnAndThenExpires() {
+        Card topCard = putOnTopOfLibrary(player1);
+        addCaptive();
+        prepareMainPhase(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new CaptiveWeird(), new CaptiveWeird()));
+        harness.setLibrary(player2, List.of(new CaptiveWeird(), new CaptiveWeird()));
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).contains(topCard.getId());
+    }
+
+    @Test
+    void cannotTransformDuringCombat() {
+        addCaptive();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
     private Permanent addCaptive() {
         return harness.addToBattlefieldAndReturn(player1, new CaptiveWeird());
     }
 
     private Card putOnTopOfLibrary(Player player) {
-        Card card = new Card();
-        gd.playerDecks.get(player.getId()).addFirst(card);
+        Card card = new CaptiveWeird();
+        harness.setLibrary(player, List.of(card));
         return card;
     }
 

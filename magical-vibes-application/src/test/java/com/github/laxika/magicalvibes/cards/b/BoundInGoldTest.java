@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.cards.s.SmugglersCopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BoundInGold.class, FountainOfYouth.class, GrizzlyBears.class,
+        LlanowarElves.class, SmugglersCopter.class})
 class BoundInGoldTest extends BaseCardTest {
 
     @Test
@@ -38,12 +40,7 @@ class BoundInGoldTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         castBoundInGold(player2, creature);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -56,10 +53,7 @@ class BoundInGoldTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 1))))
@@ -93,6 +87,38 @@ class BoundInGoldTest extends BaseCardTest {
         assertThat(enchantedCreature.isTapped()).isFalse();
         assertThat(otherCreature.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, copter)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An enchanted Vehicle cannot activate its own crew ability")
+    void enchantedVehicleCannotActivateCrew() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent copter = addPermanent(player1, new SmugglersCopter());
+        castBoundInGold(player2, copter);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, copter)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Non-mana abilities become usable again when Bound in Gold leaves")
+    void abilityBecomesUsableAfterAuraLeaves() {
+        Permanent fountain = addPermanent(player1, new FountainOfYouth());
+        castBoundInGold(player2, fountain);
+        Permanent aura = findPermanent(player2, "Bound in Gold");
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+        gd.playerGraveyards.get(player2.getId()).add(aura.getCard());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fountain.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
     private Permanent addPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {

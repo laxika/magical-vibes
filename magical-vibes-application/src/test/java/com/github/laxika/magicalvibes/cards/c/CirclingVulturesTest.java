@@ -114,4 +114,67 @@ class CirclingVulturesTest extends BaseCardTest {
 
         assertThat(graveyardNames(player1)).containsExactly("Circling Vultures");
     }
+
+    @Test
+    @DisplayName("Discarding Circling Vultures is a special action that does not use the stack")
+    void discardingDoesNotUseStack() {
+        harness.setHand(player1, List.of(new CirclingVultures()));
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Circling Vultures");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discarding in response to upkeep leaves only the upkeep trigger on the stack")
+    void discardingInResponseToUpkeepDoesNotAddStackEntry() {
+        harness.addToBattlefield(player1, new CirclingVultures());
+        harness.setHand(player1, List.of(new CirclingVultures()));
+        harness.setGraveyard(player1, List.of());
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Circling Vultures");
+        assertThat(graveyardNames(player1)).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Circling Vultures");
+    }
+
+    @Test
+    @DisplayName("Pays with the most recent creature card, leaving older creatures in the graveyard")
+    void payingExilesOnlyMostRecentCreature() {
+        harness.addToBattlefield(player1, new CirclingVultures());
+        harness.setGraveyard(player1,
+                List.of(new BenalishInfantry(), new CirclingVultures(), new Vitalize()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Circling Vultures");
+        assertThat(graveyardNames(player1)).containsExactly("Benalish Infantry", "Vitalize");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Circling Vultures");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature card cannot pay for an empty controller graveyard")
+    void emptyGraveyardCannotUseOpponentsCreature() {
+        harness.addToBattlefield(player1, new CirclingVultures());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new BenalishInfantry()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Circling Vultures");
+        harness.assertInGraveyard(player1, "Circling Vultures");
+        harness.assertInGraveyard(player2, "Benalish Infantry");
+        assertThat(gd.exiledCards).isEmpty();
+    }
 }

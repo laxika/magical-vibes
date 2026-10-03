@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "OTC", collectorNumber = "78")
 @CardRegistration(set = "BLC", collectorNumber = "134")
 @CardRegistration(set = "EOC", collectorNumber = "63")
+@CardRegistration(set = "BRC", collectorNumber = "68")
 public class AngelOfTheRuins extends Card {
 
     public AngelOfTheRuins() {

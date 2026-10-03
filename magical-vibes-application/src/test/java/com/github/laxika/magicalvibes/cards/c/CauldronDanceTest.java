@@ -31,8 +31,7 @@ class CauldronDanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0, graveyardCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, graveyardCreature.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         var returned = findPermanent(player1, "Yavimaya Barbarian");
@@ -60,8 +59,7 @@ class CauldronDanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0, graveyardCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, graveyardCreature.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -92,8 +90,7 @@ class CauldronDanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0, graveyardCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, graveyardCreature.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player1, "Yavimaya Barbarian");
@@ -142,6 +139,81 @@ class CauldronDanceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Both end-step abilities use the stack before either creature leaves")
+    void endStepAbilitiesAllowResponses() {
+        YavimayaBarbarian graveyardCreature = new YavimayaBarbarian();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new CauldronDance(), new HoodedKavu()));
+        addCauldronDanceMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castAndResolveInstant(player1, 0, graveyardCreature.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Yavimaya Barbarian");
+        harness.assertOnBattlefield(player1, "Hooded Kavu");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player1, "Hooded Kavu");
+    }
+
+    @Test
+    @DisplayName("An illegal graveyard target prevents the optional hand creature from entering")
+    void illegalTargetStopsEntireSpell() {
+        YavimayaBarbarian graveyardCreature = new YavimayaBarbarian();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new CauldronDance(), new HoodedKavu()));
+        addCauldronDanceMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castInstant(player1, 0, graveyardCreature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Barbarian");
+        harness.assertNotOnBattlefield(player1, "Hooded Kavu");
+        harness.assertInHand(player1, "Hooded Kavu");
+        harness.assertInGraveyard(player1, "Cauldron Dance");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Noncreature cards in hand cannot be put onto the battlefield")
+    void noEligibleCreatureInHandStillReturnsGraveyardCreature() {
+        YavimayaBarbarian graveyardCreature = new YavimayaBarbarian();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new CauldronDance(), new HolyDay()));
+        addCauldronDanceMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castAndResolveInstant(player1, 0, graveyardCreature.getId());
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+
+        harness.assertOnBattlefield(player1, "Yavimaya Barbarian");
+        harness.assertInHand(player1, "Holy Day");
+        harness.assertNotOnBattlefield(player1, "Holy Day");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addCauldronDanceMana() {

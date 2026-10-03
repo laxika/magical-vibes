@@ -74,6 +74,35 @@ class AzoriusChanceryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns a controlled land to its owner even when the opponent owns it")
+    void returnsLandToOpponentOwner() {
+        Permanent growthChamber = harness.addToBattlefieldAndReturn(player1, new SimicGrowthChamber());
+        gd.stolenCreatures.put(growthChamber.getId(), player2.getId());
+        harness.setHand(player1, List.of(new AzoriusChancery()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, growthChamber.getId());
+
+        harness.assertNotOnBattlefield(player1, "Simic Growth Chamber");
+        harness.assertNotInHand(player1, "Simic Growth Chamber");
+        harness.assertInHand(player2, "Simic Growth Chamber");
+        harness.assertOnBattlefield(player1, "Azorius Chancery");
+    }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately without using the stack")
+    void manaAbilityDoesNotUseStack() {
+        harness.addToBattlefield(player1, new AzoriusChancery());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Tapping adds one white and one blue mana")
     void manaAbilityAddsWhiteAndBlue() {
         Permanent chancery = harness.addToBattlefieldAndReturn(player1, new AzoriusChancery());

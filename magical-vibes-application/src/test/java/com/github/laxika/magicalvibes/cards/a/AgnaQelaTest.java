@@ -25,7 +25,7 @@ class AgnaQelaTest extends BaseCardTest {
     void entersTappedWithoutBasicLand() {
         playAgnaQela(player1);
 
-        assertThat(findAgnaQela(player1).isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Agna Qel'a").isTapped()).isTrue();
     }
 
     @Test
@@ -35,7 +35,7 @@ class AgnaQelaTest extends BaseCardTest {
 
         playAgnaQela(player1);
 
-        assertThat(findAgnaQela(player1).isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Agna Qel'a").isTapped()).isFalse();
     }
 
     @Test
@@ -95,10 +95,42 @@ class AgnaQelaTest extends BaseCardTest {
         return agnaQela;
     }
 
-    private Permanent findAgnaQela(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() instanceof AgnaQela)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("An opponent's basic land does not allow this land to enter untapped")
+    void opponentsBasicLandDoesNotSatisfyCheck() {
+        harness.addToBattlefield(player2, new Island());
+
+        playAgnaQela(player1);
+
+        assertThat(findPermanent(player1, "Agna Qel'a").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("With an empty hand, the drawn card is discarded after paying the activation costs")
+    void emptyHandDiscardsDrawnCard() {
+        Permanent land = addReadyAgnaQela(player1);
+        Card drawn = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn, new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

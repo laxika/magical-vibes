@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,32 +13,23 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BarbedBattlegear.class, CarapaceForger.class, Memnite.class})
 class BarbedBattlegearTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
     @Test
-    @DisplayName("Barbed Battlegear has equip {2} ability with correct properties")
-    void hasEquipAbility() {
-        BarbedBattlegear card = new BarbedBattlegear();
+    @DisplayName("Equip requires two mana")
+    void equipRequiresTwoMana() {
+        Permanent gear = addGearReady(player1);
+        Permanent creature = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gear.isAttached()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Barbed Battlegear for {3} and resolving puts it on the battlefield unattached")
@@ -56,8 +45,6 @@ class BarbedBattlegearTest extends BaseCardTest {
                         && !p.isAttached());
     }
 
-    // ===== Equip ability: resolving =====
-
     @Test
     @DisplayName("Resolving equip ability attaches Battlegear to target creature")
     void resolvingEquipAttachesToCreature() {
@@ -71,8 +58,6 @@ class BarbedBattlegearTest extends BaseCardTest {
         assertThat(gear.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Static effects: power/toughness boost =====
 
     @Test
     @DisplayName("Equipped creature gets +4/-1")
@@ -112,8 +97,6 @@ class BarbedBattlegearTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
-    // ===== Re-equip =====
-
     @Test
     @DisplayName("Battlegear can be moved to another creature")
     void canReEquipToAnotherCreature() {
@@ -135,8 +118,6 @@ class BarbedBattlegearTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature2)).isEqualTo(1);
     }
 
-    // ===== Equip fizzle =====
-
     @Test
     @DisplayName("Equip fizzles if target creature is removed before resolution")
     void equipFizzlesIfTargetRemoved() {
@@ -147,29 +128,75 @@ class BarbedBattlegearTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
 
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Grizzly Bears"));
+                .removeIf(p -> p.getCard().getName().equals("Carapace Forger"));
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent remaining = findPermanent(player1, "Barbed Battlegear");
-        assertThat(remaining.getAttachedTo()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gear.getAttachedTo()).isNull();
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Equipping a one-toughness creature puts it into the graveyard and leaves Battlegear unattached")
+    void equippedCreatureWithZeroToughnessDies() {
+        Permanent gear = addGearReady(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        harness.assertInGraveyard(player1, "Memnite");
+        harness.assertOnBattlefield(player1, "Barbed Battlegear");
+        assertThat(gear.isAttached()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        Permanent gear = addGearReady(player1);
+        Permanent creature = addReadyCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gear.isAttached()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target a noncreature")
+    void cannotEquipNoncreature() {
+        Permanent gear = addGearReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, gear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gear.isAttached()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip can only be activated as a sorcery")
+    void cannotEquipDuringCombat() {
+        Permanent gear = addGearReady(player1);
+        Permanent creature = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gear.isAttached()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addGearReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new BarbedBattlegear());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BarbedBattlegear());
     }
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CarapaceForger());
     }
 }

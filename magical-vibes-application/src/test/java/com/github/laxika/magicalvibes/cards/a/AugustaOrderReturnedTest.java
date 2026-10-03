@@ -6,15 +6,11 @@ import com.github.laxika.magicalvibes.cards.r.RhysticCave;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +31,7 @@ class AugustaOrderReturnedTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ownSpell, ownLand));
         harness.setGraveyard(player2, List.of(opponentSpell, opponentLand));
 
-        declareAttackersAt(player1, List.of(augusta, attacker), player2.getId());
+        declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
@@ -62,13 +58,13 @@ class AugustaOrderReturnedTest extends BaseCardTest {
 
     @Test
     void doesNotQueueTheCounterAbilityWhenOnlyLandsAreExiled() {
-        Permanent augusta = addCreatureReady(player1, new AugustaOrderReturned());
+        addCreatureReady(player1, new AugustaOrderReturned());
         RhysticCave ownLand = new RhysticCave();
         RhysticCave opponentLand = new RhysticCave();
         harness.setGraveyard(player1, List.of(ownLand));
         harness.setGraveyard(player2, List.of(opponentLand));
 
-        declareAttackersAt(player1, List.of(augusta), player2.getId());
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -76,16 +72,83 @@ class AugustaOrderReturnedTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentLand);
     }
 
-    private void declareAttackersAt(Player attackerController, List<Permanent> attackers, UUID attackTarget) {
-        harness.forceActivePlayer(attackerController);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        List<Permanent> battlefield = gd.playerBattlefields.get(attackerController.getId());
-        List<Integer> attackerIndices = attackers.stream().map(battlefield::indexOf).toList();
-        Map<Integer, UUID> attackTargets = attackers.stream()
-                .collect(java.util.stream.Collectors.toMap(battlefield::indexOf, ignored -> attackTarget));
-        harness.inMutationScope(() -> harness.getCombatAttackService().declareAttackers(
-                gd, attackerController, attackerIndices, attackTargets));
+    @Test
+    void putsOnlyOneCounterWhenOneLandAndOneNonlandAreExiled() {
+        Permanent augusta = addCreatureReady(player1, new AugustaOrderReturned());
+        AugustaOrderReturned ownCard = new AugustaOrderReturned();
+        RhysticCave opponentLand = new RhysticCave();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentLand));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, augusta.getId());
+        harness.passBothPriorities();
+
+        assertThat(augusta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentLand);
+    }
+
+    @Test
+    void waitsForEveryPlayersChoiceBeforeExilingAnyCard() {
+        Permanent augusta = addCreatureReady(player1, new AugustaOrderReturned());
+        AugustaOrderReturned ownCard = new AugustaOrderReturned();
+        AugustaOrderReturned ownOtherCard = new AugustaOrderReturned();
+        AugustaOrderReturned opponentCard = new AugustaOrderReturned();
+        AugustaOrderReturned opponentOtherCard = new AugustaOrderReturned();
+        harness.setGraveyard(player1, List.of(ownCard, ownOtherCard));
+        harness.setGraveyard(player2, List.of(opponentCard, opponentOtherCard));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(opponentCard.getId(), opponentOtherCard.getId());
+        boolean ownCardStillInGraveyard = gd.playerGraveyards.get(player1.getId()).contains(ownCard);
+        boolean ownExileStillEmpty = gd.getPlayerExiledCards(player1.getId()).isEmpty();
+
+        harness.handleMultipleCardsChosen(player2, List.of(opponentCard.getId()));
+        harness.handlePermanentChosen(player1, augusta.getId());
+        harness.passBothPriorities();
+
+        assertThat(augusta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
+        assertThat(ownCardStillInGraveyard).isTrue();
+        assertThat(ownExileStillEmpty).isTrue();
+    }
+
+    @Test
+    void countsOpponentNonlandWhenControllersGraveyardIsEmpty() {
+        Permanent augusta = addCreatureReady(player1, new AugustaOrderReturned());
+        AugustaOrderReturned opponentCard = new AugustaOrderReturned();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, augusta.getId());
+        harness.passBothPriorities();
+
+        assertThat(augusta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotQueueCounterAbilityWhenBothGraveyardsAreEmpty() {
+        Permanent augusta = addCreatureReady(player1, new AugustaOrderReturned());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(augusta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }

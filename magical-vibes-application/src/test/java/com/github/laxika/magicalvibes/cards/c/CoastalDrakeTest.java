@@ -42,6 +42,88 @@ class CoastalDrakeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a Kavu creature");
     }
 
+    @Test
+    void canReturnYourOwnKavu() {
+        addReadyDrake(player1);
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuGlider());
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, kavu.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kavu Glider");
+        harness.assertInHand(player1, "Kavu Glider");
+    }
+
+    @Test
+    void returnsStolenKavuToOwnerRatherThanController() {
+        addReadyDrake(player1);
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuGlider());
+        gd.stolenCreatures.put(kavu.getId(), player2.getId());
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, kavu.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kavu Glider");
+        harness.assertInHand(player2, "Kavu Glider");
+        harness.assertNotInHand(player1, "Kavu Glider");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new CoastalDrake());
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuGlider());
+        addAbilityMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, kavu.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.assertOnBattlefield(player2, "Kavu Glider");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent drake = addReadyDrake(player1);
+        drake.setTapped(true);
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuGlider());
+        addAbilityMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, kavu.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayBlueCostWithOnlyColorlessMana() {
+        Permanent drake = addReadyDrake(player1);
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuGlider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, kavu.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(drake.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterDrakeLeavesBattlefield() {
+        Permanent drake = addReadyDrake(player1);
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuGlider());
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, kavu.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, drake);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Kavu Glider");
+        harness.assertInHand(player2, "Kavu Glider");
+        harness.assertInHand(player1, "Coastal Drake");
+    }
+
     private Permanent addReadyDrake(Player player) {
         return addCreatureReady(player, new CoastalDrake());
     }

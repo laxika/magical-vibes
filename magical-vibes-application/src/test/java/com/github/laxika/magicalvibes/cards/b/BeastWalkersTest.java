@@ -105,4 +105,35 @@ class BeastWalkersTest extends BaseCardTest {
 
         assertThat(walkers.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent walkers = addCreatureReady(player1, new BeastWalkers());
+        walkers.setTapped(true);
+        walkers.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, walkers, Keyword.BANDING)).isTrue();
+        assertThat(walkers.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability grants banding only to its source")
+    void grantsBandingOnlyToSource() {
+        Permanent walkers = addCreatureReady(player1, new BeastWalkers());
+        Permanent otherWalkers = addCreatureReady(player1, new BeastWalkers());
+        Permanent opposingWalkers = addCreatureReady(player2, new BeastWalkers());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, walkers, Keyword.BANDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherWalkers, Keyword.BANDING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingWalkers, Keyword.BANDING)).isFalse();
+    }
 }

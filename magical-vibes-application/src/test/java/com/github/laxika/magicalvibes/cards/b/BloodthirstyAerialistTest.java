@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,20 +15,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodthirstyAerialist.class, AngelOfMercy.class, Murder.class})
 class BloodthirstyAerialistTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets a +1/+1 counter when its controller gains life")
     void getsCounterOnLifeGain() {
-        harness.addToBattlefield(player1, new BloodthirstyAerialist());
-        Permanent aerialist = findPermanent(player1, "Bloodthirsty Aerialist");
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new BloodthirstyAerialist());
 
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -34,8 +34,7 @@ class BloodthirstyAerialistTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when an opponent gains life")
     void doesNotTriggerOnOpponentLifeGain() {
-        harness.addToBattlefield(player1, new BloodthirstyAerialist());
-        Permanent aerialist = findPermanent(player1, "Bloodthirsty Aerialist");
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new BloodthirstyAerialist());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -43,9 +42,64 @@ class BloodthirstyAerialistTest extends BaseCardTest {
         harness.setHand(player2, List.of(new AngelOfMercy()));
         harness.addMana(player2, ManaColor.WHITE, 5);
         harness.castCreature(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Separate life gains each add one counter in the same turn")
+    void separateLifeGainsEachAddOneCounter() {
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new BloodthirstyAerialist());
+        harness.setHand(player1, List.of(new AngelOfMercy(), new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 10);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each controlled Aerialist gets its own counter, but an opposing one does not")
+    void eachControlledAerialistTriggersIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BloodthirstyAerialist());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BloodthirstyAerialist());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new BloodthirstyAerialist());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Life gain uses the stack and a removed source cannot give another Aerialist its counter")
+    void removedSourceDoesNotPutCounterOnAnotherAerialist() {
+        Permanent aerialist = harness.addToBattlefieldAndReturn(player1, new BloodthirstyAerialist());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castAndResolveInstant(player2, 0, aerialist.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aerialist);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new BloodthirstyAerialist());
+        resolveAllTriggers();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

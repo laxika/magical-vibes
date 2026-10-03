@@ -38,10 +38,8 @@ class CloudseederTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Blind Phantasm");
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Cloud Sprite");
+        assertThat(countPermanents(player1, "Cloud Sprite")).isEqualTo(1);
         assertThat(token.getCard().getName()).isEqualTo("Cloud Sprite");
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(token.getEffectivePower()).isEqualTo(1);
@@ -121,6 +119,47 @@ class CloudseederTest extends BaseCardTest {
                 .hasMessageContaining("can only block creatures with flying");
     }
 
+    @Test
+    @DisplayName("Costs are paid before the Cloud Sprite is created")
+    void paysCostsBeforeResolution() {
+        Permanent cloudseeder = addCreatureReady(player1, new Cloudseeder());
+        harness.setHand(player1, List.of(new BlindPhantasm(), new WhipSpineDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(cloudseeder.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Whip-Spine Drake");
+        harness.assertInHand(player1, "Blind Phantasm");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Cloud Sprite");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cloud Sprite")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Cloud Sprite")).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability still creates a token after Cloudseeder dies")
+    void createsTokenAfterSourceDies() {
+        Permanent cloudseeder = addCreatureReady(player1, new Cloudseeder());
+        harness.setHand(player1, List.of(new BlindPhantasm()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        cloudseeder.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Cloudseeder");
+        harness.assertNotOnBattlefield(player1, "Cloudseeder");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cloud Sprite")).isEqualTo(1);
+    }
+
     private Permanent createCloudSprite() {
         addCreatureReady(player1, new Cloudseeder());
         harness.setHand(player1, List.of(new BlindPhantasm()));
@@ -130,10 +169,7 @@ class CloudseederTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Cloud Sprite");
     }
 
     private void addAttackingCreature(Player player, Card card) {

@@ -119,4 +119,40 @@ class BloodClockTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Blood Clock");
     }
+
+    @Test
+    @DisplayName("Blood Clock can return itself during its controller's upkeep")
+    void canReturnBloodClockItself() {
+        Permanent clock = harness.addToBattlefieldAndReturn(player1, new BloodClock());
+        Permanent opposingScout = harness.addToBattlefieldAndReturn(player2, new SakuraTribeScout());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(clock.getId())
+                .doesNotContain(opposingScout.getId());
+        harness.handlePermanentChosen(player1, clock.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player1, "Blood Clock");
+        harness.assertNotOnBattlefield(player1, "Blood Clock");
+        harness.assertOnBattlefield(player2, "Sakura-Tribe Scout");
+    }
+
+    @Test
+    @DisplayName("A player with no permanents may still pay 2 life")
+    void canPayLifeWithoutPermanents() {
+        harness.addToBattlefield(player1, new BloodClock());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Blood Clock");
+    }
 }

@@ -66,10 +66,19 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
                         .map(Permanent::getId)
                         .toList();
 
-        if (validPlayerIds.size() + planeswalkerIds.size() == 1) {
+        List<UUID> permanentTargetIds = new java.util.ArrayList<>(planeswalkerIds);
+        gameData.forEachPermanent((playerId, candidate) -> {
+            if (gameQueryService.isBattle(gameData, candidate)
+                    && !entry.getControllerId().equals(candidate.getProtectorPlayerId())
+                    && (requiredAttackingPlayerId == null || attackTargetIds.contains(candidate.getId()))) {
+                permanentTargetIds.add(candidate.getId());
+            }
+        });
+
+        if (validPlayerIds.size() + permanentTargetIds.size() == 1) {
             permanent.setAttacking(true);
             permanent.setAttackedOrBlockedSinceLastUpkeep(true);
-            permanent.setAttackTarget(validPlayerIds.isEmpty() ? planeswalkerIds.getFirst() : validPlayerIds.getFirst());
+            permanent.setAttackTarget(validPlayerIds.isEmpty() ? permanentTargetIds.getFirst() : validPlayerIds.getFirst());
             return;
         }
 
@@ -79,9 +88,9 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
         playerInputService.beginAnyTargetChoice(
                 gameData,
                 entry.getControllerId(),
-                planeswalkerIds,
+                permanentTargetIds,
                 validPlayerIds,
-                "Choose the player or planeswalker for " + permanent.getCard().getName() + " to attack.");
+                "Choose the player, planeswalker, or battle for " + permanent.getCard().getName() + " to attack.");
     }
 
     private Set<UUID> currentAttackTargetIds(GameData gameData, UUID attackingPlayerId) {

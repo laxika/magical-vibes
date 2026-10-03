@@ -181,4 +181,28 @@ class AnarchistTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player2, "Nausea");
     }
+
+    @Test
+    @DisplayName("The triggered ability resolves after Anarchist dies")
+    void returnsSorceryAfterSourceDies() {
+        Card sorcery = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(sorcery));
+
+        castAnarchist();
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
+
+        var anarchist = gd.playerBattlefields.get(player1.getId()).getFirst();
+        anarchist.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Anarchist");
+        harness.assertInGraveyard(player1, "Anarchist");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Death's Duet");
+        harness.assertNotInGraveyard(player1, "Death's Duet");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,8 +34,7 @@ class CallTheGatewatchTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(card -> card.hasType(CardType.PLANESWALKER));
 
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Chandra Nalaar");
         harness.assertNotInHand(player1, "Grizzly Bears");
@@ -53,6 +51,60 @@ class CallTheGatewatchTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.hasType(CardType.CREATURE));
+    }
+
+    @Test
+    @DisplayName("May fail to find even when a planeswalker is available")
+    void mayFailToFindPlaneswalker() {
+        Card planeswalker = new ChandraNalaar();
+        harness.setLibrary(player1, List.of(planeswalker));
+        castCallTheGatewatch();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(planeswalker);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertInGraveyard(player1, "Call the Gatewatch");
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library")
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        castCallTheGatewatch();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertInGraveyard(player1, "Call the Gatewatch");
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Reveals and moves only the selected planeswalker from its controller's library")
+    void selectsOnlyOnePlaneswalkerFromOwnLibrary() {
+        Card first = new ChandraNalaar();
+        Card second = new ChandraNalaar();
+        Card opponentCard = new ChandraNalaar();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(opponentCard));
+        castCallTheGatewatch();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "Chandra Nalaar");
+        harness.assertInGraveyard(player1, "Call the Gatewatch");
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("reveals Chandra Nalaar")
+                && entry.plainText().contains("Library is shuffled"));
     }
 
     private void castCallTheGatewatch() {

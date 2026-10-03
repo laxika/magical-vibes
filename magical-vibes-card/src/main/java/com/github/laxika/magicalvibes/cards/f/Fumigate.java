@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "LTC", collectorNumber = "170")
 @CardRegistration(set = "MKC", collectorNumber = "66")
 @CardRegistration(set = "EOC", collectorNumber = "65")
+@CardRegistration(set = "ONC", collectorNumber = "69")
 public class Fumigate extends Card {
 
     public Fumigate() {

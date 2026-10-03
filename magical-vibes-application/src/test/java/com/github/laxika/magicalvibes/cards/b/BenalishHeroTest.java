@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BenalishHero.class, GrayOgre.class})
 class BenalishHeroTest extends BaseCardTest {
@@ -73,8 +74,7 @@ class BenalishHeroTest extends BaseCardTest {
         Permanent bandingBlocker = addCreatureReady(player2, new BenalishHero());
         Permanent plainBlocker = addCreatureReady(player2, new GrayOgre());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -115,6 +115,40 @@ class BenalishHeroTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hero);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nonBander);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    void cannotBandWithTwoNonBandingAttackers() {
+        addCreatureReady(player1, new BenalishHero());
+        addCreatureReady(player1, new GrayOgre());
+        addCreatureReady(player1, new GrayOgre());
+
+        assertThatThrownBy(() -> declareBand(List.of(0, 1, 2), List.of(List.of(0, 1, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("at most one creature without banding");
+    }
+
+    @Test
+    void cannotPutTheSameCreatureInTwoBands() {
+        addCreatureReady(player1, new BenalishHero());
+        addCreatureReady(player1, new BenalishHero());
+        addCreatureReady(player1, new GrayOgre());
+
+        assertThatThrownBy(() -> declareBand(List.of(0, 1, 2),
+                List.of(List.of(0, 2), List.of(1, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("more than one band");
+    }
+
+    @Test
+    void bandingDoesNotRequireAttackingInABand() {
+        Permanent hero = addCreatureReady(player1, new BenalishHero());
+        addCreatureReady(player2, new GrayOgre());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(hero.isAttacking()).isTrue();
+        assertThat(hero.getBandId()).isNull();
     }
 
     private void declareBand(List<Integer> attackerIndices, List<List<Integer>> bands) {

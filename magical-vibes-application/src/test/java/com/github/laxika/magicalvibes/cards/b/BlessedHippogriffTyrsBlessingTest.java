@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,8 +19,8 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
 
     @Test
     void attackingCreatureWithoutFlyingGainsFlyingUntilEndOfTurn() {
-        addReady(player1, new BlessedHippogriffTyrsBlessing());
-        Permanent attacker = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BlessedHippogriffTyrsBlessing());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -39,8 +37,8 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
 
     @Test
     void attackTriggerCannotTargetCreatureWithFlying() {
-        Permanent hippogriff = addReady(player1, new BlessedHippogriffTyrsBlessing());
-        addReady(player1, new GrizzlyBears());
+        Permanent hippogriff = addCreatureReady(player1, new BlessedHippogriffTyrsBlessing());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -68,10 +66,62 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
         assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void attackTriggerCannotTargetNonattackingCreature() {
+        addCreatureReady(player1, new BlessedHippogriffTyrsBlessing());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonattacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(nonattacker.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void adventureCanTargetOpponentsCreatureAndCreatureCanLaterBeCastFromExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlessedHippogriffTyrsBlessing());
+        BlessedHippogriffTyrsBlessing card = new BlessedHippogriffTyrsBlessing();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Blessed Hippogriff").getCard()).isSameAs(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void adventureWithDepartedTargetGoesToGraveyardInsteadOfExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlessedHippogriffTyrsBlessing());
+        BlessedHippogriffTyrsBlessing card = new BlessedHippogriffTyrsBlessing();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
     }
 }

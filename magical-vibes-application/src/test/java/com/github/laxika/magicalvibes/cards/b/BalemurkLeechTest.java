@@ -15,6 +15,68 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BalemurkLeechTest extends BaseCardTest {
 
     @Test
+    void roomEntryAndFullUnlockEachTriggerOnceWithoutGainingLife() {
+        harness.addToBattlefield(player1, new BalemurkLeech());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        int opponentLife = gd.getLife(player2.getId());
+        int controllerLife = gd.getLife(player1.getId());
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife);
+
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.unlockRoomDoor(player1, 1, 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenAnOpponentFullyUnlocksARoom() {
+        harness.addToBattlefield(player1, new BalemurkLeech());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        int opponentLife = gd.getLife(player2.getId());
+        int controllerLife = gd.getLife(player1.getId());
+
+        harness.castModalSorcery(player2, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.unlockRoomDoor(player2, 0, 1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife);
+    }
+
+    @Test
+    void eachLeechTriggersIndependentlyForAnEnchantmentEntering() {
+        harness.addToBattlefield(player1, new BalemurkLeech());
+        harness.addToBattlefield(player1, new BalemurkLeech());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        int opponentLife = gd.getLife(player2.getId());
+
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void eachOpponentLosesLifeWhenAnEnchantmentYouControlEnters() {
         harness.addToBattlefield(player1, new BalemurkLeech());
         int lifeBefore = gd.getLife(player2.getId());

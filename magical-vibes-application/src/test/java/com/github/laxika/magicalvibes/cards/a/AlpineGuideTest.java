@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +39,7 @@ class AlpineGuideTest extends BaseCardTest {
         assertThat(search.params().cards()).singleElement()
                 .satisfies(card -> assertThat(card.getSubtypes()).contains(CardSubtype.MOUNTAIN));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanent(player1, "Mountain").isTapped()).isTrue();
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -102,5 +101,103 @@ class AlpineGuideTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Alpine Guide's controller may fail to find even with a Mountain in the library")
+    void mayFailToFindMountain() {
+        harness.setHand(player1, List.of(new AlpineGuide()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Accepting Alpine Guide's search with no Mountains completes without finding a card")
+    void searchWithNoMountain() {
+        harness.setHand(player1, List.of(new AlpineGuide()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Alpine Guide's controller chooses exactly one of their Mountains to sacrifice")
+    void choosesOneMountainToSacrifice() {
+        Permanent guide = addCreatureReady(player1, new AlpineGuide());
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent chosenMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, guide.getId());
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosenMountain.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(chosenMountain.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Mountain"))
+                .hasSize(1);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Leaving with no Mountain does not sacrifice another land or an opponent's Mountain")
+    void leavingWithoutMountainDoesNothing() {
+        Permanent guide = addCreatureReady(player1, new AlpineGuide());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, guide.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Alpine Guide");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("A tapped Alpine Guide is not required to attack")
+    void tappedGuideNeedNotAttack() {
+        Permanent guide = addCreatureReady(player1, new AlpineGuide());
+        guide.tap();
+
+        declareAttackers(List.of());
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Alpine Guide");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Alpine Guide is not required to attack")
+    void summoningSickGuideNeedNotAttack() {
+        harness.addToBattlefield(player1, new AlpineGuide());
+
+        declareAttackers(List.of());
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Alpine Guide");
     }
 }

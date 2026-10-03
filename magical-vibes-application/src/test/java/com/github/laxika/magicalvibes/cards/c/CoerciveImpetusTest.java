@@ -62,6 +62,67 @@ class CoerciveImpetusTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("An able enchanted creature cannot be omitted from attackers")
+    void enchantedCreatureMustAttackIfAble() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        castCoerciveImpetus(player1, bears);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted creature is not required to attack")
+    void tappedEnchantedCreatureDoesNotHaveToAttack() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        castCoerciveImpetus(player1, bears);
+        bears.tap();
+        harness.setLife(player1, 20);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+    }
+
+    @Test
+    @DisplayName("An Aura on your own attacking creature still draws a card and loses life")
+    void ownEnchantedCreatureTriggersAura() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castCoerciveImpetus(player1, bears);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new Mountain()));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Each attached Coercive Impetus triggers separately")
+    void multipleAurasEachTrigger() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        castCoerciveImpetus(player1, bears);
+        castCoerciveImpetus(player1, bears);
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(new Mountain(), new Mountain()));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 2);
+        harness.assertLife(player1, 14);
+    }
+
     private void castCoerciveImpetus(Player caster, Permanent creature) {
         harness.setHand(caster, List.of(new CoerciveImpetus()));
         harness.addMana(caster, ManaColor.BLACK, 1);

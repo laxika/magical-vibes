@@ -108,6 +108,110 @@ class AncientBrassDragonTest extends BaseCardTest {
                 .doesNotContain(tooExpensive.getId(), land.getId());
     }
 
+    @Test
+    @DisplayName("The controller may choose no creatures even when legal targets exist")
+    void mayChooseNoTargets() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+
+        triggerWithRoll(5);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .doesNotContain(creature.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Empty graveyards do not prevent the die roll or leave a target prompt")
+    void rollsWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        triggerWithRoll(10);
+
+        assertThat(gameLogContains("rolls a d20 for Ancient Brass Dragon: 10.")).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A roll of one cannot return a creature with mana value two")
+    void rollOfOneLeavesOverLimitCreatureInGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+
+        triggerWithRoll(1);
+
+        assertThat(gameLogContains("rolls a d20 for Ancient Brass Dragon: 1.")).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A natural twenty returns creatures whose total mana value is exactly twenty")
+    void naturalTwentyReturnsCreaturesAtExactAggregateLimit() {
+        Card firstDragon = new AncientBrassDragon();
+        Card secondDragon = new AncientBrassDragon();
+        Card giant = new HillGiant();
+        Card bear = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(firstDragon, giant));
+        harness.setGraveyard(player2, List.of(secondDragon, bear));
+
+        triggerWithRoll(20);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(firstDragon.getId(), secondDragon.getId(), giant.getId(), bear.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(firstDragon.getId(), secondDragon.getId(), giant.getId(), bear.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+    @Test
+    @DisplayName("The reflexive ability resolves after the dragon leaves the battlefield")
+    void returnsCreaturesAfterSourceLeavesBattlefield() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+
+        triggerWithRoll(2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(creature.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A remaining legal target returns when another target leaves its graveyard")
+    void returnsRemainingLegalTarget() {
+        Card removedCreature = new GrizzlyBears();
+        Card remainingCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(removedCreature));
+        harness.setGraveyard(player2, List.of(remainingCreature));
+
+        triggerWithRoll(4);
+        harness.withAutoStop(gd.currentStep, () -> harness.handleMultipleCardsChosen(player1,
+                List.of(removedCreature.getId(), remainingCreature.getId())));
+        assertThat(gd.stack).isNotEmpty();
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(remainingCreature.getId())
+                .doesNotContain(removedCreature.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
     private void triggerWithRoll(int result) {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
         addCreatureReady(player1, new AncientBrassDragon());

@@ -1,13 +1,18 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.e.EidolonOfRhetoric;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornColossus;
+import com.github.laxika.magicalvibes.cards.t.ThrillOfPossibility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshiokNightmareMuse.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AshiokNightmareMuse.class, Forest.class, GrizzlyBears.class,
+        EidolonOfRhetoric.class, NyxbornColossus.class, ThrillOfPossibility.class})
 class AshiokNightmareMuseTest extends BaseCardTest {
 
     @Test
@@ -102,9 +108,7 @@ class AshiokNightmareMuseTest extends BaseCardTest {
         assertThat(choice.maxCount()).isEqualTo(3);
 
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(first.getId())
@@ -128,11 +132,126 @@ class AshiokNightmareMuseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void nightmareBlockTriggerExilesShortOpponentLibrary() {
+        addReadyAshiok(player1, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent nightmare = findPermanent(player1, "Nightmare");
+        addCreatureReady(player2, new NyxbornColossus());
+        Card opponentTop = new Forest();
+        Card ownTop = new Forest();
+        harness.setLibrary(player2, List.of(opponentTop));
+        harness.setLibrary(player1, List.of(ownTop));
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(nightmare), 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentTop);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTop);
+    }
+
+    @Test
+    void minusThreeCanExileReturnedCard() {
+        addReadyAshiok(player1, 5);
+        Card targetCard = new NyxbornColossus();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        Card otherCard = new Forest();
+        harness.setHand(player2, List.of(otherCard));
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, gd.playerHands.get(player2.getId()).indexOf(targetCard));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(otherCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(targetCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void minusThreeBouncesTokenThenExilesRealCard() {
+        addReadyAshiok(player1, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent nightmare = findPermanent(player1, "Nightmare");
+        addReadyAshiok(player2, 5);
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setHand(player1, List.of(first, second));
+
+        harness.activateAbility(player2, 0, 1, null, nightmare.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nightmare);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first);
+    }
+
+    @Test
+    void minusSevenMayCastNoSpells() {
+        addReadyAshiok(player1, 7);
+        Card exiled = new NyxbornColossus();
+        gd.addToExile(player2.getId(), exiled);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusSevenRespectsSpellCastingLimit() {
+        addReadyAshiok(player1, 7);
+        harness.addToBattlefield(player2, new EidolonOfRhetoric());
+        harness.setHand(player1, List.of(new NyxbornColossus()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Card exiled = new NyxbornColossus();
+        gd.addToExile(player2.getId(), exiled);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+        if (choice != null && choice.validCardIds().contains(exiled.getId())) {
+            harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
+        assertThat(countPermanents(player1, "Nyxborn Colossus")).isEqualTo(1);
+    }
+
+    @Test
+    void minusSevenAllowsPayableAdditionalCost() {
+        addReadyAshiok(player1, 7);
+        Card thrill = new ThrillOfPossibility();
+        Card discard = new Forest();
+        Card otherCard = new Forest();
+        gd.addToExile(player2.getId(), thrill);
+        harness.setHand(player1, List.of(discard, otherCard));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(thrill.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discard, otherCard);
+    }
+
     private Permanent addReadyAshiok(Player player, int loyalty) {
-        Permanent perm = new Permanent(new AshiokNightmareMuse());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AshiokNightmareMuse());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

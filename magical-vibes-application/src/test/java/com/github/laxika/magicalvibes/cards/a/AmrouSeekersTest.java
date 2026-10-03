@@ -52,6 +52,38 @@ class AmrouSeekersTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Amrou Seekers can be blocked by white and artifact creatures together")
+    void canBeBlockedByWhiteAndArtifactCreaturesTogether() {
+        Permanent seekers = attackingSeekers();
+        Permanent whiteBlocker = addCreatureReady(player2, new AmrouScout());
+        Permanent artifactBlocker = addCreatureReady(player2, new AssemblyWorker());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(whiteBlocker.isBlocking()).isTrue();
+        assertThat(artifactBlocker.isBlocking()).isTrue();
+        assertThat(whiteBlocker.getBlockingTargetIds()).containsExactly(seekers.getId());
+        assertThat(artifactBlocker.getBlockingTargetIds()).containsExactly(seekers.getId());
+    }
+
+    @Test
+    @DisplayName("An eligible blocker does not let a nonartifact nonwhite creature also block Amrou Seekers")
+    void rejectsIneligibleBlockerAlongsideEligibleBlocker() {
+        attackingSeekers();
+        addCreatureReady(player2, new AmrouScout());
+        addCreatureReady(player2, new AshcoatBear());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by artifact creatures or white creatures");
+    }
+
     private Permanent attackingSeekers() {
         Permanent seekers = addCreatureReady(player1, new AmrouSeekers());
         seekers.setAttacking(true);

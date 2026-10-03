@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AbzanAscendancy.class, GrizzlyBears.class, WrathOfGod.class})
 class AbzanAscendancyTest extends BaseCardTest {
 
     @Test
@@ -65,22 +66,73 @@ class AbzanAscendancyTest extends BaseCardTest {
     }
 
     private void castAndResolveAscendancy() {
-        harness.setHand(player1, List.of(new AbzanAscendancy()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AbzanAscendancy(), "{W}{B}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
     private void destroyCreaturesWithWrath(com.github.laxika.magicalvibes.model.Player caster) {
-        harness.setHand(caster, List.of(new WrathOfGod()));
-        harness.addMana(caster, ManaColor.WHITE, 4);
         harness.forceActivePlayer(caster);
-
-        harness.getGameService().playCard(harness.getGameData(), caster, 0, 0, null, null);
+        harness.castFromHand(caster, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Entering without creatures puts no counters on the enchantment")
+    void enteringWithoutCreaturesDoesNotPutCountersOnEnchantment() {
+        castAndResolveAscendancy();
+
+        assertThat(findPermanent(player1, "Abzan Ascendancy")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entry trigger puts counters on all creatures present when it resolves")
+    void entryTriggerUsesCreaturesPresentAtResolution() {
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new AbzanAscendancy(), "{W}{B}{G}");
+        harness.passBothPriorities();
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        resolveAllTriggers();
+
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(secondCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(laterCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Simultaneous nontoken deaths create one Spirit for each controlled creature")
+    void simultaneousDeathsCreateSeparateSpirits() {
+        harness.addToBattlefield(player1, new AbzanAscendancy());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        destroyCreaturesWithWrath(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Spirit token dying does not create another Spirit")
+    void tokenDeathDoesNotCreateSpirit() {
+        harness.addToBattlefield(player1, new AbzanAscendancy());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        destroyCreaturesWithWrath(player2);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+
+        destroyCreaturesWithWrath(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
