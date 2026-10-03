@@ -22,8 +22,7 @@ class DeepwoodTantivTest extends BaseCardTest {
         addCreatureReady(player2, new FreshVolunteers());
         addCreatureReady(player2, new FreshVolunteers());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
@@ -36,10 +35,44 @@ class DeepwoodTantivTest extends BaseCardTest {
         harness.setLife(player1, 10);
         addCreatureReady(player1, new DeepwoodTantiv());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Each blocked Tantiv gains life for its controller when its trigger resolves")
+    void separateBlockedAttackersEachGainLife() {
+        harness.setLife(player2, 10);
+        addCreatureReady(player2, new DeepwoodTantiv());
+        addCreatureReady(player2, new DeepwoodTantiv());
+        addCreatureReady(player1, new FreshVolunteers());
+        addCreatureReady(player1, new FreshVolunteers());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player2, 10);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 14);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Deepwood Tantiv does not gain life when it blocks")
+    void blockingDoesNotGainLife() {
+        harness.setLife(player2, 10);
+        addCreatureReady(player1, new FreshVolunteers());
+        addCreatureReady(player2, new DeepwoodTantiv());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).isEmpty();
     }
 }
