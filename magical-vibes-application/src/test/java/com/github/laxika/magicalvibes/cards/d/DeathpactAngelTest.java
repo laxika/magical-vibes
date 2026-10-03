@@ -2,19 +2,24 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeathpactAngel.class, WrathOfGod.class, GrizzlyBears.class})
 class DeathpactAngelTest extends BaseCardTest {
 
     @Test
@@ -59,9 +64,6 @@ class DeathpactAngelTest extends BaseCardTest {
     void tokenAbilityWithNoAngelInGraveyard() {
         killAngel();
         Permanent cleric = readyCleric();
-        // Remove the Angel card so only an unrelated creature card remains in the graveyard.
-        gd.playerGraveyards.get(player1.getId())
-                .removeIf(card -> "Deathpact Angel".equals(card.getName()));
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.forceActivePlayer(player1);
@@ -78,15 +80,135 @@ class DeathpactAngelTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
+    @Test
+    void clericHasBothColorsAndClericSubtype() {
+        killAngel();
+
+        Permanent cleric = findPermanent(player1, "Cleric");
+        assertThat(cleric.getCard().getColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
+        assertThat(cleric.getCard().getSubtypes()).containsExactly(CardSubtype.CLERIC);
+    }
+
+    @Test
+    void returningAnAvailableAngelCannotBeDeclined() {
+        killAngel();
+        Permanent cleric = readyCleric();
+        payForCleric();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cleric), null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, indexInGraveyard(player1, "Deathpact Angel"));
+        harness.assertOnBattlefield(player1, "Deathpact Angel");
+    }
+
+    @Test
+    void newlyCreatedClericCannotPayTapCost() {
+        killAngel();
+        Permanent cleric = findPermanent(player1, "Cleric");
+        payForCleric();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(cleric), null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("summoning sickness");
+        harness.assertOnBattlefield(player1, "Cleric");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedClericCannotActivate() {
+        killAngel();
+        Permanent cleric = readyCleric();
+        cleric.setTapped(true);
+        payForCleric();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(cleric), null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("tapped");
+        harness.assertOnBattlefield(player1, "Cleric");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tokenCannotReturnAnAngelFromOpponentsGraveyard() {
+        killAngel();
+        Permanent cleric = readyCleric();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new DeathpactAngel()));
+        payForCleric();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cleric), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Cleric");
+        harness.assertNotOnBattlefield(player1, "Deathpact Angel");
+        harness.assertInGraveyard(player2, "Deathpact Angel");
+    }
+
+    @Test
+    void angelIsChosenAtResolutionRatherThanActivation() {
+        killAngel();
+        Permanent cleric = readyCleric();
+        harness.setGraveyard(player1, List.of());
+        payForCleric();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cleric), null, null);
+        harness.setGraveyard(player1, List.of(new DeathpactAngel()));
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, indexInGraveyard(player1, "Deathpact Angel"));
+
+        harness.assertOnBattlefield(player1, "Deathpact Angel");
+        harness.assertNotInGraveyard(player1, "Deathpact Angel");
+    }
+
+    @Test
+    void abilityNeedsTwoBlackManaEvenWhenSixManaIsAvailable() {
+        killAngel();
+        Permanent cleric = readyCleric();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(cleric), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Cleric");
+        harness.assertInGraveyard(player1, "Deathpact Angel");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tokenCanReturnADifferentAngelWithTheSameName() {
+        killAngel();
+        Permanent cleric = readyCleric();
+        DeathpactAngel otherAngel = new DeathpactAngel();
+        harness.setGraveyard(player1, List.of(otherAngel));
+        payForCleric();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cleric), null, null);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Deathpact Angel").getCard().getId()).isEqualTo(otherAngel.getId());
+        harness.assertNotInGraveyard(player1, "Deathpact Angel");
+    }
+
+    private void payForCleric() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+    }
+
     /** Wrath of God cast by the opponent kills the Angel; both the death trigger and the token resolve. */
     private void killAngel() {
         harness.addToBattlefield(player1, new DeathpactAngel());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Wrath resolves — Angel dies, death trigger goes on the stack
         harness.passBothPriorities(); // Death trigger resolves — token is created
     }
