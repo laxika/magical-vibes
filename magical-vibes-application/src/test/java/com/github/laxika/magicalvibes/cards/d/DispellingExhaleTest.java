@@ -59,12 +59,88 @@ class DispellingExhaleTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Without behold, counters the spell when its controller cannot pay {2}")
+    void withoutBeholdCountersWhenPaymentIsUnaffordable() {
+        GrizzlyBears targetSpell = castTargetSpellWithMana(1);
+        prepareExhale();
+
+        harness.castInstantWithBehold(player2, 0, targetSpell.getId(), List.of(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Without behold, the controller may decline to pay even with enough mana")
+    void decliningPaymentCountersSpell() {
+        GrizzlyBears targetSpell = castTargetSpellWithMana(2);
+        prepareExhale();
+
+        harness.castInstantWithBehold(player2, 0, targetSpell.getId(), List.of(), List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A beheld Dragon increases the tax to {4}, which can be paid")
+    void beheldDragonAllowsFourManaPayment() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new DragonWhelp());
+        GrizzlyBears targetSpell = castTargetSpellWithMana(4);
+        prepareExhale();
+
+        harness.castInstantWithBehold(player2, 0, targetSpell.getId(), List.of(dragon.getId()), List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Dragon Whelp");
+    }
+
+    @Test
+    @DisplayName("Controlling a Dragon does not increase the tax if behold is declined")
+    void availableDragonDoesNotAutomaticallyIncreaseTax() {
+        harness.addToBattlefield(player2, new DragonWhelp());
+        GrizzlyBears targetSpell = castTargetSpellWithMana(2);
+        prepareExhale();
+
+        harness.castInstantWithBehold(player2, 0, targetSpell.getId(), List.of(), List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The {4} tax persists after the beheld Dragon leaves the battlefield")
+    void beholdIsRememberedAfterDragonLeaves() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new DragonWhelp());
+        GrizzlyBears targetSpell = castTargetSpellWithMana(3);
+        prepareExhale();
+
+        harness.castInstantWithBehold(player2, 0, targetSpell.getId(), List.of(dragon.getId()), List.of());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dragon));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Dragon Whelp");
+    }
+
+    private void prepareExhale() {
+        harness.setHand(player2, List.of(new DispellingExhale()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+    }
+
     private GrizzlyBears castTargetSpellWithMana(int extraMana) {
         GrizzlyBears targetSpell = new GrizzlyBears();
-        harness.setHand(player1, List.of(targetSpell));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, targetSpell, "{1}{G}");
         harness.addMana(player1, ManaColor.COLORLESS, extraMana);
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         return targetSpell;
     }
