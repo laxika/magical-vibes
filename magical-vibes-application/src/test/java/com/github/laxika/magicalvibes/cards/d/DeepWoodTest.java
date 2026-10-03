@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.f.FrenziedBaloth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.r.RagingRegisaur;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeepWood.class, GrizzlyBears.class, WildGriffin.class})
+@CardUsed({DeepWood.class, GrizzlyBears.class, WildGriffin.class, ProdigalSorcerer.class,
+        RagingRegisaur.class, Unsummon.class, FrenziedBaloth.class})
 class DeepWoodTest extends BaseCardTest {
 
     @Test
@@ -53,8 +57,7 @@ class DeepWoodTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.castFromHand(player2, new DeepWood(), "{1}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(defenderLifeBefore);
     }
@@ -101,6 +104,66 @@ class DeepWoodTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @CardUsed({RagingRegisaur.class, Unsummon.class})
+    @DisplayName("Can cast after the last declared attacker leaves the battlefield this step")
+    void canCastAfterLastAttackerLeavesBattlefield() {
+        Permanent attacker = addCreatureReady(player1, new RagingRegisaur());
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Raging Regisaur");
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castFromHand(player2, new DeepWood(), "{1}{G}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player2, "Deep Wood");
+        resolveAllTriggers();
+    }
+
+    @Test
+    @CardUsed({RagingRegisaur.class, FrenziedBaloth.class})
+    @DisplayName("Noncombat damage is prevented when only combat damage cannot be prevented")
+    void preventsNoncombatDamageWithFrenziedBaloth() {
+        addCreatureReady(player1, new RagingRegisaur());
+        addCreatureReady(player1, new FrenziedBaloth());
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        int defenderLifeBefore = gd.getLife(player2.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.castFromHand(player2, new DeepWood(), "{1}{G}");
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(defenderLifeBefore);
+    }
+
+    @Test
+    @CardUsed(FrenziedBaloth.class)
+    @DisplayName("Deep Wood does not prevent combat damage that cannot be prevented")
+    void doesNotPreventUnpreventableCombatDamage() {
+        harness.forceActivePlayer(player1);
+        addAttacker();
+        addCreatureReady(player1, new FrenziedBaloth());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        int defenderLifeBefore = gd.getLife(player2.getId());
+        harness.castFromHand(player2, new DeepWood(), "{1}{G}");
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(defenderLifeBefore - 2);
+    }
+
     private Permanent addAttacker() {
         Permanent perm = addCreatureReady(player1, new WildGriffin());
         perm.tap();
@@ -124,9 +187,7 @@ class DeepWoodTest extends BaseCardTest {
         // declare attackers step is still active.
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.castFromHand(player2, new DeepWood(), "{1}{G}");
-        harness.passBothPriorities();
-
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(defenderLifeBefore - 1);
     }
