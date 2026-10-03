@@ -27,8 +27,8 @@ class CinderGiantTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Duskrider Falcon");
         assertThat(countPermanents(player2, "Duskrider Falcon")).isEqualTo(2);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -69,5 +69,52 @@ class CinderGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Duskrider Falcon");
+    }
+
+    @Test
+    @DisplayName("Each Cinder Giant damages the other Giant but not itself")
+    void multipleGiantsDamageEachOther() {
+        harness.addToBattlefield(player1, new CinderGiant());
+        harness.addToBattlefield(player1, new CinderGiant());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Cinder Giant")).hasSize(2)
+                .allSatisfy(giant -> assertThat(giant.getMarkedDamage()).isEqualTo(2));
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger still damages creatures after its source leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        var giant = harness.addToBattlefieldAndReturn(player1, new CinderGiant());
+        harness.addToBattlefield(player1, new BenalishInfantry());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, giant));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Cinder Giant");
+        assertThat(findPermanent(player1, "Benalish Infantry").getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A returned Cinder Giant is damaged by its previous permanent's trigger")
+    void returnedSourceIsAnotherCreatureForOldTrigger() {
+        var card = new CinderGiant();
+        var original = harness.addToBattlefieldAndReturn(player1, card);
+        harness.addToBattlefield(player1, new BenalishInfantry());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, original));
+        gd.playerHands.get(player1.getId()).remove(card);
+        var returned = harness.enterBattlefieldAndReturn(player1, card);
+        harness.passBothPriorities();
+
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        assertThat(returned.getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Benalish Infantry").getMarkedDamage()).isEqualTo(2);
     }
 }
