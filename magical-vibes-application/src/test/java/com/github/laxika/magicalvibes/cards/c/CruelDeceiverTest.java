@@ -162,4 +162,42 @@ class CruelDeceiverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Revealing an empty library grants no destroy ability")
+    void emptyLibraryRevealGrantsNothing() {
+        addCreatureReady(player1, new CruelDeceiver());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+
+        Permanent blocker = addCreatureReady(player2, new KamiOfOldStone());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("The reveal activation limit applies before the first activation resolves")
+    void cannotActivateRevealAgainInResponse() {
+        addCreatureReady(player1, new CruelDeceiver());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
 }

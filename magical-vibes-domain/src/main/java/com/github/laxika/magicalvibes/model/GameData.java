@@ -676,6 +676,8 @@ public class GameData {
     public final Map<UUID, UUID> exiledVoyageControllerIds = new ConcurrentHashMap<>();
     /** Cards exiled by the foretell special action and therefore castable for their foretell cost. */
     public final Set<UUID> foretoldCardIds = ConcurrentHashMap.newKeySet();
+    /** Players who have used the foretell special action during the current turn. */
+    public final Set<UUID> playersWhoForetoldThisTurn = ConcurrentHashMap.newKeySet();
     /** Foretell costs assigned when cards were granted foretell dynamically. */
     public final Map<UUID, ManaCost> foretoldCardCosts = new ConcurrentHashMap<>();
     /** Card IDs currently represented as cards in the ante zone. Ante is modelled through exile. */
@@ -1307,6 +1309,8 @@ public class GameData {
     public final Set<UUID> playersExilingCreaturesInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose effects, this turn, exile creatures their opponents control instead of putting them into graveyards. */
     public final Set<UUID> playersExilingOpponentCreaturesInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players whose effects, this turn, exile their controlled permanents instead of putting them into graveyards. */
+    public final Set<UUID> playersExilingControlledPermanentsInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players with an active effect that redirects damage dealt to any creature to them. */
@@ -1494,6 +1498,8 @@ public class GameData {
     public final Set<UUID> playersWithHandRevealed = ConcurrentHashMap.newKeySet();
     /** Players who can't gain life this turn (e.g. Flames of the Blood Hand). Cleared at turn cleanup. */
     public final Set<UUID> playersWhoCantGainLifeThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who can't lose life this turn (e.g. Courageous Resolve). Cleared at turn cleanup. */
+    public final Set<UUID> playersWhoCantLoseLifeThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks source-linked animations (Awakener Druid-style).
      *  Maps animated target permanent UUID → source permanent UUID.
@@ -6849,6 +6855,8 @@ public class GameData {
                 .addAll(this.playersExilingCreaturesInsteadOfDyingThisTurn);
         copy.playersExilingOpponentCreaturesInsteadOfDyingThisTurn
                 .addAll(this.playersExilingOpponentCreaturesInsteadOfDyingThisTurn);
+        copy.playersExilingControlledPermanentsInsteadOfDyingThisTurn
+                .addAll(this.playersExilingControlledPermanentsInsteadOfDyingThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoActivatedSparkAbilityThisTurn.addAll(this.playersWhoActivatedSparkAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
@@ -7828,6 +7836,7 @@ public class GameData {
         copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
         copy.playersWithHandRevealed.addAll(this.playersWithHandRevealed);
         copy.playersWhoCantGainLifeThisTurn.addAll(this.playersWhoCantGainLifeThisTurn);
+        copy.playersWhoCantLoseLifeThisTurn.addAll(this.playersWhoCantLoseLifeThisTurn);
 
         // --- Source-linked animations (Awakener Druid-style) ---
         copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
@@ -7971,6 +7980,7 @@ public class GameData {
         copy.graveyardPlayFilterPermissionsThisTurn.addAll(this.graveyardPlayFilterPermissionsThisTurn);
         copy.exileCastPermissionsUntilEndOfTurn.addAll(this.exileCastPermissionsUntilEndOfTurn);
         copy.foretoldCardCastPermissionsThisTurn.addAll(this.foretoldCardCastPermissionsThisTurn);
+        copy.playersWhoForetoldThisTurn.addAll(this.playersWhoForetoldThisTurn);
         copy.playersExilingCardsInsteadOfGraveyardThisTurn.addAll(this.playersExilingCardsInsteadOfGraveyardThisTurn);
         copy.playersMayPlayFaceUpCardsFromExileThisTurn.addAll(this.playersMayPlayFaceUpCardsFromExileThisTurn);
         copy.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn

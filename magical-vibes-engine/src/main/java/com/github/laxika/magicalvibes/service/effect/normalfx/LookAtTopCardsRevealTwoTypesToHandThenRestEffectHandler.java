@@ -114,14 +114,14 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         if (!firstEligible.isEmpty()) {
             // First pick: the first type. The second pick runs (and disposes the rest) afterwards.
             beginPick(gameData, controllerId, firstEligible, topCards,
-                    e.firstPrompt() != null ? promptFor(e.firstPrompt(), e.chosenDestination())
-                            : promptFor(e.firstType(), e.chosenDestination()),
+                    e.firstPrompt() != null ? promptFor(e.firstPrompt(), e.firstChosenDestination())
+                            : promptFor(e.firstType(), e.firstChosenDestination()),
                     e.secondPredicate() != null
                             ? LibrarySearchFollowUp.forSecondBoundedPick(
                                     e.secondPredicate(), e.secondPrompt(), randomBottom, e.chosenDestination())
                             : LibrarySearchFollowUp.forSecondBoundedPick(e.secondType(), toGraveyard,
                                     randomBottom, e.chosenDestination()),
-                    toGraveyard, e.chosenDestination());
+                    toGraveyard, e.firstChosenDestination());
             return;
         }
 
@@ -211,17 +211,22 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
     }
 
     private static String promptFor(CardType type, LibrarySearchDestination destination) {
-        String destinationPhrase = destination == LibrarySearchDestination.BATTLEFIELD
+        String destinationPhrase = isBattlefieldDestination(destination)
                 ? "onto the battlefield" : "into your hand";
         return "You may reveal a " + type.getDisplayName().toLowerCase()
                 + " card from among them and put it " + destinationPhrase + ".";
     }
 
     private static String promptFor(String description, LibrarySearchDestination destination) {
-        String destinationPhrase = destination == LibrarySearchDestination.BATTLEFIELD
+        String destinationPhrase = isBattlefieldDestination(destination)
                 ? "onto the battlefield" : "into your hand";
         return "You may reveal " + description + " from among them and put it "
                 + destinationPhrase + ".";
+    }
+
+    private static boolean isBattlefieldDestination(LibrarySearchDestination destination) {
+        return destination == LibrarySearchDestination.BATTLEFIELD
+                || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
     }
 
     private static String promptFor(CardSubtype subtype) {

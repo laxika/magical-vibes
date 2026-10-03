@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 @CardRegistration(set = "LTC", collectorNumber = "4")
 @CardRegistration(set = "LTC", collectorNumber = "84")
 @CardRegistration(set = "LTC", collectorNumber = "92")
+@CardRegistration(set = "LTC", collectorNumber = "478")
 public class SauronLordOfTheRings extends Card {
 
     public SauronLordOfTheRings() {

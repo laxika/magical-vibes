@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "69")
+@CardRegistration(set = "LTC", collectorNumber = "479")
 public class SongOfERendil extends Card {
 
     public SongOfERendil() {

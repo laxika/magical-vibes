@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "HOC", collectorNumber = "55")
 @CardRegistration(set = "LTC", collectorNumber = "12")
 @CardRegistration(set = "LTC", collectorNumber = "96")
+@CardRegistration(set = "LTC", collectorNumber = "414")
 public class TheGaffer extends Card {
 
     public TheGaffer() {

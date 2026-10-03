@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "19")
 @CardRegistration(set = "LTC", collectorNumber = "102")
+@CardRegistration(set = "LTC", collectorNumber = "421")
 public class CorsairsOfUmbar extends Card {
 
     public CorsairsOfUmbar() {

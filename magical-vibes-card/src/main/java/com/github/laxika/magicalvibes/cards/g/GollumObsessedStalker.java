@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDealtCombatDamage
 
 @CardRegistration(set = "LTC", collectorNumber = "26")
 @CardRegistration(set = "LTC", collectorNumber = "109")
+@CardRegistration(set = "LTC", collectorNumber = "428")
 public class GollumObsessedStalker extends Card {
 
     public GollumObsessedStalker() {

@@ -487,7 +487,9 @@ public class GameService {
             }
             hand.remove(cardIndex);
             gameData.addForetoldCardToExile(player.getId(), card, foretellCost);
+            gameData.playersWhoForetoldThisTurn.add(player.getId());
             triggerCollectionService.checkControllerForetellTriggers(gameData, player.getId(), card);
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, player.getId(), 1);
             gameData.priorityPassedBy.clear();
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " foretells ", card, "."));

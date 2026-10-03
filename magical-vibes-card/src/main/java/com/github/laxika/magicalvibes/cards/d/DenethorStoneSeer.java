@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "20")
 @CardRegistration(set = "LTC", collectorNumber = "103")
+@CardRegistration(set = "LTC", collectorNumber = "422")
 public class DenethorStoneSeer extends Card {
 
     public DenethorStoneSeer() {

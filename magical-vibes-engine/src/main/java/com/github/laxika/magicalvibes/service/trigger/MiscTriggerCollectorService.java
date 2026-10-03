@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -816,6 +817,31 @@ public class MiscTriggerCollectorService {
     }
 
     // ── ON_ENCHANTED_PERMANENT_TAPPED ──────────────────────────────────
+
+    @CollectsTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
+            slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    private boolean handleOpponentNontokenPermanentSacrificeSteal(
+            TriggerMatchContext match, StealDyingOpponentPermanentUnlessPaysLifeEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.OpponentNontokenPermanentSacrificed sacrificed =
+                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
+        StealDyingOpponentPermanentUnlessPaysLifeEffect baked =
+                new StealDyingOpponentPermanentUnlessPaysLifeEffect(
+                        effect.lifeCost(), sacrificed.sacrificedCard().getId(),
+                        sacrificed.sacrificingPlayerId());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(baked)),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
 
     @CollectsTrigger(value = GivePoisonCountersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapPoison(TriggerMatchContext match,
@@ -4020,6 +4046,35 @@ public class MiscTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on a permanent phasing out or a card being exiled",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_HAND),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT)
+    })
+    boolean handleControllerExileTriggers(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardsExiledFromHand)
+                && !(ctx instanceof TriggerContext.ControllerSpellOrAbilityExilesPermanent)) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        match.gameData().stack.add(entry);
+        if (ctx instanceof TriggerContext.ControllerCardsExiledFromHand exiled) {
+            entry.setEventValue(exiled.count());
+        } else {
+            entry.setEventValue(1);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on cards or permanents being exiled",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

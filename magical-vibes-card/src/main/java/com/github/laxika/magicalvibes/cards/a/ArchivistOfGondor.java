@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 
 @CardRegistration(set = "LTC", collectorNumber = "18")
 @CardRegistration(set = "LTC", collectorNumber = "101")
+@CardRegistration(set = "LTC", collectorNumber = "420")
 public class ArchivistOfGondor extends Card {
 
     public ArchivistOfGondor() {

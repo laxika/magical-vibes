@@ -18,6 +18,7 @@ import java.util.Map;
 
 @CardRegistration(set = "LTC", collectorNumber = "13")
 @CardRegistration(set = "LTC", collectorNumber = "97")
+@CardRegistration(set = "LTC", collectorNumber = "415")
 public class GilraenDNedainProtector extends Card {
 
     public GilraenDNedainProtector() {

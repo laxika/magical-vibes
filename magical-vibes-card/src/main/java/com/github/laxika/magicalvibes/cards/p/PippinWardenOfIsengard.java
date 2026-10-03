@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "65")
 @CardRegistration(set = "LTC", collectorNumber = "146")
+@CardRegistration(set = "LTC", collectorNumber = "472")
 public class PippinWardenOfIsengard extends Card {
 
     private static final String PARTNER_NAME = "Merry, Warden of Isengard";

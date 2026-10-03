@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "ORI", collectorNumber = "172")
 @CardRegistration(set = "FDN", collectorNumber = "217")
 @CardRegistration(set = "DDU", collectorNumber = "2")
+@CardRegistration(set = "KHC", collectorNumber = "56")
 public class DwynenGiltLeafDaen extends Card {
 
     public DwynenGiltLeafDaen() {

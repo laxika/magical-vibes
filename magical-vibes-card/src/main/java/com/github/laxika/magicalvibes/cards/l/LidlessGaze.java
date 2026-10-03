@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachPlayersLibr
 
 @CardRegistration(set = "LTC", collectorNumber = "59")
 @CardRegistration(set = "LTC", collectorNumber = "141")
+@CardRegistration(set = "LTC", collectorNumber = "466")
 public class LidlessGaze extends Card {
 
     public LidlessGaze() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "HA4", collectorNumber = "20")
+@CardRegistration(set = "KHC", collectorNumber = "81")
 public class AbominationOfLlanowar extends Card {
 
     public AbominationOfLlanowar() {

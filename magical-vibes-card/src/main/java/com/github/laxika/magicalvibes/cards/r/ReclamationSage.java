@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "LTC", collectorNumber = "259")
 @CardRegistration(set = "C20", collectorNumber = "186")
 @CardRegistration(set = "C18", collectorNumber = "159")
+@CardRegistration(set = "KHC", collectorNumber = "72")
 public class ReclamationSage extends Card {
 
     public ReclamationSage() {

@@ -14249,6 +14249,8 @@ public class SpellCastingService {
                 log.info("Game {} - {} exiles {} from hand as alternate casting cost",
                         gameData.id, player.getUsername(), toExile.getName());
             }
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
+                    gameData, playerId, effectiveIndices.size());
         }
 
         List<AlternateDiscardSelection> discardSelections = validateAlternateDiscardCosts(

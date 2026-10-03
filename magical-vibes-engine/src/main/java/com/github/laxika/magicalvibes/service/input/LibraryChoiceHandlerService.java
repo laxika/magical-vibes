@@ -767,6 +767,12 @@ public class LibraryChoiceHandlerService {
                 gameData.shuffleExilePile(librarySearch.sourcePermanentId());
             }
             if (followUp.secondBoundedPick() != null
+                    && startSecondBoundedPick(gameData, deckOwnerId,
+                            new ArrayList<>(librarySearch.sourceCards()), accumulatedCards,
+                            followUp.secondBoundedPick())) {
+                return;
+            }
+            if (followUp.secondBoundedPick() != null
                     && followUp.secondBoundedPick().randomRest()
                     && librarySearch.sourceCards() != null) {
                 List<Card> remainingCards = new ArrayList<>(librarySearch.sourceCards());
@@ -775,12 +781,6 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(player.getUsername()
                         + " puts the unchosen cards on the bottom of their library in a random order."));
                 finishSearchAndResume(gameData);
-                return;
-            }
-            if (followUp.secondBoundedPick() != null
-                    && startSecondBoundedPick(gameData, deckOwnerId,
-                            new ArrayList<>(librarySearch.sourceCards()), accumulatedCards,
-                            followUp.secondBoundedPick())) {
                 return;
             }
             // CR 608.2f: Place any accumulated battlefield cards before finishing

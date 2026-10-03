@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOC", collectorNumber = "16")
 @CardRegistration(set = "HOC", collectorNumber = "56")
+@CardRegistration(set = "LTC", collectorNumber = "500")
+@CardRegistration(set = "LTC", collectorNumber = "544")
 public class GaladrielsDismissal extends Card {
 
     public GaladrielsDismissal() {

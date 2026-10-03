@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 @CardRegistration(set = "LTC", collectorNumber = "42")
 @CardRegistration(set = "LTC", collectorNumber = "125")
+@CardRegistration(set = "LTC", collectorNumber = "444")
 public class MotivatedPony extends Card {
 
     public MotivatedPony() {

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "77")
 @CardRegistration(set = "LTC", collectorNumber = "157")
+@CardRegistration(set = "LTC", collectorNumber = "487")
 public class LothlorienBlade extends Card {
 
     private static final PermanentHasSubtypePredicate ELF =

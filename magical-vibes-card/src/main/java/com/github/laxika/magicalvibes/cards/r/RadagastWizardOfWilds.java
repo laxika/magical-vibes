@@ -22,6 +22,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "66")
 @CardRegistration(set = "LTC", collectorNumber = "147")
+@CardRegistration(set = "LTC", collectorNumber = "473")
 public class RadagastWizardOfWilds extends Card {
 
     private static final String BEAST_MODE = "Create a 3/3 green Beast creature token";

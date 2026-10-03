@@ -209,6 +209,9 @@ another player's dash costs.
 - `cast/costmod/ForetellCostReductionEffectHandler.java` — battlefield handler for
   `ForetellCostReductionEffect(int, boolean)`; contributes through the foretell action-cost and
   any-player-turn channels for the source controller.
+- `cast/costmod/ReduceFirstForetellCostEachTurnEffectHandler.java` — battlefield handler for
+  `ReduceFirstForetellCostEachTurnEffect(int)`; contributes through the foretell action-cost
+  channel only until the source controller has foretold a card during the current turn.
 - `cast/costmod/ReduceRoomUnlockCostEffectHandler.java` — battlefield handler for
   `ReduceRoomUnlockCostEffect(int)`; contributes only through the generic Room-door unlock-cost
   channel for the source controller (Inquisitive Glimmer, `DSK`).

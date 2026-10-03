@@ -7094,6 +7094,20 @@ public class TriggerCollectionService {
         }
     }
 
+    public void checkExertTriggers(GameData gameData, UUID exertingPlayerId, UUID exertedCreatureId) {
+        if (exertingPlayerId == null || exertedCreatureId == null) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(exertingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        TriggerContext context = new TriggerContext.Exert(exertingPlayerId, exertedCreatureId);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, exertingPlayerId, EffectSlot.ON_CONTROLLER_EXERTS, context);
+        }
+    }
+
     /**
      * Fires effects that care about an attacking creature causing one of its own triggered
      * abilities to trigger. The ability is supplied as a snapshot so later stack changes cannot
@@ -11454,6 +11468,35 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.Foretell(foretellingPlayerId, foretoldCard);
         for (Permanent perm : List.copyOf(battlefield)) {
             dispatchSlot(gameData, perm, foretellingPlayerId, EffectSlot.ON_CONTROLLER_FORETELLS, ctx);
+        }
+    }
+
+    /** Fires triggers that care when one or more cards leave the given player's hand for exile. */
+    public void checkControllerCardsExiledFromHandTriggers(GameData gameData, UUID handOwnerId, int count) {
+        if (handOwnerId == null || count <= 0) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(handOwnerId);
+        if (battlefield == null) return;
+
+        TriggerContext context = new TriggerContext.ControllerCardsExiledFromHand(handOwnerId, count);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, handOwnerId,
+                    EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_HAND, context);
+        }
+    }
+
+    /** Fires triggers for a permanent exiled by the resolving controller's spell or ability. */
+    public void checkControllerSpellOrAbilityExilesPermanentTriggers(
+            GameData gameData, Permanent exiledPermanent, UUID exiledPermanentControllerId,
+            UUID exilingControllerId) {
+        if (exiledPermanent == null || exilingControllerId == null) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(exilingControllerId);
+        if (battlefield == null) return;
+
+        TriggerContext context = new TriggerContext.ControllerSpellOrAbilityExilesPermanent(
+                exiledPermanent, exiledPermanentControllerId, exilingControllerId);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, exilingControllerId,
+                    EffectSlot.ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT, context);
         }
     }
 

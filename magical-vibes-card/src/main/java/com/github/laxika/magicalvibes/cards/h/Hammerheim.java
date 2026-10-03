@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "302")
 @CardRegistration(set = "ME3", collectorNumber = "207")
+@CardRegistration(set = "LTC", collectorNumber = "518")
 public class Hammerheim extends Card {
 
     public Hammerheim() {

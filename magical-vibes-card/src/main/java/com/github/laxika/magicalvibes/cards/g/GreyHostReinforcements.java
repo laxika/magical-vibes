@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "14")
 @CardRegistration(set = "LTC", collectorNumber = "98")
+@CardRegistration(set = "LTC", collectorNumber = "416")
 public class GreyHostReinforcements extends Card {
 
     public GreyHostReinforcements() {

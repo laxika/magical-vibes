@@ -24,6 +24,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "15")
 @CardRegistration(set = "LTC", collectorNumber = "99")
+@CardRegistration(set = "LTC", collectorNumber = "417")
 public class GwaihirGreatestOfTheEagles extends Card {
 
     public GwaihirGreatestOfTheEagles() {

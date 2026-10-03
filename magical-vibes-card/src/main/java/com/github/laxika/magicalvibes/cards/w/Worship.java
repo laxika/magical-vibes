@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 @CardRegistration(set = "USG", collectorNumber = "57")
 @CardRegistration(set = "MP2", collectorNumber = "6")
 @CardRegistration(set = "SS2", collectorNumber = "7")
+@CardRegistration(set = "LTC", collectorNumber = "522")
 public class Worship extends Card {
 
     public Worship() {

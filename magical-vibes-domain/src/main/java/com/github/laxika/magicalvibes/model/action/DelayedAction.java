@@ -143,6 +143,7 @@ public sealed interface DelayedAction permits
         ExpireControlAtEndOfNextTurn,
         PhasedOutUntilEndOfNextTurn,
         DelayedDamageDoubling,
+        DelayedControllerDamageMultiplication,
         DelayedSourceDamageMultiplication,
         DelayedVehicleAttack,
         UnattachEquipmentAtNextEndStep {

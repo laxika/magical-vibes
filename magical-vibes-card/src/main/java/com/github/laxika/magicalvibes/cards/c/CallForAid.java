@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "113")
+@CardRegistration(set = "LTC", collectorNumber = "432")
 public class CallForAid extends Card {
 
     public CallForAid() {

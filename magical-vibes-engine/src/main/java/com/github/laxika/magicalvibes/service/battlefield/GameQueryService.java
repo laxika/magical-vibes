@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
 import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
 import com.github.laxika.magicalvibes.model.action.DelayedSourceDamageMultiplication;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -1761,7 +1762,9 @@ public class GameQueryService {
 
     /** Returns whether the player can lose life, including damage and life payments. */
     public boolean canPlayerLoseLife(GameData gameData, UUID playerId) {
-        return canPlayerLifeChange(gameData, playerId) && !gameData.playersCantLoseLifeThisTurn;
+        return canPlayerLifeChange(gameData, playerId)
+                && !gameData.playersWhoCantLoseLifeThisTurn.contains(playerId)
+                && !gameData.playersCantLoseLifeThisTurn;
     }
 
     /**
@@ -9727,6 +9730,14 @@ public class GameQueryService {
         for (DelayedDamageDoubling doubling : gameData.getDelayedActions(DelayedDamageDoubling.class)) {
             if (recipientPlayerId.equals(doubling.targetPlayerId())) {
                 multiplier[0] *= MaroGoneNutsSupport.doublingFactor(gameData) * 2;
+            }
+        }
+        if (sourceControllerId != null && !recipientPlayerId.equals(sourceControllerId)) {
+            for (DelayedControllerDamageMultiplication multiplication
+                    : gameData.getDelayedActions(DelayedControllerDamageMultiplication.class)) {
+                if (sourceControllerId.equals(multiplication.controllerId())) {
+                    multiplier[0] *= multiplication.multiplier();
+                }
             }
         }
         gameData.forEachPermanent((controllerId, p) -> {
