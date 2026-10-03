@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.ArmorThrull;
+import com.github.laxika.magicalvibes.cards.e.Excruciator;
 import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DelifsCone.class, IcatianPhalanx.class, ArmorThrull.class})
+@CardUsed({DelifsCone.class, IcatianPhalanx.class, ArmorThrull.class, Excruciator.class})
 class DelifsConeTest extends BaseCardTest {
 
     private Permanent activateForAttacker() {
@@ -81,9 +82,7 @@ class DelifsConeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Delif's Cone");
         harness.passBothPriorities();
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -111,8 +110,7 @@ class DelifsConeTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new IcatianPhalanx());
         addCreatureReady(player2, new IcatianPhalanx());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of());
 
         int coneIndex = gd.playerBattlefields.get(player1.getId())
@@ -165,9 +163,7 @@ class DelifsConeTest extends BaseCardTest {
                 .indexOf(findPermanent(player1, "Delif's Cone"));
         harness.activateAbility(player1, coneIndex, null, attacker.getId());
         harness.passBothPriorities();
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker)).isTrue();
@@ -177,5 +173,74 @@ class DelifsConeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("An untargeted attacker still deals combat damage when the chosen attacker gains life")
+    void untargetedAttackerStillDealsCombatDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new DelifsCone());
+        Permanent chosen = addCreatureReady(player1, new IcatianPhalanx());
+        Permanent other = addCreatureReady(player1, new IcatianPhalanx());
+
+        harness.activateAbility(player1, 0, null, chosen.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(chosen),
+                gd.playerBattlefields.get(player1.getId()).indexOf(other)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A target that leaves before the activation resolves creates no delayed trigger")
+    void targetLeavingBeforeActivationResolvesDoesNotTrigger() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new DelifsCone());
+        Permanent chosen = addCreatureReady(player1, new IcatianPhalanx());
+        Permanent other = addCreatureReady(player1, new IcatianPhalanx());
+
+        harness.activateAbility(player1, 0, null, chosen.getId());
+        assertThat(harness.getPermanentRemovalService().removePermanentToGraveyard(gd, chosen)).isTrue();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Delif's Cone");
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(other)));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Accepting life gain stops combat damage assignment even when damage cannot be prevented")
+    void acceptingStopsAssignmentOfUnpreventableCombatDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new DelifsCone());
+        Permanent attacker = addCreatureReady(player1, new Excruciator());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(27);
+
+        resolveCombat();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
