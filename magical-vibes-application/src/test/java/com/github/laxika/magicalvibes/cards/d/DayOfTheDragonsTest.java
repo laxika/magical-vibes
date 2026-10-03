@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.n.NobleTemplar;
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
+import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
 import com.github.laxika.magicalvibes.cards.t.TempleOfTheFalseGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DayOfTheDragons.class, ControlMagic.class, DragonMage.class, NobleTemplar.class,
-        TempleOfTheFalseGod.class})
+        TempleOfTheFalseGod.class, MaskwoodNexus.class, ZulaportCutthroat.class})
 class DayOfTheDragonsTest extends BaseCardTest {
 
     @Test
@@ -122,13 +124,85 @@ class DayOfTheDragonsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Noble Templar");
     }
 
+    @Test
+    @DisplayName("Sacrifices all Dragons simultaneously so dying Dragons see each other's deaths")
+    void dragonsDieSimultaneously() {
+        castAndResolveDayOfTheDragons();
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        harness.addToBattlefield(player1, new ZulaportCutthroat());
+        harness.addToBattlefield(player1, new NobleTemplar());
+        harness.addToBattlefield(player1, new NobleTemplar());
+
+        Permanent day = findPermanent(player1, "Day of the Dragons");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, day));
+        harness.passBothPriorities();
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Zulaport Cutthroat");
+        harness.assertNotOnBattlefield(player1, "Noble Templar");
+        harness.assertOnBattlefield(player1, "Maskwood Nexus");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Exiled creature tokens count toward new Dragons but cannot return")
+    void exiledTokensCountButDoNotReturn() {
+        harness.addToBattlefield(player1, new NobleTemplar());
+        castAndResolveDayOfTheDragons();
+        Permanent firstDay = findPermanent(player1, "Day of the Dragons");
+
+        castAndResolveDayOfTheDragons();
+        Permanent secondDay = findPermanents(player1, "Day of the Dragons").stream()
+                .filter(day -> !day.getId().equals(firstDay.getId()))
+                .findFirst().orElseThrow();
+        assertThat(findPermanents(player1, "Dragon")).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondDay));
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Noble Templar");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstDay));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Noble Templar");
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaving before the enter trigger resolves leaves later exiled creatures in exile")
+    void leavesBeforeEnterTriggerResolves() {
+        harness.addToBattlefield(player1, new NobleTemplar());
+        harness.addToBattlefield(player1, new DragonMage());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new DayOfTheDragons(), "{4}{U}{U}{U}");
+        harness.passBothPriorities();
+        Permanent day = findPermanent(player1, "Day of the Dragons");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, day));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Dragon Mage");
+        harness.assertOnBattlefield(player1, "Noble Templar");
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Noble Templar");
+        assertThat(findPermanents(player1, "Dragon")).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(day.getId()))
+                .extracting(card -> card.getName()).containsExactly("Noble Templar");
+    }
+
     private void castAndResolveDayOfTheDragons() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new DayOfTheDragons()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new DayOfTheDragons(), "{4}{U}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
