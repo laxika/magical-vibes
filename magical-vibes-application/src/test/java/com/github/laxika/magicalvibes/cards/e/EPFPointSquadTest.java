@@ -22,7 +22,7 @@ class EPFPointSquadTest extends BaseCardTest {
     void getsCounterWhenAllyCreatureEnters() {
         Permanent pointSquad = harness.addToBattlefieldAndReturn(player1, new EPFPointSquad());
 
-        castGrizzlyBears(player1);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         resolveAllTriggers();
 
         assertThat(pointSquad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -36,7 +36,7 @@ class EPFPointSquadTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        castGrizzlyBears(player2);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         resolveAllTriggers();
 
         assertThat(pointSquad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -55,9 +55,44 @@ class EPFPointSquadTest extends BaseCardTest {
         assertThat(pointSquad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private void castGrizzlyBears(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castCreature(player, 0);
+    @Test
+    @DisplayName("A second Point Squad triggers the first but not itself")
+    void anotherPointSquadTriggersOnlyTheExistingCopy() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new EPFPointSquad());
+        harness.setHand(player1, List.of(new EPFPointSquad()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(second).isNotSameAs(first);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Alliance triggers again for each subsequent creature entry")
+    void accumulatesCountersFromRepeatedEntries() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new EPFPointSquad());
+
+        for (int entry = 0; entry < 2; entry++) {
+            harness.setHand(player1, List.of(new EPFPointSquad()));
+            harness.addMana(player1, ManaColor.WHITE, 3);
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+        }
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(1)
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getLast()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
