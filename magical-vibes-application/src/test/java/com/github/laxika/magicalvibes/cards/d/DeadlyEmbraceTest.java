@@ -27,11 +27,9 @@ class DeadlyEmbraceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Murder(), new DeadlyEmbrace()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castInstant(player1, 0, ownCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ownCreature.getId());
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -48,11 +46,45 @@ class DeadlyEmbraceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DeadlyEmbrace()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when its only target dies in response")
+    void doesNotDrawWhenTargetDiesInResponse() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.setHand(player1, List.of(new DeadlyEmbrace(), new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Deadly Embrace");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Earlier deaths remain counted for another Deadly Embrace in the same turn")
+    void earlierDeathsAreNotConsumedByDrawing() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.setHand(player1, List.of(new DeadlyEmbrace(), new DeadlyEmbrace()));
+        harness.addMana(player1, ManaColor.BLACK, 10);
+
+        harness.castAndResolveSorcery(player1, 0, firstTarget.getId());
+        harness.castAndResolveSorcery(player1, 0, secondTarget.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
