@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DuctCrawler.class)
+@CardUsed({DuctCrawler.class})
 class DuctCrawlerTest extends BaseCardTest {
 
     @Test
@@ -238,16 +238,52 @@ class DuctCrawlerTest extends BaseCardTest {
         assertThat(ownCreature.getCantBlockIds()).contains(crawler.getId());
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Duct Crawler can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent crawler = harness.addToBattlefieldAndReturn(player1, new DuctCrawler());
+        crawler.setSummoningSick(true);
+        crawler.setTapped(true);
+        Permanent target = addCreatureReady(player2, new DuctCrawler());
+        addAbilityMana(player1, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCantBlockIds()).contains(crawler.getId());
+        assertThat(crawler.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Duct Crawler can target itself")
+    void canTargetItself() {
+        Permanent crawler = addReadyCrawler(player1);
+        addAbilityMana(player1, 1);
+
+        harness.activateAbility(player1, 0, null, crawler.getId());
+        harness.passBothPriorities();
+
+        assertThat(crawler.getCantBlockIds()).contains(crawler.getId());
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the required red mana")
+    void cannotActivateWithoutRedMana() {
+        addReadyCrawler(player1);
+        Permanent target = addCreatureReady(player2, new DuctCrawler());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addAbilityMana(Player player, int activations) {
         harness.addMana(player, ManaColor.RED, activations);
         harness.addMana(player, ManaColor.COLORLESS, activations);
     }
 
     private Permanent addReadyCrawler(Player player) {
-        DuctCrawler card = new DuctCrawler();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new DuctCrawler());
     }
 }
