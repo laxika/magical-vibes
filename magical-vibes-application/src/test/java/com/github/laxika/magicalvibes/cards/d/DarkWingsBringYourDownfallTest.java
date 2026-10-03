@@ -22,10 +22,10 @@ class DarkWingsBringYourDownfallTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking creates a tapped and attacking 5/5 Demon token")
     void attackCreatesDemonToken() {
-        harness.addToBattlefield(player1, new DarkWingsBringYourDownfall());
+        gd.playerCommandZones.get(player1.getId()).add(new DarkWingsBringYourDownfall());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(1));
+        declareAttackers(List.of(0));
         resolveAllTriggers();
 
         Permanent demon = findPermanents(player1, "Demon").stream()
@@ -44,7 +44,8 @@ class DarkWingsBringYourDownfallTest extends BaseCardTest {
     @Test
     @DisplayName("Abandons at the end step after two creatures you control die")
     void abandonsAfterTwoControlledCreaturesDie() {
-        Permanent scheme = harness.addToBattlefieldAndReturn(player1, new DarkWingsBringYourDownfall());
+        DarkWingsBringYourDownfall scheme = new DarkWingsBringYourDownfall();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
@@ -52,13 +53,15 @@ class DarkWingsBringYourDownfallTest extends BaseCardTest {
         advanceToEndStep();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scheme);
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(scheme);
     }
 
     @Test
     @DisplayName("Opponent creature deaths do not satisfy the abandonment condition")
     void ignoresOpponentCreatureDeaths() {
-        Permanent scheme = harness.addToBattlefieldAndReturn(player1, new DarkWingsBringYourDownfall());
+        DarkWingsBringYourDownfall scheme = new DarkWingsBringYourDownfall();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -66,7 +69,81 @@ class DarkWingsBringYourDownfallTest extends BaseCardTest {
         destroyCreaturesWithDamnation();
         advanceToEndStep();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
+        assertThat(gd.playerCommandZones.get(player1.getId())).contains(scheme);
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void noDeathsDoNotTriggerAbandonment() {
+        DarkWingsBringYourDownfall scheme = new DarkWingsBringYourDownfall();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+
+        advanceToEndStep();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+    }
+
+    @Test
+    void demonTokenDeathCountsTowardAbandonment() {
+        DarkWingsBringYourDownfall scheme = new DarkWingsBringYourDownfall();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Demon")).isEqualTo(1);
+
+        destroyCreaturesWithDamnation();
+        advanceToEndStep();
+        resolveAllTriggers();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(scheme);
+    }
+
+    @Test
+    void multipleAttackersCreateOnlyOneDemon() {
+        gd.playerCommandZones.get(player1.getId()).add(new DarkWingsBringYourDownfall());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Demon")).isEqualTo(1);
+    }
+
+    @Test
+    void opponentAttackDoesNotCreateDemon() {
+        gd.playerCommandZones.get(player1.getId()).add(new DarkWingsBringYourDownfall());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Demon")).isZero();
+        assertThat(countPermanents(player2, "Demon")).isZero();
+    }
+
+    @Test
+    void abandonsOnOpponentEndStepAfterTwoControlledCreaturesDie() {
+        DarkWingsBringYourDownfall scheme = new DarkWingsBringYourDownfall();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Damnation()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(scheme);
     }
 
     private void destroyCreaturesWithDamnation() {
@@ -75,8 +152,7 @@ class DarkWingsBringYourDownfallTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Damnation()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void advanceToEndStep() {
