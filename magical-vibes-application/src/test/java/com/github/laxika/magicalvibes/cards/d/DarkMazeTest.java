@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarkMaze.class, GrizzlyBears.class})
+@CardUsed({DarkMaze.class, GrizzlyBears.class, RayOfCommand.class})
 class DarkMazeTest extends BaseCardTest {
 
     private Permanent addMazeReady() {
@@ -72,7 +74,7 @@ class DarkMazeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dark Maze");
 
         // Advance to the end step — Dark Maze should be exiled.
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Dark Maze");
@@ -93,5 +95,76 @@ class DarkMazeTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void abilityCanBeActivatedWhileSummoningSickButDoesNotAllowAttack() {
+        harness.addToBattlefield(player1, new DarkMaze());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void abilityCanBeActivatedWhileTappedButDoesNotUntapMaze() {
+        Permanent maze = addMazeReady();
+        maze.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(maze.isTapped()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void repeatedActivationsExileOnlyTheActivatedMaze() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent activatedMaze = addMazeReady();
+        Permanent otherMaze = addMazeReady();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .containsExactly(activatedMaze, otherMaze);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherMaze);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(activatedMaze.getCard());
+    }
+
+    @Test
+    void delayedExileRemainsControlledByThePlayerWhoActivatedMaze() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent maze = addMazeReady();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player2, 0, maze.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(maze);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Dark Maze");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(maze.getCard());
     }
 }
