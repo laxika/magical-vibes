@@ -107,6 +107,58 @@ class EarthKingdomJailerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("May choose no target even when a legal target exists")
+    void mayDeclineLegalTarget() {
+        harness.addToBattlefield(player2, new HillGiant());
+
+        castAndResolve(null);
+
+        harness.assertOnBattlefield(player1, "Earth Kingdom Jailer");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not exile when Jailer leaves before its enter trigger resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player2, new HillGiant());
+        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
+        harness.setHand(player1, List.of(new EarthKingdomJailer()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+
+        destroyJailer();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Earth Kingdom Jailer");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not exile a target that dies before the enter trigger resolves")
+    void targetLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player2, new HillGiant());
+        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
+        harness.setHand(player1, List.of(new EarthKingdomJailer()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Earth Kingdom Jailer");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
     private void castAndResolve(UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -127,7 +179,6 @@ class EarthKingdomJailerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID jailerId = harness.getPermanentId(player1, "Earth Kingdom Jailer");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, jailerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, jailerId);
     }
 }
