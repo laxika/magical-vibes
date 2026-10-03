@@ -1,46 +1,22 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CobbledWings.class, WalkingCorpse.class})
 class CobbledWingsTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
-
-    @Test
-    @DisplayName("Cobbled Wings has equip {1} ability with correct properties")
-    void hasEquipAbility() {
-        CobbledWings card = new CobbledWings();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Cobbled Wings and resolving puts it on the battlefield unattached")
@@ -56,13 +32,11 @@ class CobbledWingsTest extends BaseCardTest {
                         && !p.isAttached());
     }
 
-    // ===== Equip ability: resolving =====
-
     @Test
     @DisplayName("Resolving equip ability attaches Cobbled Wings to target creature")
     void resolvingEquipAttachesToCreature() {
-        Permanent wings = addWingsReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -70,15 +44,15 @@ class CobbledWingsTest extends BaseCardTest {
 
         assertThat(wings.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(wings.isTapped()).isFalse();
     }
-
-    // ===== Static effects: keyword grants =====
 
     @Test
     @DisplayName("Equipped creature has flying")
     void equippedCreatureHasFlying() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent wings = addWingsReady(player1);
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
         wings.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
@@ -87,8 +61,8 @@ class CobbledWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses flying when Cobbled Wings is removed")
     void creatureLosesFlyingWhenEquipmentRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent wings = addWingsReady(player1);
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
         wings.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
@@ -101,22 +75,20 @@ class CobbledWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Cobbled Wings does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent wings = addWingsReady(player1);
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent otherCreature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
         wings.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Re-equip =====
-
     @Test
     @DisplayName("Cobbled Wings can be moved to another creature")
     void canReEquipToAnotherCreature() {
-        Permanent wings = addWingsReady(player1);
-        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
+        Permanent creature1 = addCreatureReady(player1, new WalkingCorpse());
+        Permanent creature2 = addCreatureReady(player1, new WalkingCorpse());
 
         wings.setAttachedTo(creature1.getId());
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.FLYING)).isTrue();
@@ -130,12 +102,92 @@ class CobbledWingsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature2, Keyword.FLYING)).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    void cannotEquipWithoutMana() {
+        harness.addToBattlefield(player1, new CobbledWings());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 
-    private Permanent addWingsReady(Player player) {
-        Permanent perm = new Permanent(new CobbledWings());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void cannotEquipOpponentsCreature() {
+        harness.addToBattlefield(player1, new CobbledWings());
+        Permanent creature = addCreatureReady(player2, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotEquipNoncreature() {
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wings.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wings.isAttached()).isFalse();
+    }
+
+    @Test
+    void cannotEquipDuringUpkeep() {
+        harness.addToBattlefield(player1, new CobbledWings());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotEquipWhileStackIsNotEmpty() {
+        harness.addToBattlefield(player1, new CobbledWings());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void failedReequipLeavesEquipmentOnOriginalCreature() {
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
+        Permanent original = addCreatureReady(player1, new WalkingCorpse());
+        Permanent target = addCreatureReady(player1, new WalkingCorpse());
+        wings.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+        assertThat(wings.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipmentGrantsFlyingAcrossControllers() {
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
+        Permanent creature = addCreatureReady(player2, new WalkingCorpse());
+        wings.setAttachedTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void tappedEquipmentCanEquipTappedCreature() {
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new CobbledWings());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        wings.tap();
+        creature.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(wings.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(wings.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 }
