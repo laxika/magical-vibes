@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,9 +43,7 @@ class DwarvenSongTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.RED);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.GREEN);
     }
@@ -68,6 +67,66 @@ class DwarvenSongTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(pendelhaven.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target more than ninety-nine creatures")
+    void canTargetOneHundredCreatures() {
+        List<Permanent> creatures = IntStream.range(0, 100)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new BarbaryApes()))
+                .toList();
+
+        cast(creatures.stream().map(Permanent::getId).toList());
+
+        for (Permanent creature : creatures) {
+            assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.RED);
+        }
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new DwarvenSong()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Still changes a legal target when another target leaves the battlefield")
+    void resolvesForRemainingLegalTarget() {
+        Permanent departingCreature = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        Permanent remainingCreature = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new DwarvenSong()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, List.of(departingCreature.getId(), remainingCreature.getId()));
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, departingCreature);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, remainingCreature)).containsExactly(CardColor.RED);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not resolve when every target has left the battlefield")
+    void doesNotResolveWithNoLegalTargets() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new DwarvenSong()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, List.of(target.getId()));
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, untargeted)).containsExactly(CardColor.GREEN);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof DwarvenSong);
     }
 
     private void cast(List<java.util.UUID> targetIds) {
