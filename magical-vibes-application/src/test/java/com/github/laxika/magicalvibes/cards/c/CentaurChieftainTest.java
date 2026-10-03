@@ -96,6 +96,39 @@ class CentaurChieftainTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, rootwalla, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Gaining threshold after entry does not retroactively trigger the ability")
+    void gainingThresholdAfterEntryDoesNotTrigger() {
+        Permanent rootwalla = harness.addToBattlefieldAndReturn(player1, new BaskingRootwalla());
+        harness.setGraveyard(player1, graveyardWithSixCards());
+        harness.setGraveyard(player2, graveyardWithSevenCards());
+
+        harness.castFromHand(player1, new CentaurChieftain(), "{3}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, rootwalla, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the threshold ability resolves do not receive its effects")
+    void creaturesEnteringAfterResolutionAreNotAffected() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent chieftain = castChieftain();
+
+        Permanent lateRootwalla = harness.enterBattlefieldAndReturn(player1, new BaskingRootwalla());
+
+        assertThat(gqs.getEffectivePower(gd, chieftain)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, chieftain, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, lateRootwalla)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lateRootwalla)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, lateRootwalla, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent castChieftain() {
         harness.castFromHand(player1, new CentaurChieftain(), "{3}{G}");
         harness.passBothPriorities();
