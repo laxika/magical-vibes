@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,9 +12,73 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CutthroatIlDal.class, BlindPhantasm.class})
 class CutthroatIlDalTest extends BaseCardTest {
+    @Test
+    void cannotBeBlockedByCreatureWithoutShadowWhileHellbent() {
+        harness.setHand(player1, List.of());
+        addCreatureReady(player1, new CutthroatIlDal());
+        addCreatureReady(player2, new BlindPhantasm());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    void canBeBlockedByCreatureWithoutShadowWhenNotHellbent() {
+        harness.setHand(player1, List.of(new BlindPhantasm()));
+        addCreatureReady(player1, new CutthroatIlDal());
+        Permanent blocker = addCreatureReady(player2, new BlindPhantasm());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void canBeBlockedByAnotherHellbentCutthroat() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        addCreatureReady(player1, new CutthroatIlDal());
+        Permanent blocker = addCreatureReady(player2, new CutthroatIlDal());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void cannotBlockCreatureWithoutShadowWhileHellbent() {
+        harness.setHand(player2, List.of());
+        addCreatureReady(player1, new BlindPhantasm());
+        addCreatureReady(player2, new CutthroatIlDal());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    void gainingCardBeforeBlocksAllowsNonShadowBlocker() {
+        harness.setHand(player1, List.of());
+        addCreatureReady(player1, new CutthroatIlDal());
+        Permanent blocker = addCreatureReady(player2, new BlindPhantasm());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new BlindPhantasm()));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("Has shadow while its controller has no cards in hand")
