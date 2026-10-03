@@ -43,6 +43,9 @@ class ChargingCinderhornTest extends BaseCardTest {
         Permanent cinderhorn = harness.addToBattlefieldAndReturn(player1, new ChargingCinderhorn());
         addCreatureReady(player2, new GrizzlyBears());
         declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
 
         advanceToEndStep(player2);
 

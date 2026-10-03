@@ -623,8 +623,10 @@ public class DeathTriggerCollectorService {
                 effect.counterType(), counters, effect.optional(), effect.targetPredicate(), modular);
         // "you may …" (Soulstinger): the target is still chosen now (CR 603.3d), but the controller
         // may decline placing the counters when the trigger resolves — gate it behind a MayEffect.
+        String counterDescription = effect.counterType() == CounterType.PLUS_ONE_PLUS_ONE ? "+1/+1" : "-1/-1";
         CardEffect queued = effect.optional()
-                ? new MayEffect(baked, "put a -1/-1 counter on target creature for each -1/-1 counter on "
+                ? new MayEffect(baked, "put a " + counterDescription + " counter on target creature for each "
+                        + counterDescription + " counter on "
                         + sd.dyingCard().getName() + "?")
                 : baked;
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(

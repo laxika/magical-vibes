@@ -55,7 +55,7 @@ class KynaiosAndTiroOfMeletisTest extends BaseCardTest {
 
         chooseNoLand(player1);
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerDraw);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest, controllerDraw);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentDraw);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .noneMatch(permanent -> permanent.getCard().getId().equals(forest.getId()))).isTrue();
