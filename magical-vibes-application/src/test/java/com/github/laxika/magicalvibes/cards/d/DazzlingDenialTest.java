@@ -25,7 +25,7 @@ class DazzlingDenialTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Angel's Mercy");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -36,16 +36,69 @@ class DazzlingDenialTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Angel's Mercy");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void countersWhenControllerDeclinesToPayTwo() {
+        AngelsMercy angelsMercy = castTargetSpell();
+        castDazzlingDenial(angelsMercy);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Angel's Mercy");
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void allowsSpellToResolveWhenControllerPaysFour() {
+        harness.addToBattlefield(player2, new AvenSquire());
+        AngelsMercy angelsMercy = castTargetSpell();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        castDazzlingDenial(angelsMercy);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Angel's Mercy");
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void opponentsBirdDoesNotIncreasePayment() {
+        harness.addToBattlefield(player1, new AvenSquire());
+        AngelsMercy angelsMercy = castTargetSpell();
+        castDazzlingDenial(angelsMercy);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void checksForBirdAtResolutionRatherThanCasting() {
+        AngelsMercy angelsMercy = castTargetSpell();
+        harness.setHand(player2, List.of(new DazzlingDenial()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, angelsMercy.getId());
+
+        harness.addToBattlefield(player2, new AvenSquire());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Angel's Mercy");
+        harness.assertLife(player1, 10);
     }
 
     private AngelsMercy castTargetSpell() {
         harness.setLife(player1, 10);
         AngelsMercy angelsMercy = new AngelsMercy();
-        harness.setHand(player1, List.of(angelsMercy));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, angelsMercy, "{2}{W}{W}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passPriority(player1);
         return angelsMercy;
     }
