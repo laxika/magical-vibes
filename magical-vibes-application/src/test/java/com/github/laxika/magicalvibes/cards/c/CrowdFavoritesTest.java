@@ -70,9 +70,7 @@ class CrowdFavoritesTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, crowdFavorites)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(9);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, crowdFavorites)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(4);
@@ -96,6 +94,56 @@ class CrowdFavoritesTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, crowdFavorites)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Repeated toughness boosts accumulate and expire together")
+    void repeatedBoostsAccumulate() {
+        Permanent crowdFavorites = addReadyCrowdFavorites(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, crowdFavorites)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(14);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The tap ability can target Crowd Favorites itself")
+    void canTapItself() {
+        Permanent crowdFavorites = addReadyCrowdFavorites(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, crowdFavorites.getId());
+
+        assertThat(crowdFavorites.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(crowdFavorites.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The tap ability resolves even after Crowd Favorites leaves the battlefield")
+    void tapAbilitySurvivesSourceLeaving() {
+        Permanent crowdFavorites = addReadyCrowdFavorites(player1);
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(crowdFavorites);
+        gd.playerGraveyards.get(player1.getId()).add(crowdFavorites.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
     }
 
     private Permanent addReadyCrowdFavorites(Player player) {
