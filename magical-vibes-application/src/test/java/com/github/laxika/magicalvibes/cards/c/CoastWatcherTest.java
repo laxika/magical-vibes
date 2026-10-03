@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AcceleratedMutation;
 import com.github.laxika.magicalvibes.cards.d.DragonFangs;
 import com.github.laxika.magicalvibes.cards.t.TreetopScout;
 import com.github.laxika.magicalvibes.cards.x.XantidSwarm;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
