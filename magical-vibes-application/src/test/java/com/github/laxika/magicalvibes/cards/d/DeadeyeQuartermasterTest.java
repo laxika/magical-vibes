@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ShortSword;
-import com.github.laxika.magicalvibes.cards.s.SylvokLifestaff;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.f.FellFlagship;
+import com.github.laxika.magicalvibes.cards.p.PiratesCutlass;
+import com.github.laxika.magicalvibes.cards.s.StormFleetAerialist;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DeadeyeQuartermaster.class, PiratesCutlass.class, FellFlagship.class, StormFleetAerialist.class})
 class DeadeyeQuartermasterTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Resolving Deadeye Quartermaster creates may prompt")
@@ -71,7 +69,7 @@ class DeadeyeQuartermasterTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
@@ -96,9 +94,7 @@ class DeadeyeQuartermasterTest extends BaseCardTest {
     @DisplayName("Non-Equipment non-Vehicle cards are excluded from search")
     void nonEquipmentNonVehicleExcluded() {
         setupAndCast();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new StormFleetAerialist(), new StormFleetAerialist()));
 
         harness.passBothPriorities();
         harness.passBothPriorities(); // resolve MayEffect → may prompt
@@ -120,9 +116,95 @@ class DeadeyeQuartermasterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A Vehicle can be found, revealed, and put into hand")
+    void choosingVehicleRevealsItAndPutsItIntoHand() {
+        setupAndCast();
+        FellFlagship vehicle = new FellFlagship();
+        PiratesCutlass equipment = new PiratesCutlass();
+        StormFleetAerialist creature = new StormFleetAerialist();
+        harness.setLibrary(player1, List.of(vehicle, equipment, creature));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(vehicle, equipment);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(vehicle);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(equipment, creature);
+        harness.assertNotOnBattlefield(player1, "Fell Flagship");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals Fell Flagship"));
+    }
+
+    @Test
+    @DisplayName("Declining the optional search preserves library order and hand")
+    void decliningSearchLeavesLibraryUnchanged() {
+        setupAndCast();
+        PiratesCutlass equipment = new PiratesCutlass();
+        FellFlagship vehicle = new FellFlagship();
+        StormFleetAerialist creature = new StormFleetAerialist();
+        harness.setLibrary(player1, List.of(equipment, vehicle, creature));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(equipment, vehicle, creature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(entry -> entry.contains("shuffled"));
+    }
+
+    @Test
+    @DisplayName("Failing to find retains eligible cards and still shuffles")
+    void failingToFindRetainsCardsAndShuffles() {
+        setupAndCast();
+        PiratesCutlass equipment = new PiratesCutlass();
+        FellFlagship vehicle = new FellFlagship();
+        harness.setLibrary(player1, List.of(equipment, vehicle));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(equipment, vehicle);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library finishes and shuffles")
+    void searchingEmptyLibraryFinishes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
     }
 
     private void setupAndCast() {
@@ -133,9 +215,6 @@ class DeadeyeQuartermasterTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        // ShortSword (Equipment), SylvokLifestaff (Equipment), GrizzlyBears (creature — not Equipment/Vehicle)
-        deck.addAll(List.of(new ShortSword(), new SylvokLifestaff(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new PiratesCutlass(), new PiratesCutlass(), new StormFleetAerialist()));
     }
 }
