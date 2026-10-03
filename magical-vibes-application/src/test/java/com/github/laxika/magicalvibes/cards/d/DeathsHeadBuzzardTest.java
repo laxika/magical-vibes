@@ -72,6 +72,49 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Creatures entering before the death trigger resolves are affected")
+    void deathTriggerAffectsCreaturesPresentAtResolution() {
+        Permanent buzzard = harness.addToBattlefieldAndReturn(player1, new DeathsHeadBuzzard());
+        harness.setHand(player1, java.util.List.of(new SparkSpray()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, buzzard.getId());
+
+        harness.assertInGraveyard(player1, "Death's-Head Buzzard");
+        Permanent entrant = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
+        assertThat(entrant.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(entrant.getEffectivePower()).isEqualTo(1);
+        assertThat(entrant.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Buzzard killed by another Buzzard's trigger creates its own death trigger")
+    void deathTriggersChainAndDebuffsAccumulate() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
+        Permanent buzzard = harness.addToBattlefieldAndReturn(player1, new DeathsHeadBuzzard());
+        harness.addToBattlefield(player2, new DeathsHeadBuzzard());
+
+        destroyBuzzard(buzzard);
+
+        harness.assertInGraveyard(player1, "Death's-Head Buzzard");
+        harness.assertInGraveyard(player2, "Death's-Head Buzzard");
+        harness.assertNotOnBattlefield(player2, "Death's-Head Buzzard");
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Brigand");
+        harness.assertNotOnBattlefield(player2, "Goblin Brigand");
+        harness.assertInGraveyard(player1, "Goblin Brigand");
+        harness.assertInGraveyard(player2, "Goblin Brigand");
+    }
+
     private void destroyBuzzard(Permanent buzzard) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
