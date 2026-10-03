@@ -17,6 +17,8 @@ import java.util.List;
 
 @CardRegistration(set = "HOC", collectorNumber = "48")
 @CardRegistration(set = "HOC", collectorNumber = "88")
+@CardRegistration(set = "LTC", collectorNumber = "514")
+@CardRegistration(set = "LTC", collectorNumber = "558")
 public class MinasMorgulDarkFortress extends Card {
 
     public MinasMorgulDarkFortress() {

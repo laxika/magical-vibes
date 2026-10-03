@@ -22,6 +22,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "36")
 @CardRegistration(set = "LTC", collectorNumber = "119")
+@CardRegistration(set = "LTC", collectorNumber = "438")
 public class AssembleTheEntmoot extends Card {
 
     public AssembleTheEntmoot() {

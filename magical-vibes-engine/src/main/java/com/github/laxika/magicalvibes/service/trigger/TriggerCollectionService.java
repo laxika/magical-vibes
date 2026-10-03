@@ -7086,6 +7086,20 @@ public class TriggerCollectionService {
         }
     }
 
+    public void checkExertTriggers(GameData gameData, UUID exertingPlayerId, UUID exertedCreatureId) {
+        if (exertingPlayerId == null || exertedCreatureId == null) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(exertingPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+        TriggerContext context = new TriggerContext.Exert(exertingPlayerId, exertedCreatureId);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, exertingPlayerId, EffectSlot.ON_CONTROLLER_EXERTS, context);
+        }
+    }
+
     /**
      * Fires effects that care about an attacking creature causing one of its own triggered
      * abilities to trigger. The ability is supplied as a snapshot so later stack changes cannot

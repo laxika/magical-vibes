@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneCardOfEachManaVa
 
 @CardRegistration(set = "SOI", collectorNumber = "226")
 @CardRegistration(set = "SIR", collectorNumber = "212")
+@CardRegistration(set = "LTC", collectorNumber = "529")
 public class SeasonsPast extends Card {
 
     public SeasonsPast() {

@@ -249,6 +249,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once for each die showing its unmodified highest natural result. */
     ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT,
     ON_CONTROLLER_BENDS,
+    /** Triggers whenever this permanent's controller exerts a creature. */
+    ON_CONTROLLER_EXERTS,
     /** Triggers whenever this permanent's controller collects evidence. */
     ON_CONTROLLER_COLLECTS_EVIDENCE,
     /** Triggers whenever this permanent's controller completes a discover action. */

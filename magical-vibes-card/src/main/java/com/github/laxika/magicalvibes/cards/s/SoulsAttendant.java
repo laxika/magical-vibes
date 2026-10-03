@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ROE", collectorNumber = "44")
+@CardRegistration(set = "LTC", collectorNumber = "520")
 public class SoulsAttendant extends Card {
 
     public SoulsAttendant() {

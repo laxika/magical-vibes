@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "HOC", collectorNumber = "201")
 @CardRegistration(set = "LTC", collectorNumber = "33")
 @CardRegistration(set = "LTC", collectorNumber = "116")
+@CardRegistration(set = "LTC", collectorNumber = "435")
 public class OrcishSiegemaster extends Card {
 
     public OrcishSiegemaster() {

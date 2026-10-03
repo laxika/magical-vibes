@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "HOC", collectorNumber = "87")
 @CardRegistration(set = "LTC", collectorNumber = "80")
 @CardRegistration(set = "LTC", collectorNumber = "160")
+@CardRegistration(set = "LTC", collectorNumber = "490")
 public class TheBlackGate extends Card {
 
     public TheBlackGate() {

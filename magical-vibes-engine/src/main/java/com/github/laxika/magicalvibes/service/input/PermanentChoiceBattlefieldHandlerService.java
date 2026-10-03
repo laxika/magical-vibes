@@ -246,6 +246,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OrderOfSuccessionEffectHandler orderOfSuccessionEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler eachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler olorinSearingLightEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToTapAndGoadEffectHandler fellBeastsShriekEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler benthicAnomalyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentDrawAndUntapEffectHandler chooseOpponentDrawAndUntapEffectHandler;
@@ -1096,6 +1098,25 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleEachOpponentChoosesCreatureToExileWithSource(GameData gameData, UUID permanentId,
             PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource context) {
         eachOpponentChoosesCreatureToExileWithSourceEffectHandler.completeChoice(gameData, permanentId, context);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleEachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage context) {
+        olorinSearingLightEffectHandler.completeChoice(gameData, permanentId, context);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleEachOpponentChoosesCreatureToTapAndGoad(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.EachOpponentChoosesCreatureToTapAndGoad context) {
+        fellBeastsShriekEffectHandler.completeChoice(gameData, permanentId, context);
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }

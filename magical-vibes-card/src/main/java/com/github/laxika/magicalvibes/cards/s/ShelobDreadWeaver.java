@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "29")
 @CardRegistration(set = "LTC", collectorNumber = "112")
+@CardRegistration(set = "LTC", collectorNumber = "431")
 public class ShelobDreadWeaver extends Card {
 
     public ShelobDreadWeaver() {
