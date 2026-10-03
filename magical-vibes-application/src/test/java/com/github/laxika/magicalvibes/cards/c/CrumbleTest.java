@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Crumble.class, RodOfRuin.class, GrizzlyBears.class})
@@ -32,12 +30,11 @@ class CrumbleTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Rod of Ruin");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Rod of Ruin");
         harness.assertInGraveyard(player2, "Rod of Ruin");
         // Rod of Ruin has mana value 4; its controller (player2), not the caster, gains 4 life
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(ownerLifeBefore + 4);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(casterLifeBefore);
+        harness.assertLife(player2, ownerLifeBefore + 4);
+        harness.assertLife(player1, casterLifeBefore);
     }
 
     @Test
@@ -81,5 +78,42 @@ class CrumbleTest extends BaseCardTest {
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Crumble can destroy its caster's artifact and give that player life")
+    void destroysOwnArtifactAndGainsLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.setHand(player1, List.of(new Crumble()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Rod of Ruin");
+        harness.assertInGraveyard(player1, "Rod of Ruin");
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Crumble gives no life when its target leaves before resolution")
+    void noLifeGainWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.setHand(player1, List.of(new Crumble()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Crumble");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
