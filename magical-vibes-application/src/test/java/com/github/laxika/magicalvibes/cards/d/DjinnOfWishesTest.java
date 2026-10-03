@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HaakonStromgaldScourge;
+import com.github.laxika.magicalvibes.cards.k.KalonianBehemoth;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
-@CardUsed({DjinnOfWishes.class, GrizzlyBears.class, Pyroclasm.class, Shock.class})
+@CardUsed({DjinnOfWishes.class, GrizzlyBears.class, Pyroclasm.class, Shock.class, Forest.class,
+        DemonOfCatastrophes.class, HaakonStromgaldScourge.class, KalonianBehemoth.class})
 class DjinnOfWishesTest extends BaseCardTest {
 
     private void addDjinnMana() {
@@ -28,8 +32,7 @@ class DjinnOfWishesTest extends BaseCardTest {
     }
 
     private void addDjinnToBattlefield() {
-        harness.addToBattlefield(player1, new DjinnOfWishes());
-        gd.playerBattlefields.get(player1.getId()).getLast().setCounterCount(CounterType.WISH, 3);
+        harness.addToBattlefieldAndReturn(player1, new DjinnOfWishes()).setCounterCount(CounterType.WISH, 3);
     }
 
     // ===== Enters with wish counters =====
@@ -153,7 +156,7 @@ class DjinnOfWishesTest extends BaseCardTest {
     @DisplayName("Can play a land from top of library if no land played this turn")
     void canPlayLandFromTop() {
         addDjinnToBattlefield();
-        Card forest = new com.github.laxika.magicalvibes.cards.f.Forest();
+        Card forest = new Forest();
         gd.playerDecks.get(player1.getId()).addFirst(forest);
 
         harness.forceActivePlayer(player1);
@@ -180,7 +183,7 @@ class DjinnOfWishesTest extends BaseCardTest {
     @DisplayName("Land is exiled if player already played a land this turn")
     void landExiledIfAlreadyPlayedLand() {
         addDjinnToBattlefield();
-        Card forest = new com.github.laxika.magicalvibes.cards.f.Forest();
+        Card forest = new Forest();
         gd.playerDecks.get(player1.getId()).addFirst(forest);
 
         // Simulate having already played a land
@@ -263,5 +266,109 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Removed from library
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    void landIsExiledOnOpponentsTurn() {
+        addDjinnToBattlefield();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addDjinnMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(forest);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.landsPlayedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    void canCastSorceryDuringOpponentsTurn() {
+        addDjinnToBattlefield();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card pyroclasm = new Pyroclasm();
+        harness.setLibrary(player1, List.of(pyroclasm));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addDjinnMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCounterCount(CounterType.WISH))
+                .isEqualTo(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(pyroclasm);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void mandatorySacrificeMustBePaidBeforeCastingRevealedCreature() {
+        addDjinnToBattlefield();
+        Card demon = new DemonOfCatastrophes();
+        harness.setLibrary(player1, List.of(demon));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addDjinnMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == demon);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Djinn of Wishes"));
+        harness.assertNotOnBattlefield(player1, "Djinn of Wishes");
+        assertThat(gd.stack.getLast().getCard()).isSameAs(demon);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Demon of Catastrophes");
+    }
+
+    @Test
+    void cardThatCannotBeCastFromLibraryIsExiled() {
+        addDjinnToBattlefield();
+        Card haakon = new HaakonStromgaldScourge();
+        harness.setLibrary(player1, List.of(haakon));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addDjinnMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(haakon);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(haakon);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == haakon);
+    }
+
+    @Test
+    void revealedSpellCannotTargetCreatureWithShroud() {
+        addDjinnToBattlefield();
+        UUID behemothId = harness.addToBattlefieldAndReturn(player2, new KalonianBehemoth()).getId();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addDjinnMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        var choice = (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        List<UUID> offeredTargets = List.copyOf(choice.validPermanentIds());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        assertThat(offeredTargets).doesNotContain(behemothId);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Kalonian Behemoth");
     }
 }
