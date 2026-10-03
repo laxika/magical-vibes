@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BloodArtist;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GoblinKing;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Dracoplasm.class, GrizzlyBears.class, GiantSpider.class, HillGiant.class,
-        GoblinKing.class, GoblinPiker.class})
+        GoblinKing.class, GoblinPiker.class, BloodArtist.class})
 class DracoplasmTest extends BaseCardTest {
 
     private void castDracoplasm() {
@@ -124,5 +126,55 @@ class DracoplasmTest extends BaseCardTest {
 
         assertThat(harness.getGameQueryService().getEffectivePower(gd, dracoplasm)).isEqualTo(3);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, dracoplasm)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated firebreathing boosts expire without losing the sacrificed creatures' stats")
+    void repeatedFirebreathingExpiresAtEndOfTurn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castDracoplasm();
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        Permanent dracoplasm = findPermanent(player1, "Dracoplasm");
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dracoplasm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dracoplasm)).isEqualTo(2);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, dracoplasm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, dracoplasm)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Dracoplasm");
+    }
+
+    @Test
+    @CardUsed({Dracoplasm.class, BloodArtist.class, GrizzlyBears.class})
+    @DisplayName("A sacrificed Blood Artist sees every creature sacrificed to Dracoplasm")
+    void sacrificedDeathWatcherSeesAllSimultaneousSacrifices() {
+        Permanent artist = harness.addToBattlefieldAndReturn(player1, new BloodArtist());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castDracoplasm();
+        harness.handleMultiplePermanentsChosen(player1, List.of(artist.getId(), bears.getId()));
+
+        for (int i = 0; i < 2; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        for (int i = 0; i < 2; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        Permanent dracoplasm = findPermanent(player1, "Dracoplasm");
+        assertThat(gqs.getEffectivePower(gd, dracoplasm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, dracoplasm)).isEqualTo(3);
     }
 }
