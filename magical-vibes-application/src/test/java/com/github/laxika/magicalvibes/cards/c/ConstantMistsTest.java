@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
 import com.github.laxika.magicalvibes.cards.w.WallOfTears;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -107,5 +108,61 @@ class ConstantMistsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Constant Mists");
         harness.assertNotInHand(player1, "Constant Mists");
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage to attacking and blocking creatures")
+    void preventsDamageToBothCombatants() {
+        var attacker = addCreatureReady(player1, new YouthfulKnight());
+        var blocker = addCreatureReady(player2, new YouthfulKnight());
+        harness.castFromHand(player1, new ConstantMists(), "{1}{G}");
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        harness.assertOnBattlefield(player1, "Youthful Knight");
+        harness.assertOnBattlefield(player2, "Youthful Knight");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped land can pay buyback and prevention still applies")
+    void tappedLandCanPayBuyback() {
+        var land = harness.addToBattlefieldAndReturn(player1, new VolrathsStronghold());
+        land.setTapped(true);
+        harness.setHand(player1, List.of(new ConstantMists()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrificeAndBuyback(player1, 0, null, land.getId());
+        harness.assertInGraveyard(player1, "Volrath's Stronghold");
+        harness.assertNotInHand(player1, "Constant Mists");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Constant Mists");
+
+        addCreatureReady(player2, new YouthfulKnight());
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Buyback cannot sacrifice an opponent's land")
+    void buybackCannotSacrificeOpponentsLand() {
+        var land = harness.addToBattlefieldAndReturn(player2, new VolrathsStronghold());
+        harness.setHand(player1, List.of(new ConstantMists()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrificeAndBuyback(
+                player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Constant Mists");
+        harness.assertOnBattlefield(player2, "Volrath's Stronghold");
     }
 }
