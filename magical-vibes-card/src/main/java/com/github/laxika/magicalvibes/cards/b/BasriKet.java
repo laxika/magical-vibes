@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "7")
+@CardRegistration(set = "M21", collectorNumber = "280")
+@CardRegistration(set = "M21", collectorNumber = "286")
 public class BasriKet extends Card {
 
     private static final String EMBLEM_TEXT =

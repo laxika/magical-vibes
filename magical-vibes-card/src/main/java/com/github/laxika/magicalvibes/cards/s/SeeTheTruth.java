@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEf
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 
 @CardRegistration(set = "M21", collectorNumber = "69")
+@CardRegistration(set = "M21", collectorNumber = "352")
 public class SeeTheTruth extends Card {
 
     public SeeTheTruth() {

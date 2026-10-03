@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "135")
+@CardRegistration(set = "M21", collectorNumber = "283")
+@CardRegistration(set = "M21", collectorNumber = "301")
 public class ChandraHeartOfFire extends Card {
 
     public ChandraHeartOfFire() {

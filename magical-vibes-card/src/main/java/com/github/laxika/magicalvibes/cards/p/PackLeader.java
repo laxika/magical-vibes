@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "29")
+@CardRegistration(set = "M21", collectorNumber = "345")
+@CardRegistration(set = "M21", collectorNumber = "392")
 @CardRegistration(set = "SLD", collectorNumber = "2258")
 @CardRegistration(set = "SLD", collectorNumber = "2268")
 @CardRegistration(set = "SLD", collectorNumber = "2270")

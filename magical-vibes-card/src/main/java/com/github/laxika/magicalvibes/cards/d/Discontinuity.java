@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostByManaCostEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "48")
+@CardRegistration(set = "M21", collectorNumber = "349")
 public class Discontinuity extends Card {
 
     public Discontinuity() {

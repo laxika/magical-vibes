@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 /** Teferi's Tutelage — enchantment. */
 @CardRegistration(set = "M21", collectorNumber = "78")
+@CardRegistration(set = "M21", collectorNumber = "296")
 public class TeferisTutelage extends Card {
 
     public TeferisTutelage() {

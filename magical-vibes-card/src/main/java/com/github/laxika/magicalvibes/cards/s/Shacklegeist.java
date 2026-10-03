@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "70")
+@CardRegistration(set = "M21", collectorNumber = "353")
 public class Shacklegeist extends Card {
 
     public Shacklegeist() {

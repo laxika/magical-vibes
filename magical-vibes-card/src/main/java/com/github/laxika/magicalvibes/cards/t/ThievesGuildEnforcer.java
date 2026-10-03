@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "125")
+@CardRegistration(set = "M21", collectorNumber = "361")
 public class ThievesGuildEnforcer extends Card {
 
     public ThievesGuildEnforcer() {
