@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CriticalHit.class, ChaosChanneler.class, GrizzlyBears.class})
+@CardUsed({CriticalHit.class, ChaosChanneler.class, HillGiantHerdgorger.class})
 class CriticalHitTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -40,13 +41,12 @@ class CriticalHitTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature gains double strike until end of turn")
     void grantsDoubleStrikeToTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
         harness.setHand(player1, List.of(new CriticalHit()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
     }
@@ -57,7 +57,7 @@ class CriticalHitTest extends BaseCardTest {
         setRoll(20);
         CriticalHit criticalHit = new CriticalHit();
         harness.setGraveyard(player1, List.of(criticalHit));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger(), new HillGiantHerdgorger(), new HillGiantHerdgorger()));
         addCreatureReady(player1, new ChaosChanneler());
 
         declareAttackers(List.of(0));
@@ -74,7 +74,7 @@ class CriticalHitTest extends BaseCardTest {
         setRoll(19);
         CriticalHit criticalHit = new CriticalHit();
         harness.setGraveyard(player1, List.of(criticalHit));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger(), new HillGiantHerdgorger(), new HillGiantHerdgorger()));
         addCreatureReady(player1, new ChaosChanneler());
 
         declareAttackers(List.of(0));
@@ -82,6 +82,56 @@ class CriticalHitTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(criticalHit);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(criticalHit);
+    }
+
+    @Test
+    void canTargetOpponentsCreatureAndDoubleStrikeExpires() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        harness.setHand(player1, List.of(new CriticalHit()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void opponentsNaturalTwentyDoesNotReturnCard() {
+        setRoll(20);
+        CriticalHit criticalHit = new CriticalHit();
+        harness.setGraveyard(player1, List.of(criticalHit));
+        harness.setLibrary(player2, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger(),
+                new HillGiantHerdgorger(), new HillGiantHerdgorger()));
+        addCreatureReady(player2, new ChaosChanneler());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(criticalHit);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(criticalHit);
+    }
+
+    @Test
+    void naturalTwentyReturnsEveryCopyInGraveyard() {
+        setRoll(20);
+        CriticalHit first = new CriticalHit();
+        CriticalHit second = new CriticalHit();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger(),
+                new HillGiantHerdgorger(), new HillGiantHerdgorger()));
+        addCreatureReady(player1, new ChaosChanneler());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
     }
 
     private void setRoll(int result) {
