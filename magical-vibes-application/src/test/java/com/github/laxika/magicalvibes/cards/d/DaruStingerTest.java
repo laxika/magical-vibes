@@ -110,4 +110,72 @@ class DaruStingerTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    @DisplayName("May reveal no cards for Amplify even with Soldiers in hand")
+    void mayDeclineAmplify() {
+        AvenWarhawk soldier = new AvenWarhawk();
+        harness.setHand(player1, List.of(new DaruStinger(), soldier));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(findPermanent(player1, "Daru Stinger")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(soldier);
+    }
+
+    @Test
+    @DisplayName("Enters without counters when there are no Soldiers in hand")
+    void entersWithoutEligibleCards() {
+        EnormousBaloth beast = new EnormousBaloth();
+        harness.setHand(player1, List.of(new DaruStinger(), beast));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Daru Stinger")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(beast);
+    }
+
+    @Test
+    @DisplayName("Counts +1/+1 counters when the damage ability resolves")
+    void countsCountersAtResolution() {
+        Permanent stinger = addCreatureReady(player1, new DaruStinger());
+        stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addCreatureReady(player2, new EnormousBaloth());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Deals no damage if the target stops attacking or blocking before resolution")
+    void targetMustRemainInCombat() {
+        Permanent stinger = addCreatureReady(player1, new DaruStinger());
+        stinger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent attacker = addCreatureReady(player2, new EnormousBaloth());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(stinger.isTapped()).isTrue();
+    }
 }
