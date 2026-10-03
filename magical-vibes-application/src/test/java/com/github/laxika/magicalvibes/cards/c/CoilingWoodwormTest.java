@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,4 +46,44 @@ class CoilingWoodwormTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, woodworm)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Forests outside the battlefield do not contribute to power")
+    void forestsInOtherZonesDoNotCount() {
+        Permanent woodworm = addCreatureReady(player1, new CoilingWoodworm());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setExile(player2, List.of(new Forest()));
+
+        assertThat(gqs.getEffectivePower(gd, woodworm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, woodworm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The power-defining ability applies while Woodworm is in the graveyard")
+    void powerIsDefinedInGraveyard() {
+        CoilingWoodworm woodworm = new CoilingWoodworm();
+        harness.setGraveyard(player1, List.of(woodworm));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, woodworm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, woodworm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counters increase both power and toughness after the defining ability")
+    void countersApplyAfterDefiningAbility() {
+        Permanent woodworm = addCreatureReady(player1, new CoilingWoodworm());
+        harness.addToBattlefield(player2, new Forest());
+        woodworm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, woodworm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, woodworm)).isEqualTo(3);
+
+        harness.addToBattlefield(player1, new Forest());
+        assertThat(gqs.getEffectivePower(gd, woodworm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, woodworm)).isEqualTo(3);
+    }
 }
