@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AegisOfHonor;
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
+import com.github.laxika.magicalvibes.cards.c.CoffinPurge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,8 +17,78 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Decompose.class, AegisOfHonor.class, AngelicWall.class})
+@CardUsed({Decompose.class, AegisOfHonor.class, AngelicWall.class, CoffinPurge.class})
 class DecomposeTest extends BaseCardTest {
+
+    @Test
+    void canResolveWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new Decompose()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Decompose");
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void rejectsMoreThanThreeTargets() {
+        Card a = new AegisOfHonor();
+        Card b = new AegisOfHonor();
+        Card c = new AngelicWall();
+        Card d = new AngelicWall();
+        harness.setGraveyard(player1, List.of(a, b, c, d));
+        harness.setHand(player1, List.of(new Decompose()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(a.getId(), b.getId(), c.getId(), d.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsDuplicateTargets() {
+        Card a = new AegisOfHonor();
+        Card b = new AngelicWall();
+        harness.setGraveyard(player1, List.of(a, b));
+        harness.setHand(player1, List.of(new Decompose()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(a.getId(), a.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void resolvesRemainingTargetsWhenOneIsExiledInResponse() {
+        Card removed = new AegisOfHonor();
+        Card remaining = new AngelicWall();
+        Card unchosen = new AegisOfHonor();
+        harness.setGraveyard(player2, List.of(removed, remaining, unchosen));
+        harness.setHand(player1, List.of(new Decompose()));
+        harness.setHand(player2, List.of(new CoffinPurge()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.castAndResolveInstant(player2, 0, removed.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(remaining, unchosen);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(unchosen).doesNotContain(remaining, removed);
+        assertThat(gd.exiledCards.stream().map(e -> e.card().getId()))
+                .contains(removed.getId(), remaining.getId()).doesNotContain(unchosen.getId());
+        harness.assertInGraveyard(player1, "Decompose");
+    }
 
     @Test
     @DisplayName("Exiles up to three chosen cards from a single graveyard")
