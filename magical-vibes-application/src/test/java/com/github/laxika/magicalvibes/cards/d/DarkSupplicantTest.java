@@ -1,20 +1,24 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.s.ScionOfDarkness;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarkSupplicant.class, ScionOfDarkness.class})
+@CardUsed({DarkSupplicant.class, ScionOfDarkness.class, PsychogenicProbe.class})
 class DarkSupplicantTest extends BaseCardTest {
 
     @Test
@@ -143,6 +147,76 @@ class DarkSupplicantTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(libraryScion.getId()));
         harness.assertOnBattlefield(player1, "Scion of Darkness");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardScion);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Zone.class, names = {"HAND", "GRAVEYARD", "LIBRARY"})
+    @DisplayName("Can retrieve Scion without searching the library, or search it and trigger shuffle damage")
+    void shufflesOnlyWhenChoosingToSearchLibrary(Zone searchZone) {
+        addThreeSupplicants();
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        ScionOfDarkness scion = scionOfDarkness();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(new DarkSupplicant()));
+        switch (searchZone) {
+            case HAND -> harness.setHand(player1, List.of(scion));
+            case GRAVEYARD -> harness.setGraveyard(player1, List.of(scion));
+            case LIBRARY -> harness.setLibrary(player1, List.of(scion, new DarkSupplicant()));
+            default -> throw new IllegalArgumentException("Unexpected search zone");
+        }
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(scion.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Scion of Darkness");
+        harness.assertLife(player1, searchZone == Zone.LIBRARY ? 18 : 20);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice opposing Clerics to pay the activation cost")
+    void cannotSacrificeOpponentsClerics() {
+        Permanent source = addCreatureReady(player1, new DarkSupplicant());
+        addCreatureReady(player2, new DarkSupplicant());
+        addCreatureReady(player2, new DarkSupplicant());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents to sacrifice");
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Dark Supplicant")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Dark Supplicant")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped Dark Supplicant cannot activate even with three Clerics")
+    void cannotActivateWhileTapped() {
+        addThreeSupplicants();
+        findPermanent(player1, "Dark Supplicant").setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(countPermanents(player1, "Dark Supplicant")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Dark Supplicant cannot activate")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new DarkSupplicant());
+        addCreatureReady(player1, new DarkSupplicant());
+        addCreatureReady(player1, new DarkSupplicant());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(countPermanents(player1, "Dark Supplicant")).isEqualTo(3);
+        assertThat(findPermanent(player1, "Dark Supplicant").isTapped()).isFalse();
     }
 
     private void addThreeSupplicants() {
