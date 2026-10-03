@@ -35,8 +35,7 @@ class DarkDeedTest extends BaseCardTest {
     @Test
     @DisplayName("Kills a creature with four toughness or less")
     void killsCreatureWithFourToughnessOrLess() {
-        harness.addToBattlefield(player2, new HillGiant());
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         castDarkDeed(target);
 
@@ -67,6 +66,30 @@ class DarkDeedTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the caster")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+
+        castDarkDeed(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+    }
+
+    @Test
+    @DisplayName("Multiple Dark Deeds combine to reduce toughness below zero")
+    void multipleDebuffsAreCumulative() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+
+        castDarkDeed(target);
+        castDarkDeed(target);
+
+        harness.assertNotOnBattlefield(player2, "Colossal Dreadmaw");
+        harness.assertInGraveyard(player2, "Colossal Dreadmaw");
     }
 
     private void castDarkDeed(Permanent target) {
