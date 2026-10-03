@@ -106,4 +106,47 @@ class DelraichTest extends BaseCardTest {
                 harness.castCreatureWithAlternateCost(player1, 0, List.of(smugglers, ghoul, ghoul)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Alternate cost sacrifices are paid before Delraich resolves")
+    void sacrificesArePaidBeforeResolution() {
+        UUID smugglers = harness.addToBattlefieldAndReturn(player1, new BogSmugglers()).getId();
+        UUID ghoul = harness.addToBattlefieldAndReturn(player1, new DeepwoodGhoul()).getId();
+        UUID persuader = harness.addToBattlefieldAndReturn(player1, new CateranPersuader()).getId();
+        harness.setHand(player1, List.of(new Delraich()));
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(smugglers, ghoul, persuader));
+
+        harness.assertNotOnBattlefield(player1, "Delraich");
+        harness.assertNotInHand(player1, "Delraich");
+        harness.assertInGraveyard(player1, "Bog Smugglers");
+        harness.assertInGraveyard(player1, "Deepwood Ghoul");
+        harness.assertInGraveyard(player1, "Cateran Persuader");
+        harness.assertNotOnBattlefield(player1, "Bog Smugglers");
+        harness.assertNotOnBattlefield(player1, "Deepwood Ghoul");
+        harness.assertNotOnBattlefield(player1, "Cateran Persuader");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Delraich");
+    }
+
+    @Test
+    @DisplayName("An opponent's black creature cannot pay the alternate cost")
+    void alternateCostRejectsOpponentsCreatureWithoutSacrificingAnything() {
+        UUID smugglers = harness.addToBattlefieldAndReturn(player1, new BogSmugglers()).getId();
+        UUID ghoul = harness.addToBattlefieldAndReturn(player1, new DeepwoodGhoul()).getId();
+        UUID persuader = harness.addToBattlefieldAndReturn(player2, new CateranPersuader()).getId();
+        harness.setHand(player1, List.of(new Delraich()));
+
+        assertThatThrownBy(() ->
+                harness.castCreatureWithAlternateCost(player1, 0, List.of(smugglers, ghoul, persuader)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not found on your battlefield");
+
+        harness.assertInHand(player1, "Delraich");
+        harness.assertOnBattlefield(player1, "Bog Smugglers");
+        harness.assertOnBattlefield(player1, "Deepwood Ghoul");
+        harness.assertOnBattlefield(player2, "Cateran Persuader");
+    }
 }
