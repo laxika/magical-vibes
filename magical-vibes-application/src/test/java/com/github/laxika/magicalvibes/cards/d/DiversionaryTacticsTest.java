@@ -89,6 +89,50 @@ class DiversionaryTacticsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Summoning-sick creatures can pay the tap cost")
+    void summoningSickCreaturesCanPayCost() {
+        Permanent tactics = harness.addToBattlefieldAndReturn(player1, new DiversionaryTactics());
+        Permanent firstCostCreature = harness.addToBattlefieldAndReturn(player1, new GaeasSkyfolk());
+        Permanent secondCostCreature = harness.addToBattlefieldAndReturn(player1, new GaeasSkyfolk());
+        Permanent target = addCreatureReady(player2, new GaeasSkyfolk());
+
+        assertThat(firstCostCreature.isSummoningSick()).isTrue();
+        assertThat(secondCostCreature.isSummoningSick()).isTrue();
+
+        int tacticsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(tactics);
+        harness.activateAbility(player1, tacticsIndex, null, target.getId());
+
+        assertThat(firstCostCreature.isTapped()).isTrue();
+        assertThat(secondCostCreature.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already-tapped creature is a legal target and the cost is still paid")
+    void canTargetAlreadyTappedCreature() {
+        Permanent tactics = harness.addToBattlefieldAndReturn(player1, new DiversionaryTactics());
+        Permanent firstCostCreature = addCreatureReady(player1, new GaeasSkyfolk());
+        Permanent secondCostCreature = addCreatureReady(player1, new GaeasSkyfolk());
+        Permanent target = addCreatureReady(player2, new GaeasSkyfolk());
+        target.tap();
+
+        int tacticsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(tactics);
+        harness.activateAbility(player1, tacticsIndex, null, target.getId());
+
+        assertThat(firstCostCreature.isTapped()).isTrue();
+        assertThat(secondCostCreature.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("A creature tapped as the cost can also be the target")
     void creatureTappedAsCostCanAlsoBeTarget() {
         Permanent tactics = harness.addToBattlefieldAndReturn(player1, new DiversionaryTactics());
