@@ -20,6 +20,52 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DesecrationElementalTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting the Elemental does not trigger its own sacrifice ability")
+    void doesNotTriggerForItsOwnCasting() {
+        harness.addToBattlefield(player1, new MyrServitor());
+
+        harness.castFromHand(player1, new DesecrationElemental(), "{3}{B}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Desecration Elemental");
+        harness.assertOnBattlefield(player1, "Myr Servitor");
+        harness.assertNotInGraveyard(player1, "Myr Servitor");
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent choosing a creature to sacrifice")
+    void canSacrificeCreatureWithProtectionFromBlack() {
+        harness.addToBattlefield(player1, new DesecrationElemental());
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new AuriokChampion());
+
+        harness.castFromHand(player1, new MyrServitor(), "{1}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, champion.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Auriok Champion");
+        harness.assertOnBattlefield(player1, "Desecration Elemental");
+        harness.assertOnBattlefield(player1, "Myr Servitor");
+    }
+
+    @Test
+    @DisplayName("Each Elemental triggers independently and pending triggers survive sacrificing their source")
+    void multipleElementalsEachRequireSacrifice() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DesecrationElemental());
+        harness.addToBattlefield(player1, new DesecrationElemental());
+
+        harness.castFromHand(player1, new MyrServitor(), "{1}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof DesecrationElemental)
+                .hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Desecration Elemental");
+        harness.assertOnBattlefield(player1, "Myr Servitor");
+    }
+    @Test
     @DisplayName("Controller sacrifices a creature when they cast a spell")
     void controllerSacrificesCreatureOnOwnSpellCast() {
         harness.addToBattlefield(player1, new DesecrationElemental());
