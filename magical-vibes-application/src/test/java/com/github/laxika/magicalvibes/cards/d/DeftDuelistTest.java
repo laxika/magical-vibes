@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.b.Boomerang;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CylianElf;
+import com.github.laxika.magicalvibes.cards.i.Infest;
+import com.github.laxika.magicalvibes.cards.m.Mosstodon;
+import com.github.laxika.magicalvibes.cards.r.ResoundingWave;
+import com.github.laxika.magicalvibes.cards.v.VithianStinger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,64 +16,41 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeftDuelist.class, CylianElf.class, Mosstodon.class, ResoundingWave.class,
+        VithianStinger.class, Infest.class})
 class DeftDuelistTest extends BaseCardTest {
-
-    // ===== First strike =====
 
     @Test
     @DisplayName("First strike kills a 2/2 blocker before it deals regular damage")
     void firstStrikeKillsBlockerBeforeRegularDamage() {
-        Permanent attacker = new Permanent(new DeftDuelist());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DeftDuelist());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new CylianElf());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Deft Duelist deals 2 first strike damage, killing the 2/2 before it can deal damage back.
         harness.assertOnBattlefield(player1, "Deft Duelist");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Cylian Elf");
     }
 
     @Test
     @DisplayName("Deft Duelist still dies if the blocker survives first strike damage")
     void diesIfBlockerSurvivesFirstStrike() {
-        Permanent attacker = new Permanent(new DeftDuelist());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DeftDuelist());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blocker = new Permanent(bigBear);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new Mosstodon());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        resolveCombat();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        // 2 first strike damage doesn't kill a 3/3; it deals 3 back and the 2/1 dies.
+        // Mosstodon survives 2 first strike damage and kills the Duelist in regular damage.
         harness.assertNotOnBattlefield(player1, "Deft Duelist");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Mosstodon");
     }
-
-    // ===== Shroud =====
 
     @Test
     @DisplayName("Opponent spells cannot target Deft Duelist")
@@ -78,16 +58,13 @@ class DeftDuelistTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.addToBattlefield(player1, new DeftDuelist());
         // Add valid target so the spell is playable.
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addToBattlefield(player1, new CylianElf());
+        harness.setHand(player2, List.of(new ResoundingWave()));
         harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd,
-                player2,
-                0,
-                0,
-                harness.getPermanentId(player1, "Deft Duelist"),
-                null))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0,
+                harness.getPermanentId(player1, "Deft Duelist")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
@@ -96,17 +73,80 @@ class DeftDuelistTest extends BaseCardTest {
     @DisplayName("Your own spells cannot target Deft Duelist")
     void ownSpellsCannotTarget() {
         harness.addToBattlefield(player1, new DeftDuelist());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addToBattlefield(player1, new CylianElf());
+        harness.setHand(player1, List.of(new ResoundingWave()));
         harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd,
-                player1,
-                0,
-                0,
-                harness.getPermanentId(player1, "Deft Duelist"),
-                null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player1, "Deft Duelist")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("First strike also kills an attacker before it damages the blocking Duelist")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new CylianElf());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DeftDuelist());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Cylian Elf");
+        harness.assertOnBattlefield(player2, "Deft Duelist");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Duelist deals combat damage only once")
+    void firstStrikeDoesNotDealRegularDamageAgain() {
+        Permanent attacker = addCreatureReady(player1, new DeftDuelist());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Shroud prevents an opponent's activated ability from targeting the Duelist")
+    void opponentAbilityCannotTarget() {
+        harness.addToBattlefield(player1, new DeftDuelist());
+        addCreatureReady(player2, new VithianStinger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null,
+                harness.getPermanentId(player1, "Deft Duelist")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud prevents its controller's activated ability from targeting the Duelist")
+    void ownAbilityCannotTarget() {
+        harness.addToBattlefield(player1, new DeftDuelist());
+        addCreatureReady(player1, new VithianStinger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null,
+                harness.getPermanentId(player1, "Deft Duelist")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud does not protect the Duelist from a spell that does not target")
+    void nonTargetedSpellStillAffectsDuelist() {
+        harness.addToBattlefield(player1, new DeftDuelist());
+        harness.setHand(player1, List.of(new Infest()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Deft Duelist");
+        harness.assertInGraveyard(player1, "Deft Duelist");
     }
 }
