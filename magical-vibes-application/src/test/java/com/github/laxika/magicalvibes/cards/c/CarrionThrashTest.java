@@ -1,101 +1,139 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.b.Blightning;
+import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CarrionThrash.class, CavernThoctar.class, DregscapeZombie.class, Blightning.class})
 class CarrionThrashTest extends BaseCardTest {
 
-    /**
-     * Puts Carrion Thrash on the battlefield blocking a lethal 5/5 attacker, advances to combat
-     * damage so it dies, then resolves the queued death trigger up to the may-pay prompt.
-     */
-    private void killInCombatUntilMayPrompt() {
-        CarrionThrash thrash = new CarrionThrash();
-        Permanent thrashPerm = new Permanent(thrash);
-        thrashPerm.setSummoningSick(false);
-        thrashPerm.setBlocking(true);
-        thrashPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player1.getId()).add(thrashPerm);
+    private void killInCombat() {
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new CarrionThrash());
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        bears.setPower(5);
-        bears.setToughness(5);
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new CavernThoctar());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-
-        harness.passBothPriorities(); // advance to combat damage → Carrion Thrash dies
-        harness.passBothPriorities(); // resolve death trigger → may-pay prompt
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Carrion Thrash");
     }
 
-    @Test
-    @DisplayName("Dies, pay {2}, returns another target creature card from graveyard to hand")
-    void diesPayReturnsAnotherCreature() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-
-        killInCombatUntilMayPrompt();
-
-        // Carrion Thrash is now in the graveyard alongside the pre-seeded Grizzly Bears
-        harness.assertInGraveyard(player1, "Carrion Thrash");
+    private void chooseTargetAndResolveUntilPayment(Card target) {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
-
-        // Accept and pay {2} → graveyard creature choice
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        // "Another" — Carrion Thrash cannot return itself
-        harness.assertInGraveyard(player1, "Carrion Thrash");
     }
 
     @Test
-    @DisplayName("Dies, decline paying {2}, nothing is returned")
-    void diesDeclineReturnsNothing() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+    @DisplayName("Choose another creature before resolution, then pay to return it")
+    void diesPayReturnsAnotherCreature() {
+        DregscapeZombie target = new DregscapeZombie();
+        harness.setGraveyard(player1, List.of(target));
+        killInCombat();
+        chooseTargetAndResolveUntilPayment(target);
 
-        killInCombatUntilMayPrompt();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Dregscape Zombie");
+        harness.assertNotInGraveyard(player1, "Dregscape Zombie");
+        harness.assertInGraveyard(player1, "Carrion Thrash");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining payment leaves the chosen creature in the graveyard")
+    void diesDeclineReturnsNothing() {
+        DregscapeZombie target = new DregscapeZombie();
+        harness.setGraveyard(player1, List.of(target));
+        killInCombat();
+        chooseTargetAndResolveUntilPayment(target);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dregscape Zombie");
+        harness.assertNotInHand(player1, "Dregscape Zombie");
     }
 
     @Test
-    @DisplayName("Only non-creature cards (besides itself) in graveyard — no creature to return")
+    @DisplayName("Without another creature card there is no target and no payment prompt")
     void diesWithNoOtherCreatureCard() {
-        // Wrath of God is a sorcery; the only creature card would be Carrion Thrash itself, which
-        // "another" excludes.
-        harness.setGraveyard(player1, List.of(new WrathOfGod()));
+        harness.setGraveyard(player1, List.of(new Blightning()));
+        killInCombat();
 
-        killInCombatUntilMayPrompt();
-
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.handleMayAbilityChosen(player1, true);
-
-        // No graveyard choice is offered and Carrion Thrash stays put
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Carrion Thrash");
         harness.assertNotInHand(player1, "Carrion Thrash");
+    }
+
+    @Test
+    @DisplayName("Only other creature cards in the controller's graveyard are legal targets")
+    void excludesSelfNoncreaturesAndOpponentsCards() {
+        DregscapeZombie target = new DregscapeZombie();
+        harness.setGraveyard(player1, List.of(new Blightning(), target));
+        harness.setGraveyard(player2, List.of(new DregscapeZombie()));
+        killInCombat();
+        chooseTargetAndResolveUntilPayment(target);
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("A legal target must be chosen even if payment will be declined")
+    void targetCannotBeDeclined() {
+        DregscapeZombie target = new DregscapeZombie();
+        harness.setGraveyard(player1, List.of(target));
+        killInCombat();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        chooseTargetAndResolveUntilPayment(target);
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("Accepting payment without enough mana does not return the creature")
+    void cannotPayWithOnlyOneMana() {
+        DregscapeZombie target = new DregscapeZombie();
+        harness.setGraveyard(player1, List.of(target));
+        killInCombat();
+        chooseTargetAndResolveUntilPayment(target);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Dregscape Zombie");
+        harness.assertNotInHand(player1, "Dregscape Zombie");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 }
