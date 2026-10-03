@@ -41,10 +41,8 @@ class CruelRevivalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Barkhide Mauler");
         harness.assertInGraveyard(player2, "Barkhide Mauler");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(zombieInGraveyard.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(zombieInGraveyard.getId()));
+        harness.assertInHand(player1, "Gluttonous Zombie");
+        harness.assertNotInGraveyard(player1, "Gluttonous Zombie");
 
         int destroyIndex = -1;
         int returnIndex = -1;
@@ -57,7 +55,7 @@ class CruelRevivalTest extends BaseCardTest {
                 returnIndex = i;
             }
         }
-        assertThat(destroyIndex).isLessThan(returnIndex);
+        assertThat(destroyIndex).isGreaterThanOrEqualTo(0).isLessThan(returnIndex);
     }
 
     @Test
@@ -154,6 +152,81 @@ class CruelRevivalTest extends BaseCardTest {
         UUID maulerId = harness.getPermanentId(player2, "Barkhide Mauler");
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, zombie.getId(), List.of(maulerId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can decline the Zombie target even when a Zombie is available")
+    void canDeclineAvailableZombie() {
+        harness.setGraveyard(player1, List.of(new GluttonousZombie()));
+        harness.addToBattlefield(player2, new BarkhideMauler());
+        harness.setHand(player1, List.of(new CruelRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveInstant(player1, 0,
+                List.of(harness.getPermanentId(player2, "Barkhide Mauler")));
+
+        harness.assertInGraveyard(player2, "Barkhide Mauler");
+        harness.assertInGraveyard(player1, "Gluttonous Zombie");
+        harness.assertNotInHand(player1, "Gluttonous Zombie");
+    }
+
+    @Test
+    @DisplayName("Returns the Zombie when the creature target leaves the battlefield")
+    void returnsZombieWhenCreatureTargetLeaves() {
+        Card zombie = new GluttonousZombie();
+        harness.setGraveyard(player1, List.of(zombie));
+        harness.addToBattlefield(player2, new BarkhideMauler());
+        harness.setHand(player1, List.of(new CruelRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        UUID maulerId = harness.getPermanentId(player2, "Barkhide Mauler");
+
+        harness.castSorcery(player1, 0, zombie.getId(), List.of(maulerId));
+        gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(maulerId));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gluttonous Zombie");
+        harness.assertNotInGraveyard(player1, "Gluttonous Zombie");
+        harness.assertInGraveyard(player1, "Cruel Revival");
+    }
+
+    @Test
+    @DisplayName("Destroys the creature when the Zombie target leaves the graveyard")
+    void destroysCreatureWhenZombieTargetLeaves() {
+        Card zombie = new GluttonousZombie();
+        harness.setGraveyard(player1, List.of(zombie));
+        harness.addToBattlefield(player2, new BarkhideMauler());
+        harness.setHand(player1, List.of(new CruelRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player1, 0, zombie.getId(),
+                List.of(harness.getPermanentId(player2, "Barkhide Mauler")));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Barkhide Mauler");
+        harness.assertInGraveyard(player2, "Barkhide Mauler");
+        harness.assertNotInHand(player1, "Gluttonous Zombie");
+        harness.assertInGraveyard(player1, "Cruel Revival");
+    }
+
+    @Test
+    @DisplayName("Cannot cast solely to return a Zombie without a creature target")
+    void requiresNonZombieCreatureTarget() {
+        Card zombie = new GluttonousZombie();
+        harness.setGraveyard(player1, List.of(zombie));
+        harness.setHand(player1, List.of(new CruelRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, zombie.getId(), List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
