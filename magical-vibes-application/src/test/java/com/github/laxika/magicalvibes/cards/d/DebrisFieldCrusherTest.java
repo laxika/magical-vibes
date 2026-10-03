@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ExosuitSavior;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,22 +14,22 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DebrisFieldCrusher.class, GrizzlyBears.class})
+@CardUsed({DebrisFieldCrusher.class, ExosuitSavior.class})
 class DebrisFieldCrusherTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Debris Field Crusher enters, it deals 3 damage to a target creature")
     void enteringDealsDamageToCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent savior = harness.addToBattlefieldAndReturn(player2, new ExosuitSavior());
         harness.setHand(player1, List.of(new DebrisFieldCrusher()));
         addCrusherMana();
 
-        harness.castArtifact(player1, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castArtifact(player1, 0, savior.getId());
+        resolveAllTriggers();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Exosuit Savior");
     }
 
     @Test
@@ -39,8 +40,7 @@ class DebrisFieldCrusherTest extends BaseCardTest {
         addCrusherMana();
 
         harness.castArtifact(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
@@ -49,13 +49,13 @@ class DebrisFieldCrusherTest extends BaseCardTest {
     @DisplayName("Station puts counters equal to the tapped creature's power on Debris Field Crusher")
     void stationUsesTappedCreaturePower() {
         Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent savior = addCreatureReady(player1, new ExosuitSavior());
+        savior.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.activateAbility(player1, battlefieldIndex(crusher), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(savior.isTapped()).isTrue();
         assertThat(crusher.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
@@ -85,6 +85,88 @@ class DebrisFieldCrusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(3);
+    }
+
+    @Test
+    void pumpCannotBeActivatedBelowEightCounters() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
+        crusher.setCounterCount(CounterType.CHARGE, 7);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(crusher), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void stationCanTapASummoningSickCreatureAndUsesPowerAtResolution() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
+        Permanent savior = harness.addToBattlefieldAndReturn(player1, new ExosuitSavior());
+
+        harness.activateAbility(player1, battlefieldIndex(crusher), 0, null, null);
+        assertThat(savior.isTapped()).isTrue();
+        savior.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(crusher.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+    }
+
+    @Test
+    void stationCannotTapTheSpacecraftItself() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
+        crusher.setCounterCount(CounterType.CHARGE, 8);
+        crusher.setSummoningSick(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(crusher), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(crusher.isTapped()).isFalse();
+    }
+
+    @Test
+    void stationCannotTapAnOpponentsCreature() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
+        addCreatureReady(player2, new ExosuitSavior());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(crusher), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void stationCannotBeActivatedOutsideMainPhase() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
+        addCreatureReady(player1, new ExosuitSavior());
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(crusher), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void droppingBelowThresholdRemovesCreatureStatusAndFlying() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
+        crusher.setCounterCount(CounterType.CHARGE, 8);
+        assertThat(gqs.isCreature(gd, crusher)).isTrue();
+        assertThat(gqs.hasKeyword(gd, crusher, Keyword.FLYING)).isTrue();
+
+        crusher.setCounterCount(CounterType.CHARGE, 7);
+
+        assertThat(gqs.isCreature(gd, crusher)).isFalse();
+        assertThat(gqs.hasKeyword(gd, crusher, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void pumpExpiresAtEndOfTurn() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new DebrisFieldCrusher());
+        crusher.setCounterCount(CounterType.CHARGE, 8);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(crusher), 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(3);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(1);
     }
 
     private void addCrusherMana() {
