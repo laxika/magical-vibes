@@ -165,6 +165,54 @@ class DazzlingBeautyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an unblocked attacking creature");
     }
 
+    @Test
+    @DisplayName("A second copy with the same target does not schedule a draw after the first makes it blocked")
+    void invalidatedTargetPreventsDelayedDraw() {
+        Permanent attacker = addCreatureReady(player1, new FemerefScouts());
+        addCreatureReady(player2, new FemerefScouts());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DazzlingBeauty(), new DazzlingBeauty()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.castInstant(player2, 0, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+        harness.setLibrary(player2, List.of(new FemerefScouts(), new FemerefScouts()));
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Femeref Scouts");
+    }
+
+    @Test
+    @DisplayName("The attacking player can target their own attacker and draws during the opponent's next upkeep")
+    void casterDrawsDuringOpponentsUpkeep() {
+        Permanent attacker = addCreatureReady(player1, new FemerefScouts());
+        addCreatureReady(player2, new FemerefScouts());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DazzlingBeauty()));
+        harness.setLibrary(player1, List.of(new FemerefScouts(), new FemerefScouts()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Femeref Scouts");
+    }
     private void castDazzlingBeauty(Permanent target) {
         harness.clearPriorityPassed();
         giveSpell();
