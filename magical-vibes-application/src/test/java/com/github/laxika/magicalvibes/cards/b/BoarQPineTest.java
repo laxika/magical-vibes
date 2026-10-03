@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,15 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoarQPine.class, GrizzlyBears.class, Shock.class})
+@CardUsed({BoarQPine.class, LightningStrike.class})
 class BoarQPineTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a noncreature spell puts a +1/+1 counter on Boar-q-pine")
     void noncreatureSpellAddsCounter() {
         harness.addToBattlefield(player1, new BoarQPine());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         Permanent boar = findBoar();
         harness.castInstant(player1, 0, player2.getId());
@@ -33,8 +32,7 @@ class BoarQPineTest extends BaseCardTest {
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isEqualTo(1);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -43,8 +41,8 @@ class BoarQPineTest extends BaseCardTest {
     @DisplayName("Casting a creature spell does not trigger Boar-q-pine")
     void creatureSpellDoesNotAddCounter() {
         harness.addToBattlefield(player1, new BoarQPine());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new BoarQPine()));
+        harness.addMana(player1, ManaColor.RED, 3);
 
         Permanent boar = findBoar();
         harness.castCreature(player1, 0);
@@ -62,8 +60,8 @@ class BoarQPineTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player2, ManaColor.RED, 2);
 
         Permanent boar = findBoar();
         harness.castInstant(player2, 0, player1.getId());
@@ -78,21 +76,86 @@ class BoarQPineTest extends BaseCardTest {
     @DisplayName("Multiple noncreature spells accumulate +1/+1 counters")
     void multipleNoncreatureSpellsAccumulateCounters() {
         harness.addToBattlefield(player1, new BoarQPine());
-        harness.setHand(player1, List.of(new Shock(), new Shock()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new LightningStrike(), new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 4);
 
         Permanent boar = findBoar();
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The counter resolves before the spell, including during an opponent's turn")
+    void counterResolvesBeforeSpellOnOpponentTurn() {
+        harness.addToBattlefield(player1, new BoarQPine());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        Permanent boar = findBoar();
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.passBothPriorities();
         assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Each Boar-q-pine gets its own counter from a single noncreature spell")
+    void multipleCopiesEachGetOneCounter() {
+        harness.addToBattlefield(player1, new BoarQPine());
+        Permanent first = findBoar();
+        harness.addToBattlefield(player1, new BoarQPine());
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A pending trigger cannot put counters on another copy after its source dies")
+    void removedSourceDoesNotGiveCounterToOtherCopy() {
+        harness.addToBattlefield(player1, new BoarQPine());
+        Permanent first = findBoar();
+        harness.addToBattlefield(player1, new BoarQPine());
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.setHand(player1, List.of(new LightningStrike()));
+        harness.setHand(player2, List.of(new LightningStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player2, 0, first.getId());
+        harness.assertInGraveyard(player1, "Boar-q-pine");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
     }
 
     private Permanent findBoar() {
