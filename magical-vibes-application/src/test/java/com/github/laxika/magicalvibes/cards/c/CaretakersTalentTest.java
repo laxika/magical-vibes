@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BuildersTalent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InnkeepersTalent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CaretakersTalent.class, BuildersTalent.class, GrizzlyBears.class})
+@CardUsed({CaretakersTalent.class, BuildersTalent.class, GrizzlyBears.class, InnkeepersTalent.class})
 class CaretakersTalentTest extends BaseCardTest {
 
     @Test
@@ -78,16 +80,99 @@ class CaretakersTalentTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Counter doubling does not advance a Class past the purchased level")
+    void counterDoublingDoesNotSkipClassLevel() {
+        Permanent caretaker = castCaretakersTalent();
+        Permanent wall = createWall();
+        harness.setHand(player1, List.of(new InnkeepersTalent()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        Permanent innkeeper = findPermanent(player1, "Innkeeper's Talent");
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(innkeeper);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, index, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, index, 1, null, null);
+        resolveAllTriggers();
+
+        levelUp(player1, caretaker, 0);
+        harness.handlePermanentChosen(player1, wall.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Can gain levels without a token available for the level 2 trigger")
+    void levelsWithoutTokens() {
+        Permanent caretaker = castCaretakersTalent();
+        levelUp(player1, caretaker, 0);
+        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        levelUp(player1, caretaker, 1);
+        resolveAllTriggers();
+        Permanent wall = createWall();
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Opponent token entries do not draw or consume your once-per-turn trigger")
+    void ignoresOpponentTokens() {
+        castCaretakersTalent();
+        harness.setHand(player1, List.of());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BuildersTalent()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player2, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        createWall();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Copies token characteristics without copying counters or tapped status")
+    void copyDoesNotInheritCountersOrTappedStatus() {
+        Permanent caretaker = castCaretakersTalent();
+        Permanent wall = createWall();
+        wall.setTapped(true);
+        wall.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        levelUp(player1, caretaker, 0);
+        harness.handlePermanentChosen(player1, wall.getId());
+        resolveAllTriggers();
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .filter(permanent -> !permanent.getId().equals(wall.getId()))
+                .findFirst().orElseThrow();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, copy)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(4);
+    }
+
     private Permanent castCaretakersTalent() {
         harness.setHand(player1, List.of(new CaretakersTalent()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castEnchantment(player1, 0);
         resolveAllTriggers();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof CaretakersTalent)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Caretaker's Talent");
     }
 
     private Permanent createWall() {
