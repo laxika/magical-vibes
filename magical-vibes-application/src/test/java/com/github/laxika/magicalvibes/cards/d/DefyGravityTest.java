@@ -24,14 +24,13 @@ class DefyGravityTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature gains flying until end of turn")
     void grantsFlyingUntilEndOfTurn() {
-        harness.addToBattlefield(player1, new BenevolentBodyguard());
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player1, new BenevolentBodyguard());
         harness.setHand(player1, List.of(new DefyGravity()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Benevolent Bodyguard");
+        UUID targetId = bodyguard.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        Permanent bodyguard = findPermanent(player1, "Benevolent Bodyguard");
         assertThat(bodyguard.hasKeyword(Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -44,28 +43,26 @@ class DefyGravityTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature an opponent controls gains flying")
     void grantsFlyingToOpponentsCreature() {
-        harness.addToBattlefield(player2, new BenevolentBodyguard());
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player2, new BenevolentBodyguard());
         harness.setHand(player1, List.of(new DefyGravity()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Benevolent Bodyguard");
+        UUID targetId = bodyguard.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        Permanent bodyguard = findPermanent(player2, "Benevolent Bodyguard");
         assertThat(bodyguard.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Flashback grants flying and exiles Defy Gravity")
     void flashbackGrantsFlyingAndExilesSpell() {
-        harness.addToBattlefield(player1, new BenevolentBodyguard());
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player1, new BenevolentBodyguard());
         harness.setGraveyard(player1, List.of(new DefyGravity()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Benevolent Bodyguard");
+        UUID targetId = bodyguard.getId();
         harness.castAndResolveFlashback(player1, 0, targetId);
 
-        Permanent bodyguard = findPermanent(player1, "Benevolent Bodyguard");
         assertThat(bodyguard.hasKeyword(Keyword.FLYING)).isTrue();
         harness.assertNotInGraveyard(player1, "Defy Gravity");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -93,5 +90,54 @@ class DefyGravityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, creature.getId());
         assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A normally cast Defy Gravity can be flashed back after cleanup")
+    void normalCastCanBeFlashedBackAfterCleanup() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CabalTrainee());
+        harness.setHand(player1, List.of(new DefyGravity()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        harness.assertInGraveyard(player1, "Defy Gravity");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveFlashback(player1, 0, creature.getId());
+        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        harness.assertNotInGraveyard(player1, "Defy Gravity");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Defy Gravity"));
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when its target leaves the battlefield")
+    void flashbackExilesSpellWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CabalTrainee());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new BenevolentBodyguard());
+        harness.setGraveyard(player1, List.of(new DefyGravity()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castFlashback(player1, 0, target.getId());
+        harness.activateAbility(player1, 0, null, survivor.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cabal Trainee");
+        assertThat(survivor.hasKeyword(Keyword.FLYING)).isFalse();
+        harness.assertNotInGraveyard(player1, "Defy Gravity");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Defy Gravity"));
+        assertThat(gd.stack).isEmpty();
     }
 }
