@@ -1,22 +1,29 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.CivicWayfinder;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.ThievingMagpie;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DistendedMindbender.class, AirElemental.class, CivicWayfinder.class,
+        Forest.class, GrizzlyBears.class, Shock.class, ThievingMagpie.class})
 class DistendedMindbenderTest extends BaseCardTest {
 
     @Test
@@ -110,8 +117,7 @@ class DistendedMindbenderTest extends BaseCardTest {
     @Test
     @DisplayName("Emerge: sacrifice a creature, pay emerge cost reduced by its mana value")
     void emergeSacrificesAndReducesCost() {
-        harness.addToBattlefield(player1, new GrizzlyBears()); // MV 2
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
 
         harness.setHand(player2, new ArrayList<>(List.of(new Shock())));
         harness.setHand(player1, List.of(new DistendedMindbender()));
@@ -142,5 +148,126 @@ class DistendedMindbenderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void includesManaValuesThreeAndFourInTheirRespectiveBands() {
+        harness.setHand(player2, List.of(new CivicWayfinder(), new ThievingMagpie(), new Forest()));
+        harness.setHand(player1, List.of(new DistendedMindbender()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 2))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        harness.assertNotInGraveyard(player2, "Civic Wayfinder");
+        harness.assertNotInGraveyard(player2, "Thieving Magpie");
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player2, "Civic Wayfinder");
+        harness.assertInGraveyard(player2, "Thieving Magpie");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(c -> c.getName())
+                .containsExactly("Forest");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Distended Mindbender");
+    }
+
+    @Test
+    void handContainingOnlyLandsDoesNotRequireAChoice() {
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new DistendedMindbender()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Distended Mindbender");
+    }
+
+    @Test
+    void emptyHandDoesNotPreventCreatureResolving() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new DistendedMindbender()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Distended Mindbender");
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotDiscard() {
+        harness.setHand(player2, List.of(new Shock(), new AirElemental()));
+
+        harness.enterBattlefieldAndReturn(player1, new DistendedMindbender());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void emergeReductionCannotRemoveColoredMana() {
+        UUID sacrificeId = harness.addToBattlefieldAndReturn(player1, new DistendedMindbender()).getId();
+        harness.setHand(player1, List.of(new DistendedMindbender()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of(sacrificeId)))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Distended Mindbender");
+        harness.assertOnBattlefield(player1, "Distended Mindbender");
+    }
+
+    @Test
+    void emergeReductionIsCappedAtGenericCost() {
+        UUID sacrificeId = harness.addToBattlefieldAndReturn(player1, new DistendedMindbender()).getId();
+        harness.setHand(player1, List.of(new DistendedMindbender()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(sacrificeId));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Distended Mindbender");
+        harness.assertOnBattlefield(player1, "Distended Mindbender");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void sacrificingFaceDownCreatureDoesNotReduceEmergeCost() {
+        var sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        sacrifice.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new DistendedMindbender()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(sacrifice.getId()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Distended Mindbender");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
