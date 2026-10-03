@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.m.MireKavu;
 import com.github.laxika.magicalvibes.cards.m.MoggJailer;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DralnusCrusade.class, MoggJailer.class, MireKavu.class})
+@CardUsed({DralnusCrusade.class, MoggJailer.class, MireKavu.class, BoggartShenanigans.class})
 class DralnusCrusadeTest extends BaseCardTest {
 
     @Test
@@ -24,7 +25,7 @@ class DralnusCrusadeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, goblin))
-                .containsExactlyInAnyOrder(CardColor.RED, CardColor.BLACK);
+                .containsExactly(CardColor.BLACK);
         assertThat(gqs.effectiveCreatureSubtypes(gd, goblin))
                 .containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.ZOMBIE);
     }
@@ -40,5 +41,59 @@ class DralnusCrusadeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactly(CardColor.RED);
         assertThat(gqs.effectiveCreatureSubtypes(gd, kavu))
                 .containsExactly(CardSubtype.KAVU);
+    }
+
+    @Test
+    @DisplayName("Crusade affects Goblins entering later on either player's battlefield")
+    void affectsLaterGoblinsForBothPlayers() {
+        harness.addToBattlefield(player1, new DralnusCrusade());
+        Permanent ownGoblin = harness.addToBattlefieldAndReturn(player1, new MoggJailer());
+        Permanent opposingGoblin = harness.addToBattlefieldAndReturn(player2, new MoggJailer());
+
+        for (Permanent goblin : java.util.List.of(ownGoblin, opposingGoblin)) {
+            assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+            assertThat(gqs.getEffectiveColors(gd, goblin)).containsExactly(CardColor.BLACK);
+            assertThat(gqs.effectiveCreatureSubtypes(gd, goblin))
+                    .containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.ZOMBIE);
+        }
+    }
+
+    @Test
+    @DisplayName("Noncreature Goblins become black and gain Zombie")
+    void affectsNoncreatureGoblins() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new BoggartShenanigans());
+        harness.addToBattlefield(player1, new DralnusCrusade());
+
+        assertThat(gqs.getEffectiveColors(gd, goblin)).containsExactly(CardColor.BLACK);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, goblin))
+                .containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    @DisplayName("Multiple Crusades stack their boosts and their effects end when they leave")
+    void effectsStackAndEndWhenCrusadesLeave() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new MoggJailer());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DralnusCrusade());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DralnusCrusade());
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, goblin))
+                .containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.ZOMBIE);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first));
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, goblin))
+                .containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.ZOMBIE);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second));
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveColors(gd, goblin)).containsExactly(CardColor.RED);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, goblin)).containsExactly(CardSubtype.GOBLIN);
     }
 }
