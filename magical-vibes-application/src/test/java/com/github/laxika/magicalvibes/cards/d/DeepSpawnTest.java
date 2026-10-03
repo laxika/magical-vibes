@@ -115,10 +115,7 @@ class DeepSpawnTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 3,
@@ -145,6 +142,69 @@ class DeepSpawnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spawn.getGrantedKeywords()).doesNotContain(Keyword.SHROUD);
+    }
+
+    @Test
+    @DisplayName("An empty library cannot pay the upkeep cost")
+    void emptyLibrarySacrificesWithoutPrompt() {
+        addCreatureReady(player1, new DeepSpawn());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Deep Spawn");
+        harness.assertInGraveyard(player1, "Deep Spawn");
+    }
+
+    @Test
+    @DisplayName("Repeated activations while tapped only prevent the next untap")
+    void repeatedActivationsDoNotSkipAdditionalUntapSteps() {
+        Permanent spawn = addCreatureReady(player1, new DeepSpawn());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(spawn.isTapped()).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+        assertThat(spawn.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(spawn.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Changing control does not prevent the new controller's untap")
+    void changingControlDoesNotMoveUntapRestrictionToNewController() {
+        Permanent spawn = addCreatureReady(player1, new DeepSpawn());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(spawn);
+        gd.playerBattlefields.get(player2.getId()).add(spawn);
+        harness.performUntapStep(player2);
+
+        assertThat(spawn.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The original activator's untap step expires the restriction after control changes")
+    void restrictionExpiresDuringOriginalActivatorsUntapStep() {
+        Permanent spawn = addCreatureReady(player1, new DeepSpawn());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(spawn);
+        gd.playerBattlefields.get(player2.getId()).add(spawn);
+        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
+
+        assertThat(spawn.isTapped()).isFalse();
     }
 
     private void advanceTurn() {
