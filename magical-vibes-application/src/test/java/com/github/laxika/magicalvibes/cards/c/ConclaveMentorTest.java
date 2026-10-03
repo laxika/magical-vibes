@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.c;
+package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BasrisSolidarity;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
