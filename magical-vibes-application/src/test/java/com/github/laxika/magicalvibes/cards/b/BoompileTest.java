@@ -8,9 +8,37 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Boompile.class, GrizzlyBears.class, Forest.class})
 class BoompileTest extends BaseCardTest {
+    @Test
+    @DisplayName("Activating Boompile taps it before the coin is flipped")
+    void activationPaysTapCostBeforeResolution() {
+        harness.addToBattlefield(player1, new Boompile());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(findPermanent(player1, "Boompile").isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gameLogContains("wins the coin flip for Boompile")).isFalse();
+        assertThat(gameLogContains("loses the coin flip for Boompile")).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Boompile cannot activate its ability")
+    void tappedBoompileCannotActivate() {
+        harness.addToBattlefield(player1, new Boompile());
+        findPermanent(player1, "Boompile").setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Boompile");
+    }
 
     @Test
     @DisplayName("A winning flip destroys all nonland permanents while lands survive")
