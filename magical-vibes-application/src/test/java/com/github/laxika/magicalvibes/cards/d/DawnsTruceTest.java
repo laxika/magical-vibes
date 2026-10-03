@@ -55,9 +55,7 @@ class DawnsTruceTest extends BaseCardTest {
         cast(false);
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
@@ -78,6 +76,58 @@ class DawnsTruceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
+    }
+
+    @Test
+    void promisedGiftDrawsOneCardForOpponent() {
+        Plains gift = new Plains();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(gift, new Plains()));
+
+        cast(true);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(gift);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void decliningGiftDoesNotDrawForOpponent() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Plains(), new Plains()));
+
+        cast(false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void protectionOnlyAppliesToControlledPermanentsPresentAtResolution() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new Plains());
+
+        cast(true);
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.playerHasHexproof(gd, player2.getId())).isFalse();
+    }
+
+    @Test
+    void giftedProtectionExpiresOnNextTurn() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        cast(true);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private void cast(boolean giftPromised) {
