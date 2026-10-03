@@ -70,6 +70,142 @@ class CemeteryProwlerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    void canExileFromItsControllersGraveyard() {
+        Card card = new CemeteryProwler();
+        harness.setGraveyard(player1, List.of(card));
+        Permanent prowler = harness.enterBattlefieldAndReturn(player1, new CemeteryProwler());
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(prowler.getId())).containsExactly(card);
+    }
+
+    @Test
+    void emptyGraveyardsDoNotPreventEntering() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        Permanent prowler = harness.enterBattlefieldAndReturn(player1, new CemeteryProwler());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getCardsExiledByPermanent(prowler.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Cemetery Prowler");
+    }
+
+    @Test
+    void doesNotReduceColoredManaRequirements() {
+        enterProwlerWith(new CemeteryProwler());
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new CemeteryProwler()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void doesNotReduceSpellsWithoutASharedType() {
+        enterProwlerWith(new GolemsHeart());
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new CemeteryProwler()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void oneExiledArtifactCreatureProvidesBothTypeReductions() {
+        enterProwlerWith(new Juggernaut());
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new Juggernaut()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void doesNotReduceOpponentsSpells() {
+        enterProwlerWith(new CemeteryProwler());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new CemeteryProwler()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void reducesNoncreatureSpellsWithASharedType() {
+        enterProwlerWith(new GolemsHeart());
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new GolemsHeart()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void reductionsFromMultipleProwlersAddTogether() {
+        enterProwlerWith(new CemeteryProwler());
+        enterProwlerWith(new CemeteryProwler());
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new CemeteryProwler()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void anotherProwlerDoesNotInheritExiledCards() {
+        enterProwlerWith(new CemeteryProwler());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.enterBattlefieldAndReturn(player1, new CemeteryProwler());
+        harness.passBothPriorities();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private Permanent enterProwlerWith(Card card) {
         harness.setGraveyard(player2, List.of(card));
         Permanent prowler = harness.enterBattlefieldAndReturn(player1, new CemeteryProwler());
