@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Curfew")
-@CardUsed({Curfew.class, CoralMerfolk.class, Dromosaur.class, Forest.class})
+@CardUsed({Curfew.class, CoralMerfolk.class, Dromosaur.class, Forest.class, ExtractorDemon.class})
 class CurfewTest extends BaseCardTest {
 
     @Test
@@ -99,6 +99,63 @@ class CurfewTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("The active player chooses first even when the nonactive player casts Curfew")
+    void activePlayerChoosesFirstWhenOpponentCasts() {
+        harness.forceActivePlayer(player2);
+        Permanent player1Merfolk = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        harness.addToBattlefield(player1, new Dromosaur());
+        Permanent player2Merfolk = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        harness.addToBattlefield(player2, new Dromosaur());
+
+        castCurfew();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(firstChoice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(player2Merfolk.getId()));
+
+        PendingInteraction.MultiPermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(secondChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(player2Merfolk);
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1Merfolk.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(player1Merfolk.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).contains(player2Merfolk.getCard());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A creature controlled by its owner's opponent returns to its owner's hand")
+    void returnsCreatureToOwnerRatherThanController() {
+        CoralMerfolk stolenCreature = new CoralMerfolk();
+        stolenCreature.setOwnerId(player1.getId());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, stolenCreature);
+
+        castCurfew();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(permanent);
+        assertThat(gd.playerHands.get(player1.getId())).contains(stolenCreature);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(stolenCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolves without a choice when neither player controls a creature")
+    void resolvesWithNoCreatures() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        castCurfew();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
     private void castCurfew() {
         harness.castFromHand(player1, new Curfew(), "{U}");
     }
