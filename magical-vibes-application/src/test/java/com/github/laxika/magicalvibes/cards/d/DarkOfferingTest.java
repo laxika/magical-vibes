@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.ArmoredGriffin;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -98,5 +100,38 @@ class DarkOfferingTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Dark Offering");
+    }
+
+    @Test
+    @DisplayName("Does not resolve or gain life when its target becomes black")
+    void targetBecomingBlackPreventsLifeGain() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new ArmoredGriffin());
+        harness.setHand(player1, List.of(new DarkOffering()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, griffin.getId());
+        griffin.getGrantedColors().add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Armored Griffin");
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Dark Offering");
+    }
+
+    @Test
+    @DisplayName("Gains life even when indestructibility prevents destruction")
+    void indestructibleCreatureSurvivesAndControllerGainsLife() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new ArmoredGriffin());
+        griffin.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new DarkOffering()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, griffin.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Armored Griffin");
+        harness.assertNotInGraveyard(player2, "Armored Griffin");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
     }
 }
