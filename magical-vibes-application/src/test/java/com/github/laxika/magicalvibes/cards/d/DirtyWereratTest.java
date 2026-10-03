@@ -101,6 +101,64 @@ class DirtyWereratTest extends BaseCardTest {
         assertThat(wererat.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Discarding the seventh graveyard card enables threshold immediately")
+    void discardEnablesThreshold() {
+        Permanent wererat = harness.addToBattlefieldAndReturn(player1, new DirtyWererat());
+        int basePower = gqs.getEffectivePower(gd, wererat);
+        int baseToughness = gqs.getEffectiveToughness(gd, wererat);
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        assertThat(gqs.getEffectivePower(gd, wererat)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, wererat)).isEqualTo(baseToughness + 2);
+        harness.passBothPriorities();
+        assertThat(wererat.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration prevents lethal first-strike damage and removes the creature from combat")
+    void regenerationSavesBlocker() {
+        addAttacker();
+        Permanent wererat = addCreatureReady(player2, new DirtyWererat());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Dirty Wererat");
+        harness.assertOnBattlefield(player1, "Halberdier");
+        assertThat(wererat.getRegenerationShield()).isZero();
+        assertThat(wererat.getMarkedDamage()).isZero();
+        assertThat(wererat.isTapped()).isTrue();
+        assertThat(wererat.isBlocking()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot be activated without a card to discard")
+    void cannotActivateWithoutDiscard() {
+        harness.addToBattlefield(player1, new DirtyWererat());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No valid card to discard");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addAttacker() {
         Permanent attacker = addCreatureReady(player1, new Halberdier());
         attacker.setAttacking(true);
