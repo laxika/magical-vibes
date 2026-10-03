@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AraAHeartOfTheSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TaxiDriver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CosmicSpiderMan.class, AraAHeartOfTheSpider.class, GrizzlyBears.class})
+@CardUsed({CosmicSpiderMan.class, AraAHeartOfTheSpider.class, TaxiDriver.class})
 class CosmicSpiderManTest extends BaseCardTest {
 
     @Test
@@ -21,7 +21,7 @@ class CosmicSpiderManTest extends BaseCardTest {
     void grantsKeywordsToOtherSpiders() {
         harness.addToBattlefield(player1, new CosmicSpiderMan());
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new AraAHeartOfTheSpider());
-        Permanent nonSpider = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonSpider = harness.addToBattlefieldAndReturn(player1, new TaxiDriver());
         Permanent opposingSpider = harness.addToBattlefieldAndReturn(player2, new AraAHeartOfTheSpider());
 
         advanceToCombatAndResolve(player1);
@@ -50,7 +50,73 @@ class CosmicSpiderManTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Granted keywords last through the end step and expire during cleanup")
+    void keywordsExpireAtEndOfTurn() {
+        harness.addToBattlefield(player1, new CosmicSpiderMan());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new AraAHeartOfTheSpider());
+
+        advanceToCombatAndResolve(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertGrantedKeywords(spider, true);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertGrantedKeywords(spider, false);
+    }
+
+    @Test
+    @DisplayName("A Spider entering after the trigger resolves does not gain keywords")
+    void doesNotAffectSpidersEnteringAfterResolution() {
+        harness.addToBattlefield(player1, new CosmicSpiderMan());
+        advanceToCombatAndResolve(player1);
+
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new AraAHeartOfTheSpider());
+
+        assertGrantedKeywords(spider, false);
+    }
+
+    @Test
+    @DisplayName("A Spider entering before the trigger resolves gains all five keywords")
+    void affectsSpidersPresentAtResolution() {
+        harness.addToBattlefield(player1, new CosmicSpiderMan());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new AraAHeartOfTheSpider());
+        assertGrantedKeywords(spider, false);
+        resolveAllTriggers();
+
+        assertGrantedKeywords(spider, true);
+    }
+
+    @Test
+    @DisplayName("The combat trigger resolves even if Cosmic Spider-Man leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CosmicSpiderMan());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new AraAHeartOfTheSpider());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Cosmic Spider-Man");
+        assertGrantedKeywords(spider, true);
+    }
+
+    private void assertGrantedKeywords(Permanent permanent, boolean expected) {
+        for (Keyword keyword : new Keyword[]{Keyword.FLYING, Keyword.FIRST_STRIKE,
+                Keyword.TRAMPLE, Keyword.LIFELINK, Keyword.HASTE}) {
+            assertThat(gqs.hasKeyword(gd, permanent, keyword)).as("%s", keyword).isEqualTo(expected);
+        }
     }
 }
