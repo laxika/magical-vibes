@@ -227,4 +227,36 @@ class HowlingMineTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);
     }
+
+    @Test
+    @DisplayName("Untapping after the draw step begins does not create a missed trigger")
+    void untappingAfterDrawStepBeginsDoesNotTrigger() {
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+        howlingMine.tap();
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        advanceToDraw(player2);
+        howlingMine.untap();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Tapping one of two Mines before resolution prevents only its additional draw")
+    void eachMineChecksItsOwnUntappedState() {
+        Permanent firstMine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+        harness.addToBattlefield(player2, new HowlingMine());
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        advanceToDraw(player2);
+        firstMine.tap();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 2);
+    }
 }
