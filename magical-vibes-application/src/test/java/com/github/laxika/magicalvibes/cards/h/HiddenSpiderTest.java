@@ -67,8 +67,7 @@ class HiddenSpiderTest extends BaseCardTest {
         prepareOpponentCast();
 
         harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
 
@@ -104,5 +103,58 @@ class HiddenSpiderTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Hidden Spider");
         harness.assertInHand(player1, "Hidden Spider");
+    }
+
+    @Test
+    @DisplayName("Each Hidden Spider transforms independently from the same flying creature spell")
+    void transformsEachCopyIndependently() {
+        Permanent first = addHiddenSpider();
+        Permanent second = addHiddenSpider();
+        prepareOpponentCast();
+
+        harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
+
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, first)).isTrue();
+        assertThat(gqs.isCreature(gd, second)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.REACH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A transformed Hidden Spider returns as an enchantment when bounced and cast again")
+    void transformationDoesNotPersistAcrossZoneChanges() {
+        Permanent spider = addHiddenSpider();
+        prepareOpponentCast();
+        harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, spider)).isTrue();
+
+        harness.setHand(player1, List.of(new Rescind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+        harness.assertNotOnBattlefield(player1, "Hidden Spider");
+        harness.assertInHand(player1, "Hidden Spider");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.isEnchantment(gd, returned)).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+
+        prepareOpponentCast();
+        harness.castFromHand(player2, new PendrellDrake(), "{3}{U}");
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, returned)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(5);
     }
 }
