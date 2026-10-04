@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.c.CoalStoker;
+import com.github.laxika.magicalvibes.cards.c.Conflagrate;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(IgniteMemories.class)
+@CardUsed({IgniteMemories.class, CoalStoker.class, Conflagrate.class, Mountain.class})
 class IgniteMemoriesTest extends BaseCardTest {
 
     @Test
@@ -85,13 +88,58 @@ class IgniteMemoriesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        var target = harness.addToBattlefieldAndReturn(player2, new IgniteMemories());
+        var target = harness.addToBattlefieldAndReturn(player2, new CoalStoker());
         harness.setHand(player1, List.of(new IgniteMemories()));
         addIgniteMemoriesMana();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only target players");
+    }
+
+    @Test
+    @DisplayName("Revealing a land deals no damage and leaves it in hand")
+    void revealingLandDealsNoDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new IgniteMemories()));
+        harness.setHand(player2, List.of(new Mountain()));
+        addIgniteMemoriesMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveSpellAndStorm();
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Mountain");
+        assertThat(gameLogContains("reveals Mountain at random")).isTrue();
+    }
+
+    @Test
+    @DisplayName("X symbols in a revealed card's mana cost contribute zero")
+    void revealedXSpellUsesManaValueInHand() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new IgniteMemories()));
+        harness.setHand(player2, List.of(new Conflagrate()));
+        addIgniteMemoriesMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        resolveSpellAndStorm();
+
+        harness.assertLife(player2, 19);
+        harness.assertInHand(player2, "Conflagrate");
+    }
+
+    @Test
+    @DisplayName("The original spell may target its caster")
+    void originalSpellCanTargetCaster() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new IgniteMemories(), new CoalStoker()));
+        addIgniteMemoriesMana();
+
+        harness.castSorcery(player1, 0, player1.getId());
+        resolveSpellAndStorm();
+
+        harness.assertLife(player1, 16);
+        harness.assertInHand(player1, "Coal Stoker");
     }
 
     private void addIgniteMemoriesMana() {
