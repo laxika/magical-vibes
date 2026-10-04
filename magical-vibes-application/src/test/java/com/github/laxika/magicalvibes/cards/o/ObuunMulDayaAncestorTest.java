@@ -66,6 +66,7 @@ class ObuunMulDayaAncestorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
+        declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isLand(gd, forest)).isTrue();

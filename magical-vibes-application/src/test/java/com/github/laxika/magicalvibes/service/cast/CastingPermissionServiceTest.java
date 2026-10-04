@@ -1106,7 +1106,6 @@ class CastingPermissionServiceTest {
             gd.graveyardCastFilterPermissionsThisTurn.add(
                     new GameData.GraveyardCastFilterPermission(player1Id, filter, true, player2Id, true));
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player1Id);
-            when(predicateEvaluationService.matchesCardPredicate(card, filter, null)).thenReturn(true);
 
             assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isFalse();
         }
