@@ -77,6 +77,51 @@ class HeraldOfHadarTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("A result of 1 only makes the opponent lose life")
+    void minimumResultOnlyLosesLife() {
+        setRoll(1);
+        activateAbility();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A result of 10 gains life without creating Treasures")
+    void firstMiddleResultGainsLife() {
+        setRoll(10);
+        activateAbility();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Circle of Death can be activated repeatedly while tapped and summoning sick")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        setRoll(20);
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfHadar());
+        herald.setSummoningSick(true);
+        herald.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(herald);
+        harness.activateAbility(player1, index, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, index, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(4)
+                .allSatisfy(treasure -> assertThat(treasure.isTapped()).isFalse());
+        assertThat(herald.isTapped()).isTrue();
+    }
+
     private void setRoll(int result) {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
     }
