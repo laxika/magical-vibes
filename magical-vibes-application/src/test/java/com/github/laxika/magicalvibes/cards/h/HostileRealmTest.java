@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.m.Mutavault;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -95,5 +96,63 @@ class HostileRealmTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
         assertThat(mutavault.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted land grants its ability to that opponent")
+    void opponentControlsGrantedAbility() {
+        Permanent mutavault = harness.addToBattlefieldAndReturn(player2, new Mutavault());
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.setHand(player1, List.of(new HostileRealm()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, mutavault.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, 1, null, warrior.getId());
+        harness.passBothPriorities();
+
+        assertThat(mutavault.isTapped()).isTrue();
+        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after Hostile Realm leaves")
+    void abilityResolvesAfterAuraLeaves() {
+        setUpEnchantedMutavault();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+
+        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(p -> p.getCard() instanceof HostileRealm);
+        harness.passBothPriorities();
+
+        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The blocking restriction expires at the end of the turn")
+    void blockingRestrictionExpires() {
+        setUpEnchantedMutavault();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        harness.passBothPriorities();
+        assertThat(warrior.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(warrior.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The granted ability can target a creature its controller controls")
+    void grantedAbilityCanTargetOwnCreature() {
+        setUpEnchantedMutavault();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+
+        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        harness.passBothPriorities();
+
+        assertThat(warrior.isCantBlockThisTurn()).isTrue();
     }
 }
