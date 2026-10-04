@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.s.SpectralBears;
 import com.github.laxika.magicalvibes.cards.w.WinterSky;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -128,7 +127,7 @@ class HeadstoneTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -139,5 +138,56 @@ class HeadstoneTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The delayed draw uses the stack and happens only once")
+    void delayedDrawUsesStackAndHappensOnlyOnce() {
+        Card bears = new SpectralBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setHand(player1, List.of(new Headstone()));
+        harness.setLibrary(player1, List.of(new WinterSky(), new SpectralBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Winter Sky");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Casting during upkeep waits until the next turn's upkeep")
+    void castingDuringUpkeepWaitsUntilNextTurn() {
+        advanceToUpkeep(player1);
+        Card bears = new SpectralBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setHand(player1, List.of(new Headstone()));
+        harness.setLibrary(player1, List.of(new WinterSky()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Winter Sky");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }
