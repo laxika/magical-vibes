@@ -70,10 +70,55 @@ class FlamingSwordTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
     }
 
+    @Test
+    void canEnchantOpponentsCreatureWithoutBoostingOtherCreatures() {
+        Permanent ownCreature = addCreature();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new FlamingSword()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Flaming Sword").getAttachedTo()).isEqualTo(opponentCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void goesToGraveyardWhenTargetLeavesBeforeResolution() {
+        Permanent creature = addCreature();
+        harness.setHand(player1, List.of(new FlamingSword()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.setGraveyard(player1, List.of(creature.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Flaming Sword");
+        harness.assertInGraveyard(player1, "Flaming Sword");
+    }
+
+    @Test
+    void auraGoesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent creature = addCreature();
+        attachAura(creature);
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.setGraveyard(player1, List.of(creature.getCard()));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Flaming Sword");
+        harness.assertInGraveyard(player1, "Flaming Sword");
+    }
+
     private Permanent attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new FlamingSword());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FlamingSword());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 }
