@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "187")
+@CardRegistration(set = "SCD", collectorNumber = "183")
 public class FoeRazerRegent extends Card {
 
     public FoeRazerRegent() {

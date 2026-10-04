@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "170")
 @CardRegistration(set = "KHC", collectorNumber = "63")
+@CardRegistration(set = "SCD", collectorNumber = "188")
 public class HarvestSeason extends Card {
 
     public HarvestSeason() {

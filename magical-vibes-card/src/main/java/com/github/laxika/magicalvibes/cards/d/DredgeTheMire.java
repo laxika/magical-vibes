@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureCardFromTheirGraveyardToBattlefieldEffect;
 
 @CardRegistration(set = "C20", collectorNumber = "43")
+@CardRegistration(set = "SCD", collectorNumber = "76")
 public class DredgeTheMire extends Card {
 
     public DredgeTheMire() {

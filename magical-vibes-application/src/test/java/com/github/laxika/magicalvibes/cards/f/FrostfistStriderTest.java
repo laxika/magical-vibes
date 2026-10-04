@@ -60,8 +60,7 @@ class FrostfistStriderTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, frostfist.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, frostfist.getId());
 
         harness.assertInGraveyard(player2, "Shock");
         assertThat(frostfist.getMarkedDamage()).isZero();
@@ -77,8 +76,7 @@ class FrostfistStriderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player2, 0, frostfist.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, frostfist.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
@@ -95,5 +93,65 @@ class FrostfistStriderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void alreadyTappedCreatureStillGetsAnAdditionalStunCounter() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opponentCreature.setTapped(true);
+        opponentCreature.setCounterCount(CounterType.STUN, 1);
+        harness.setHand(player1, List.of(new FrostfistStrider()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0, 0, opponentCreature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(opponentCreature.getCounterCount(CounterType.STUN)).isEqualTo(2);
+        harness.performUntapStep(player2);
+        assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(opponentCreature.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    void wardDoesNotTriggerForItsControllersSpell() {
+        Permanent frostfist = harness.addToBattlefieldAndReturn(player1, new FrostfistStrider());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, frostfist.getId());
+
+        assertThat(frostfist.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    void opponentCanDeclineWardEvenWithEnoughMana() {
+        Permanent frostfist = harness.addToBattlefieldAndReturn(player1, new FrostfistStrider());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, frostfist.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(frostfist.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void canEnterWithNoOpposingCreatures() {
+        harness.setHand(player1, List.of(new FrostfistStrider()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Frostfist Strider");
+        assertThat(gd.stack).isEmpty();
     }
 }

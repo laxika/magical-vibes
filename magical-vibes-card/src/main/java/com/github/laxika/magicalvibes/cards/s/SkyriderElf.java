@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "PIO", collectorNumber = "243")
+@CardRegistration(set = "BFZ", collectorNumber = "220")
 public class SkyriderElf extends Card {
 
     public SkyriderElf() {

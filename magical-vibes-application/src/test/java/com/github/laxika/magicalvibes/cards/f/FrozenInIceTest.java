@@ -2,11 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FrozenInIce.class, AirElemental.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({FrozenInIce.class, AirElemental.class, FountainOfYouth.class, GrizzlyBears.class, Twiddle.class})
 class FrozenInIceTest extends BaseCardTest {
 
     @Test
@@ -36,9 +35,7 @@ class FrozenInIceTest extends BaseCardTest {
     @Test
     void enchantedCreatureLosesAbilities() {
         Permanent creature = addCreatureReady(player2, new AirElemental());
-        Permanent aura = new Permanent(new FrozenInIce());
-        aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        attachAura(creature);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
@@ -49,7 +46,7 @@ class FrozenInIceTest extends BaseCardTest {
         creature.tap();
         attachAura(creature);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -108,14 +105,43 @@ class FrozenInIceTest extends BaseCardTest {
         return aura;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void enchantedCreatureCannotBeUntappedByASpell() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        attachAura(creature);
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    void removingAuraAllowsCreatureToUntap() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        Permanent aura = attachAura(creature);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void canEnchantOwnCreatureWithoutAffectingOtherCreatures() {
+        Permanent creature = addCreatureReady(player1, new AirElemental());
+        Permanent otherCreature = addCreatureReady(player1, new AirElemental());
+
+        castFrozenInIce(creature);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(otherCreature.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isTrue();
     }
 }

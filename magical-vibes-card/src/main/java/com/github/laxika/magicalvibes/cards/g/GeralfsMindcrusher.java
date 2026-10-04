@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "DKA", collectorNumber = "37")
+@CardRegistration(set = "SCD", collectorNumber = "53")
 public class GeralfsMindcrusher extends Card {
 
     public GeralfsMindcrusher() {

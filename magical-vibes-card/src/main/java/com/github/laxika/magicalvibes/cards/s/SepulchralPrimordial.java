@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "75")
 @CardRegistration(set = "FIC", collectorNumber = "284")
+@CardRegistration(set = "SCD", collectorNumber = "106")
 public class SepulchralPrimordial extends Card {
 
     public SepulchralPrimordial() {

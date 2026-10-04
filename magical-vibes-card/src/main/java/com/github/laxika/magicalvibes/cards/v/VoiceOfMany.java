@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "C19", collectorNumber = "36")
 @CardRegistration(set = "KHC", collectorNumber = "77")
+@CardRegistration(set = "SCD", collectorNumber = "215")
 public class VoiceOfMany extends Card {
 
     public VoiceOfMany() {

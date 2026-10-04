@@ -2,6 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.l.LandCap;
+import com.github.laxika.magicalvibes.cards.g.GiantOyster;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FreyalisesWinds.class, BalduvianBears.class, Forest.class, LandCap.class})
+@CardUsed({FreyalisesWinds.class, BalduvianBears.class, Forest.class, LandCap.class, GiantOyster.class})
 class FreyalisesWindsTest extends BaseCardTest {
 
     // "Whenever a permanent becomes tapped, put a wind counter on it.
@@ -165,6 +169,72 @@ class FreyalisesWindsTest extends BaseCardTest {
         assertThat(spider.getCounterCount(CounterType.WIND)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("An already untapped permanent keeps its wind counters during its controller's untap step")
+    void untappedPermanentKeepsWindCounters() {
+        harness.addToBattlefield(player1, new FreyalisesWinds());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        tapAndResolve(bears);
+        bears.untap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(bears.getCounterCount(CounterType.WIND)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another player's untap step does not remove wind counters")
+    void otherPlayersUntapStepKeepsWindCounters() {
+        harness.addToBattlefield(player1, new FreyalisesWinds());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        tapAndResolve(bears);
+
+        harness.performUntapStep(player1);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getCounterCount(CounterType.WIND)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Winds each add a counter but replace only one untap")
+    void multipleWindsReplaceUntapOnlyOnce() {
+        harness.addToBattlefield(player1, new FreyalisesWinds());
+        harness.addToBattlefield(player2, new FreyalisesWinds());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        bears.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, bears));
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.WIND)).isEqualTo(2);
+
+        harness.performUntapStep(player1);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getCounterCount(CounterType.WIND)).isZero();
+
+        harness.performUntapStep(player1);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+    @Test
+    @DisplayName("Choosing to untap an optional-untap permanent removes wind counters instead")
+    void choosingToUntapStillAppliesWindReplacement() {
+        harness.addToBattlefield(player1, new FreyalisesWinds());
+        Permanent oyster = addCreatureReady(player1, new GiantOyster());
+        oyster.tap();
+        oyster.setCounterCount(CounterType.WIND, 2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.performUntapStep(player1);
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(PlayerInputService.class).processNextMayAbility(gd));
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(oyster.isTapped()).isTrue();
+        assertThat(oyster.getCounterCount(CounterType.WIND)).isZero();
+    }
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(

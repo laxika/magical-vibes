@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "106")
 @CardRegistration(set = "MIC", collectorNumber = "128")
+@CardRegistration(set = "SCD", collectorNumber = "109")
 public class SparkReaper extends Card {
 
     public SparkReaper() {

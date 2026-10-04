@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "RVR", collectorNumber = "15")
 @CardRegistration(set = "RVR", collectorNumber = "305")
 @CardRegistration(set = "MOC", collectorNumber = "180")
+@CardRegistration(set = "SCD", collectorNumber = "18")
 public class DevouringLight extends Card {
 
     public DevouringLight() {

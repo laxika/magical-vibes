@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "THB", collectorNumber = "158")
 @CardRegistration(set = "DSC", collectorNumber = "168")
 @CardRegistration(set = "AFC", collectorNumber = "144")
+@CardRegistration(set = "SCD", collectorNumber = "161")
 public class TectonicGiant extends Card {
 
     public TectonicGiant() {

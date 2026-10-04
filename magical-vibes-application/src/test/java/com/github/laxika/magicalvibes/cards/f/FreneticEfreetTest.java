@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(FreneticEfreet.class)
+@CardUsed({FreneticEfreet.class, EdgarKingOfFigaro.class})
 class FreneticEfreetTest extends BaseCardTest {
 
     @Test
@@ -34,11 +34,9 @@ class FreneticEfreetTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(efreet);
 
         if (phasedOut) {
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                    .anyMatch(log -> log.contains("wins the coin flip"));
+            assertThat(gameLogContains("wins the coin flip")).isTrue();
         } else {
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                    .anyMatch(log -> log.contains("loses the coin flip"));
+            assertThat(gameLogContains("loses the coin flip")).isTrue();
         }
     }
 
@@ -50,8 +48,7 @@ class FreneticEfreetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("coin flip for Frenetic Efreet"));
+        assertThat(gameLogContains("coin flip for Frenetic Efreet")).isTrue();
     }
 
     @Test
@@ -72,6 +69,57 @@ class FreneticEfreetTest extends BaseCardTest {
 
         harness.passUntil(player1, TurnStep.UNTAP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+    }
+
+    @Test
+    @DisplayName("Stacked activations each flip a coin even after the Efreet is gone")
+    void stackedActivationsStillFlipCoins() {
+        Permanent efreet = addCreatureReady(player1, new FreneticEfreet());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Frenetic Efreet"))).hasSize(3);
+        boolean inGraveyard = gd.playerGraveyards.get(player1.getId()).contains(efreet.getCard());
+        assertThat(isPhasedOut(efreet) != inGraveyard).isTrue();
+        harness.assertNotOnBattlefield(player1, "Frenetic Efreet");
+    }
+
+    @Test
+    @CardUsed(EdgarKingOfFigaro.class)
+    @DisplayName("Remaining activations cannot sacrifice an Efreet that already phased out")
+    void stackedActivationsLeavePhasedOutEfreetAlone() {
+        Permanent efreet = addCreatureReady(player1, new FreneticEfreet());
+        harness.addToBattlefield(player1, new EdgarKingOfFigaro());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Frenetic Efreet"))).hasSize(2);
+        assertThat(isPhasedOut(efreet)).isTrue();
+        harness.assertNotInGraveyard(player1, "Frenetic Efreet");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Efreet may activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent efreet = harness.addToBattlefieldAndReturn(player1, new FreneticEfreet());
+        efreet.setSummoningSick(true);
+        efreet.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("coin flip for Frenetic Efreet")).isTrue();
+        boolean inGraveyard = gd.playerGraveyards.get(player1.getId()).contains(efreet.getCard());
+        assertThat(isPhasedOut(efreet) != inGraveyard).isTrue();
     }
 
     private boolean isPhasedOut(Permanent permanent) {
