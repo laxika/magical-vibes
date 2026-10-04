@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BloodKnight;
 import com.github.laxika.magicalvibes.cards.g.GiantDustwasp;
+import com.github.laxika.magicalvibes.cards.p.Pongify;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HammerheimDeadeye.class, GiantDustwasp.class, BloodKnight.class})
+@CardUsed({HammerheimDeadeye.class, GiantDustwasp.class, BloodKnight.class, Pongify.class})
 class HammerheimDeadeyeTest extends BaseCardTest {
 
     @Test
@@ -99,6 +100,46 @@ class HammerheimDeadeyeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
     }
 
+    @Test
+    @DisplayName("Echo still triggers when no flying creature is available on entry")
+    void echoTriggersWithoutAnEtbTarget() {
+        prepareDeadeye();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Hammerheim Deadeye");
+    }
+
+    @Test
+    @DisplayName("Echo still triggers when the flying target is destroyed in response to the ETB")
+    void echoTriggersAfterEtbTargetBecomesIllegal() {
+        harness.addToBattlefield(player2, new GiantDustwasp());
+        UUID targetId = harness.getPermanentId(player2, "Giant Dustwasp");
+        prepareDeadeye();
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Pongify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Giant Dustwasp");
+        harness.assertOnBattlefield(player1, "Hammerheim Deadeye");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Hammerheim Deadeye");
+    }
+
     private void prepareDeadeye() {
         harness.setHand(player1, List.of(new HammerheimDeadeye()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -108,7 +149,6 @@ class HammerheimDeadeyeTest extends BaseCardTest {
     private void castAndResolveDeadeye(UUID targetId) {
         prepareDeadeye();
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
