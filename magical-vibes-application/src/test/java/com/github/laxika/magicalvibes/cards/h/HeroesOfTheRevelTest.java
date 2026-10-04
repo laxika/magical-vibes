@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -51,13 +52,83 @@ class HeroesOfTheRevelTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gqs.getEffectivePower(gd, heroes)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, heroes)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An opponent's spell targeting Heroes does not trigger the boost")
+    void opponentSpellDoesNotTriggerBoost() {
+        Permanent heroes = harness.addToBattlefieldAndReturn(player1, new HeroesOfTheRevel());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, heroes.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, heroes)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, heroes)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost resolves before the targeting spell and includes the Satyr but not opposing creatures")
+    void boostResolvesBeforeSpellAndIncludesToken() {
+        Permanent heroes = harness.enterBattlefieldAndReturn(player1, new HeroesOfTheRevel());
+        resolveAllTriggers();
+        Permanent satyr = findPermanent(player1, "Satyr");
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HeroesOfTheRevel());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, heroes.getId());
+
+        assertThat(gqs.getEffectivePower(gd, heroes)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, heroes)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, satyr)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, satyr)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(4);
+
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, heroes)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, heroes)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the boost resolves do not receive it")
+    void boostDoesNotApplyToLaterCreatures() {
+        Permanent heroes = harness.addToBattlefieldAndReturn(player1, new HeroesOfTheRevel());
+        castGiantGrowth(heroes);
+
+        Permanent laterHeroes = harness.enterBattlefieldAndReturn(player1, new HeroesOfTheRevel());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, laterHeroes)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Satyr"))).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, heroes)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("The boost expires at end of turn")
+    void boostExpiresAtEndOfTurn() {
+        Permanent heroes = harness.enterBattlefieldAndReturn(player1, new HeroesOfTheRevel());
+        resolveAllTriggers();
+        Permanent satyr = findPermanent(player1, "Satyr");
+
+        castGiantGrowth(heroes);
+        assertThat(gqs.getEffectivePower(gd, satyr)).isEqualTo(2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, heroes)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, heroes)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, satyr)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, satyr)).isEqualTo(1);
     }
 
     private void castGiantGrowth(Permanent target) {
