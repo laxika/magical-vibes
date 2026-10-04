@@ -57,7 +57,8 @@ class HERBIELovableRobotTest extends BaseCardTest {
         advanceToBeginningOfCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -77,6 +78,79 @@ class HERBIELovableRobotTest extends BaseCardTest {
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
     }
 
+    @Test
+    void canKeepSurveilledCardOnTop() {
+        Permanent herbie = addReadyHerbie();
+        Card topCard = new HERBIELovableRobot();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, herbie.getId());
+        harness.passBothPriorities();
+
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    void doesNotTriggerWithoutCastingASpell() {
+        addReadyHerbie();
+        harness.setLibrary(player1, List.of(new HERBIELovableRobot()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void castingNoncreatureSpellAfterCombatBeginsDoesNotTrigger() {
+        Permanent herbie = addReadyHerbie();
+        Card topCard = new HERBIELovableRobot();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        advanceToBeginningOfCombat();
+        assertThat(gd.stack).isEmpty();
+
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, herbie.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsTurnEvenAfterCastingNoncreatureSpell() {
+        Permanent herbie = addReadyHerbie();
+        Card topCard = new HERBIELovableRobot();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, herbie.getId());
+        harness.passBothPriorities();
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
     private Permanent addReadyHerbie() {
         Permanent herbie = harness.addToBattlefieldAndReturn(player1, new HERBIELovableRobot());
         herbie.setSummoningSick(false);
@@ -84,9 +158,6 @@ class HERBIELovableRobotTest extends BaseCardTest {
     }
 
     private void advanceToBeginningOfCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 }
