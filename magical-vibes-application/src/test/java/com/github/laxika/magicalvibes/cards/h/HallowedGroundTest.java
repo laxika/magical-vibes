@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,7 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HallowedGround.class, AdarkarWastes.class, BalduvianBears.class, Plains.class})
+@CardUsed({HallowedGround.class, AdarkarWastes.class, BalduvianBears.class, Plains.class, SnowCoveredPlains.class})
 class HallowedGroundTest extends BaseCardTest {
 
     @Test
@@ -139,6 +140,72 @@ class HallowedGroundTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Plains");
         assertCardNotInHand(player1, plains);
+    }
+
+    @Test
+    @DisplayName("Cannot target a real snow-covered basic land")
+    void cannotTargetSnowCoveredPlains() {
+        addHallowedGround(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Hallowed Ground can activate repeatedly")
+    void canActivateRepeatedlyWhileTapped() {
+        Permanent ground = addHallowedGround(player1);
+        Permanent firstLand = addLand(player1, false);
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new AdarkarWastes());
+        ground.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, firstLand.getId());
+        harness.activateAbility(player1, 0, null, secondLand.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertCardInHand(player1, firstLand);
+        assertCardInHand(player1, secondLand);
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player1, "Adarkar Wastes");
+        assertThat(ground.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Hallowed Ground leaves the battlefield")
+    void resolvesWithoutSourceOnBattlefield() {
+        Permanent ground = addHallowedGround(player1);
+        Permanent land = addLand(player1, false);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ground);
+        gd.playerGraveyards.get(player1.getId()).add(ground.getCard());
+        harness.passBothPriorities();
+
+        assertCardInHand(player1, land);
+        harness.assertNotOnBattlefield(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("A land that changes controller before resolution is not returned")
+    void targetChangingControllerBeforeResolutionIsIllegal() {
+        addHallowedGround(player1);
+        Permanent land = addLand(player1, false);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerBattlefields.get(player2.getId()).add(land);
+        gd.stolenCreatures.put(land.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Plains");
+        assertCardNotInHand(player1, land);
+        assertCardNotInHand(player2, land);
     }
 
     private Permanent addHallowedGround(Player player) {
