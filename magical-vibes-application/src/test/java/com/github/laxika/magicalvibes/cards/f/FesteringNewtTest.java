@@ -2,18 +2,24 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BogbrewWitch;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RumblingBaloth;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FesteringNewt.class, BogbrewWitch.class, GrizzlyBears.class})
 class FesteringNewtTest extends BaseCardTest {
 
     /**
@@ -28,11 +34,9 @@ class FesteringNewtTest extends BaseCardTest {
         GrizzlyBears bigBear = new GrizzlyBears();
         bigBear.setPower(3);
         bigBear.setToughness(3);
-        Permanent blocker = new Permanent(bigBear);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, bigBear);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -146,5 +150,71 @@ class FesteringNewtTest extends BaseCardTest {
         Permanent bears = permanentById(bearsId);
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @CardUsed({RumblingBaloth.class})
+    @DisplayName("A Witch entering after the Newt dies upgrades the resolving trigger")
+    void witchEnteringBeforeResolutionUpgradesDebuff() {
+        Permanent newt = harness.addToBattlefieldAndReturn(player1, new FesteringNewt());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
+        newt.setToughnessModifier(-1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.addToBattlefield(player1, new BogbrewWitch());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rumbling Baloth");
+        harness.assertNotOnBattlefield(player2, "Rumbling Baloth");
+    }
+
+    @Test
+    @CardUsed({RumblingBaloth.class})
+    @DisplayName("A Witch dying before resolution leaves only the normal debuff")
+    void witchLeavingBeforeResolutionDoesNotUpgradeDebuff() {
+        Permanent newt = harness.addToBattlefieldAndReturn(player1, new FesteringNewt());
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new BogbrewWitch());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
+        newt.setToughnessModifier(-1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        witch.setToughnessModifier(-3);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bogbrew Witch");
+        harness.assertOnBattlefield(player2, "Rumbling Baloth");
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @CardUsed({RumblingBaloth.class, SongOfTheDryads.class})
+    @DisplayName("A Bogbrew Witch that is a noncreature land does not upgrade the debuff")
+    void noncreatureWitchDoesNotUpgradeDebuff() {
+        Permanent newt = harness.addToBattlefieldAndReturn(player1, new FesteringNewt());
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new BogbrewWitch());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, witch.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, witch)).isFalse();
+        assertThat(gqs.isLand(gd, witch)).isTrue();
+
+        newt.setToughnessModifier(-1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Rumbling Baloth");
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
     }
 }
