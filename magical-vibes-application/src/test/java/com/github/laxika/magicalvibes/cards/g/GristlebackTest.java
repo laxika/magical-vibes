@@ -54,6 +54,47 @@ class GristlebackTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Gristleback");
     }
 
+    @Test
+    @DisplayName("Bloodthirst adds only one counter even after multiple damage events")
+    void bloodthirstCounterCountDoesNotScaleWithDamage() {
+        gd.recordDamageToPlayer(player2.getId(), 5);
+        gd.recordDamageToPlayer(player2.getId(), 3);
+        castGristleback();
+
+        assertThat(findPermanent(player1, "Gristleback")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bloodthirst checks damage when Gristleback enters rather than when it is cast")
+    void bloodthirstChecksDamageAtEntry() {
+        harness.castFromHand(player1, new Gristleback(), "{2}{G}");
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Gristleback")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Gristleback can be sacrificed immediately, with life gained only on resolution")
+    void sacrificeIsPaidBeforeLifeGainAndNeedsNoTap() {
+        castGristleback();
+        findPermanent(player1, "Gristleback").tap();
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Gristleback");
+        harness.assertInGraveyard(player1, "Gristleback");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
     private void castGristleback() {
         harness.castFromHand(player1, new Gristleback(), "{2}{G}");
         harness.passBothPriorities();
