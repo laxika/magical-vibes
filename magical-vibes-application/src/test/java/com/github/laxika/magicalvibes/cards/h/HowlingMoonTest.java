@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.RecklessWaif;
+import com.github.laxika.magicalvibes.cards.s.SnarlingWolf;
 import com.github.laxika.magicalvibes.cards.y.YoungWolf;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -21,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HowlingMoon.class, YoungWolf.class, RecklessWaif.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({HowlingMoon.class, YoungWolf.class, RecklessWaif.class, GrizzlyBears.class, LightningBolt.class,
+        SnarlingWolf.class})
 class HowlingMoonTest extends BaseCardTest {
 
     @Test
@@ -51,15 +53,21 @@ class HowlingMoonTest extends BaseCardTest {
     void cannotTargetInvalidCreature() {
         harness.addToBattlefield(player1, new HowlingMoon());
         harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent ownWolf = harness.addToBattlefieldAndReturn(player1, new YoungWolf());
         Permanent opponentWolf = harness.addToBattlefieldAndReturn(player2, new YoungWolf());
 
         advanceToCombat(player1);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(ownWolf.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1,
                 harness.getPermanentId(player1, "Grizzly Bears")))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentWolf.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, ownWolf.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, ownWolf)).isEqualTo(3);
     }
 
     @Test
@@ -91,12 +99,10 @@ class HowlingMoonTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(countPermanents(player1, "Wolf")).isZero();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(countPermanents(player1, "Wolf")).isEqualTo(1);
         Permanent wolf = findPermanent(player1, "Wolf");
@@ -105,8 +111,7 @@ class HowlingMoonTest extends BaseCardTest {
         assertThat(wolf.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(wolf.getCard().getSubtypes()).contains(CardSubtype.WOLF);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(countPermanents(player1, "Wolf")).isEqualTo(1);
     }
 
@@ -117,12 +122,62 @@ class HowlingMoonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(countPermanents(player1, "Wolf")).isZero();
+    }
+
+    @Test
+    @CardUsed({HowlingMoon.class, SnarlingWolf.class})
+    @DisplayName("Does not boost a Wolf during an opponent's combat")
+    void doesNotBoostDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new HowlingMoon());
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new SnarlingWolf());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({HowlingMoon.class, SnarlingWolf.class})
+    @DisplayName("Boosts a Wolf, leaving other eligible creatures unchanged")
+    void boostsOnlyChosenWolf() {
+        harness.addToBattlefield(player1, new HowlingMoon());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new SnarlingWolf());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new SnarlingWolf());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, chosen)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({HowlingMoon.class, SnarlingWolf.class})
+    @DisplayName("Counts an opponent's first spell even when cast before Howling Moon enters")
+    void countsSpellCastBeforeEntering() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new SnarlingWolf(), new SnarlingWolf()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new HowlingMoon());
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Wolf")).isEqualTo(1);
     }
 
     private void advanceToCombat(Player activePlayer) {
