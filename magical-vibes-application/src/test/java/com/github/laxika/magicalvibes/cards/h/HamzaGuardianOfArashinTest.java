@@ -24,12 +24,7 @@ class HamzaGuardianOfArashinTest extends BaseCardTest {
     void reducesOwnCostForCounterBearingCreaturesYouControl() {
         addCounterBearingCreature(player1);
         addCounterBearingCreature(player1);
-        harness.setHand(player1, List.of(new HamzaGuardianOfArashin()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HamzaGuardianOfArashin(), "{2}{G}{W}");
 
         assertThat(harness.getGameData().stack).hasSize(1);
     }
@@ -39,10 +34,7 @@ class HamzaGuardianOfArashinTest extends BaseCardTest {
     void reducesCreatureSpellCosts() {
         harness.addToBattlefield(player1, new HamzaGuardianOfArashin());
         addCounterBearingCreature(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{G}");
 
         assertThat(harness.getGameData().stack).hasSize(1);
     }
@@ -53,12 +45,70 @@ class HamzaGuardianOfArashinTest extends BaseCardTest {
         Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         ownForest.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         addCounterBearingCreature(player2);
-        harness.setHand(player1, List.of(new HamzaGuardianOfArashin()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        assertThatThrownBy(() ->
+                harness.castFromHand(player1, new HamzaGuardianOfArashin(), "{2}{G}{W}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+    @Test
+    void countsEachCreatureOnceRegardlessOfCounterCount() {
+        addCounterBearingCreature(player1).setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        assertThatThrownBy(() ->
+                harness.castFromHand(player1, new HamzaGuardianOfArashin(), "{G}{W}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void excessReductionStillRequiresColoredMana() {
+        for (int i = 0; i < 5; i++) {
+            addCounterBearingCreature(player1);
+        }
+
+        assertThatThrownBy(() ->
+                harness.castFromHand(player1, new HamzaGuardianOfArashin(), "{G}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canReduceOwnGenericCostToZero() {
+        for (int i = 0; i < 5; i++) {
+            addCounterBearingCreature(player1);
+        }
+
+        harness.castFromHand(player1, new HamzaGuardianOfArashin(), "{G}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void counterBearingHamzaCountsForItsBattlefieldReduction() {
+        Permanent hamza = harness.addToBattlefieldAndReturn(player1, new HamzaGuardianOfArashin());
+        hamza.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{G}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void hamzaInHandDoesNotReduceOtherCreatureSpells() {
+        addCounterBearingCreature(player1);
+        harness.setHand(player1, List.of(new HamzaGuardianOfArashin(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void battlefieldReductionIgnoresOpponentsCreaturesAndNoncreatures() {
+        harness.addToBattlefield(player1, new HamzaGuardianOfArashin());
+        addCounterBearingCreature(player2);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GrizzlyBears(), "{G}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
