@@ -14,9 +14,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(EnslavedScout.class)
+@CardUsed({EnslavedScout.class, Mountain.class})
 class EnslavedScoutTest extends BaseCardTest {
 
     @Test
@@ -33,8 +34,7 @@ class EnslavedScoutTest extends BaseCardTest {
     @Test
     @DisplayName("Gains mountainwalk until end of turn")
     void gainsMountainwalk() {
-        Permanent scout = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
-        scout.setSummoningSick(false);
+        Permanent scout = addCreatureReady(player1, new EnslavedScout());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThat(gqs.hasKeyword(gd, scout, Keyword.MOUNTAINWALK)).isFalse();
@@ -52,13 +52,10 @@ class EnslavedScoutTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Mountain.class)
     void grantedMountainwalkPreventsBlocking() {
-        Permanent scout = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
-        scout.setSummoningSick(false);
+        Permanent scout = addCreatureReady(player1, new EnslavedScout());
         harness.addToBattlefield(player2, new Mountain());
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new EnslavedScout());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new EnslavedScout());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -72,5 +69,63 @@ class EnslavedScoutTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mountainControlledByAttackerDoesNotPreventBlocking() {
+        Permanent scout = addCreatureReady(player1, new EnslavedScout());
+        harness.addToBattlefield(player1, new Mountain());
+        addCreatureReady(player2, new EnslavedScout());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.MOUNTAINWALK)).isTrue();
+        scout.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void grantsMountainwalkOnlyToTheActivatingScout() {
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
+        Permanent otherScout = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
+        Permanent opposingScout = harness.addToBattlefieldAndReturn(player2, new EnslavedScout());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.MOUNTAINWALK)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherScout, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingScout, Keyword.MOUNTAINWALK)).isFalse();
+    }
+
+    @Test
+    void canActivateWhileTapped() {
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
+        scout.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(scout.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneMana() {
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.MOUNTAINWALK)).isFalse();
     }
 }

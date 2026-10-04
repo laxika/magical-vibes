@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.CloudcrownOak;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.ScionOfOona;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EntanglingTrap.class, CloudcrownOak.class, Forest.class})
+@CardUsed({EntanglingTrap.class, CloudcrownOak.class, Forest.class, ScionOfOona.class})
 class EntanglingTrapTest extends BaseCardTest {
 
     // ===== Won clash — tap target + it doesn't untap next untap step =====
@@ -159,5 +160,86 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Winning a clash initiated by an opponent taps and locks the target")
+    void winningOpponentInitiatedClashTriggers() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new EntanglingTrap());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
+        harness.setLibrary(player1, List.of(new CloudcrownOak()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player2.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing a clash initiated by an opponent still taps the target")
+    void losingOpponentInitiatedClashTriggers() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new EntanglingTrap());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new CloudcrownOak()));
+
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player2.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Clash trigger excludes creatures with shroud from target selection")
+    void shroudedCreaturesAreNotLegalTargets() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new EntanglingTrap());
+        Permanent firstScion = harness.addToBattlefieldAndReturn(player2, new ScionOfOona());
+        Permanent secondScion = harness.addToBattlefieldAndReturn(player2, new ScionOfOona());
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
+        harness.setLibrary(player1, List.of(new CloudcrownOak()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(legalTarget.getId())
+                .doesNotContain(firstScion.getId(), secondScion.getId());
+    }
+
+    @Test
+    @DisplayName("Winning a clash locks an already tapped creature through its next untap")
+    void alreadyTappedCreatureStillReceivesUntapRestriction() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new EntanglingTrap());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
+        target.tap();
+        harness.setLibrary(player1, List.of(new CloudcrownOak()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
     }
 }

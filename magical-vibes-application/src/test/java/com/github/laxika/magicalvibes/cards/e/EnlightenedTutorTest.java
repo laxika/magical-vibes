@@ -81,6 +81,44 @@ class EnlightenedTutorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("An enchantment is put on top without entering the battlefield or hand")
+    void choosingEnchantmentPutsOnlyThatCardOnTop() {
+        Card enchantment = new Pacifism();
+        Card artifact = new Ornithopter();
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature, artifact, enchantment));
+
+        cast();
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
+        assertThat(offered).containsExactly(artifact, enchantment);
+        harness.handleCardChosen(player1, offered.indexOf(enchantment));
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(enchantment);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(creature, artifact, enchantment);
+        harness.assertNotInHand(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        harness.assertInGraveyard(player1, "Enlightened Tutor");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the spell from resolving")
+    void emptyLibraryResolvesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Enlightened Tutor");
+    }
+
     private void cast() {
         harness.castFromHand(player1, new EnlightenedTutor(), "{W}");
     }

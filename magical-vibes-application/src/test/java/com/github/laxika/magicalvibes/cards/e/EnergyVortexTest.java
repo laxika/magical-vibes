@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.s.StealEnchantment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EnergyVortex.class, Boomerang.class})
+@CardUsed({EnergyVortex.class, Boomerang.class, StealEnchantment.class})
 class EnergyVortexTest extends BaseCardTest {
 
     @Test
@@ -101,14 +102,15 @@ class EnergyVortexTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no vortex counters the opponent is not prompted and takes no damage")
-    void noCountersMeansNoPromptAndNoDamage() {
+    @DisplayName("With no vortex counters the opponent can pay zero to avoid damage")
+    void noCountersAllowsFreePayment() {
         harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
         harness.assertLife(player2, 20);
     }
 
@@ -129,5 +131,64 @@ class EnergyVortexTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Declining the free payment with zero counters still deals 3 damage")
+    void decliningFreePaymentDealsDamage() {
+        harness.addToBattlefield(player1, new EnergyVortex());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Counters added in response to the removal trigger are removed when it resolves")
+    void countersAddedBeforeRemovalResolvesAreRemoved() {
+        Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setCounterCount(CounterType.VORTEX, 2);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+        assertThat(vortex.getCounterCount(CounterType.VORTEX)).isEqualTo(5);
+
+        harness.passBothPriorities();
+        assertThat(vortex.getCounterCount(CounterType.VORTEX)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter ability cannot be activated during the opponent's upkeep")
+    void abilityRestrictedDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new EnergyVortex());
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Changing control does not change the player chosen as Energy Vortex enters")
+    void controlChangePreservesChosenPlayer() {
+        Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        harness.setHand(player2, List.of(new StealEnchantment()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castEnchantment(player2, 0, vortex.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(vortex);
+        vortex.setCounterCount(CounterType.VORTEX, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
     }
 }

@@ -1,25 +1,27 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.t.TragicSlip;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({ErdwalRipper.class, SerraAngel.class, TragicSlip.class})
 class ErdwalRipperTest extends BaseCardTest {
 
     private Permanent addReadyRipper() {
-        Permanent perm = new Permanent(new ErdwalRipper());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new ErdwalRipper());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
-
-    // ===== Combat damage +1/+1 counter trigger =====
 
     @Test
     @DisplayName("Gets a +1/+1 counter when dealing combat damage to a player")
@@ -28,18 +30,13 @@ class ErdwalRipperTest extends BaseCardTest {
         ripper.setAttacking(true);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // through combat damage
+        resolveCombat();
 
-        // Player2 takes 2 combat damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
+        assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        // Resolve the triggered ability
         harness.passBothPriorities();
 
-        // Ripper should have a +1/+1 counter
         assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -47,19 +44,14 @@ class ErdwalRipperTest extends BaseCardTest {
     @DisplayName("Deals increased combat damage after getting a +1/+1 counter")
     void dealsMoreDamageWithCounter() {
         Permanent ripper = addReadyRipper();
-        ripper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // simulate having gotten a counter previously
+        ripper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         ripper.setAttacking(true);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage
+        resolveCombat();
 
-        // 2 base power + 1 from counter = 3 damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
 
-        // Resolve trigger — gets another counter
         harness.passBothPriorities();
         assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -71,22 +63,86 @@ class ErdwalRipperTest extends BaseCardTest {
         ripper.setAttacking(true);
         harness.setLife(player2, 20);
 
-        // 4/4 blocker blocks the 2/1 Ripper
-        Permanent blocker = new Permanent(new SerraAngel());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage
+        resolveCombat();
 
-        // No combat damage reaches the player
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-
-        // No counter placed (and Ripper died to the 4/4)
+        harness.assertLife(player2, 20);
         harness.assertInGraveyard(player1, "Erdwal Ripper");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zero power deals no damage and does not trigger a counter")
+    void zeroPowerDoesNotTrigger() {
+        Permanent ripper = addReadyRipper();
+        ripper.setPowerModifier(-2);
+        ripper.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Ripper gets its own counter while a nonattacking Ripper gets none")
+    void countersBelongToEachDamageSource() {
+        Permanent first = addReadyRipper();
+        Permanent second = addReadyRipper();
+        Permanent nonattacker = addReadyRipper();
+        first.setAttacking(true);
+        second.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        harness.assertLife(player2, 16);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nonattacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the source before its trigger resolves does not put a counter on another Ripper")
+    void removedSourceDoesNotGiveAnotherRipperACounter() {
+        Permanent attacker = addReadyRipper();
+        Permanent other = addReadyRipper();
+        attacker.setAttacking(true);
+        harness.setHand(player2, List.of(new TragicSlip()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        harness.assertInGraveyard(player1, "Erdwal Ripper");
+        resolveAllTriggers();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Haste allows a newly entered Ripper to attack and earn a counter")
+    void newlyEnteredRipperCanAttack() {
+        Permanent ripper = harness.addToBattlefieldAndReturn(player1, new ErdwalRipper());
+        ripper.setSummoningSick(true);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

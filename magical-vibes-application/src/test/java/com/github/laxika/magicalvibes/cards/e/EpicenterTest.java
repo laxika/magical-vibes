@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Epicenter")
-@CardUsed({Epicenter.class, Forest.class, WildMongrel.class})
+@CardUsed({Epicenter.class, Forest.class, WildMongrel.class, TajuruPreserver.class})
 class EpicenterTest extends BaseCardTest {
 
     @Test
@@ -72,7 +72,6 @@ class EpicenterTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(TajuruPreserver.class)
     @DisplayName("Threshold respects an opponent's sacrifice prevention")
     void thresholdRespectsOpponentSacrificePrevention() {
         harness.setGraveyard(player1, graveyardWithSevenCards());
@@ -104,12 +103,82 @@ class EpicenterTest extends BaseCardTest {
         assertThat(landCount(player1)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Sacrificing your own land at six graveyard cards does not also apply threshold")
+    void selfSacrificeDoesNotEnableThresholdMidResolution() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        List<Permanent> lands = addLands(player1, 2);
+        addLands(player2, 2);
+
+        cast(player1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(0).getId()));
+
+        assertThat(landCount(player1)).isEqualTo(1);
+        assertThat(landCount(player2)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Threshold gained before resolution replaces the single sacrifice")
+    void thresholdGainedBeforeResolution() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        addLands(player1, 2);
+        addLands(player2, 2);
+        prepareSpell();
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setGraveyard(player1, graveyardWithCards(7));
+        harness.passBothPriorities();
+
+        assertThat(landCount(player1)).isZero();
+        assertThat(landCount(player2)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Threshold lost before resolution leaves only the targeted player's sacrifice")
+    void thresholdLostBeforeResolution() {
+        harness.setGraveyard(player1, graveyardWithCards(7));
+        addLands(player1, 2);
+        List<Permanent> lands = addLands(player2, 2);
+        prepareSpell();
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(lands.get(0).getId()));
+
+        assertThat(landCount(player1)).isEqualTo(2);
+        assertThat(landCount(player2)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Below threshold a target with no lands sacrifices nothing")
+    void targetWithoutLandsSacrificesNothing() {
+        addLands(player1, 2);
+        harness.addToBattlefield(player2, new WildMongrel());
+
+        cast();
+
+        assertThat(landCount(player1)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Wild Mongrel");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void cast() {
+        cast(player2);
+    }
+
+    private void cast(Player target) {
+        prepareSpell();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+    }
+
+    private void prepareSpell() {
         harness.setHand(player1, List.of(new Epicenter()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
     }
 
     private List<Permanent> addLands(Player player, int count) {

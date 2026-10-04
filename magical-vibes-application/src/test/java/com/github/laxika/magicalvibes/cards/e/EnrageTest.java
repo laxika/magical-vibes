@@ -35,6 +35,28 @@ class EnrageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Enrages retain their own X values and their boosts add together")
+    void multipleEnragesUseIndependentXValues() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Enrage(), new Enrage()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castInstant(player1, 0, 2, bear.getId());
+        harness.castInstant(player1, 0, 3, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(5);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(7);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Enrage");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Boost wears off at cleanup step")
     void boostWearsOffAtCleanup() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

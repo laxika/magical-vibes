@@ -123,6 +123,57 @@ class EnergyArcTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can target more than ninety-nine creatures")
+    void canTargetOneHundredCreatures() {
+        List<Permanent> creatures = java.util.stream.IntStream.range(0, 100)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new ElvishRanger()))
+                .toList();
+        creatures.forEach(Permanent::tap);
+
+        castEnergyArc(creatures.stream().map(Permanent::getId).toList());
+
+        assertThat(creatures).allMatch(creature -> !creature.isTapped());
+    }
+
+    @Test
+    @DisplayName("An untapped targeted attacker deals no combat damage, while an unselected attacker still does")
+    void onlySelectedAttackerIsPrevented() {
+        harness.setLife(player2, 20);
+        Permanent selected = addAttacker(player1, player2, 4, 1);
+        addAttacker(player1, player2, 4, 1);
+
+        castEnergyArc(List.of(selected.getId()));
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Resolves for the surviving target when another target dies in response")
+    void resolvesWithOneRemainingTarget() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new ElvishRanger());
+        Permanent survivor = addAttacker(player1, player2, 4, 1);
+        removed.tap();
+        survivor.tap();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new EnergyArc()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, List.of(removed.getId(), survivor.getId()));
+
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, removed.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(removed);
+        assertThat(survivor.isTapped()).isFalse();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+    }
+
     private void castEnergyArc(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new EnergyArc()));
         harness.addMana(player1, ManaColor.WHITE, 1);

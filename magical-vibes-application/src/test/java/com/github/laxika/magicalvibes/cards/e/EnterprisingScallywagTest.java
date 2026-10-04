@@ -40,6 +40,56 @@ class EnterprisingScallywagTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("An opponent descending does not satisfy your end-step condition")
+    void opponentsDescentDoesNotCreateTreasure() {
+        harness.addToBattlefield(player1, new EnterprisingScallywag());
+        harness.addToBattlefield(player2, new ZuranOrb());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Forest");
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Descending does not trigger Scallywag at an opponent's end step")
+    void doesNotTriggerAtOpponentsEndStep() {
+        harness.addToBattlefield(player1, new EnterprisingScallywag());
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Forest");
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Descending after the end step begins does not trigger the ability retroactively")
+    void descentDuringEndStepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new EnterprisingScallywag());
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

@@ -98,7 +98,7 @@ class EnergyStormTest extends BaseCardTest {
         flier.tap();
         bears.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(flier.isTapped()).isTrue();
         assertThat(bears.isTapped()).isFalse();
@@ -111,7 +111,7 @@ class EnergyStormTest extends BaseCardTest {
         Permanent flier = addCreatureReady(player2, new KjeldoranSkycaptain());
         flier.tap();
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(flier.isTapped()).isTrue();
     }
@@ -195,5 +195,60 @@ class EnergyStormTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(storm);
         harness.assertInGraveyard(player1, "Energy Storm");
+    }
+
+    @Test
+    @DisplayName("Prevents Hurricane damage to flying creatures on both battlefields")
+    void preventsSorceryDamageToFlyingCreatures() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        Permanent ownFlier = harness.addToBattlefieldAndReturn(player1, new KjeldoranSkycaptain());
+        Permanent opposingFlier = harness.addToBattlefieldAndReturn(player2, new KjeldoranSkycaptain());
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownFlier);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingFlier);
+        assertThat(ownFlier.getMarkedDamage()).isZero();
+        assertThat(opposingFlier.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents Lava Burst damage to a player")
+    void preventsLavaBurstDamageToPlayer() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        harness.setHand(player1, List.of(new LavaBurst()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Energy Storm ends damage prevention and the flying untap restriction")
+    void staticEffectsEndWhenSacrificed() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        Permanent flier = addCreatureReady(player2, new KjeldoranSkycaptain());
+        flier.tap();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Energy Storm");
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.performUntapStep(player2);
+        assertThat(flier.isTapped()).isFalse();
     }
 }
