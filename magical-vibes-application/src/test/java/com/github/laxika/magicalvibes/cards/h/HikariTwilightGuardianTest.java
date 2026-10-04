@@ -127,4 +127,48 @@ class HikariTwilightGuardianTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hikari, Twilight Guardian");
         harness.assertNotOnBattlefield(player2, "Hikari, Twilight Guardian");
     }
+
+    @Test
+    @DisplayName("Exiling Hikari during an end step delays its return until the following turn's end step")
+    void exilingDuringEndStepWaitsForNextTurnsEndStep() {
+        harness.addToBattlefield(player1, new HikariTwilightGuardian());
+        harness.setHand(player1, List.of(new BlessedBreath()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Hikari, Twilight Guardian"));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Hikari, Twilight Guardian");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Hikari, Twilight Guardian");
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hikari, Twilight Guardian");
+    }
+
+    @Test
+    @DisplayName("The Spirit spell resolves after Hikari is exiled and Hikari returns untapped as a new permanent")
+    void spiritSpellResolvesAfterHikariExiles() {
+        var original = harness.addToBattlefieldAndReturn(player1, new HikariTwilightGuardian());
+        original.setTapped(true);
+        harness.setHand(player1, List.of(new HarshDeceiver()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Hikari, Twilight Guardian");
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Harsh Deceiver");
+        harness.passBothPriorities();
+
+        var returnedId = harness.getPermanentId(player1, "Hikari, Twilight Guardian");
+        assertThat(returnedId).isNotEqualTo(original.getId());
+        assertThat(gqs.findPermanentById(gd, returnedId).isTapped()).isFalse();
+    }
 }
