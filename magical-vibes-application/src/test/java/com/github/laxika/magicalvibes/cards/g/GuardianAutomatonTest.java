@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.Disperse;
+import com.github.laxika.magicalvibes.cards.m.MaritimeGuard;
+import com.github.laxika.magicalvibes.cards.r.ReaveSoul;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GuardianAutomaton.class, WrathOfGod.class, MaritimeGuard.class, ReaveSoul.class, Disperse.class})
 class GuardianAutomatonTest extends BaseCardTest {
 
     @Test
@@ -26,7 +31,7 @@ class GuardianAutomatonTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Guardian Automaton");
@@ -40,20 +45,14 @@ class GuardianAutomatonTest extends BaseCardTest {
     @Test
     @DisplayName("Guardian Automaton survives combat, no life gained")
     void survivesNoLifeGain() {
-        GuardianAutomaton automaton = new GuardianAutomaton();
-        Permanent blocker = new Permanent(automaton);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new GuardianAutomaton());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(blocker);
 
-        GrizzlyBears weakAttacker = new GrizzlyBears();
-        weakAttacker.setPower(0);
-        weakAttacker.setToughness(2);
-        Permanent attacker = new Permanent(weakAttacker);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new MaritimeGuard());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         GameData gd = harness.getGameData();
         int lifeBefore = gd.getLife(player1.getId());
@@ -66,5 +65,47 @@ class GuardianAutomatonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Guardian Automaton");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Destroying an opponent's Guardian Automaton gains life for its controller after resolution")
+    void opposingControllerGainsLifeOnlyWhenTriggerResolves() {
+        Permanent automaton = harness.addToBattlefieldAndReturn(player2, new GuardianAutomaton());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new ReaveSoul()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, automaton.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Guardian Automaton");
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        assertThat(harness.getGameData().stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 13);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning Guardian Automaton to hand does not trigger life gain")
+    void returningToHandDoesNotGainLife() {
+        Permanent automaton = harness.addToBattlefieldAndReturn(player1, new GuardianAutomaton());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, automaton.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Guardian Automaton");
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }
