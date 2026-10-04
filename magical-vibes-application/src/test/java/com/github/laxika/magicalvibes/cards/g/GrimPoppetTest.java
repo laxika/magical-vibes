@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrimPoppet.class, SafeholdSentry.class})
 class GrimPoppetTest extends BaseCardTest {
-
-    // ===== ETB: enters with three -1/-1 counters =====
 
     @Test
     @DisplayName("Enters the battlefield with three -1/-1 counters (4/4 becomes 1/1)")
@@ -29,27 +30,25 @@ class GrimPoppetTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB effect
 
         Permanent poppet = findPoppet(player1);
 
         assertThat(poppet.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(poppet.getEffectivePower()).isEqualTo(1);
         assertThat(poppet.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Ability removes a -1/-1 counter from itself and puts one on target creature")
     void abilityMovesCounterToTarget() {
         Permanent poppet = addReadyPoppet(player1);
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        harness.addToBattlefield(player2, new SafeholdSentry());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.getPermanentId(player2, "Safehold Sentry");
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
 
@@ -64,41 +63,37 @@ class GrimPoppetTest extends BaseCardTest {
     @Test
     @DisplayName("Two -1/-1 counters kill a 2/2 target creature")
     void twoCountersKillTarget() {
-        Permanent poppet = addReadyPoppet(player1);
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        addReadyPoppet(player1);
+        harness.addToBattlefield(player2, new SafeholdSentry());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.getPermanentId(player2, "Safehold Sentry");
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Safehold Sentry");
+        harness.assertInGraveyard(player2, "Safehold Sentry");
     }
-
-    // ===== Cannot activate without counters =====
 
     @Test
     @DisplayName("Cannot activate ability when no -1/-1 counters remain")
     void cannotActivateWithoutCounters() {
         Permanent poppet = addReadyPoppet(player1);
         poppet.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        harness.addToBattlefield(player2, new SafeholdSentry());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.getPermanentId(player2, "Safehold Sentry");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
     }
-
-    // ===== "another" target restriction =====
 
     @Test
     @DisplayName("Cannot target itself (another target creature)")
@@ -112,14 +107,78 @@ class GrimPoppetTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Counter removal is paid immediately even while tapped and summoning sick")
+    void removesCounterBeforeResolutionWithoutTapRestriction() {
+        Permanent poppet = addReadyPoppet(player1);
+        poppet.setTapped(true);
+        poppet.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(poppet.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(poppet.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another Grim Poppet is a legal target")
+    void canTargetAnotherGrimPoppet() {
+        Permanent poppet = addReadyPoppet(player1);
+        Permanent otherPoppet = addReadyPoppet(player2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, otherPoppet.getId());
+        harness.passBothPriorities();
+
+        assertThat(poppet.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Grim Poppet");
+        harness.assertInGraveyard(player2, "Grim Poppet");
+    }
+
+    @Test
+    @DisplayName("Ability still resolves when its source has left the battlefield")
+    void resolvesWithoutSource() {
+        Permanent poppet = addReadyPoppet(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(poppet);
+        gd.playerGraveyards.get(player1.getId()).add(poppet.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An illegal target does not refund the counter removal cost")
+    void targetLeavingDoesNotRefundCost() {
+        Permanent poppet = addReadyPoppet(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(poppet.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyPoppet(Player player) {
-        GrimPoppet card = new GrimPoppet();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GrimPoppet());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
