@@ -50,4 +50,67 @@ class FungalBloomTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void repeatedActivationsOnOwnFungusProvideSpendableSporeCounters() {
+        Permanent bloom = harness.addToBattlefieldAndReturn(player1, new FungalBloom());
+        Permanent fungus = harness.addToBattlefieldAndReturn(player1, new Thallid());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, fungus.getId());
+            assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(i);
+            harness.passBothPriorities();
+        }
+
+        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(3);
+        assertThat(bloom.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent bloom = harness.addToBattlefieldAndReturn(player1, new FungalBloom());
+        Permanent fungus = harness.addToBattlefieldAndReturn(player2, new Thallid());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, fungus.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bloom);
+        gd.playerGraveyards.get(player1.getId()).add(bloom.getCard());
+        harness.passBothPriorities();
+
+        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+    }
+
+    @Test
+    void abilityDoesNotPutCounterOnTargetThatLeftBattlefield() {
+        harness.addToBattlefield(player1, new FungalBloom());
+        Permanent fungus = harness.addToBattlefieldAndReturn(player2, new Thallid());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, fungus.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(fungus);
+        gd.playerGraveyards.get(player2.getId()).add(fungus.getCard());
+        harness.passBothPriorities();
+
+        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void genericManaCannotReplaceSecondGreenMana() {
+        harness.addToBattlefield(player1, new FungalBloom());
+        Permanent fungus = harness.addToBattlefieldAndReturn(player2, new Thallid());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, fungus.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(fungus.getCounterCount(CounterType.FUNGUS)).isZero();
+    }
 }

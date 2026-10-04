@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "150")
+@CardRegistration(set = "ELD", collectorNumber = "296")
 public class CuriousPair extends Card {
 
     public CuriousPair() {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "1")
+@CardRegistration(set = "ELD", collectorNumber = "334")
 @CardRegistration(set = "MOC", collectorNumber = "166")
 public class AcclaimedContender extends Card {
 

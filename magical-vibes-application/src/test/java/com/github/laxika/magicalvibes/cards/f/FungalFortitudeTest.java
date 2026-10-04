@@ -44,8 +44,7 @@ class FungalFortitudeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         Permanent returnedBears = findPermanent(player2, "Grizzly Bears");
@@ -66,5 +65,57 @@ class FungalFortitudeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Fungal Fortitude can be flashed in response to lethal damage on an opponent's turn")
+    void flashInResponseToLethalDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
+
+        harness.setHand(player1, List.of(new FungalFortitude()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fungal Fortitude");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        Permanent returnedBears = findPermanent(player1, "Grizzly Bears");
+        assertThat(returnedBears).isNotSameAs(bears);
+        assertThat(returnedBears.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returnedBears)).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Fungal Fortitude");
+    }
+
+    @Test
+    @DisplayName("Fungal Fortitude does not return a creature that dies before the Aura resolves")
+    void creatureDiesBeforeAuraResolves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FungalFortitude()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Fungal Fortitude");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fungal Fortitude");
+        assertThat(gd.stack).isEmpty();
     }
 }

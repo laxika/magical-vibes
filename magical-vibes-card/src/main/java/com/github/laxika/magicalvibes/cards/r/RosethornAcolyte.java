@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 @CardRegistration(set = "ELD", collectorNumber = "174")
+@CardRegistration(set = "ELD", collectorNumber = "300")
 public class RosethornAcolyte extends Card {
 
     public RosethornAcolyte() {

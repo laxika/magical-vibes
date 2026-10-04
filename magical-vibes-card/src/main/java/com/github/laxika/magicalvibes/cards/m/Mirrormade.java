@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "55")
+@CardRegistration(set = "ELD", collectorNumber = "347")
 @CardRegistration(set = "DSC", collectorNumber = "120")
 public class Mirrormade extends Card {
 

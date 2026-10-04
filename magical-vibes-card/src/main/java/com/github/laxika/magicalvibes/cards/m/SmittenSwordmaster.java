@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "105")
+@CardRegistration(set = "ELD", collectorNumber = "290")
 @CardRegistration(set = "MOC", collectorNumber = "268")
 public class SmittenSwordmaster extends Card {
 

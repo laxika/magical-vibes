@@ -80,6 +80,48 @@ class FungalShamblerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Draws a card even when the damaged opponent has no cards to discard")
+    void emptyOpponentHandDoesNotPreventDraw() {
+        Permanent shambler = addCreatureReady(player1, new FungalShambler());
+        shambler.setAttacking(true);
+        harness.setLibrary(player1, List.of(new KavuGlider(), new KavuGlider()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second player's Shambler draws for its controller and makes the first player discard")
+    void secondPlayerDrawsAndFirstPlayerDiscards() {
+        Permanent shambler = addCreatureReady(player2, new FungalShambler());
+        shambler.setAttacking(true);
+        harness.setLibrary(player2, List.of(new KavuGlider(), new KavuGlider()));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new KavuGlider(), new KavuGlider()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
     private Permanent addDaggeredShambler() {
         Permanent shambler = addCreatureReady(player1, new FungalShambler());
         Permanent dagger = harness.addToBattlefieldAndReturn(player1, new QuicksilverDagger());
@@ -89,6 +131,6 @@ class FungalShamblerTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

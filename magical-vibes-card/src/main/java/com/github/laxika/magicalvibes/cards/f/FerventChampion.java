@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "124")
+@CardRegistration(set = "ELD", collectorNumber = "360")
 public class FerventChampion extends Card {
 
     private static final PermanentPredicate ANOTHER_ATTACKING_KNIGHT = new PermanentAllOfPredicate(List.of(

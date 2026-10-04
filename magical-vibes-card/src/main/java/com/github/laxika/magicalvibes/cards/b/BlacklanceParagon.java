@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "79")
+@CardRegistration(set = "ELD", collectorNumber = "351")
 public class BlacklanceParagon extends Card {
 
     public BlacklanceParagon() {
