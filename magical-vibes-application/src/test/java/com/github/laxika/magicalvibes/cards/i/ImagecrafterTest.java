@@ -85,6 +85,55 @@ class ImagecrafterTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Imagecrafter can change its own creature type")
+    void canTargetItself() {
+        Permanent imagecrafter = addImagecrafter();
+
+        activate(imagecrafter);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(imagecrafter.isTapped()).isTrue();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, imagecrafter)).containsExactly(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("Creature type is chosen during resolution rather than activation")
+    void choosesTypeAtResolution() {
+        addImagecrafter();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target))
+                .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("A later resolving ability replaces the earlier chosen creature type")
+    void laterTypeChangeReplacesEarlierType() {
+        addImagecrafter();
+        addCreatureReady(player1, new Imagecrafter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+
+        activate(target);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.GOBLIN);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.ELF);
+    }
+
     private Permanent addImagecrafter() {
         Permanent imagecrafter = addCreatureReady(player1, new Imagecrafter());
         harness.forceActivePlayer(player1);
