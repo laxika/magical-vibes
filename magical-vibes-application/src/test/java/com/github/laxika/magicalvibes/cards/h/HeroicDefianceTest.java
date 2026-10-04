@@ -143,4 +143,35 @@ class HeroicDefianceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Heroic Defiance resolves attached to an opponent's creature and boosts it")
+    void resolvesOnOpponentsCreature() {
+        Permanent kavu = addCreatureReady(player2, new KavuRecluse());
+        addCreatureReady(player1, new HonorableScout());
+        harness.setHand(player1, List.of(new HeroicDefiance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, kavu.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Heroic Defiance");
+        assertThat(aura.getAttachedTo()).isEqualTo(kavu.getId());
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Heroic Defiance boosts a multicolored creature when neither color is most common")
+    void boostsWhenNeitherEnchantedColorIsMostCommon() {
+        Permanent panther = addCreatureReady(player1, new FleetfootPanther());
+        addCreatureReady(player2, new KavuRecluse());
+        addCreatureReady(player2, new KavuRecluse());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HeroicDefiance());
+        aura.setAttachedTo(panther.getId());
+
+        assertThat(gqs.getEffectivePower(gd, panther)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, panther)).isEqualTo(7);
+    }
 }
