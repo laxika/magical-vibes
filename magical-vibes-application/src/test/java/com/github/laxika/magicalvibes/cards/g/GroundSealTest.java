@@ -76,8 +76,7 @@ class GroundSealTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Zombify()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         harness.assertOnBattlefield(player1, "Druid Lyrist");
     }
@@ -115,5 +114,41 @@ class GroundSealTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Druid Lyrist");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getId().equals(land.getId()));
+    }
+
+    @Test
+    @DisplayName("Ground Seal makes a graveyard target illegal while a spell is on the stack")
+    void blocksSpellAlreadyOnStack() {
+        Card creature = new DruidLyrist();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.addToBattlefield(player2, new GroundSeal());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Druid Lyrist");
+        harness.assertNotOnBattlefield(player1, "Druid Lyrist");
+        harness.assertInGraveyard(player1, "Zombify");
+    }
+
+    @Test
+    @DisplayName("Graveyard cards can be targeted again after Ground Seal leaves")
+    void targetingResumesAfterGroundSealLeaves() {
+        Permanent seal = harness.addToBattlefieldAndReturn(player1, new GroundSeal());
+        Permanent lyrist = addCreatureReady(player1, new DruidLyrist());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int lyristIndex = gd.playerBattlefields.get(player1.getId()).indexOf(lyrist);
+
+        harness.activateAbility(player1, lyristIndex, null, seal.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Ground Seal");
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, lyrist.getCard().getId());
+
+        harness.assertOnBattlefield(player1, "Druid Lyrist");
     }
 }
