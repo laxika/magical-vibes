@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HullbreakerHorror.class, Cancel.class, GrizzlyBears.class, Opt.class})
 class HullbreakerHorrorTest extends BaseCardTest {
 
     // Flash + can't be countered + whenever you cast a spell, choose up to one bounce.
@@ -52,11 +54,9 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0);
-        // Trigger on top of Opt — resolve trigger into mode prompt
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd)); // bounce effect
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -77,11 +77,9 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.passPriority(player2);
 
         harness.castInstant(player1, 0);
-        // Stack: bears, Opt, Hullbreaker trigger (top)
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.SPELL);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd)); // bounce spell
+        harness.passBothPriorities();
 
         assertThat(gd.stack.stream().noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"))).isTrue();
         harness.assertInHand(player2, "Grizzly Bears");
@@ -98,9 +96,43 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.NONE);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Opt");
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's turn without triggering itself")
+    void canBeCastDuringOpponentTurn() {
+        harness.setHand(player1, List.of(new HullbreakerHorror()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+        harness.forceActivePlayer(player2);
+        harness.passPriority(player2);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hullbreaker Horror");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Permanent mode can return Hullbreaker Horror itself")
+    void canBounceItself() {
+        Permanent horror = harness.addToBattlefieldAndReturn(player1, new HullbreakerHorror());
+        harness.setHand(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.castInstant(player1, 0);
+        harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT);
+        harness.handlePermanentChosen(player1, horror.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hullbreaker Horror");
+        harness.assertInHand(player1, "Hullbreaker Horror");
     }
 }
