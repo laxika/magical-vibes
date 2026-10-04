@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -110,5 +111,71 @@ class FirestormTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Firestorm");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The same target cannot be chosen twice")
+    void duplicateTargetsAreRejected() {
+        harness.setHand(player1, List.of(new Firestorm(),
+                new LlanowarBehemoth(), new LlanowarBehemoth()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantForXWithDiscards(player1, 0, 2,
+                List.of(player2.getId(), player2.getId()), List.of(1, 2)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Discarding is paid before Firestorm resolves")
+    void discardsArePaidBeforeResolution() {
+        harness.setHand(player1, List.of(new LlanowarBehemoth(),
+                new Firestorm(), new LlanowarBehemoth()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstantForXWithDiscards(player1, 1, 2,
+                List.of(player1.getId(), player2.getId()), List.of(0, 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Llanowar Behemoth", "Llanowar Behemoth");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Firestorm");
+    }
+
+    @Test
+    @DisplayName("X above 100 still requires exactly X targets")
+    void largeXCannotUseFewerThanXTargets() {
+        List<Card> hand = new ArrayList<>();
+        hand.add(new Firestorm());
+        List<Integer> discardIndices = new ArrayList<>();
+        List<UUID> targets = new ArrayList<>();
+        for (int i = 1; i <= 101; i++) {
+            hand.add(new LlanowarBehemoth());
+            discardIndices.add(i);
+            var creature = harness.addToBattlefieldAndReturn(player2, new LlanowarBehemoth());
+            if (i <= 100) {
+                targets.add(creature.getId());
+            }
+        }
+        harness.setHand(player1, hand);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantForXWithDiscards(player1, 0, 101,
+                targets, discardIndices))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(102);
     }
 }
