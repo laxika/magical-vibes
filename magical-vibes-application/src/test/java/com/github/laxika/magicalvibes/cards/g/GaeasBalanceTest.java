@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.Taiga;
@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GaeasBalance.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class,
-        Plains.class, Swamp.class, Taiga.class})
+        Plains.class, Swamp.class, Taiga.class, ObNixilisUnshackled.class})
 class GaeasBalanceTest extends BaseCardTest {
 
     @Test
@@ -113,8 +112,7 @@ class GaeasBalanceTest extends BaseCardTest {
             PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search).isNotNull();
             assertThat(search.params().cards()).containsExactly(searchedLand);
-            harness.getGameService().handleInteractionAnswer(
-                    gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -141,14 +139,96 @@ class GaeasBalanceTest extends BaseCardTest {
             PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search).isNotNull();
             assertThat(search.params().cards()).containsExactly(searchedLands.get(i));
-            harness.getGameService().handleInteractionAnswer(
-                    gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
                 .containsExactlyInAnyOrderElementsOf(searchedLands);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All selected lands enter together after the search finishes")
+    void selectedLandsWaitUntilSearchCompletes() {
+        List<UUID> sacrificeIds = addLandsToBattlefield(List.of(
+                new Plains(), new Island(), new Swamp(), new Mountain(), new Forest()));
+        List<Card> searchedLands = List.of(new Plains(), new Island(), new Swamp(), new Mountain(), new Forest());
+        harness.setLibrary(player1, searchedLands);
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorceryWithSacrifices(player1, 0, null, sacrificeIds);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < searchedLands.size(); i++) {
+            assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+            PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search).isNotNull();
+            harness.handleCardChosen(player1, search.params().cards().indexOf(searchedLands.get(i)));
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard))
+                .containsExactlyInAnyOrderElementsOf(searchedLands);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> !p.isTapped());
+    }
+
+    @Test
+    @DisplayName("Searching an empty library triggers an opponent's search ability only once")
+    void searchesLibraryOnlyOnce() {
+        List<UUID> sacrificeIds = addLandsToBattlefield(List.of(
+                new Plains(), new Island(), new Swamp(), new Mountain(), new Forest()));
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorceryWithSacrifices(player1, 0, null, sacrificeIds);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May fail to find a matching land even when one is present")
+    void mayFailToFindAvailableLand() {
+        List<UUID> sacrificeIds = addLandsToBattlefield(List.of(
+                new Plains(), new Island(), new Swamp(), new Mountain(), new Forest()));
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorceryWithSacrifices(player1, 0, null, sacrificeIds);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice the same land more than once")
+    void rejectsDuplicateSacrificeSelection() {
+        List<UUID> sacrificeIds = addLandsToBattlefield(List.of(
+                new Plains(), new Island(), new Swamp(), new Mountain(), new Forest()));
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifices(player1, 0, null,
+                List.of(sacrificeIds.get(0), sacrificeIds.get(1), sacrificeIds.get(2),
+                        sacrificeIds.get(3), sacrificeIds.get(3))))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private List<UUID> addLandsToBattlefield(List<Card> lands) {
