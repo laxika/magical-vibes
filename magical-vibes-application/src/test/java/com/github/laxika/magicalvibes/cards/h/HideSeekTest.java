@@ -118,4 +118,61 @@ class HideSeekTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
     }
+
+    @Test
+    void hideReturnsOpponentOwnedArtifactToItsOwnersLibrary() {
+        AzoriusSignet card = new AzoriusSignet();
+        card.setOwnerId(player2.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, card);
+        AssaultZeppelid remaining = new AssaultZeppelid();
+        harness.setLibrary(player2, List.of(remaining));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new HideSeek()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, HIDE, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Azorius Signet");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining, card);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void seekGainsCombinedManaValueOfExiledSplitCard() {
+        HideSeek chosen = new HideSeek();
+        harness.setLibrary(player2, List.of(chosen));
+        harness.setHand(player1, List.of(new HideSeek()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, SEEK, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void seekMustSelectACardFromNonemptyLibrary() {
+        AzoriusSignet chosen = new AzoriusSignet();
+        harness.setLibrary(player2, List.of(chosen));
+        harness.setHand(player1, List.of(new HideSeek()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, SEEK, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
+        harness.assertLife(player1, 22);
+    }
 }
