@@ -54,6 +54,57 @@ class HedgeTrollTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Loses the bonus when its controller's last Plains leaves")
+    void losesBonusWhenLastPlainsLeaves() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new HedgeTroll());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(3);
+        gd.playerBattlefields.get(player1.getId()).remove(plains);
+
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, troll)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can activate regeneration repeatedly while summoning sick")
+    void canRegenerateRepeatedlyWhileSummoningSick() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new HedgeTroll());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(troll.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activated regeneration saves the troll and removes it from combat")
+    void activatedRegenerationSavesFromCombat() {
+        Permanent troll = addCreatureReady(player1, new HedgeTroll());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        troll.setBlocking(true);
+        troll.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new HedgeTroll());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Hedge Troll");
+        harness.assertInGraveyard(player2, "Hedge Troll");
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.isBlocking()).isFalse();
+        assertThat(troll.getRegenerationShield()).isZero();
+    }
+
+    @Test
     @DisplayName("Paying {W} grants a regeneration shield")
     void whiteActivationGrantsRegenerationShield() {
         Permanent troll = addCreatureReady(player1, new HedgeTroll());
