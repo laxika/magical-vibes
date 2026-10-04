@@ -35,10 +35,7 @@ class IcewindStalwartTest extends BaseCardTest {
     @Test
     @DisplayName("ETB can resolve without a target")
     void canChooseNoTarget() {
-        harness.setHand(player1, List.of(new IcewindStalwart()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0, (UUID) null);
+        harness.castFromHand(player1, new IcewindStalwart(), "{3}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -68,6 +65,72 @@ class IcewindStalwartTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("non-Warrior creature you control");
+    }
+
+    @Test
+    @DisplayName("A borrowed creature returns under its owner's control")
+    void returnsBorrowedCreatureToOwner() {
+        GrizzlyBears card = new GrizzlyBears();
+        card.setOwnerId(player2.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, card);
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+
+        castStalwart(bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Grizzly Bears").getId()).isNotEqualTo(bears.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning creates an untapped creature with no marked damage")
+    void clearsPermanentStateOnReturn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
+        bears.setMarkedDamage(1);
+
+        castStalwart(bears.getId());
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.getMarkedDamage()).isZero();
+        assertThat(returned.getId()).isNotEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Choosing no target leaves an eligible creature untouched")
+    void canDeclineWithEligibleCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
+
+        harness.castFromHand(player1, new IcewindStalwart(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Icewind Stalwart");
+        assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(bears.getId());
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target no longer controlled by you is not flickered")
+    void doesNotFlickerTargetAfterControlChanges() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IcewindStalwart()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+        gd.stolenCreatures.put(bears.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Grizzly Bears").getId()).isEqualTo(bears.getId());
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castStalwart(UUID targetId) {
