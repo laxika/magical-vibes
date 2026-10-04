@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
-import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.a.ArcaneAdaptation;
+import com.github.laxika.magicalvibes.cards.b.BlightKeeper;
+import com.github.laxika.magicalvibes.cards.b.BishopOfTheBloodstained;
+import com.github.laxika.magicalvibes.cards.j.JadeGuardian;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetCutthroat;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetFirebrand;
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
@@ -15,43 +18,39 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrimCaptainsCall.class, FathomFleetFirebrand.class, BaronyVampire.class,
-        FrenziedRaptor.class, CoralMerfolk.class, FathomFleetCutthroat.class, GrizzlyBears.class})
+@CardUsed({GrimCaptainsCall.class, FathomFleetFirebrand.class, BishopOfTheBloodstained.class,
+        FrenziedRaptor.class, JadeGuardian.class, FathomFleetCutthroat.class, BlightKeeper.class, ArcaneAdaptation.class})
 class GrimCaptainsCallTest extends BaseCardTest {
-
-    // ===== Resolution: all four subtypes present with single matches =====
 
     @Test
     @DisplayName("Returns one of each subtype when exactly one of each is in graveyard")
     void returnsAllFourSubtypesAutomatically() {
         harness.setGraveyard(player1, List.of(
                 new FathomFleetFirebrand(),  // Pirate
-                new BaronyVampire(),         // Vampire
+                new BishopOfTheBloodstained(),         // Vampire
                 new FrenziedRaptor(),        // Dinosaur
-                new CoralMerfolk()           // Merfolk
+                new JadeGuardian()           // Merfolk
         ));
         harness.setHand(player1, List.of(new GrimCaptainsCall()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // All four creature cards should be in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         harness.assertInHand(player1, "Fathom Fleet Firebrand");
-        harness.assertInHand(player1, "Barony Vampire");
+        harness.assertInHand(player1, "Bishop of the Bloodstained");
         harness.assertInHand(player1, "Frenzied Raptor");
-        harness.assertInHand(player1, "Coral Merfolk");
+        harness.assertInHand(player1, "Jade Guardian");
 
         // Graveyard should only contain Grim Captain's Call itself
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName())
                 .isEqualTo("Grim Captain's Call");
     }
-
-    // ===== Resolution: partial matches =====
 
     @Test
     @DisplayName("Returns only matching subtypes when some are missing")
@@ -64,8 +63,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Only Pirate and Dinosaur should be in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -73,22 +71,19 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.assertInHand(player1, "Frenzied Raptor");
     }
 
-    // ===== Resolution: no matches =====
-
     @Test
     @DisplayName("Does nothing when graveyard has no matching subtypes")
     void doesNothingWithNoMatchingSubtypes() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new BlightKeeper()));
         harness.setHand(player1, List.of(new GrimCaptainsCall()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        // Grizzly Bears stays in graveyard, nothing returned to hand
+        // Blight Keeper stays in graveyard, nothing returned to hand
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Blight Keeper");
     }
 
     @Test
@@ -99,13 +94,10 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
-
-    // ===== Resolution: multiple cards of same subtype require choice =====
 
     @Test
     @DisplayName("Prompts for choice when multiple cards of the same subtype exist")
@@ -118,8 +110,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Should be awaiting a graveyard choice for the Pirate
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
@@ -127,12 +118,9 @@ class GrimCaptainsCallTest extends BaseCardTest {
         // Choose the first Pirate (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
 
-        // Chosen Pirate should be in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        // Other Pirate remains in graveyard
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Fathom Fleet Cutthroat")
-                        || c.getName().equals("Fathom Fleet Firebrand"));
+        harness.assertInHand(player1, "Fathom Fleet Firebrand");
+        harness.assertInGraveyard(player1, "Fathom Fleet Cutthroat");
     }
 
     @Test
@@ -141,20 +129,19 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(
                 new FathomFleetFirebrand(),  // Pirate
                 new FathomFleetCutthroat(),  // Pirate
-                new BaronyVampire(),         // Vampire (single — auto-returned)
-                new FrenziedRaptor()         // Dinosaur (single — auto-returned)
+                new BishopOfTheBloodstained(),         // Vampire
+                new FrenziedRaptor()         // Dinosaur
         ));
         harness.setHand(player1, List.of(new GrimCaptainsCall()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        // Vampire and Dinosaur auto-returned; Pirate requires choice
-        // Vampire and Dinosaur should already be in hand
-        harness.assertInHand(player1, "Barony Vampire");
-        harness.assertInHand(player1, "Frenzied Raptor");
+        // Later instructions wait for the Pirate choice.
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Bishop of the Bloodstained");
+        harness.assertInGraveyard(player1, "Frenzied Raptor");
 
         // Should be awaiting graveyard choice for Pirate
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
@@ -162,56 +149,45 @@ class GrimCaptainsCallTest extends BaseCardTest {
         // Choose Fathom Fleet Firebrand
         harness.handleGraveyardCardChosen(player1, 0);
 
-        // Now 3 creature cards in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertInHand(player1, "Fathom Fleet Firebrand");
+        harness.assertInHand(player1, "Bishop of the Bloodstained");
+        harness.assertInHand(player1, "Frenzied Raptor");
     }
 
-    // ===== Resolution: declining a choice does not skip other subtypes =====
-
     @Test
-    @DisplayName("Declining a choice for one subtype still processes remaining subtypes")
-    void decliningOneSubtypeProcessesRemaining() {
+    @DisplayName("Cannot decline a return when a matching Pirate is available")
+    void cannotDeclineRequiredReturn() {
         harness.setGraveyard(player1, List.of(
-                new FathomFleetFirebrand(),  // Pirate
-                new FathomFleetCutthroat(),  // Pirate
-                new FrenziedRaptor()         // Dinosaur (single — auto-returned after queue)
-        ));
+                new FathomFleetFirebrand(), new FathomFleetCutthroat(), new FrenziedRaptor()));
         harness.setHand(player1, List.of(new GrimCaptainsCall()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        // Dinosaur was auto-returned; Pirate requires choice
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        // Decline the Pirate choice
-        harness.handleGraveyardCardChosen(player1, -1);
-
-        // Dinosaur should still be in hand even though Pirate was declined
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertInHand(player1, "Fathom Fleet Firebrand");
         harness.assertInHand(player1, "Frenzied Raptor");
-        // Both Pirates should remain in graveyard
-        harness.assertInGraveyard(player1, "Fathom Fleet Firebrand");
         harness.assertInGraveyard(player1, "Fathom Fleet Cutthroat");
     }
-
-    // ===== Resolution: does not return cards from opponent's graveyard =====
 
     @Test
     @DisplayName("Only returns cards from controller's graveyard, not opponent's")
     void onlyReturnsFromControllersGraveyard() {
         harness.setGraveyard(player1, List.of(new FathomFleetFirebrand()));  // Pirate for player1
         harness.setGraveyard(player2, List.of(
-                new BaronyVampire(),   // Vampire in opponent's graveyard
+                new BishopOfTheBloodstained(),   // Vampire in opponent's graveyard
                 new FrenziedRaptor()   // Dinosaur in opponent's graveyard
         ));
         harness.setHand(player1, List.of(new GrimCaptainsCall()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Only Pirate from player1's graveyard should be returned
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -220,5 +196,45 @@ class GrimCaptainsCallTest extends BaseCardTest {
 
         // Opponent's graveyard should be unchanged
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Returns a creature card given Pirate by Arcane Adaptation")
+    void returnsCardWithGrantedGraveyardSubtype() {
+        harness.addToBattlefieldAndReturn(player1, new ArcaneAdaptation())
+                .setChosenSubtype(CardSubtype.PIRATE);
+        harness.setGraveyard(player1, List.of(new BlightKeeper()));
+        harness.setHand(player1, List.of(new GrimCaptainsCall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInHand(player1, "Blight Keeper");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(c -> c.getName()).containsExactly("Grim Captain's Call");
+    }
+
+    @Test
+    @DisplayName("A Pirate Vampire can be chosen for Pirate before processing Vampire")
+    void choosesMultiTypedCardForEarlierSubtype() {
+        harness.addToBattlefieldAndReturn(player1, new ArcaneAdaptation())
+                .setChosenSubtype(CardSubtype.PIRATE);
+        harness.setGraveyard(player1, List.of(
+                new BishopOfTheBloodstained(), new FathomFleetFirebrand()));
+        harness.setHand(player1, List.of(new GrimCaptainsCall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName()).containsExactly("Bishop of the Bloodstained");
+        harness.assertInGraveyard(player1, "Fathom Fleet Firebrand");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
