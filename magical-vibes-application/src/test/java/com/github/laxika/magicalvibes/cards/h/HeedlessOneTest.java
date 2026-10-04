@@ -63,8 +63,7 @@ class HeedlessOneTest extends BaseCardTest {
         addCreatureReady(player1, new ElvishWarrior());
         Permanent blocker = addCreatureReady(player2, new GoblinSledder());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -80,6 +79,40 @@ class HeedlessOneTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
         assertThat(gqs.getEffectivePower(gd, heedlessOne)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Elves in hand, graveyard, and exile do not increase Heedless One's size")
+    void ignoresElvesOutsideBattlefield() {
+        Permanent heedlessOne = addHeedlessOneReady(player1);
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        harness.setGraveyard(player2, List.of(new ElvishWarrior()));
+        harness.setExile(player2, List.of(new ElvishWarrior()));
+
+        assertThat(gqs.getEffectivePower(gd, heedlessOne)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, heedlessOne)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Heedless One's defining ability works in hand and graveyard without counting itself")
+    void definesSizeOutsideBattlefield() {
+        HeedlessOne inHand = new HeedlessOne();
+        HeedlessOne inGraveyard = new HeedlessOne();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player2, List.of(inGraveyard));
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isZero();
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isZero();
+
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isEqualTo(2);
     }
 
     private Permanent addHeedlessOneReady(Player player) {
