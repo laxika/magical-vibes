@@ -22,12 +22,9 @@ class GustcloakSkirmisherTest extends BaseCardTest {
         Permanent skirmisher = addSkirmisher();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        skirmisher.tap();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(skirmisher.isTapped()).isFalse();
@@ -42,12 +39,9 @@ class GustcloakSkirmisherTest extends BaseCardTest {
         Permanent skirmisher = addSkirmisher();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        skirmisher.tap();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(skirmisher.isTapped()).isTrue();
@@ -60,9 +54,7 @@ class GustcloakSkirmisherTest extends BaseCardTest {
     void unblockedSkirmisherDoesNotTrigger() {
         Permanent skirmisher = addSkirmisher();
 
-        declareAttackers(List.of(0));
-        skirmisher.tap();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -77,14 +69,11 @@ class GustcloakSkirmisherTest extends BaseCardTest {
         Permanent secondBlocker = addCreatureReady(player2);
         int startingLife = gd.getLife(player2.getId());
 
-        declareAttackers(List.of(0));
-        skirmisher.tap();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -98,6 +87,50 @@ class GustcloakSkirmisherTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
         assertThat(firstBlocker.getMarkedDamage()).isZero();
         assertThat(secondBlocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An already untapped Skirmisher can still be removed from combat")
+    void alreadyUntappedSkirmisherCanBeRemovedFromCombat() {
+        Permanent skirmisher = addSkirmisher();
+        Permanent blocker = addCreatureReady(player2);
+        int startingLife = gd.getLife(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        skirmisher.untap();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(skirmisher.isTapped()).isFalse();
+        assertThat(skirmisher.isAttacking()).isFalse();
+        assertThat(skirmisher.getAttackTarget()).isNull();
+
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+        assertThat(skirmisher.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining removal allows normal combat damage between the Skirmisher and its blocker")
+    void decliningRemovalAllowsNormalCombatDamage() {
+        Permanent skirmisher = addSkirmisher();
+        Permanent blocker = addCreatureReady(player2);
+        int startingLife = gd.getLife(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(skirmisher);
+        assertThat(skirmisher.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
     }
 
     private Permanent addSkirmisher() {
