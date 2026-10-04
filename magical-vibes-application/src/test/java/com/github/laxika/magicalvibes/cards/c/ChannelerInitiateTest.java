@@ -138,7 +138,7 @@ class ChannelerInitiateTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent initiate = addReadyInitiate(player1);
-        initiate.setTapped(true);
+        initiate.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -178,7 +178,7 @@ class ChannelerInitiateTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(before + 1);
         assertThat(gd.stack).isEmpty();
 
-        initiate.setTapped(false);
+        initiate.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(initiate.isTapped()).isFalse();

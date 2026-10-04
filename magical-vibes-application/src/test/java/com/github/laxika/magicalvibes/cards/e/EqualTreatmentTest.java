@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EqualTreatment.class, AvenTrooper.class, Blaze.class, SerraAngel.class})
+@CardUsed({EqualTreatment.class, AvenTrooper.class, Blaze.class, SerraAngel.class, FurnaceOfRath.class})
 class EqualTreatmentTest extends BaseCardTest {
 
     @Test
@@ -100,6 +101,53 @@ class EqualTreatmentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Zero damage remains zero")
+    void doesNotReplaceZeroDamage() {
+        castEqualTreatment();
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Replaces every separate damage event during the turn")
+    void replacesRepeatedDamageEvents() {
+        castEqualTreatment();
+        harness.setHand(player1, List.of(new Blaze(), new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("The damaged player chooses the order of competing damage replacements")
+    void damagedPlayerChoosesReplacementOrder() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        castEqualTreatment();
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player2, 20);
     }
 
     private void castEqualTreatment() {

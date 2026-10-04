@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,5 +51,23 @@ class FerrousLakeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Colored mana can pay the generic cost and the mana ability resolves immediately")
+    void acceptsColoredManaAndResolvesImmediately(ManaColor paymentColor) {
+        Permanent lake = harness.addToBattlefieldAndReturn(player1, new FerrousLake());
+        harness.addMana(player1, paymentColor, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        for (ManaColor color : ManaColor.values()) {
+            int expected = color == ManaColor.BLUE || color == ManaColor.RED ? 1 : 0;
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(expected);
+            assertThat(gd.playerManaPools.get(player2.getId()).get(color)).isZero();
+        }
+        assertThat(lake.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

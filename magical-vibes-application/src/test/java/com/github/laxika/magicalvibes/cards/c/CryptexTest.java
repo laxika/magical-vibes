@@ -53,7 +53,7 @@ class CryptexTest extends BaseCardTest {
     @Test
     void tappedCryptexWithMoreThanFiveCountersCanBeSacrificedAndKeepAllSurveilledCards() {
         Permanent cryptex = harness.addToBattlefieldAndReturn(player1, new Cryptex());
-        cryptex.setTapped(true);
+        cryptex.tap();
         cryptex.setCounterCount(CounterType.UNLOCK, 6);
         Card first = new NervousGardener();
         Card second = new NervousGardener();

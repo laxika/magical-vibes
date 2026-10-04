@@ -117,6 +117,61 @@ class FlawlessManeuverTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    void canCastForFreeWhileControllingOpponentsCommander() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player2.getId(), commander);
+        Permanent controlledCommander = harness.addToBattlefieldAndReturn(player1, commander);
+        harness.setHand(player1, List.of(new FlawlessManeuver()));
+
+        harness.castInstantWithAlternateCost(player1, 0, null, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, controlledCommander, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void unregisteredLegendaryCreatureDoesNotAllowFreeCasting() {
+        harness.addToBattlefield(player1, new EdgarMarkov());
+        harness.setHand(player1, List.of(new FlawlessManeuver()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, null, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void grantsIndestructibleToCreaturesPresentAtResolutionOnly() {
+        harness.setHand(player1, List.of(new FlawlessManeuver()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void losingCommanderAfterCastingDoesNotPreventResolution() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        Permanent commanderPermanent = harness.addToBattlefieldAndReturn(player1, commander);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FlawlessManeuver()));
+        harness.castInstantWithAlternateCost(player1, 0, null, List.of());
+        gd.playerBattlefields.get(player1.getId()).remove(commanderPermanent);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
     private void addToCommandZone(Player player, Card card) {
         gd.playerCommandZones.get(player.getId()).add(card);
     }

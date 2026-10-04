@@ -86,7 +86,7 @@ class CentaurVeteranTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent veteran = harness.addToBattlefieldAndReturn(player1, new CentaurVeteran());
-        veteran.setTapped(true);
+        veteran.tap();
         veteran.setSummoningSick(true);
         harness.setHand(player1, List.of(new CentaurVeteran(), new CentaurVeteran()));
         harness.addMana(player1, ManaColor.GREEN, 2);

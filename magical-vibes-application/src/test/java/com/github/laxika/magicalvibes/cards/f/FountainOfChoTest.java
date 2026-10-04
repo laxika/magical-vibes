@@ -92,4 +92,54 @@ class FountainOfChoTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Storage counters are added on resolution, after the land taps as a cost")
+    void storageAbilityUsesTheStack() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfCho());
+        fountain.setCounterCount(CounterType.STORAGE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(fountain.isTapped()).isTrue();
+        assertThat(fountain.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(fountain.getCounterCount(CounterType.STORAGE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All storage counters can be removed immediately without removing other counters")
+    void removesAllStorageCountersWithoutUsingTheStack() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfCho());
+        fountain.setCounterCount(CounterType.STORAGE, 3);
+        fountain.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "3");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(3);
+        assertThat(fountain.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(fountain.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(fountain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The storage ability cannot be activated while the land is tapped")
+    void cannotAddStorageCounterWhileTapped() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfCho());
+        fountain.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(fountain.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

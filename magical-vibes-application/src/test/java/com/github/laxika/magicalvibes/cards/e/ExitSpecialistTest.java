@@ -74,19 +74,12 @@ class ExitSpecialistTest extends BaseCardTest {
 
     @Test
     void cannotBeBlockedByCreatureWithPowerThreeOrGreater() {
-        Permanent blocker = new Permanent(new HillGiant());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new HillGiant());
 
-        Permanent attacker = new Permanent(new ExitSpecialist());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ExitSpecialist());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -95,22 +88,100 @@ class ExitSpecialistTest extends BaseCardTest {
 
     @Test
     void canBeBlockedByCreatureWithPowerTwo() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent attacker = new Permanent(new ExitSpecialist());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ExitSpecialist());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void disguiseCreatesOnlyOneWardTrigger() {
+        Permanent specialist = castFaceDownSpecialist();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, specialist.getId());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void faceDownSpecialistCanBeBlockedByPowerThreeCreature() {
+        Permanent specialist = castFaceDownSpecialist();
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        specialist.setSummoningSick(false);
+        specialist.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void turningFaceUpCanReturnAnotherCreatureYouControl() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent specialist = castFaceDownSpecialist();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(specialist));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Exit Specialist");
+    }
+
+    @Test
+    void turningFaceUpWithoutAnotherCreatureDoesNotReturnItself() {
+        Permanent specialist = castFaceDownSpecialist();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(specialist.isFaceDown()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Exit Specialist");
+        harness.assertNotInHand(player1, "Exit Specialist");
+    }
+
+    @Test
+    void faceUpSpecialistDoesNotHaveDisguiseWard() {
+        Permanent specialist = harness.addToBattlefieldAndReturn(player1, new ExitSpecialist());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, specialist.getId());
+
+        harness.assertInGraveyard(player1, "Exit Specialist");
+        harness.assertNotOnBattlefield(player1, "Exit Specialist");
+    }
+
+    private Permanent castFaceDownSpecialist() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ExitSpecialist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        return findPermanent(player1, "Exit Specialist");
     }
 }

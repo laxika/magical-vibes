@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @CardUsed({ElementalUprising.class, Forest.class, GrizzlyBears.class})
 class ElementalUprisingTest extends BaseCardTest {
@@ -78,21 +80,57 @@ class ElementalUprisingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot evade the blocking requirement by blocking another attacker")
+    void cannotRedirectOnlyBlockerToAnotherAttacker() {
+        Permanent land = addLand(player1);
+        addCreatureReady(player1);
+        addCreatureReady(player2);
+        castOn(player1, land);
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A single blocker satisfies the requirement even when more are available")
+    void oneBlockerIsEnough() {
+        Permanent land = addLand(player1);
+        addCreatureReady(player2);
+        addCreatureReady(player2);
+        castOn(player1, land);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that is not a land")
+    void cannotTargetNonlandCreature() {
+        Permanent creature = addCreatureReady(player1);
+        harness.setHand(player1, List.of(new ElementalUprising()));
+        addManaForSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addLand(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private void castOn(Player player, Permanent land) {
         harness.setHand(player, List.of(new ElementalUprising()));
         addManaForSpell();
-        harness.castInstant(player, 0, land.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, land.getId());
     }
 
     private void addManaForSpell() {

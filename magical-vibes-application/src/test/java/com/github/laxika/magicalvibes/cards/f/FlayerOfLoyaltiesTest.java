@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -74,12 +74,13 @@ class FlayerOfLoyaltiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         harness.castCreature(player1, 0, target.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
@@ -99,5 +100,86 @@ class FlayerOfLoyaltiesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Flayer itself has annihilator 2 when it attacks")
+    void flayerItselfMakesDefenderSacrificeTwoPermanents() {
+        addCreatureReady(player1, new FlayerOfLoyalties());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The cast trigger can untap and transform a creature already controlled by its caster")
+    void castTriggerCanTargetOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new FlayerOfLoyalties()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castCreature(player1, 0, target.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Flayer of Loyalties");
+    }
+
+    @Test
+    @DisplayName("The granted annihilator ability expires at cleanup")
+    void grantedAnnihilatorExpiresAtCleanup() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new FlayerOfLoyalties()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castCreature(player1, 0, target.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(target)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Setting base power and toughness preserves counters")
+    void transformationPreservesCounters() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new FlayerOfLoyalties()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castCreature(player1, 0, target.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, target.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(12);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 }

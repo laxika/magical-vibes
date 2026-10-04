@@ -10,12 +10,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FireBowman.class, WeiInfantry.class})
+@CardUsed({FireBowman.class, WeiInfantry.class, ChandraNalaar.class})
 class FireBowmanTest extends BaseCardTest {
 
     @Test
@@ -27,7 +25,7 @@ class FireBowmanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         harness.assertNotOnBattlefield(player1, "Fire Bowman");
     }
 
@@ -35,17 +33,14 @@ class FireBowmanTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 2/1")
     void deals1DamageDestroying1Toughness() {
         setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new WeiInfantry());
-
-        UUID targetId = harness.getPermanentId(player2, "Wei Infantry");
-        harness.activateAbility(player1, 0, null, targetId);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Wei Infantry");
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     @DisplayName("Deals 1 damage to target planeswalker")
     void deals1DamageToPlaneswalker() {
         setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
@@ -101,6 +96,66 @@ class FireBowmanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped creature with summoning sickness during upkeep")
+    void canActivateWhileTappedDuringUpkeep() {
+        setupOnMyTurn(TurnStep.UPKEEP);
+        Permanent bowman = gd.playerBattlefields.get(player1.getId()).getFirst();
+        bowman.setTapped(true);
+        bowman.setSummoningSick(true);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Fire Bowman");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canDamageController() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Fire Bowman");
+    }
+
+    @Test
+    @DisplayName("Can target itself, but its sacrifice makes the target illegal on resolution")
+    void selfTargetBecomesIllegalAfterSacrifice() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent bowman = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.activateAbility(player1, 0, null, bowman.getId());
+
+        harness.assertInGraveyard(player1, "Fire Bowman");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bowman.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase even without attackers")
+    void cannotActivateInPostcombatMain() {
+        setupOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+
+        harness.assertOnBattlefield(player1, "Fire Bowman");
+        harness.assertNotInGraveyard(player1, "Fire Bowman");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupOnMyTurn(TurnStep step) {

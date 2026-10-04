@@ -21,8 +21,7 @@ class FangrenHunterTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new AlphaMyr());
         addCreatureReady(player1, new FangrenHunter());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -33,5 +32,46 @@ class FangrenHunterTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         harness.assertInGraveyard(player2, "Alpha Myr");
+    }
+
+    @Test
+    @DisplayName("Trample permits assigning all combat damage to a blocker")
+    void canAssignAllDamageToBlocker() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new AlphaMyr());
+        addCreatureReady(player1, new FangrenHunter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 4));
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        harness.assertOnBattlefield(player1, "Fangren Hunter");
+    }
+
+    @Test
+    @DisplayName("Trample assigns lethal damage to each blocker before excess damage")
+    void tramplesOverMultipleBlockers() {
+        harness.setLife(player2, 20);
+        Permanent firstBlocker = addCreatureReady(player2, new AlphaMyr());
+        Permanent secondBlocker = addCreatureReady(player2, new AlphaMyr());
+        addCreatureReady(player1, new FangrenHunter());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1,
+                secondBlocker.getId(), 1,
+                player2.getId(), 2
+        ));
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player2, "Alpha Myr");
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Fangren Hunter");
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.SeekFromLibraryToGraveyardEff
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -60,6 +59,5 @@ public class SeekFromLibraryToGraveyardEffectHandler implements NormalEffectHand
             }
         }
 
-        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
     }
 }

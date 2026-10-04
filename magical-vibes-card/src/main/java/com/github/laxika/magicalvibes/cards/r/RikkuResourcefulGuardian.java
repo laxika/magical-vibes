@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "41")
 @CardRegistration(set = "FIC", collectorNumber = "145")
+@CardRegistration(set = "FIC", collectorNumber = "468")
 public class RikkuResourcefulGuardian extends Card {
 
     public RikkuResourcefulGuardian() {

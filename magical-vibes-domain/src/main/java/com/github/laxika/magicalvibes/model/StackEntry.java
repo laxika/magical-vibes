@@ -69,6 +69,7 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    private final Map<UUID, Map<CounterType, Integer>> lastKnownPermanentCounters = new HashMap<>();
     /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
     private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
     /** Effective colors of declared targets just before they left the battlefield. */
@@ -141,6 +142,8 @@ public class StackEntry {
     @Setter private boolean castTransformed;
     /** Whether a creature spell resolves as a face-down 2/2 from a morph cast. */
     @Setter private boolean castFaceDown;
+    /** Whether the face-down casting alternative was disguise and supplies ward. */
+    @Setter private boolean castWithDisguise;
     /** Whether this face-down creature turns face up when it would deal or receive damage or become tapped. */
     @Setter private boolean faceDownTurnsFaceUpOnDamageOrTap;
     /** Whether a permanent resolved from this spell enters the battlefield tapped. */
@@ -389,6 +392,8 @@ public class StackEntry {
      * Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringPermanentId;
+    /** Player whose monarch status was captured when a monarch-triggered target was created. */
+    @Setter private UUID triggeringPlayerId;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
     /** Owner of the triggering permanent when its non-targeting reference was captured. */
@@ -726,6 +731,8 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        source.lastKnownPermanentCounters.forEach((id, counts) ->
+                this.lastKnownPermanentCounters.put(id, new EnumMap<>(counts)));
         this.returnedPermanentIds.addAll(source.returnedPermanentIds);
         this.lastKnownTargetColors.putAll(source.lastKnownTargetColors);
         this.counters.putAll(source.counters);
@@ -765,6 +772,7 @@ public class StackEntry {
         this.castWithWarp = source.castWithWarp;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
+        this.castWithDisguise = source.castWithDisguise;
         this.faceDownTurnsFaceUpOnDamageOrTap = source.faceDownTurnsFaceUpOnDamageOrTap;
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
@@ -865,6 +873,7 @@ public class StackEntry {
         this.exiledCostCardSnapshot = source.exiledCostCardSnapshot;
         this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
         this.triggeringPermanentId = source.triggeringPermanentId;
+        this.triggeringPlayerId = source.triggeringPlayerId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
@@ -1062,6 +1071,7 @@ public class StackEntry {
         this.castWithDisturb = false;
         this.castTransformed = false;
         this.castFaceDown = false;
+        this.castWithDisguise = false;
         this.faceDownTurnsFaceUpOnDamageOrTap = false;
         this.entersTapped = false;
         this.cyclingAbility = false;

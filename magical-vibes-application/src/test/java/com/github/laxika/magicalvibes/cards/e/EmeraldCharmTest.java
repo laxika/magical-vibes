@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EmeraldCharmTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({EmeraldCharm.class, GrizzlyBears.class, AngelicChorus.class})
     @DisplayName("Mode 0: Untap target permanent")
     class UntapMode {
 
@@ -58,6 +59,7 @@ class EmeraldCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({EmeraldCharm.class, AngelicChorus.class, GrizzlyBears.class, Pacifism.class})
     @DisplayName("Mode 1: Destroy target non-Aura enchantment")
     class DestroyNonAuraEnchantmentMode {
 
@@ -79,8 +81,7 @@ class EmeraldCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target an Aura")
         void cannotTargetAura() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent host = findPermanent(player2, "Grizzly Bears");
+            Permanent host = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             Permanent aura = addAuraAttachedTo(player2, host);
             harness.addToBattlefield(player2, new AngelicChorus());
             harness.setHand(player1, List.of(new EmeraldCharm()));
@@ -103,8 +104,39 @@ class EmeraldCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({EmeraldCharm.class, AirElemental.class, AngelicChorus.class, GrizzlyBears.class})
     @DisplayName("Mode 2: Target creature loses flying until end of turn")
     class LoseFlyingMode {
+
+        @Test
+        @DisplayName("Can target a creature without flying")
+        void canTargetCreatureWithoutFlying() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new EmeraldCharm()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            harness.castInstant(player1, 0, 2, bears.getId());
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Emerald Charm");
+            assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Only the targeted creature loses flying")
+        void onlyTargetedCreatureLosesFlying() {
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+            Permanent other = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+            harness.setHand(player1, List.of(new EmeraldCharm()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            harness.castInstant(player1, 0, 2, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+            assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isTrue();
+        }
 
         @Test
         @DisplayName("Target creature loses flying until end of turn")

@@ -138,4 +138,73 @@ class DwarvenBloodboilerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No untapped matching creature to tap");
     }
+
+    @Test
+    @DisplayName("A summoning-sick Bloodboiler can tap itself and target itself")
+    void summoningSickBloodboilerCanBoostItself() {
+        Permanent bloodboiler = harness.addToBattlefieldAndReturn(player1, new DwarvenBloodboiler());
+
+        assertThat(bloodboiler.isSummoningSick()).isTrue();
+        harness.activateAbility(player1, 0, null, bloodboiler.getId());
+        assertThat(bloodboiler.isTapped()).isTrue();
+        assertThat(bloodboiler.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(bloodboiler.getPowerModifier()).isEqualTo(2);
+        assertThat(bloodboiler.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick support Dwarf can pay the cost")
+    void summoningSickDwarfCanPayCost() {
+        Permanent bloodboiler = addCreatureReady(player1, new DwarvenBloodboiler());
+        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
+        Permanent target = addCreatureReady(player2, new SuntailHawk());
+        bloodboiler.tap();
+
+        assertThat(dwarf.isSummoningSick()).isTrue();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(dwarf.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Bloodboiler can activate repeatedly using different Dwarves")
+    void boostsFromSeparateActivationsAccumulate() {
+        Permanent bloodboiler = addCreatureReady(player1, new DwarvenBloodboiler());
+        Permanent firstDwarf = addCreatureReady(player1, new DwarvenDriller());
+        Permanent secondDwarf = addCreatureReady(player1, new DwarvenDriller());
+        Permanent target = addCreatureReady(player2, new SuntailHawk());
+        bloodboiler.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, firstDwarf.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(firstDwarf.isTapped()).isTrue();
+        assertThat(secondDwarf.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The tapping cost remains paid when the target leaves before resolution")
+    void targetLeavingDoesNotRefundCost() {
+        Permanent bloodboiler = addCreatureReady(player1, new DwarvenBloodboiler());
+        Permanent target = addCreatureReady(player2, new SuntailHawk());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bloodboiler.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

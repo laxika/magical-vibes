@@ -98,7 +98,7 @@ class CrimsonMageTest extends BaseCardTest {
     @DisplayName("A tapped Crimson Mage can activate its ability")
     void tappedMageCanActivate() {
         Permanent mage = addReadyMage(player1);
-        mage.setTapped(true);
+        mage.tap();
         Permanent target = addReadyCreature(player1);
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -57,6 +57,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
 
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
@@ -73,6 +74,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
 
@@ -134,7 +136,8 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -160,6 +163,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
 
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
@@ -205,6 +209,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 

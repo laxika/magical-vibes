@@ -43,8 +43,7 @@ class EnshrinedMemoriesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, 4);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(firstCreature, secondCreature);
@@ -71,8 +70,7 @@ class EnshrinedMemoriesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -94,8 +92,7 @@ class EnshrinedMemoriesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, 4);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(firstCreature, secondCreature);
@@ -114,13 +111,69 @@ class EnshrinedMemoriesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EnshrinedMemories()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactly(topCreature, topNoncreature);
         assertThat(gd.playerHands.get(player1.getId()))
                 .doesNotContain(topCreature, topNoncreature);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("All revealed creatures go into hand without a selection")
+    void allCreatureRevealRequiresNoChoice() {
+        Card firstCreature = new BodyOfJukai();
+        Card secondCreature = new ForkedBranchGarami();
+        Card untouched = new GodsEyeGateToTheReikai();
+        harness.setLibrary(player1, List.of(firstCreature, secondCreature, untouched));
+        harness.setHand(player1, List.of(new EnshrinedMemories()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCreature, secondCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("When no creatures are revealed, all revealed cards can be ordered on the bottom")
+    void noCreaturesReordersAllRevealedCards() {
+        Card firstNoncreature = new SickeningShoal();
+        Card secondNoncreature = new TendoIceBridge();
+        Card untouched = new BodyOfJukai();
+        harness.setLibrary(player1, List.of(firstNoncreature, secondNoncreature, untouched));
+        harness.setHand(player1, List.of(new EnshrinedMemories()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(firstNoncreature, secondNoncreature);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(untouched, secondNoncreature, firstNoncreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without drawing or requesting a choice")
+    void emptyLibraryResolvesWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new EnshrinedMemories()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

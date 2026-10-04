@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -67,6 +68,48 @@ class FlashConscriptionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat damage to a creature grants life even when the stolen creature dies")
+    void combatDamageToCreatureGrantsLifeAfterSourceDies() {
+        Permanent target = addCreatureReady(player2, new ViashinoFangtail());
+        Permanent blocker = addCreatureReady(player2, new ViashinoFangtail());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castFlashConscription(target, true);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(target);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The granted life ability expires before the creature attacks on the next turn")
+    void lifeGainAbilityExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player2, new BorosRecruit());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castFlashConscription(target, true);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(target)));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("The granted life ability does not trigger for noncombat damage")
     void nonCombatDamageDoesNotGrantLife() {
         Permanent target = addCreatureReady(player2, new ViashinoFangtail());
@@ -128,8 +171,7 @@ class FlashConscriptionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        Permanent artifact = new Permanent(new BorosSignet());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
         harness.setHand(player1, List.of(new FlashConscription()));
         addMana(false);
 
@@ -141,8 +183,7 @@ class FlashConscriptionTest extends BaseCardTest {
     private void castFlashConscription(Permanent target, boolean whiteSpent) {
         harness.setHand(player1, List.of(new FlashConscription()));
         addMana(whiteSpent);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana(boolean whiteSpent) {

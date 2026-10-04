@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CloudcrestLake;
-import com.github.laxika.magicalvibes.cards.g.GlacialRay;
+import com.github.laxika.magicalvibes.cards.g.GutShot;
 import com.github.laxika.magicalvibes.cards.j.JukaiMessenger;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AkkiUnderminer.class, JukaiMessenger.class, CloudcrestLake.class, GlacialRay.class})
+@CardUsed({AkkiUnderminer.class, JukaiMessenger.class, CloudcrestLake.class, GutShot.class})
 class AkkiUnderminerTest extends BaseCardTest {
 
     @Test
@@ -24,12 +23,12 @@ class AkkiUnderminerTest extends BaseCardTest {
         Permanent underminer = addCreatureReady(player1, new AkkiUnderminer());
         underminer.setAttacking(true);
         harness.addToBattlefield(player2, new CloudcrestLake());
-        harness.setHand(player2, List.of(new GlacialRay()));
-        harness.addMana(player2, ManaColor.RED, 2);
-
-        resolveCombat();
-        harness.castInstant(player2, 0, underminer.getId());
-        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new GutShot()));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, () -> {
+            harness.castInstant(player2, 0, underminer.getId());
+            harness.passBothPriorities();
+        });
 
         harness.assertInGraveyard(player1, "Akki Underminer");
         harness.assertOnBattlefield(player2, "Cloudcrest Lake");

@@ -75,7 +75,7 @@ class ErtaiWizardAdeptTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        Permanent ertai = addCreatureReady(player1, new ErtaiWizardAdept());
+        addCreatureReady(player1, new ErtaiWizardAdept());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addToBattlefield(player2, new RagingGoblin());
@@ -100,5 +100,47 @@ class ErtaiWizardAdeptTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, goblin.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own spell")
+    void countersOwnSpell() {
+        Permanent ertai = addCreatureReady(player1, new ErtaiWizardAdept());
+        Spellbook spellbook = new Spellbook();
+        harness.castFromHand(player1, spellbook, "{0}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, spellbook.getId());
+
+        assertThat(ertai.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(2);
+        harness.assertNotInGraveyard(player1, "Spellbook");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot replace the second blue mana with generic mana")
+    void cannotActivateWithInsufficientBlueMana() {
+        Permanent ertai = addCreatureReady(player1, new ErtaiWizardAdept());
+        Spellbook spellbook = new Spellbook();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spellbook, "{0}");
+        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spellbook.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ertai.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Spellbook");
+        harness.assertNotInGraveyard(player2, "Spellbook");
     }
 }

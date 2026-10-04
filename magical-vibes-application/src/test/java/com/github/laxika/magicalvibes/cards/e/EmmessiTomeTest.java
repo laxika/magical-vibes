@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmmessiTome.class})
+@CardUsed({EmmessiTome.class, Disenchant.class})
 class EmmessiTomeTest extends BaseCardTest {
 
     @Test
@@ -75,8 +76,8 @@ class EmmessiTomeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Drawing from an empty library ends the game before the discard")
-    void emptyLibraryEndsGameBeforeDiscard() {
+    @DisplayName("An empty library and empty hand cause loss after resolution without a discard prompt")
+    void emptyLibraryAndHandEndGameAfterResolution() {
         harness.addToBattlefieldAndReturn(player1, new EmmessiTome());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
@@ -105,6 +106,53 @@ class EmmessiTomeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(lastCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent discarding an existing hand card before losing")
+    void discardsExistingCardBeforeEmptyLibraryLoss() {
+        harness.addToBattlefield(player1, new EmmessiTome());
+        EmmessiTome handCard = new EmmessiTome();
+        harness.setHand(player1, List.of(handCard));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(handCard);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The activated ability draws and discards even if Tome is destroyed in response")
+    void resolvesAfterSourceIsDestroyed() {
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new EmmessiTome());
+        harness.setHand(player1, List.of());
+        EmmessiTome firstDraw = new EmmessiTome();
+        EmmessiTome secondDraw = new EmmessiTome();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, tome.getId());
+        harness.assertNotOnBattlefield(player1, "Emmessi Tome");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(secondDraw);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

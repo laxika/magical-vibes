@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GoblinSkyRaider;
+import com.github.laxika.magicalvibes.cards.h.Hystrodon;
 import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EndemicPlague.class, ElvishWarrior.class, WirewoodElf.class, GoblinSkyRaider.class,
-        GlorySeeker.class})
+        GlorySeeker.class, Hystrodon.class})
 class EndemicPlagueTest extends BaseCardTest {
 
     @Test
@@ -57,6 +58,49 @@ class EndemicPlagueTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
+    }
+
+    @Test
+    void sacrificingAFaceDownCreatureDoesNotDestroyCreaturesOfItsPrintedType() {
+        harness.setHand(player1, List.of(new Hystrodon()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent sacrificed = findPermanent(player1, "Hystrodon");
+        harness.addToBattlefield(player2, new Hystrodon());
+        prepareCast();
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrificed.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hystrodon");
+        harness.assertOnBattlefield(player2, "Hystrodon");
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeResolutionAndNewMatchingCreaturesAreDestroyed() {
+        Permanent sacrificed = addCreatureReady(player1, new ElvishWarrior());
+        prepareCast();
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrificed.getId());
+
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.addToBattlefield(player2, new WirewoodElf());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Wirewood Elf");
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsCreature() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, opposingCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
     }
 
     private void prepareCast() {

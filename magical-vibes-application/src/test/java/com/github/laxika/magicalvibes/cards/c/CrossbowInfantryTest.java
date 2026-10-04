@@ -144,7 +144,7 @@ class CrossbowInfantryTest extends BaseCardTest {
     @DisplayName("Cannot activate the tap ability when already tapped")
     void cannotActivateWhileTapped() {
         Permanent infantry = addCreatureReady(player1, new CrossbowInfantry());
-        infantry.setTapped(true);
+        infantry.tap();
         Permanent attacker = addAttackingCreature(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 

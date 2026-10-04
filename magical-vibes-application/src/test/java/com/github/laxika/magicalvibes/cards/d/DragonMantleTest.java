@@ -68,7 +68,7 @@ class DragonMantleTest extends BaseCardTest {
     @DisplayName("Repeated activations work while summoning sick and tapped and expire at cleanup")
     void repeatedActivationsExpire() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new TravelingPhilosopher());
-        creature.setTapped(true);
+        creature.tap();
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new DragonMantle());
         aura.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.RED, 2);

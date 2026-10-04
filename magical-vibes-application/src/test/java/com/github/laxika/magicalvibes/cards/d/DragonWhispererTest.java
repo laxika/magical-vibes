@@ -135,7 +135,7 @@ class DragonWhispererTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent whisperer = harness.addToBattlefieldAndReturn(player1, new DragonWhisperer());
         whisperer.setSummoningSick(true);
-        whisperer.setTapped(true);
+        whisperer.tap();
         addBeastbreakers(3);
         harness.addMana(player1, ManaColor.RED, 9);
 

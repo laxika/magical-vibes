@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
 import com.github.laxika.magicalvibes.cards.i.Imperiosaur;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EdgeOfAutumn.class, Forest.class, Plains.class, HorizonCanopy.class, Imperiosaur.class})
+@CardUsed({EdgeOfAutumn.class, Forest.class, Plains.class, HorizonCanopy.class, Imperiosaur.class, Stabilizer.class})
 class EdgeOfAutumnTest extends BaseCardTest {
 
     @Test
@@ -34,8 +35,7 @@ class EdgeOfAutumnTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(basicLand, nonBasicLand, nonLand));
         addSpellMana();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -149,6 +149,57 @@ class EdgeOfAutumnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
+    }
+
+    @Test
+    @DisplayName("The land-count condition is checked on resolution")
+    void gainingFifthLandBeforeResolutionPreventsSearch() {
+        addForests(4);
+        harness.setHand(player1, List.of(new EdgeOfAutumn()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        addSpellMana();
+
+        harness.castSorcery(player1, 0);
+        harness.addToBattlefield(player1, new HorizonCanopy());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Edge of Autumn");
+    }
+
+    @Test
+    @DisplayName("A restricted basic-land search may fail to find")
+    void searchMayFailToFindAnAvailableBasicLand() {
+        harness.setHand(player1, List.of(new EdgeOfAutumn()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        addSpellMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Edge of Autumn");
+    }
+
+    @Test
+    @DisplayName("Stabilizer prevents sacrifice-cost cycling before costs are paid")
+    void stabilizerPreventsCycling() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player2, new Stabilizer());
+        harness.setHand(player1, List.of(new EdgeOfAutumn()));
+        harness.setLibrary(player1, List.of(new Imperiosaur()));
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't cycle");
+
+        harness.assertInHand(player1, "Edge of Autumn");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addSpellMana() {

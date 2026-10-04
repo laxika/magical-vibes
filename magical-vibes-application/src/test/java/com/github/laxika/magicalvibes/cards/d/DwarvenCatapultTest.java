@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DwarvenCatapult.class, GiantSpider.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({DwarvenCatapult.class, GiantSpider.class, GrizzlyBears.class, Mountain.class, Unsummon.class})
 class DwarvenCatapultTest extends BaseCardTest {
 
     @Test
@@ -153,5 +154,47 @@ class DwarvenCatapultTest extends BaseCardTest {
 
         Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Positive X smaller than the creature count deals no damage")
+    void positiveDamageRoundsDownToZero() {
+        List<Permanent> creatures = List.of(
+                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()),
+                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()),
+                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DwarvenCatapult()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyElementsOf(creatures);
+        assertThat(creatures).allMatch(p -> p.getMarkedDamage() == 0);
+        harness.assertInGraveyard(player1, "Dwarven Catapult");
+    }
+
+    @Test
+    @DisplayName("Divides damage using the creature count at resolution")
+    void countsCreaturesAtResolution() {
+        Permanent returningCreature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        List<Permanent> remainingCreatures = List.of(
+                harness.addToBattlefieldAndReturn(player2, new GiantSpider()),
+                harness.addToBattlefieldAndReturn(player2, new GiantSpider()));
+        harness.setHand(player1, List.of(new DwarvenCatapult()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 6, player2.getId());
+        harness.castAndResolveInstant(player2, 0, returningCreature.getId());
+        harness.assertInHand(player2, "Giant Spider");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyElementsOf(remainingCreatures);
+        assertThat(remainingCreatures).allMatch(p -> p.getMarkedDamage() == 3);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Dwarven Catapult");
     }
 }

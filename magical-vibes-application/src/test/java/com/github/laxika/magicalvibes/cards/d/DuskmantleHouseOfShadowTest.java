@@ -79,6 +79,55 @@ class DuskmantleHouseOfShadowTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    void millingUsesTheStackAndPaysOnlyBlueAndBlackMana() {
+        Permanent land = addReadyLand(player1);
+        Card topCard = new DuskmantleHouseOfShadow();
+        Card secondCard = new DuskmantleHouseOfShadow();
+        harness.setLibrary(player2, List.of(topCard, secondCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void tappedLandCannotActivateMillingAbility() {
+        Permanent land = addReadyLand(player1);
+        land.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void newlyEnteredNoncreatureLandCanActivateMillingAbility() {
+        harness.addToBattlefield(player1, new DuskmantleHouseOfShadow());
+        Card topCard = new DuskmantleHouseOfShadow();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+    }
     private Permanent addReadyLand(Player player) {
         Permanent land = harness.addToBattlefieldAndReturn(player, new DuskmantleHouseOfShadow());
         land.setSummoningSick(false);

@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(FeralLightning.class)
+@CardUsed({FeralLightning.class})
 @DisplayName("Feral Lightning")
 class FeralLightningTest extends BaseCardTest {
 
@@ -54,13 +54,39 @@ class FeralLightningTest extends BaseCardTest {
         castFeralLightning();
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(3);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(countPermanents(player1, "Elemental")).isZero();
     }
 
+    @Test
+    @DisplayName("All three tokens are exiled by one delayed trigger")
+    void exilesAllTokensWithOneDelayedTrigger() {
+        castFeralLightning();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.isToken());
+    }
+
+    @Test
+    @DisplayName("The tokens can attack on the turn they are created")
+    void tokensAttackImmediately() {
+        castFeralLightning();
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1, 2));
+        resolveCombat();
+
+        harness.assertLife(player2, 11);
+    }
     private void castFeralLightning() {
         harness.setHand(player1, List.of(new FeralLightning()));
         harness.addMana(player1, ManaColor.RED, 3);

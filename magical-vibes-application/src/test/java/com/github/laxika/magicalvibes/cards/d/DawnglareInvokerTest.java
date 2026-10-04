@@ -64,7 +64,7 @@ class DawnglareInvokerTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new DawnglareInvoker());
-        invoker.setTapped(true);
+        invoker.tap();
         invoker.setSummoningSick(true);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DawnglareInvoker());
         harness.addMana(player1, ManaColor.COLORLESS, 8);

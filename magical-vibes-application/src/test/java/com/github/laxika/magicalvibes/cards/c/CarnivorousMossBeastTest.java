@@ -46,7 +46,7 @@ class CarnivorousMossBeastTest extends BaseCardTest {
     void tappedSummoningSickBeastCanActivate() {
         Permanent beast = harness.addToBattlefieldAndReturn(player1, new CarnivorousMossBeast());
         beast.setSummoningSick(true);
-        beast.setTapped(true);
+        beast.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.GREEN, 2);
 

@@ -67,4 +67,32 @@ class ElvenRidersTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only be blocked by creatures with flying or Walls");
     }
+
+    @Test
+    @DisplayName("A Wall and a flying creature can block Elven Riders together")
+    void canBeBlockedByWallAndFlyerTogether() {
+        addCreatureReady(player1, new ElvenRiders());
+        Permanent wall = addCreatureReady(player2, new WallOfMulch());
+        Permanent flyer = addCreatureReady(player2, new GoblinSkyRaider());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(wall.isBlocking()).isTrue();
+        assertThat(flyer.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A legal blocker does not let a normal creature also block Elven Riders")
+    void everyBlockerMustBeWallOrFlyer() {
+        addCreatureReady(player1, new ElvenRiders());
+        addCreatureReady(player2, new WallOfMulch());
+        addCreatureReady(player2, new WirewoodElf());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by creatures with flying or Walls");
+    }
 }

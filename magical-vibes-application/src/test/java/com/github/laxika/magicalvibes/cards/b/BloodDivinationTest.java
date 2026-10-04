@@ -66,7 +66,7 @@ class BloodDivinationTest extends BaseCardTest {
     @DisplayName("A tapped creature is sacrificed during casting, before any cards are drawn")
     void sacrificesTappedCreatureBeforeResolution() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         harness.setHand(player1, List.of(new BloodDivination()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

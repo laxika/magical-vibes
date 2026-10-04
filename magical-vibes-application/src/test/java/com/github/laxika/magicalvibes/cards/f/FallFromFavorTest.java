@@ -53,6 +53,58 @@ class FallFromFavorTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Enchanting your own creature taps it but permits untapping while you are monarch")
+    void ownCreatureUntapsWhileAuraControllerIsMonarch() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castFallFromFavor(player1, creature);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        harness.performUntapStep(player1);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The untap restriction returns when the enchanted creature's controller loses the monarchy")
+    void losingMonarchyRestoresLockOnlyForEnchantedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castFallFromFavor(player1, creature);
+        gd.monarchPlayerId = player2.getId();
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isFalse();
+
+        creature.tap();
+        otherCreature.tap();
+        gd.monarchPlayerId = player1.getId();
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(otherCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enter trigger still taps the enchanted creature after the Aura leaves")
+    void enterTriggerUsesLastKnownAttachmentAfterAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FallFromFavor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Fall from Favor");
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+    }
+
     private void castFallFromFavor(Player caster, Permanent creature) {
         harness.setHand(caster, List.of(new FallFromFavor()));
         harness.addMana(caster, ManaColor.BLUE, 1);
@@ -68,9 +120,7 @@ class FallFromFavorTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Player nextPlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(nextPlayer, TurnStep.UPKEEP);
     }
 }

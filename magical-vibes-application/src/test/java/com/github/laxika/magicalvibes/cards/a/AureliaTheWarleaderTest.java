@@ -87,6 +87,11 @@ class AureliaTheWarleaderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0), 1);
         harness.passBothPriorities();
 
+        if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.AttackerDeclaration) {
+            gs.declareAttackers(gd, player1, List.of());
+        }
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.UPKEEP);

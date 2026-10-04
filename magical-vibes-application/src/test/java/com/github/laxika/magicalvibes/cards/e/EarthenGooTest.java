@@ -68,4 +68,62 @@ class EarthenGooTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(goo);
         harness.assertInGraveyard(player1, "Earthen Goo");
     }
+
+    @Test
+    void paysAllAgeCountersWithGreenMana() {
+        Permanent goo = harness.addToBattlefieldAndReturn(player1, new EarthenGoo());
+        goo.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(goo.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(goo);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gqs.getEffectivePower(gd, goo)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(5);
+    }
+
+    @Test
+    void insufficientPaymentSacrificesWithoutSpendingMana() {
+        Permanent goo = harness.addToBattlefieldAndReturn(player1, new EarthenGoo());
+        goo.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(goo);
+        harness.assertInGraveyard(player1, "Earthen Goo");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent goo = harness.addToBattlefieldAndReturn(player1, new EarthenGoo());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(goo.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(goo);
+    }
+
+    @Test
+    void bonusTracksAgeCountersAndIgnoresOtherCounterTypes() {
+        Permanent goo = harness.addToBattlefieldAndReturn(player1, new EarthenGoo());
+        goo.setCounterCount(CounterType.AGE, 3);
+        goo.setCounterCount(CounterType.CHARGE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, goo)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(5);
+
+        goo.setCounterCount(CounterType.AGE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, goo)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(3);
+    }
 }

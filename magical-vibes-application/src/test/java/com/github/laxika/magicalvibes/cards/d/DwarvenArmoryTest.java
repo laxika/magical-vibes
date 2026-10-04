@@ -146,4 +146,70 @@ class DwarvenArmoryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetLand.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The land is sacrificed as a cost before the counter is placed")
+    void sacrificesLandBeforeResolution() {
+        harness.addToBattlefield(player1, new DwarvenArmory());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest.getCard());
+        assertThat(bears.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate distinct +2/+2 counters without tapping the Armory")
+    void canActivateTwiceDuringSameUpkeep() {
+        Permanent armory = harness.addToBattlefieldAndReturn(player1, new DwarvenArmory());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(armory.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard(), second.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new DwarvenArmory());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+        assertThat(bears.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+    }
 }

@@ -74,4 +74,49 @@ class FearOfSleepParalysisTest extends BaseCardTest {
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.getCounterCount(CounterType.STUN)).isEqualTo(1);
     }
+
+    @Test
+    void enteringCreatureCanAddAStunCounterToAnAlreadyTappedFriendlyCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.tap();
+        creature.setCounterCount(CounterType.STUN, 1);
+        harness.setHand(player1, List.of(new FearOfSleepParalysis()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsStunCountersRemainThroughRepeatedUntapSteps() {
+        harness.addToBattlefield(player1, new FearOfSleepParalysis());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FearOfSleepParalysis());
+        creature.tap();
+        creature.setCounterCount(CounterType.STUN, 1);
+
+        harness.performUntapStep(player2);
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    void controllersStunCountersAreRemovedNormally() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FearOfSleepParalysis());
+        creature.tap();
+        creature.setCounterCount(CounterType.STUN, 1);
+
+        harness.performUntapStep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isZero();
+
+        harness.performUntapStep(player1);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
 }

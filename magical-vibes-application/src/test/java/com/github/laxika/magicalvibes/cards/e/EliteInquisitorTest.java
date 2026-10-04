@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.m.MarkovPatrician;
+import com.github.laxika.magicalvibes.cards.o.OliviaVoldaren;
+import com.github.laxika.magicalvibes.cards.p.PitchburnDevils;
+import com.github.laxika.magicalvibes.cards.s.StromkirkPatrol;
+import com.github.laxika.magicalvibes.cards.v.VillagersOfEstwald;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,61 +17,24 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EliteInquisitor.class, MarkovPatrician.class, VillagersOfEstwald.class,
+        WalkingCorpse.class, DarkthicketWolf.class, StromkirkPatrol.class,
+        PitchburnDevils.class, OliviaVoldaren.class})
 class EliteInquisitorTest extends BaseCardTest {
-
-    private static Card createCreatureWithSubtype(String name, int power, int toughness,
-                                                  CardColor color, CardSubtype subtype, Keyword... keywords) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        card.setSubtypes(List.of(subtype));
-        if (keywords.length > 0) {
-            card.setKeywords(Set.of(keywords));
-        }
-        return card;
-    }
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color, Keyword... keywords) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        if (keywords.length > 0) {
-            card.setKeywords(Set.of(keywords));
-        }
-        return card;
-    }
-
-    // ===== Protection - blocking =====
 
     @Test
     @DisplayName("Vampire creature cannot block Elite Inquisitor")
     void vampireCannotBlock() {
-        Permanent attacker = new Permanent(new EliteInquisitor());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new EliteInquisitor());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreatureWithSubtype("Vampire Interloper", 2, 1, CardColor.BLACK, CardSubtype.VAMPIRE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new MarkovPatrician());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -77,19 +44,12 @@ class EliteInquisitorTest extends BaseCardTest {
     @Test
     @DisplayName("Werewolf creature cannot block Elite Inquisitor")
     void werewolfCannotBlock() {
-        Permanent attacker = new Permanent(new EliteInquisitor());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new EliteInquisitor());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreatureWithSubtype("Reckless Waif", 3, 2, CardColor.RED, CardSubtype.WEREWOLF));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new VillagersOfEstwald());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,19 +59,12 @@ class EliteInquisitorTest extends BaseCardTest {
     @Test
     @DisplayName("Zombie creature cannot block Elite Inquisitor")
     void zombieCannotBlock() {
-        Permanent attacker = new Permanent(new EliteInquisitor());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new EliteInquisitor());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreatureWithSubtype("Walking Corpse", 2, 2, CardColor.BLACK, CardSubtype.ZOMBIE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new WalkingCorpse());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -121,77 +74,92 @@ class EliteInquisitorTest extends BaseCardTest {
     @Test
     @DisplayName("Non-protected creature can block Elite Inquisitor")
     void regularCreatureCanBlock() {
-        Permanent attacker = new Permanent(new EliteInquisitor());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new EliteInquisitor());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new DarkthicketWolf());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    // ===== Protection - combat damage =====
-
     @Test
     @DisplayName("Elite Inquisitor takes no combat damage from Vampire creature")
     void takesNoDamageFromVampire() {
-        Permanent attacker = new Permanent(createCreatureWithSubtype("Sengir Vampire", 4, 4, CardColor.BLACK, CardSubtype.VAMPIRE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new StromkirkPatrol());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new EliteInquisitor());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new EliteInquisitor());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Elite Inquisitor has first strike: deals 2 damage first (Vampire survives at 4/2)
+        // Elite Inquisitor has first strike: deals 2 damage first (Vampire survives with 2 damage marked)
         // Vampire's 4 damage to Elite Inquisitor is prevented (protection from Vampires)
         // Both creatures survive
-        harness.assertOnBattlefield(player1, "Sengir Vampire");
+        harness.assertOnBattlefield(player1, "Stromkirk Patrol");
         harness.assertOnBattlefield(player2, "Elite Inquisitor");
     }
 
     @Test
     @DisplayName("Elite Inquisitor takes normal combat damage from non-protected creature")
     void takesNormalDamageFromRegularCreature() {
-        Permanent attacker = new Permanent(createCreature("Hill Giant", 3, 3, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new PitchburnDevils());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new EliteInquisitor());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new EliteInquisitor());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Elite Inquisitor deals 2 first strike damage (Hill Giant survives at 3/1)
-        // Hill Giant deals 3 regular damage (kills 2/2 Elite Inquisitor)
-        harness.assertOnBattlefield(player1, "Hill Giant");
+        // Elite Inquisitor deals 2 first strike damage (Pitchburn Devils survives with 2 damage marked)
+        // Pitchburn Devils deals 3 regular damage (kills 2/2 Elite Inquisitor)
+        harness.assertOnBattlefield(player1, "Pitchburn Devils");
         harness.assertNotOnBattlefield(player2, "Elite Inquisitor");
+    }
+
+    @Test
+    @DisplayName("First strike kills an unprotected blocker before it can deal damage")
+    void firstStrikeKillsBlockerBeforeRegularDamage() {
+        addCreatureReady(player1, new EliteInquisitor());
+        addCreatureReady(player2, new DarkthicketWolf());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Elite Inquisitor");
+        harness.assertInGraveyard(player2, "Darkthicket Wolf");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Attacking with vigilance does not tap Elite Inquisitor")
+    void vigilanceLeavesAttackerUntapped() {
+        Permanent inquisitor = addCreatureReady(player1, new EliteInquisitor());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(inquisitor.isAttacking()).isTrue();
+        assertThat(inquisitor.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Protection prevents targeting by a Vampire's activated ability")
+    void vampireAbilityCannotTargetInquisitor() {
+        Permanent inquisitor = addCreatureReady(player1, new EliteInquisitor());
+        addCreatureReady(player2, new OliviaVoldaren());
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, inquisitor.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 }

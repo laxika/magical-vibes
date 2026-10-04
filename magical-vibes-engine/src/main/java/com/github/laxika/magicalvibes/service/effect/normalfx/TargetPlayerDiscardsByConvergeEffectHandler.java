@@ -34,7 +34,7 @@ public class TargetPlayerDiscardsByConvergeEffectHandler implements NormalEffect
             return;
         }
 
-        gameData.discardCausedByOpponent = true;
+        gameData.discardCausedByOpponent = !targetPlayerId.equals(entry.getControllerId());
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, converge);
     }
 }

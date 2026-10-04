@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudElf;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EladamriLordOfLeaves.class, Forest.class, SkyshroudElf.class, TrainedArmodon.class})
+@CardUsed({EladamriLordOfLeaves.class, ElvishFury.class, Forest.class, SkyshroudElf.class, TrainedArmodon.class})
 class EladamriLordOfLeavesTest extends BaseCardTest {
 
     @Test
@@ -101,6 +102,57 @@ class EladamriLordOfLeavesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shroud prevents an Elf's controller from targeting it")
+    void shroudPreventsOwnTargeting() {
+        harness.addToBattlefield(player1, new EladamriLordOfLeaves());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new SkyshroudElf());
+        harness.setHand(player1, List.of(new ElvishFury()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, elf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shroud prevents targeting an opposing Elf")
+    void shroudPreventsOpponentTargeting() {
+        harness.addToBattlefield(player1, new EladamriLordOfLeaves());
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new SkyshroudElf());
+        harness.setHand(player1, List.of(new ElvishFury()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, elf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Eladamri itself remains a legal spell target")
+    void eladamriCanBeTargeted() {
+        Permanent eladamri = harness.addToBattlefieldAndReturn(player1, new EladamriLordOfLeaves());
+        harness.setHand(player1, List.of(new ElvishFury()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, eladamri.getId());
+
+        assertThat(gqs.getEffectivePower(gd, eladamri)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, eladamri)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Opposing Eladamris grant both abilities to each other")
+    void opposingEladamrisProtectEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new EladamriLordOfLeaves());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new EladamriLordOfLeaves());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.SHROUD)).isTrue();
     }
 
     private Permanent addAttackingElf() {

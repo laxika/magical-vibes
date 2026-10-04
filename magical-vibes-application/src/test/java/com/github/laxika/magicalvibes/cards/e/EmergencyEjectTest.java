@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -67,11 +66,73 @@ class EmergencyEjectTest extends BaseCardTest {
         assertThat(search.params().cards()).allMatch(card ->
                 card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC));
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         harness.assertNotOnBattlefield(player2, "Lander");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(land.getId()) && permanent.isTapped());
+    }
+
+    @Test
+    void givesLanderToControllerOfOwnTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(target);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Lander")).hasSize(1);
+        assertThat(findPermanents(player2, "Lander")).isEmpty();
+    }
+
+    @Test
+    void createsLanderEvenWhenTargetRegenerates() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setRegenerationShield(1);
+
+        cast(target);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(findPermanents(player2, "Lander")).hasSize(1);
+    }
+
+    @Test
+    void createsNoLanderWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EmergencyEject()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Emergency Eject");
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+        assertThat(findPermanents(player2, "Lander")).isEmpty();
+    }
+
+    @Test
+    void canFailToFindBasicLandAndStillPaysSacrificeCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(target);
+        Card land = new Forest();
+        harness.setLibrary(player2, List.of(land));
+        Permanent lander = findPermanents(player2, "Lander").getFirst();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(lander), 0, null, null);
+        harness.assertNotOnBattlefield(player2, "Lander");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, -1);
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(land);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void cast(Permanent target) {
@@ -81,7 +142,6 @@ class EmergencyEjectTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

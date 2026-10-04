@@ -61,8 +61,7 @@ class FireWhipTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
         aura.setAttachedTo(squire.getId());
 
-        addCreatureReady(player2, new FlyingMen());
-        Permanent flyingMen = findPermanent(player2, "Flying Men");
+        Permanent flyingMen = addCreatureReady(player2, new FlyingMen());
 
         harness.activateAbility(player1, 0, null, flyingMen.getId());
         harness.passBothPriorities();
@@ -155,5 +154,65 @@ class FireWhipTest extends BaseCardTest {
         assertThat(squire.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Fire Whip in response does not stop the creature's pending ability")
+    void bothAbilitiesResolveAfterAuraIsSacrificed() {
+        harness.setLife(player2, 20);
+        Permanent squire = addCreatureReady(player1, new Squire());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        aura.setAttachedTo(squire.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 1, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Fire Whip");
+        harness.assertNotOnBattlefield(player1, "Fire Whip");
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(squire.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fire Whip can be sacrificed even when its enchanted creature is summoning sick")
+    void sacrificeDoesNotRequireCreatureToBeReady() {
+        harness.setLife(player2, 20);
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new Squire());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        aura.setAttachedTo(squire.getId());
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Fire Whip");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(squire.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature's pending granted ability resolves after the creature and Aura leave")
+    void grantedAbilityResolvesAfterSourceDies() {
+        harness.setLife(player2, 20);
+        Permanent flyingMen = addCreatureReady(player1, new FlyingMen());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        aura.setAttachedTo(flyingMen.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 1, null, flyingMen.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Flying Men");
+        harness.assertInGraveyard(player1, "Flying Men");
+        harness.assertInGraveyard(player1, "Fire Whip");
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
     }
 }

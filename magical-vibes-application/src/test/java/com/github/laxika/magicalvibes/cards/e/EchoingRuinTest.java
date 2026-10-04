@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AetherVial;
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
+import com.github.laxika.magicalvibes.cards.o.Oxidize;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EchoingRuin.class, AetherVial.class, MyrMoonvessel.class, CrazedGoblin.class, DarksteelIngot.class})
+@CardUsed({EchoingRuin.class, AetherVial.class, MyrMoonvessel.class, CrazedGoblin.class, DarksteelIngot.class, Oxidize.class})
 class EchoingRuinTest extends BaseCardTest {
 
     @Test
@@ -98,5 +99,46 @@ class EchoingRuinTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Darksteel Ingot");
+    }
+
+    @Test
+    @DisplayName("Does not destroy other matching artifacts when the target leaves before resolution")
+    void doesNotDestroyMatchingArtifactsWhenTargetLeaves() {
+        harness.addToBattlefield(player2, new AetherVial());
+        harness.addToBattlefield(player1, new AetherVial());
+        UUID targetId = harness.getPermanentId(player2, "Aether Vial");
+        harness.setHand(player1, List.of(new EchoingRuin()));
+        harness.setHand(player2, List.of(new Oxidize()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, targetId);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.assertNotOnBattlefield(player2, "Aether Vial");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aether Vial");
+        harness.assertInGraveyard(player1, "Echoing Ruin");
+    }
+
+    @Test
+    @DisplayName("Destroys matching artifact creatures across both players")
+    void destroysMatchingArtifactCreatures() {
+        harness.addToBattlefield(player1, new MyrMoonvessel());
+        harness.addToBattlefield(player2, new MyrMoonvessel());
+        harness.addToBattlefield(player2, new AetherVial());
+        UUID targetId = harness.getPermanentId(player2, "Myr Moonvessel");
+        harness.setHand(player1, List.of(new EchoingRuin()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Myr Moonvessel");
+        harness.assertNotOnBattlefield(player2, "Myr Moonvessel");
+        harness.assertInGraveyard(player1, "Myr Moonvessel");
+        harness.assertInGraveyard(player2, "Myr Moonvessel");
+        harness.assertOnBattlefield(player2, "Aether Vial");
     }
 }

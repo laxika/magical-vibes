@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LuxiorGiadasGift;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElspethStormSlayer.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({ElspethStormSlayer.class, GrizzlyBears.class, HillGiant.class, LuxiorGiadasGift.class})
 class ElspethStormSlayerTest extends BaseCardTest {
 
     @Test
@@ -54,10 +55,12 @@ class ElspethStormSlayerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
 
-        endTurn(player1);
-        endTurn(player2);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -87,21 +90,55 @@ class ElspethStormSlayerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void endTurn(Player activePlayer) {
-        harness.setHand(activePlayer, java.util.List.of());
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        for (int step = 0; step < 10 && activePlayer.getId().equals(gd.activePlayerId); step++) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+    @Test
+    void zeroGrantsFlyingToElspethWhenSheIsACreature() {
+        Permanent elspeth = addReadyElspeth(player1, 5);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LuxiorGiadasGift());
+        equipment.setAttachedTo(elspeth.getId());
+        assertThat(gqs.isCreature(gd, elspeth)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(elspeth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, elspeth, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void zeroAffectsOnlyCreaturesControlledWhenItResolves() {
+        addReadyElspeth(player1, 5);
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
+        assertThat(laterCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void tokenDoublingDoesNotApplyToAnOpponent() {
+        addReadyElspeth(player1, 5);
+        Permanent opponentElspeth = addReadyElspeth(player2, 5);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(opponentElspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(findPermanents(player2, "Soldier")).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
     }
 
     private Permanent addReadyElspeth(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new ElspethStormSlayer());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ElspethStormSlayer());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;

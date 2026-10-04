@@ -100,7 +100,7 @@ class DispatchTest extends BaseCardTest {
     @DisplayName("Exiles an already tapped creature with metalcraft")
     void exilesAlreadyTappedCreature() {
         Permanent creature = addCreatureReady(player2, new BlindZealot());
-        creature.setTapped(true);
+        creature.tap();
         addThreeArtifacts(player1);
         harness.setHand(player1, List.of(new Dispatch()));
         harness.addMana(player1, ManaColor.WHITE, 1);

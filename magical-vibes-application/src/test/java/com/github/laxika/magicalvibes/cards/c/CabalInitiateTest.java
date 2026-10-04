@@ -84,7 +84,7 @@ class CabalInitiateTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new CabalInitiate());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new CabalInitiate());
-        initiate.setTapped(true);
+        initiate.tap();
         initiate.setSummoningSick(true);
         harness.setHand(player1, List.of(new CabalInitiate()));
 

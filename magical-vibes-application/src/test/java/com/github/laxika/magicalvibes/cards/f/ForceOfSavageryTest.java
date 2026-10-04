@@ -41,8 +41,7 @@ class ForceOfSavageryTest extends BaseCardTest {
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent blocker = addCreatureReady(player2, new Imperiosaur());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -56,5 +55,23 @@ class ForceOfSavageryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("A toughness counter keeps it alive until the counter is removed")
+    void diesWhenItsToughnessCounterIsRemoved() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ForceOfSavagery());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Force of Savagery");
+        harness.assertNotInGraveyard(player1, "Force of Savagery");
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Force of Savagery");
+        harness.assertInGraveyard(player1, "Force of Savagery");
     }
 }

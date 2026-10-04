@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.BladesOfVelisVel;
 import com.github.laxika.magicalvibes.cards.k.KnightOfMeadowgrain;
 import com.github.laxika.magicalvibes.cards.w.WizenedCenn;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EgoErasure.class, KnightOfMeadowgrain.class, WizenedCenn.class, WoodlandChangeling.class})
+@CardUsed({EgoErasure.class, KnightOfMeadowgrain.class, WizenedCenn.class, WoodlandChangeling.class,
+        BladesOfVelisVel.class})
 class EgoErasureTest extends BaseCardTest {
 
     @Test
@@ -121,12 +124,38 @@ class EgoErasureTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(0);
         assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.KITHKIN)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
         assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.KITHKIN)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later effect can grant creature types after Ego Erasure")
+    void laterEffectGrantsCreatureTypes() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new KnightOfMeadowgrain());
+        castEgoErasure(player2.getId());
+        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.GOBLIN)).isFalse();
+
+        harness.setHand(player1, List.of(new BladesOfVelisVel()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, List.of(knight.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.GOBLIN)).isTrue();
+        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.KITHKIN)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Losing creature types does not remove the changeling ability")
+    void preservesChangelingAbility() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player2, new WoodlandChangeling());
+
+        castEgoErasure(player2.getId());
+
+        assertThat(GameQueryService.permanentHasSubtype(changeling, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasKeyword(gd, changeling, Keyword.CHANGELING)).isTrue();
     }
 
     private void castEgoErasure(java.util.UUID targetPlayerId) {

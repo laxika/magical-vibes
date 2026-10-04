@@ -205,7 +205,7 @@ class DinoDNATest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, first.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
         assertThat(dna.isTapped()).isTrue();
-        dna.setTapped(false);
+        dna.untap();
         harness.activateAbility(player1, 0, 0, null, second.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 1, null, first.getId(), Zone.EXILE);

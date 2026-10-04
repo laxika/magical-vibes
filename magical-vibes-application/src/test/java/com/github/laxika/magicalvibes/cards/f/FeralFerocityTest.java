@@ -41,7 +41,6 @@ class FeralFerocityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
@@ -59,5 +58,43 @@ class FeralFerocityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature without boosting other creatures")
+    void boostsOpponentsCreatureOnly() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FeralFerocity()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(6);
+        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple boosts accumulate and remain through the end step")
+    void multipleBoostsAccumulateUntilCleanup() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FeralFerocity(), new FeralFerocity()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(10);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(10);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
 }

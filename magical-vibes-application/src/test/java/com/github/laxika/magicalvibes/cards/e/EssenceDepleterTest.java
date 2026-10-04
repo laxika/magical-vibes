@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.g.GraspOfDarkness;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EssenceDepleter.class})
+@CardUsed({EssenceDepleter.class, GraspOfDarkness.class})
 class EssenceDepleterTest extends BaseCardTest {
 
     @Test
@@ -48,5 +51,61 @@ class EssenceDepleterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        var permanent = harness.addToBattlefieldAndReturn(player1, new EssenceDepleter());
+        permanent.setTapped(true);
+        permanent.setSummoningSick(true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate twice with enough mana before either ability resolves")
+    void canActivateRepeatedly() {
+        harness.addToBattlefield(player1, new EssenceDepleter());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source dies in response")
+    void resolvesAfterSourceDies() {
+        var permanent = harness.addToBattlefieldAndReturn(player1, new EssenceDepleter());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new GraspOfDarkness()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gs.passPriority(gd, player1);
+        harness.castInstant(player2, 0, permanent.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(permanent);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 }

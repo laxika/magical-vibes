@@ -89,7 +89,7 @@ class CloudheathDrakeTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new CloudheathDrake());
         drake.setSummoningSick(true);
-        drake.setTapped(true);
+        drake.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

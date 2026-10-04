@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "209")
 @CardRegistration(set = "DMU", collectorNumber = "236")
+@CardRegistration(set = "FIC", collectorNumber = "354")
 public class RelicOfLegends extends Card {
 
     public RelicOfLegends() {

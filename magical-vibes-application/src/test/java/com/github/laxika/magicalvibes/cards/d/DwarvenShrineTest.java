@@ -64,6 +64,75 @@ class DwarvenShrineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damages its own controller when that player casts a matching spell")
+    void damagesItsOwnController() {
+        harness.addToBattlefield(player1, new DwarvenShrine());
+        harness.setGraveyard(player2, List.of(new DwarvenGrunt()));
+
+        harness.castFromHand(player1, new DwarvenGrunt(), "{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Dwarven Grunt");
+    }
+
+    @Test
+    @DisplayName("Deals no damage if matching cards leave graveyards before resolution")
+    void matchingCardsRemovedBeforeResolution() {
+        harness.addToBattlefield(player1, new DwarvenShrine());
+        harness.setGraveyard(player1, List.of(new DwarvenGrunt()));
+        harness.setGraveyard(player2, List.of(new DwarvenGrunt()));
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new DwarvenGrunt(), "{R}");
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Dwarven Grunt");
+    }
+
+    @Test
+    @DisplayName("Each Shrine damages the caster independently")
+    void multipleShrinesTriggerIndependently() {
+        harness.addToBattlefield(player1, new DwarvenShrine());
+        harness.addToBattlefield(player2, new DwarvenShrine());
+        harness.setGraveyard(player1, List.of(new DwarvenGrunt()));
+
+        harness.castFromHand(player1, new DwarvenGrunt(), "{R}");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Dwarven Grunt");
+    }
+
+    @Test
+    @DisplayName("A Shrine spell does not trigger its own ability before entering")
+    void doesNotTriggerForItsOwnCast() {
+        harness.setGraveyard(player1, List.of(new DwarvenShrine()));
+
+        harness.castFromHand(player1, new DwarvenShrine(), "{1}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Dwarven Shrine");
+    }
+
+    @Test
     @DisplayName("Also triggers for a noncreature spell")
     void triggersForNoncreatureSpell() {
         harness.addToBattlefield(player1, new DwarvenShrine());

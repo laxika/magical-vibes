@@ -115,6 +115,7 @@ public class StateTriggerService {
      * <p>Iterates in APNAP order (orderedPlayerIds) so triggers are stacked correctly.</p>
      */
     public void checkStateTriggers(GameData gameData) {
+        checkPlanarStateTriggers(gameData);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -179,6 +180,38 @@ public class StateTriggerService {
         }
     }
 
+    /** Queues counter-threshold state triggers from the currently face-up planes. */
+    private void checkPlanarStateTriggers(GameData gameData) {
+        if (gameData.planechase == null) {
+            return;
+        }
+        for (var source : gameData.planechase.faceUp) {
+            List<CardEffect> effects = source.getCard().getEffects(EffectSlot.STATE_TRIGGERED);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            Permanent counterSnapshot = new Permanent(source.getCard());
+            counterSnapshot.getCounters().putAll(source.getCounters());
+            for (int i = 0; i < effects.size(); i++) {
+                if (!(effects.get(i) instanceof StateTriggerEffect trigger)
+                        || !conditionMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)) {
+                    continue;
+                }
+                StateTriggerKey key = new StateTriggerKey(source.getId(), i);
+                if (!gameData.stateTriggerOnStack.add(key)) {
+                    continue;
+                }
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
+                        gameData.planechase.controllerId, source.getCard().getName() + "'s state trigger",
+                        new ArrayList<>(trigger.effects()), 0, (UUID) null);
+                entry.setSourcePlanarObject(source.copy());
+                entry.setStateTriggerEffectIndex(i);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s state ability triggers."));
+            }
+        }
+    }
+
     private boolean hasTargets(Permanent permanent, StateTriggerEffect trigger) {
         if (etbTokenTargetService == null || permanent.getCard().getSpellTargets().isEmpty()) {
             return false;
@@ -236,10 +269,14 @@ public class StateTriggerService {
      */
     public void cleanupResolvedStateTrigger(GameData gameData, StackEntry entry) {
         if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getSourcePermanentId() != null
                 && entry.getStateTriggerEffectIndex() >= 0) {
+            UUID sourceId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId()
+                    : entry.getSourcePlanarObject() != null ? entry.getSourcePlanarObject().getId() : null;
+            if (sourceId == null) {
+                return;
+            }
             gameData.stateTriggerOnStack.remove(
-                    new StateTriggerKey(entry.getSourcePermanentId(), entry.getStateTriggerEffectIndex()));
+                    new StateTriggerKey(sourceId, entry.getStateTriggerEffectIndex()));
         }
     }
 }

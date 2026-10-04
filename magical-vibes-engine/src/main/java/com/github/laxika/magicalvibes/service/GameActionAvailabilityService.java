@@ -915,7 +915,8 @@ public class GameActionAvailabilityService {
         }
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
-            return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+            return (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)
+                    || castingCostService.canPayAlternateHandCast(gameData, playerId, card)
                     || castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)
                     || castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)
                     || castingCostService.canAffordWebSlingingCost(
@@ -1156,18 +1157,19 @@ public class GameActionAvailabilityService {
 
         if (card.getKeywords().contains(Keyword.CONVOKE)
                 || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.CONVOKE, Zone.HAND)) {
-            // Check if castable with convoke: mana pool + untapped creatures >= total cost
-            int untappedCreatureCount = 0;
+            List<Set<ManaColor>> convokeColors = new ArrayList<>();
             if (ctx.battlefield() != null) {
                 for (Permanent perm : ctx.battlefield()) {
-                    if (gameQueryService.isCreature(gameData, perm) && !perm.isTapped()) {
-                        untappedCreatureCount++;
+                    if (gameQueryService.isCreature(gameData, perm) && !perm.isTapped()
+                            && !perm.isTapRestrictedUnlessAttacking()) {
+                        convokeColors.add(gameQueryService.getEffectiveColors(gameData, perm).stream()
+                                .map(color -> ManaColor.fromCode(color.getCode()))
+                                .filter(Objects::nonNull).collect(java.util.stream.Collectors.toSet()));
                     }
                 }
             }
-            int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
-            int totalAvailable = paymentPool.getTotal() + convokeCreatures;
-            if (totalAvailable >= cost.getManaValue() + effectiveAdditionalCost) {
+            if (com.github.laxika.magicalvibes.service.cast.ConvokePaymentSupport.choose(
+                    cost, paymentPool, effectiveAdditionalCost, convokeColors) != null) {
                 return true;
             }
         }

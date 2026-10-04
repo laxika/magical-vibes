@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.k.KiraGreatGlassSpinner;
 import com.github.laxika.magicalvibes.cards.m.MirrorGallery;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,8 +12,27 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FinalJudgment.class, GnarledMass.class, MirrorGallery.class})
+@CardUsed({FinalJudgment.class, GnarledMass.class, MirrorGallery.class, KiraGreatGlassSpinner.class})
 class FinalJudgmentTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Exiles Kira and protected creatures without targeting them")
+    void bypassesTargetingProtection() {
+        KiraGreatGlassSpinner kira = new KiraGreatGlassSpinner();
+        GnarledMass creature = new GnarledMass();
+        harness.addToBattlefield(player2, kira);
+        harness.addToBattlefield(player2, creature);
+
+        harness.castFromHand(player1, new FinalJudgment(), "{4}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards)
+                .extracting(exiledCard -> exiledCard.card())
+                .containsExactlyInAnyOrder(kira, creature);
+        harness.assertInGraveyard(player1, "Final Judgment");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Exiles every creature on both battlefields")

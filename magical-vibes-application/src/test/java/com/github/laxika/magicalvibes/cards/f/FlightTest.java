@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Flight.class, GrizzlyBears.class, Island.class})
+@CardUsed({Flight.class, GrizzlyBears.class, Island.class, Disenchant.class})
 class FlightTest extends BaseCardTest {
 
     @Test
@@ -26,7 +27,7 @@ class FlightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Flight()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -115,5 +116,32 @@ class FlightTest extends BaseCardTest {
         auraPerm.setAttachedTo(bearsPerm.getId());
 
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying remains until both attached Flights are destroyed")
+    void flyingRemainsWhileAnotherFlightIsAttached() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flight(), new Flight(), new Disenchant(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        List<Permanent> flights = findPermanents(player1, "Flight");
+        assertThat(flights).hasSize(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+
+        harness.castAndResolveInstant(player1, 0, flights.getFirst().getId());
+        assertThat(countPermanents(player1, "Flight")).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+
+        harness.castAndResolveInstant(player1, 0, flights.getLast().getId());
+        harness.assertNotOnBattlefield(player1, "Flight");
+        harness.assertInGraveyard(player1, "Flight");
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 }

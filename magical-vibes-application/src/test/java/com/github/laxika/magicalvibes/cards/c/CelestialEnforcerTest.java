@@ -77,7 +77,7 @@ class CelestialEnforcerTest extends BaseCardTest {
     void tappedSummoningSickFlyerEnablesActivationAndCanBeTargeted() {
         Permanent enforcer = addCreatureReady(player1, new CelestialEnforcer());
         Permanent flyer = harness.addToBattlefieldAndReturn(player1, new ConcordiaPegasus());
-        flyer.setTapped(true);
+        flyer.tap();
         flyer.setSummoningSick(true);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

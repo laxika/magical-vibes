@@ -71,7 +71,7 @@ class DevastatingSummonsTest extends BaseCardTest {
     @DisplayName("A tapped land is sacrificed during casting before any tokens are created")
     void tappedLandIsPaidBeforeResolution() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of(new DevastatingSummons()));
         harness.addMana(player1, ManaColor.RED, 1);
 

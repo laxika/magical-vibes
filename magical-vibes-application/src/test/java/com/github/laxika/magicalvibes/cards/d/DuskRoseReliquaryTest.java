@@ -110,12 +110,54 @@ class DuskRoseReliquaryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Leaving before the enter trigger resolves does not exile the target")
+    void leavingBeforeEnterTriggerResolvesDoesNotExile() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castReliquary(target.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Dusk Rose Reliquary"));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Dusk Rose Reliquary");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land cannot pay the additional sacrifice cost")
+    void cannotSacrificeLand() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> castReliquary(target.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An opponent's permanent cannot pay the additional sacrifice cost")
+    void cannotSacrificeOpponentsPermanent() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> castReliquary(target.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
     private void castReliquary(UUID targetId, UUID sacrificeId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new DuskRoseReliquary()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        gs.playCard(gd, player1, 0, 0, targetId, null, List.of(), List.of(), false, sacrificeId);
+        harness.castSorceryWithSacrifice(player1, 0, targetId, sacrificeId);
     }
 }

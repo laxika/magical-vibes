@@ -170,4 +170,74 @@ class ForbiddenRitualTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Python");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    @DisplayName("The controller may sacrifice a nontoken land")
+    void controllerSacrificesLand() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new GriffinCanyon());
+        castAt(player2.getId());
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Griffin Canyon");
+        harness.assertInGraveyard(player1, "Griffin Canyon");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opponent may sacrifice a token to avoid losing life")
+    void opponentSacrificesToken() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new Python());
+        Python token = new Python();
+        token.setToken(true);
+        UUID tokenId = harness.addToBattlefieldAndReturn(player2, token).getId();
+        castAt(player2.getId());
+
+        harness.handleListChoice(player2, ChoiceContext.ForbiddenRitualPenaltyChoice.SACRIFICE);
+        harness.handlePermanentChosen(player2, tokenId);
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Python");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A remaining token cannot fuel another repetition")
+    void tokenRemainingAfterSacrificeDoesNotAllowRepeat() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new GriffinCanyon());
+        Python token = new Python();
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+        castAt(player2.getId());
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Griffin Canyon");
+        harness.assertOnBattlefield(player1, "Python");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeating after the opponent sacrifices offers a fresh penalty choice")
+    void repeatAfterOpponentSacrifices() {
+        harness.setHand(player2, List.of(new Python()));
+        UUID first = harness.addToBattlefieldAndReturn(player1, new Python()).getId();
+        harness.addToBattlefield(player1, new Python());
+        UUID land = harness.addToBattlefieldAndReturn(player2, new GriffinCanyon()).getId();
+        castAt(player2.getId());
+
+        harness.handlePermanentChosen(player1, first);
+        harness.handleListChoice(player2, ChoiceContext.ForbiddenRitualPenaltyChoice.SACRIFICE);
+        harness.handlePermanentChosen(player2, land);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player2, ChoiceContext.ForbiddenRitualPenaltyChoice.DISCARD);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Python");
+        harness.assertInGraveyard(player2, "Griffin Canyon");
+        harness.assertInGraveyard(player2, "Python");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }

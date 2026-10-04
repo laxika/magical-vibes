@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ClayGolem;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EbonyFly.class, GrizzlyBears.class})
+@CardUsed({EbonyFly.class, ClayGolem.class})
 class EbonyFlyTest extends BaseCardTest {
 
     @Test
@@ -79,7 +79,7 @@ class EbonyFlyTest extends BaseCardTest {
     void grantsFlyingToAnotherAttackingCreature() {
         Permanent fly = addReadyFly();
         activateAnimation(fly);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new ClayGolem());
 
         declareAttackers(player1, List.of(battlefieldIndex(fly), battlefieldIndex(attacker)));
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -93,7 +93,7 @@ class EbonyFlyTest extends BaseCardTest {
     void cannotTargetItself() {
         Permanent fly = addReadyFly();
         activateAnimation(fly);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new ClayGolem());
 
         declareAttackers(player1, List.of(battlefieldIndex(fly), battlefieldIndex(attacker)));
 
@@ -113,6 +113,74 @@ class EbonyFlyTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, fly)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, fly, CardSubtype.INSECT)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack trigger cannot target a creature that did not attack")
+    void cannotTargetNonattackingCreature() {
+        Permanent fly = addReadyFly();
+        activateAnimation(fly);
+        Permanent attacker = addCreatureReady(player1, new ClayGolem());
+        Permanent nonattacker = addCreatureReady(player1, new ClayGolem());
+
+        declareAttackers(player1, List.of(battlefieldIndex(fly), battlefieldIndex(attacker)));
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonattacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flying granted to the other attacker ends at end of turn")
+    void grantedFlyingEndsAtEndOfTurn() {
+        Permanent fly = addReadyFly();
+        activateAnimation(fly);
+        Permanent attacker = addCreatureReady(player1, new ClayGolem());
+
+        declareAttackers(player1, List.of(battlefieldIndex(fly), battlefieldIndex(attacker)));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Ebony Fly can be animated without untapping it")
+    void canAnimateWhileTapped() {
+        Permanent fly = addReadyFly();
+        harness.activateAbility(player1, battlefieldIndex(fly), 0, null, null);
+
+        activateAnimation(fly);
+
+        assertThat(fly.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, fly)).isTrue();
+        assertThat(gqs.hasKeyword(gd, fly, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining a second animation preserves the first animation")
+    void decliningSecondAnimationPreservesFirst() {
+        Permanent fly = addReadyFly();
+        activateAnimation(fly);
+        int originalPower = gqs.getEffectivePower(gd, fly);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, battlefieldIndex(fly), 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.isCreature(gd, fly)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, fly)).isEqualTo(originalPower);
+        assertThat(gqs.getEffectiveToughness(gd, fly)).isEqualTo(originalPower);
+        assertThat(gqs.hasKeyword(gd, fly, Keyword.FLYING)).isTrue();
     }
 
     private Permanent addReadyFly() {

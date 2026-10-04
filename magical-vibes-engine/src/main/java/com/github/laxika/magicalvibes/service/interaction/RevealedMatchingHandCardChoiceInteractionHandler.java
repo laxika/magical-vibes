@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -24,6 +27,7 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
     private final EffectResolutionService effectResolutionService;
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final CardRevealService cardRevealService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -61,6 +65,16 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
         pendingEntry.setChosenObjectCard(chosen);
+        int previousEffectIndex = gameData.pendingEffectResolutionIndex - 1;
+        if (interaction.keepInHand()
+                && interaction.choosingPlayerId().equals(interaction.targetPlayerId())
+                && previousEffectIndex >= 0
+                && previousEffectIndex < pendingEntry.getEffectsToResolve().size()
+                && pendingEntry.getEffectsToResolve().get(previousEffectIndex) instanceof MayEffect may
+                && may.wrapped() instanceof MayRevealSubtypeFromHandEffect) {
+            cardRevealService.revealMatchingHandCardsToAllPlayers(
+                    gameData, interaction.targetPlayerId(), List.of(chosen));
+        }
         if (interaction.keepInHand()) {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " keeps ", chosen, " in "

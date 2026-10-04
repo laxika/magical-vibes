@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTheHonoredDead;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTatteredShoji;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfStone;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;

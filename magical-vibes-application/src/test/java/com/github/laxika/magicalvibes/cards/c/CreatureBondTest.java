@@ -152,7 +152,7 @@ class CreatureBondTest extends BaseCardTest {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
         bond.setAttachedTo(spider.getId());
         Permanent disk = harness.addToBattlefieldAndReturn(player1, new NevinyrralsDisk());
-        disk.setTapped(false);
+        disk.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBefore = gd.getLife(player1.getId());
 

@@ -95,7 +95,7 @@ class CranialArchiveTest extends BaseCardTest {
     @Test
     @DisplayName("Exile is paid before the ability resolves, even when the artifact is tapped")
     void exilesAsCostBeforeResolutionWithoutTapping() {
-        harness.addToBattlefieldAndReturn(player1, new CranialArchive()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new CranialArchive()).tap();
         AlpineGrizzly card = new AlpineGrizzly();
         harness.setGraveyard(player2, List.of(card));
         harness.setHand(player1, List.of());

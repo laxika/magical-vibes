@@ -114,9 +114,9 @@ class CoastalHornclawTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hornclaw = harness.addToBattlefieldAndReturn(player1, new CoastalHornclaw());
         hornclaw.setSummoningSick(true);
-        hornclaw.setTapped(true);
+        hornclaw.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
-        land.setTapped(true);
+        land.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

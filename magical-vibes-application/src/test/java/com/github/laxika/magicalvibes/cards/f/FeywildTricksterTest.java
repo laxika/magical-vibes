@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.ContactOtherPlane;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PixieGuide;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -22,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FeywildTrickster.class, ContactOtherPlane.class, GrizzlyBears.class})
+@CardUsed({FeywildTrickster.class, ContactOtherPlane.class, PixieGuide.class})
 class FeywildTricksterTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -44,15 +44,14 @@ class FeywildTricksterTest extends BaseCardTest {
     @Test
     void createsAFaerieDragonWhenControllerRollsADie() {
         harness.addToBattlefield(player1, new FeywildTrickster());
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
+        Card first = new PixieGuide();
+        Card second = new PixieGuide();
         harness.setLibrary(player1, List.of(first, second));
         harness.setHand(player1, List.of(new ContactOtherPlane()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Faerie Dragon");
@@ -62,6 +61,63 @@ class FeywildTricksterTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.FAERIE, CardSubtype.DRAGON);
         assertThat(token.getCard().hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsRoll() {
+        harness.addToBattlefield(player1, new FeywildTrickster());
+        harness.setLibrary(player2, List.of(new PixieGuide(), new PixieGuide()));
+        harness.setHand(player2, List.of(new ContactOtherPlane()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Faerie Dragon"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Faerie Dragon"));
+    }
+
+    @Test
+    void createsOnlyOneTokenWhenRollingWithAdvantage() {
+        harness.addToBattlefield(player1, new FeywildTrickster());
+        harness.addToBattlefield(player1, new PixieGuide());
+        harness.setLibrary(player1, List.of(new PixieGuide(), new PixieGuide()));
+        harness.setHand(player1, List.of(new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Faerie Dragon"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Faerie Dragon"))
+                .hasSize(1);
+    }
+
+    @Test
+    void triggersAgainForEachSeparateRoll() {
+        harness.addToBattlefield(player1, new FeywildTrickster());
+        harness.setLibrary(player1, List.of(new PixieGuide(), new PixieGuide(),
+                new PixieGuide(), new PixieGuide()));
+        harness.setHand(player1, List.of(new ContactOtherPlane(), new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Faerie Dragon"))
+                .hasSize(2);
     }
 
     private static final class FixedD20RollService extends D20RollService {

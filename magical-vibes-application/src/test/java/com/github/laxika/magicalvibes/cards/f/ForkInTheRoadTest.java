@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ForkInTheRoad.class, Plains.class, Island.class, Swamp.class, EvolvingWilds.class})
 class ForkInTheRoadTest extends BaseCardTest {
 
     @Test
@@ -78,6 +79,52 @@ class ForkInTheRoadTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(fork);
     }
 
+    @Test
+    @DisplayName("Declining the search finds zero lands and does not offer a graveyard pick")
+    void declinesEntireSearch() {
+        Card plains = new Plains();
+        Card island = new Island();
+        Card fork = castForkInTheRoad(List.of(plains, island));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(fork);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, island);
+    }
+
+    @Test
+    @DisplayName("May find only one land even when another basic land remains")
+    void declinesSecondLand() {
+        Card plains = new Plains();
+        Card island = new Island();
+        Card fork = castForkInTheRoad(List.of(plains, island));
+
+        harness.passBothPriorities();
+        pickFromLibrary(plains);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(fork);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+    }
+
+    @Test
+    @DisplayName("An empty library finishes resolution without a search choice")
+    void searchesEmptyLibrary() {
+        Card fork = castForkInTheRoad(List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(fork);
+    }
+
     private Card castForkInTheRoad(List<Card> library) {
         Card fork = new ForkInTheRoad();
         harness.setLibrary(player1, library);
@@ -92,6 +139,6 @@ class ForkInTheRoadTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int index = search.params().cards().indexOf(card);
         assertThat(index).isGreaterThanOrEqualTo(0);
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }

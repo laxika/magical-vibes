@@ -60,9 +60,9 @@ class BreachingLeviathanTest extends BaseCardTest {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent blueCreature = addCreatureReady(player2, new AirElemental());
-        ownCreature.setTapped(true);
-        opposingCreature.setTapped(true);
-        blueCreature.setTapped(true);
+        ownCreature.tap();
+        opposingCreature.tap();
+        blueCreature.tap();
 
         harness.setHand(player1, List.of(new BreachingLeviathan()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
@@ -96,7 +96,7 @@ class BreachingLeviathanTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent laterCreature = addCreatureReady(player2, new GrizzlyBears());
-        laterCreature.setTapped(true);
+        laterCreature.tap();
 
         harness.performUntapStep(player2);
         assertThat(affected.isTapped()).isTrue();

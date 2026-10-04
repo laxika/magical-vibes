@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FledglingGriffin.class, Forest.class})
 class FledglingGriffinTest extends BaseCardTest {
 
     @Test
@@ -33,9 +35,7 @@ class FledglingGriffinTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, griffin, Keyword.FLYING)).isFalse();
     }
@@ -51,5 +51,42 @@ class FledglingGriffinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, griffin, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A land put onto the battlefield grants flying without being played")
+    void landEnteringWithoutBeingPlayedTriggers() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new FledglingGriffin());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Griffin entering after a land does not gain flying retroactively")
+    void enteringAfterLandDoesNotTrigger() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        Permanent griffin = harness.enterBattlefieldAndReturn(player1, new FledglingGriffin());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A pending landfall trigger grants flying only to its source Griffin")
+    void pendingTriggerDoesNotGrantFlyingToLaterGriffin() {
+        Permanent firstGriffin = harness.addToBattlefieldAndReturn(player1, new FledglingGriffin());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        Permanent laterGriffin = harness.enterBattlefieldAndReturn(player1, new FledglingGriffin());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, firstGriffin, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterGriffin, Keyword.FLYING)).isFalse();
     }
 }

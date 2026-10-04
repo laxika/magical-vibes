@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -75,6 +76,56 @@ class DwarvenArmorerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("The Armorer can put a counter on itself")
+    void canTargetItself() {
+        setUpArmorerAndTarget();
+        Permanent armorer = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        activate(armorer, POWER_MODE);
+
+        assertThat(armorer.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(1);
+        assertThat(armorer.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Discarding and tapping are costs paid before a counter is placed")
+    void paysCostsBeforeResolution() {
+        Permanent target = setUpArmorerAndTarget();
+        Permanent armorer = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new DwarvenHold()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(armorer.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Dwarven Hold");
+        harness.assertNotInHand(player1, "Dwarven Hold");
+        assertThat(target.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, TOUGHNESS_MODE);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated without a card to discard")
+    void cannotActivateWithEmptyHand() {
+        Permanent target = setUpArmorerAndTarget();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("discard");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent setUpArmorerAndTarget() {

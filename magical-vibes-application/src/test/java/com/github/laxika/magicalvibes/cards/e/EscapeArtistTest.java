@@ -102,7 +102,7 @@ class EscapeArtistTest extends BaseCardTest {
     void returnsToOwnersHandWhenControlledByAnotherPlayer() {
         EscapeArtist artistCard = new EscapeArtist();
         artistCard.setOwnerId(player1.getId());
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(artistCard));
+        harness.addToBattlefield(player2, artistCard);
         harness.setHand(player2, List.of(new AngelicWall()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
@@ -114,5 +114,48 @@ class EscapeArtistTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Escape Artist");
         harness.assertNotOnBattlefield(player2, "Escape Artist");
         harness.assertInGraveyard(player2, "Angelic Wall");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Escape Artist can activate its return ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent artist = harness.addToBattlefieldAndReturn(player1, new EscapeArtist());
+        artist.setTapped(true);
+        artist.setSummoningSick(true);
+        harness.setHand(player1, List.of(new AngelicWall()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Escape Artist");
+        harness.assertNotOnBattlefield(player1, "Escape Artist");
+        harness.assertInGraveyard(player1, "Angelic Wall");
+    }
+
+    @Test
+    @DisplayName("Multiple return activations pay separate costs and return the source only once")
+    void multipleActivationsReturnSourceOnlyOnce() {
+        harness.addToBattlefield(player1, new EscapeArtist());
+        harness.setHand(player1, List.of(new AngelicWall(), new AngelicWall()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Escape Artist");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Escape Artist");
+        harness.assertNotOnBattlefield(player1, "Escape Artist");
     }
 }

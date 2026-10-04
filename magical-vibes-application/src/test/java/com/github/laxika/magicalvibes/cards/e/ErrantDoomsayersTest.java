@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.cards.c.CastleRaptors;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,79 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ErrantDoomsayers.class, BenalishCavalry.class, CastleRaptors.class, Plains.class})
 class ErrantDoomsayersTest extends BaseCardTest {
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent doomsayers = addCreatureReady(player1, new ErrantDoomsayers());
+        doomsayers.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new BenalishCavalry());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(doomsayers.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent doomsayers = addCreatureReady(player1, new ErrantDoomsayers());
+        doomsayers.setTapped(true);
+        Permanent target = addCreatureReady(player2, new BenalishCavalry());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetAlreadyTappedCreature() {
+        addCreatureReady(player1, new ErrantDoomsayers());
+        Permanent target = addCreatureReady(player2, new BenalishCavalry());
+        target.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetCreatureWhoseCountersRaiseToughnessAboveTwo() {
+        addCreatureReady(player1, new ErrantDoomsayers());
+        Permanent target = addCreatureReady(player2, new BenalishCavalry());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void targetBecomingTooToughBeforeResolutionIsNotTapped() {
+        Permanent doomsayers = addCreatureReady(player1, new ErrantDoomsayers());
+        Permanent target = addCreatureReady(player2, new BenalishCavalry());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(doomsayers.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent doomsayers = addCreatureReady(player1, new ErrantDoomsayers());
+        Permanent target = addCreatureReady(player2, new BenalishCavalry());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(doomsayers);
+        gd.playerGraveyards.get(player1.getId()).add(doomsayers.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
 
     @Test
     @DisplayName("Resolving ability taps target creature with toughness 2 or less")

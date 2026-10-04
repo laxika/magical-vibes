@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.Abundance;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.InfernalContract;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.j.JunglePatrol;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.s.Stupor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,10 +22,111 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ForbiddenCrypt.class, DarkBanishing.class, Disenchant.class, InfernalContract.class,
-        IronTuskElephant.class, Island.class, JunglePatrol.class})
+        IronTuskElephant.class, Island.class, JunglePatrol.class, Abundance.class, Millstone.class, Stupor.class})
 class ForbiddenCryptTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Milled cards are exiled instead of entering the graveyard")
+    void exilesMilledCards() {
+        harness.addToBattlefield(player1, new ForbiddenCrypt());
+        harness.addToBattlefield(player2, new Millstone());
+        harness.setLibrary(player1, List.of(new Island(), new IronTuskElephant()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Island"))
+                .anyMatch(card -> card.getName().equals("Iron Tusk Elephant"));
+    }
+
+    @Test
+    @DisplayName("Random and chosen discards are both exiled instead of entering the graveyard")
+    void exilesDiscardedCards() {
+        harness.addToBattlefield(player1, new ForbiddenCrypt());
+        harness.setHand(player1, List.of(new Island(), new Island()));
+        harness.setHand(player2, List.of(new Stupor()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Island"))
+                .hasSize(2);
+        harness.assertInGraveyard(player2, "Stupor");
+    }
+
+    @Test
+    @DisplayName("The required graveyard return cannot be declined")
+    void cannotDeclineGraveyardReturn() {
+        harness.addToBattlefield(player1, new ForbiddenCrypt());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setGraveyard(player1, List.of(new IronTuskElephant()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertInHand(player1, "Iron Tusk Elephant");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent returning a graveyard card instead of drawing")
+    void returnsGraveyardCardWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new ForbiddenCrypt());
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of(new Island()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A multi-card draw loses the game when the graveyard runs out")
+    void losesWhenGraveyardRunsOutDuringMultiCardDraw() {
+        harness.addToBattlefield(player1, new ForbiddenCrypt());
+        harness.setLibrary(player1, List.of(new IronTuskElephant()));
+        harness.setGraveyard(player1, List.of(new Island()));
+        harness.setHand(player1, List.of(new InfernalContract()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Abundance can replace a draw before Forbidden Crypt causes a loss")
+    void competingDrawReplacementMustBeOfferedBeforeLoss() {
+        harness.addToBattlefield(player1, new ForbiddenCrypt());
+        harness.addToBattlefield(player1, new Abundance());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setGraveyard(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.isAwaitingInput() || !gd.pendingMayAbilities.isEmpty()).isTrue();
+    }
 
     // ===== Draw replacement: return a card from graveyard instead of drawing =====
 

@@ -139,7 +139,7 @@ class CateranSlaverTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent slaver = addCreatureReady(player1, new CateranSlaver());
-        slaver.setTapped(true);
+        slaver.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

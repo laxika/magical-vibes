@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SiegeGangCommander;
 import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
 import com.github.laxika.magicalvibes.cards.t.Threaten;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Evacuation.class, AirElemental.class, SpinedWurm.class, GloriousAnthem.class,
-        Island.class, SiegeGangCommander.class, Threaten.class})
+        Island.class, SiegeGangCommander.class, Threaten.class, TrollAscetic.class, Pacifism.class})
 class EvacuationTest extends BaseCardTest {
 
     @Test
@@ -75,10 +77,7 @@ class EvacuationTest extends BaseCardTest {
     @Test
     @DisplayName("Returns creature tokens, which cease to exist outside the battlefield")
     void returnsCreatureTokens() {
-        harness.setHand(player1, List.of(new SiegeGangCommander()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SiegeGangCommander(), "{3}{R}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -95,6 +94,40 @@ class EvacuationTest extends BaseCardTest {
                 .containsExactly(SiegeGangCommander.class);
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.isToken());
+    }
+
+    @Test
+    @DisplayName("Returns opposing creatures with hexproof without targeting them")
+    void returnsOpposingHexproofCreatures() {
+        harness.addToBattlefield(player2, new TrollAscetic());
+
+        harness.castFromHand(player1, new Evacuation(), "{3}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> (Object) card.getClass())
+                .containsExactly(TrollAscetic.class);
+    }
+
+    @Test
+    @DisplayName("Attached noncreature Auras go to the graveyard rather than returning to hand")
+    void attachedAurasGoToGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new Pacifism()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Pacifism");
+
+        harness.castFromHand(player1, new Evacuation(), "{3}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInHand(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.assertNotInHand(player1, "Pacifism");
     }
 
     @Test

@@ -144,8 +144,8 @@ class DiamondKaleidoscopeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         Permanent prism = findPermanent(player1, "Prism");
-        prism.setTapped(true);
-        otherKaleidoscope.setTapped(true);
+        prism.tap();
+        otherKaleidoscope.tap();
 
         harness.activateAbility(player1, 1, 1, null, null);
 

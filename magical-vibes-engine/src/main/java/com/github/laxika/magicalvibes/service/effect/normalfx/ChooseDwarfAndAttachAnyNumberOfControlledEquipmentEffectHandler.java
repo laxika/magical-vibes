@@ -36,7 +36,7 @@ public class ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler
         List<UUID> dwarfIds = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())) {
             if (gameQueryService.isCreature(gameData, permanent)
-                    && GameQueryService.permanentHasSubtype(permanent, CardSubtype.DWARF)) {
+                    && gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.DWARF)) {
                 dwarfIds.add(permanent.getId());
             }
         }
@@ -60,7 +60,7 @@ public class ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler
         Permanent dwarf = gameQueryService.findPermanentById(gameData, dwarfId);
         if (dwarf == null
                 || !gameQueryService.isCreature(gameData, dwarf)
-                || !GameQueryService.permanentHasSubtype(dwarf, CardSubtype.DWARF)
+                || !gameQueryService.hasEffectiveSubtype(gameData, dwarf, CardSubtype.DWARF)
                 || !controllerId.equals(gameQueryService.findPermanentController(gameData, dwarf.getId()))) {
             return;
         }

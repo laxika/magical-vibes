@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(ForbiddingWatchtower.class)
+@CardUsed({ForbiddingWatchtower.class})
 class ForbiddingWatchtowerTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -193,11 +193,9 @@ class ForbiddingWatchtowerTest extends BaseCardTest {
         assertThat(watchtower.isTapped()).isFalse();
     }
 
-    // ===== Ability fizzles if removed =====
-
     @Test
-    @DisplayName("Ability fizzles if Forbidding Watchtower is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Animation does nothing if Forbidding Watchtower leaves before resolution")
+    void animationDoesNothingIfSourceRemoved() {
         addCreatureReady(player1, new ForbiddingWatchtower());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -206,5 +204,57 @@ class ForbiddingWatchtowerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly played tapped Watchtower can animate without untapping")
+    void newlyPlayedTappedWatchtowerCanAnimate() {
+        harness.setHand(player1, List.of(new ForbiddingWatchtower()));
+        harness.playLand(player1, 0);
+        Permanent watchtower = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(watchtower.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, watchtower)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, watchtower)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, watchtower)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick animated Watchtower cannot tap for mana")
+    void summoningSickAnimatedWatchtowerCannotTapForMana() {
+        Permanent watchtower = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
+        watchtower.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(watchtower.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated animation retains 1/5 stats and a single Soldier subtype")
+    void repeatedAnimationDoesNotAccumulateStatsOrSubtypes() {
+        Permanent watchtower = addCreatureReady(player1, new ForbiddingWatchtower());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, watchtower)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, watchtower)).isEqualTo(5);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, watchtower)).containsExactly(CardSubtype.SOLDIER);
+        assertThat(gqs.getEffectiveColors(gd, watchtower)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.isLand(gd, watchtower)).isTrue();
     }
 }

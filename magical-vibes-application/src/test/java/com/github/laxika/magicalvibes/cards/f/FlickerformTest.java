@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.cards.m.MoldervineCloak;
+import com.github.laxika.magicalvibes.cards.s.SvogthosTheRestlessTomb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,9 +11,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Flickerform.class, CourierHawk.class, MoldervineCloak.class})
+@CardUsed({Flickerform.class, CourierHawk.class, MoldervineCloak.class, SvogthosTheRestlessTomb.class})
 class FlickerformTest extends BaseCardTest {
 
     @Test
@@ -99,6 +102,72 @@ class FlickerformTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Moldervine Cloak"));
     }
 
+    @Test
+    @DisplayName("Auras remain exiled when the enchanted animated land returns as a noncreature")
+    void aurasCannotReturnAttachedToAnUnanimatedLand() {
+        harness.setGraveyard(player1, List.of(new CourierHawk()));
+        Permanent land = addCreatureReady(player1, new SvogthosTheRestlessTomb());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent aura = new Permanent(new Flickerform());
+        aura.setAttachedTo(land.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        Permanent cloak = new Permanent(new MoldervineCloak());
+        cloak.setAttachedTo(land.getId());
+        gd.playerBattlefields.get(player1.getId()).add(cloak);
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Svogthos, the Restless Tomb");
+        advanceToEndStep();
+
+        harness.assertOnBattlefield(player1, "Svogthos, the Restless Tomb");
+        harness.assertNotOnBattlefield(player1, "Flickerform");
+        harness.assertNotOnBattlefield(player1, "Moldervine Cloak");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Flickerform"))
+                .anyMatch(card -> card.getName().equals("Moldervine Cloak"));
+        harness.assertNotInGraveyard(player1, "Flickerform");
+        harness.assertNotInGraveyard(player1, "Moldervine Cloak");
+    }
+
+    @Test
+    @DisplayName("The delayed return belongs to Flickerform's controller, even on an opponent's creature")
+    void delayedReturnRetainsTheActivatedAbilityControllerAndSource() {
+        Permanent creature = addCreatureReady(player2, new CourierHawk());
+        creature.getCard().setOwnerId(player2.getId());
+        Flickerform card = new Flickerform();
+        card.setOwnerId(player1.getId());
+        Permanent aura = new Permanent(card);
+        aura.setAttachedTo(creature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(card.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Courier Hawk");
+        assertThat(findPermanent(player1, "Flickerform").getAttachedTo())
+                .isEqualTo(findPermanent(player2, "Courier Hawk").getId());
+    }
+
     private Permanent setupFlickerform() {
         Permanent creature = addCreatureReady(player1, new CourierHawk());
 
@@ -118,6 +187,7 @@ class FlickerformTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }

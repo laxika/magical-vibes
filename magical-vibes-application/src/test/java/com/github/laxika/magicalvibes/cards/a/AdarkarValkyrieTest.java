@@ -77,7 +77,9 @@ class AdarkarValkyrieTest extends BaseCardTest {
     void doesNotRegisterReturnWhenTargetLeavesBeforeAbilityResolves() {
         addCreatureReady(player1, new AdarkarValkyrie());
         harness.addToBattlefield(player1, new SnowCoveredMountain());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
+        BorealDruid targetCard = new BorealDruid();
+        targetCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -97,6 +99,7 @@ class AdarkarValkyrieTest extends BaseCardTest {
     @DisplayName("Does not follow a creature that leaves and is recast before dying")
     void doesNotReturnRecastCreature() {
         addCreatureReady(player1, new AdarkarValkyrie());
+        harness.addToBattlefield(player1, new SnowCoveredMountain());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -133,7 +136,9 @@ class AdarkarValkyrieTest extends BaseCardTest {
         for (int i = 0; i < 5; i++) {
             harness.addToBattlefield(player1, new SnowCoveredMountain());
         }
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
+        BorealDruid targetCard = new BorealDruid();
+        targetCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -155,7 +160,9 @@ class AdarkarValkyrieTest extends BaseCardTest {
     @DisplayName("A delayed return only returns the creature once")
     void returnsCreatureOnlyOnce() {
         addCreatureReady(player1, new AdarkarValkyrie());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
+        BorealDruid targetCard = new BorealDruid();
+        targetCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -177,7 +184,9 @@ class AdarkarValkyrieTest extends BaseCardTest {
     @DisplayName("The delayed return expires at the end of the turn")
     void doesNotReturnCreatureOnNextTurn() {
         addCreatureReady(player1, new AdarkarValkyrie());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
+        BorealDruid targetCard = new BorealDruid();
+        targetCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

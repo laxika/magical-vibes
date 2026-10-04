@@ -89,6 +89,7 @@ class AlaniasPathmakerTest extends BaseCardTest {
     void cannotPlayExiledLandDuringOpponentsTurn() {
         Card topCard = new Mountain();
         castPathmaker(topCard, new Mountain());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain()));
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
@@ -123,8 +124,12 @@ class AlaniasPathmakerTest extends BaseCardTest {
     void canCastTheExiledCardDuringNextTurnsEndStep() {
         Card topCard = new Shock();
         castPathmaker(topCard, new Mountain(), new Mountain());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain()));
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.interaction.clearAwaitingInput();
         harness.passUntil(player1, TurnStep.END_STEP);
 
         harness.addMana(player1, ManaColor.RED, 1);
@@ -139,10 +144,14 @@ class AlaniasPathmakerTest extends BaseCardTest {
     void permissionLastsThroughNextTurnAndThenExpiresLeavingCardExiled() {
         Card topCard = new Shock();
         castPathmaker(topCard, new Mountain(), new Mountain(), new Mountain());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain(), new Mountain()));
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.interaction.clearAwaitingInput();
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

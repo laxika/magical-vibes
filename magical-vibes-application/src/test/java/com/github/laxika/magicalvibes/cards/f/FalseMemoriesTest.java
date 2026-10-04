@@ -101,10 +101,55 @@ class FalseMemoriesTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
-    private void resolveAtNextEndStep() {
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Can exile False Memories and cards added after the delayed trigger triggers")
+    void choosesFromCurrentGraveyardIncludingTheSpell() {
+        List<Card> opponentGraveyard = overmasters(2);
+        harness.setGraveyard(player2, opponentGraveyard);
+        harness.setLibrary(player1, overmasters(7));
+        FalseMemories spell = new FalseMemories();
+        harness.castFromHand(player1, spell, "{1}{U}");
         harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+        Overmaster addedAfterTrigger = new Overmaster();
+        List<Card> graveyard = new ArrayList<>(gd.playerGraveyards.get(player1.getId()));
+        graveyard.add(addedAfterTrigger);
+        harness.setGraveyard(player1, graveyard);
+        harness.passBothPriorities();
+
+        harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(spell));
+        harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(addedAfterTrigger));
+        for (int i = 0; i < 5; i++) {
+            harness.handleGraveyardCardChosen(player1, 0);
+        }
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell, addedAfterTrigger).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(opponentGraveyard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolves the delayed trigger harmlessly when the graveyard has become empty")
+    void emptyGraveyardNeedsNoChoice() {
+        harness.setLibrary(player1, overmasters(7));
+        castAndResolveFalseMemories();
+        harness.setGraveyard(player1, List.of());
+
+        resolveAtNextEndStep();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void resolveAtNextEndStep() {
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 

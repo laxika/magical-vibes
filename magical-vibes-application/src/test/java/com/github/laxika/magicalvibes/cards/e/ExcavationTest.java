@@ -109,6 +109,56 @@ class ExcavationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The land is sacrificed as a cost before the card is drawn")
+    void sacrificeIsPaidBeforeResolution() {
+        addExcavation(player1);
+        harness.addToBattlefield(player1, new RhysticCave());
+        prepareMainPhase(player1);
+        harness.setLibrary(player1, List.of(new DivingGriffin()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A player cannot pay the sacrifice cost with an opponent's land")
+    void cannotSacrificeOpponentsLand() {
+        addExcavation(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        prepareMainPhase(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation requires one mana in addition to sacrificing a land")
+    void requiresManaToActivate() {
+        addExcavation(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addExcavation(Player owner) {
         harness.addToBattlefield(owner, new Excavation());
     }

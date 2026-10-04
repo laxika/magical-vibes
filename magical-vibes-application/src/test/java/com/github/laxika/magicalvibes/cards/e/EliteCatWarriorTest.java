@@ -64,6 +64,20 @@ class EliteCatWarriorTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Forestwalk does not apply when only the attacking player controls a Forest")
+    void forestwalkAllowsBlockingWhenOnlyAttackerHasForest() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cat = addCreatureReady(player1, new EliteCatWarrior());
+        cat.setAttacking(true);
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, cat);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private void declareBlock(Permanent blocker, Permanent attacker) {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),

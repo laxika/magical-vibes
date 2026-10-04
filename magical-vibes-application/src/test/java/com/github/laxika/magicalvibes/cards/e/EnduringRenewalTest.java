@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CaribouRange;
 import com.github.laxika.magicalvibes.cards.e.ElvishHealer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -19,10 +20,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({EnduringRenewal.class, ElvishHealer.class, BalduvianBears.class, Forest.class, Plains.class})
+@CardUsed({EnduringRenewal.class, ElvishHealer.class, BalduvianBears.class, Forest.class, Plains.class,
+        CaribouRange.class, NevinyrralsDisk.class})
 class EnduringRenewalTest extends BaseCardTest {
-
-    // ===== Hand revealed =====
 
     @Test
     @DisplayName("Opponent sees the controller's hand; controller does not see the opponent's")
@@ -41,8 +41,6 @@ class EnduringRenewalTest extends BaseCardTest {
         assertThat(p1Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
         assertThat(p1Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Balduvian Bears"));
     }
-
-    // ===== Draw replacement =====
 
     @Test
     @DisplayName("Revealed creature card goes to the graveyard instead of being drawn")
@@ -88,15 +86,14 @@ class EnduringRenewalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Empty library reveal does not lose the game")
-    void emptyLibraryDoesNotLose() {
+    @DisplayName("An empty library still causes a draw attempt and a loss")
+    void emptyLibraryStillLoses() {
         harness.addToBattlefield(player1, new EnduringRenewal());
         harness.setLibrary(player1, new ArrayList<>());
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
-        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gameLogContains("reveals no cards")).isTrue();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test
@@ -113,8 +110,6 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Balduvian Bears");
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Death return =====
 
     @Test
     @DisplayName("A creature put into the graveyard from the battlefield returns to hand")
@@ -211,5 +206,47 @@ class EnduringRenewalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().toString().equals(tokenId));
         assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @CardUsed({NevinyrralsDisk.class})
+    @DisplayName("Creatures return when Enduring Renewal is destroyed at the same time")
+    void simultaneousDestructionStillReturnsCreature() {
+        harness.addToBattlefield(player1, new EnduringRenewal());
+        harness.addToBattlefield(player1, new BalduvianBears());
+        Permanent disk = harness.addToBattlefieldAndReturn(player1, new NevinyrralsDisk());
+        disk.setTapped(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Enduring Renewal");
+        harness.assertInHand(player1, "Balduvian Bears");
+        harness.assertNotInGraveyard(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("An old return trigger cannot find a creature that left and re-entered its graveyard")
+    void oldTriggerDoesNotReturnNewGraveyardObject() {
+        Permanent renewal = harness.addToBattlefieldAndReturn(player1, new EnduringRenewal());
+        BalduvianBears card = new BalduvianBears();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears);
+            harness.getPermanentRemovalService().removePermanentToExile(gd, renewal);
+            harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, card.getId());
+        });
+        Permanent returnedBears = harness.addToBattlefieldAndReturn(player1, card);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, returnedBears));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertNotInHand(player1, "Balduvian Bears");
     }
 }

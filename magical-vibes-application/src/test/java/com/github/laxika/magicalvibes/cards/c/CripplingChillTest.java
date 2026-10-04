@@ -65,7 +65,7 @@ class CripplingChillTest extends BaseCardTest {
     @DisplayName("An already tapped creature you control can be targeted and still draws a card")
     void targetsAlreadyTappedOwnCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new RagingPoltergeist());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new CripplingChill()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 3);

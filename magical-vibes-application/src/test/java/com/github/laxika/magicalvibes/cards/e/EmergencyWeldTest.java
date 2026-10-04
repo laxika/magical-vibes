@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EmergencyWeld.class, Forest.class, GrizzlyBears.class, MindStone.class})
 class EmergencyWeldTest extends BaseCardTest {
 
     @Test
@@ -55,12 +57,52 @@ class EmergencyWeldTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Rejects an artifact in an opponent's graveyard")
+    void rejectsOpponentsGraveyardTarget() {
+        Card artifact = new MindStone();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.setHand(player1, List.of(new EmergencyWeld()));
+        addWeldMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot be cast without a graveyard target just to create a token")
+    void requiresGraveyardTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new EmergencyWeld()));
+        addWeldMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.<java.util.UUID>of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not create a token when its only target leaves the graveyard")
+    void doesNotCreateTokenWhenTargetBecomesIllegal() {
+        Card artifact = new MindStone();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new EmergencyWeld()));
+        addWeldMana();
+        harness.castSorcery(player1, 0, artifact.getId());
+        harness.setGraveyard(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Emergency Weld");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castWeld(Card target) {
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new EmergencyWeld()));
         addWeldMana();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addWeldMana() {

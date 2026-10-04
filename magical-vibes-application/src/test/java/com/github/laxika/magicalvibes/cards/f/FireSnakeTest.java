@@ -29,8 +29,7 @@ class FireSnakeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castSorcery(player2, 0, snake.getId());
-        harness.passBothPriorities(); // Volcanic Hammer resolves → snake dies → death trigger awaits target
+        harness.castAndResolveSorcery(player2, 0, snake.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
@@ -53,8 +52,7 @@ class FireSnakeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castSorcery(player2, 0, snake.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, snake.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -72,8 +70,7 @@ class FireSnakeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castSorcery(player2, 0, snake.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, snake.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, forest.getId());
@@ -81,6 +78,26 @@ class FireSnakeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Death with no lands does not request a target or affect nonlands")
+    void noLegalLandTarget() {
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new FireSnake());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new VolcanicHammer()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player2, 0, snake.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fire Snake");
+        harness.assertInGraveyard(player1, "Fire Snake");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupPlayer2Active() {

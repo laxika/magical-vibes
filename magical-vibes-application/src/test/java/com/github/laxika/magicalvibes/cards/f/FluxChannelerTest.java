@@ -20,12 +20,75 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FluxChannelerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Proliferate adds every existing counter kind to selected opposing permanents and players")
+    void proliferatesSelectedPermanentsAndPlayers() {
+        harness.addToBattlefield(player1, new FluxChanneler());
+        Permanent selected = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        selected.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        selected.setCounterCount(CounterType.CHARGE, 3);
+        Permanent unselected = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        unselected.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+        gd.playerEnergyCounters.put(player2.getId(), 3);
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(selected.getId(), player2.getId()));
+
+        assertThat(selected.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(selected.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(unselected.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(4);
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The controller may choose no permanents or players")
+    void mayChooseNothing() {
+        Permanent channeler = harness.addToBattlefieldAndReturn(player1, new FluxChanneler());
+        channeler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(channeler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("A cast trigger resolves after Flux Channeler leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        Permanent channeler = harness.addToBattlefieldAndReturn(player1, new FluxChanneler());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(channeler);
+        gd.playerGraveyards.get(player1.getId()).add(channeler.getCard());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Casting a noncreature spell triggers proliferate")
     void noncreatureSpellTriggersProliferate() {
         harness.addToBattlefield(player1, new FluxChanneler());
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -46,9 +109,8 @@ class FluxChannelerTest extends BaseCardTest {
     @DisplayName("Casting a creature spell does not trigger proliferate")
     void creatureSpellDoesNotTriggerProliferate() {
         harness.addToBattlefield(player1, new FluxChanneler());
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -66,9 +128,8 @@ class FluxChannelerTest extends BaseCardTest {
     @DisplayName("An opponent casting a noncreature spell does not trigger proliferate")
     void opponentNoncreatureSpellDoesNotTriggerProliferate() {
         harness.addToBattlefield(player1, new FluxChanneler());
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

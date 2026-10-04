@@ -47,4 +47,54 @@ class FearOfSurveillanceTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Attacking puts only the top card into the graveyard")
+    void attackingSurveilsOnlyTopCard() {
+        addCreatureReady(player1, new FearOfSurveillance());
+        Card topCard = new FearOfSurveillance();
+        Card secondCard = new FearOfSurveillance();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+    }
+
+    @Test
+    @DisplayName("Attacking with an empty library finishes without a choice")
+    void attackingWithEmptyLibrary() {
+        addCreatureReady(player1, new FearOfSurveillance());
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attacking controller surveils their own library")
+    void attackingControllerSurveilsOwnLibrary() {
+        addCreatureReady(player2, new FearOfSurveillance());
+        Card defendingTopCard = new FearOfSurveillance();
+        Card attackingTopCard = new FearOfSurveillance();
+        harness.setLibrary(player1, List.of(defendingTopCard));
+        harness.setLibrary(player2, List.of(attackingTopCard));
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(attackingTopCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(defendingTopCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
 }

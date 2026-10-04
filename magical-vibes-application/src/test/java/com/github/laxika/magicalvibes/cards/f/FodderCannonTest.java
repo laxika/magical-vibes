@@ -118,4 +118,53 @@ class FodderCannonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
     }
+    @Test
+    @DisplayName("Pays costs before resolution, even with tapped summoning-sick fodder")
+    void paysCostsBeforeResolutionWithTappedSummoningSickCreature() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new FodderCannon());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        fodder.setSummoningSick(true);
+        fodder.setTapped(true);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        victim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, victim.getId());
+
+        assertThat(cannon.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(victim.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Can target the creature sacrificed as a cost")
+    void canTargetSacrificedCreature() {
+        Permanent cannon = harness.addToBattlefieldAndReturn(player1, new FodderCannon());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, fodder.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(cannon.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(otherCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Fodder Cannon");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
 }

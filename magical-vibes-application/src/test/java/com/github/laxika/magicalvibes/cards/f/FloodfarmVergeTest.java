@@ -66,9 +66,62 @@ class FloodfarmVergeTest extends BaseCardTest {
     }
 
     private Permanent addReadyVerge(Player player) {
-        Permanent verge = new Permanent(new FloodfarmVerge());
+        Permanent verge = harness.addToBattlefieldAndReturn(player, new FloodfarmVerge());
         verge.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(verge);
         return verge;
+    }
+
+    @Test
+    void tappedPlainsStillEnablesBlueMana() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        plains.setTapped(true);
+        Permanent verge = addReadyVerge(player1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void losingQualifyingLandDisablesBlueManaButStillAllowsWhite() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent verge = addReadyVerge(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        gd.playerGraveyards.get(player1.getId()).add(island.getCard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(verge.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+    }
+
+    @Test
+    void newlyEnteredVergeCanProduceBlueManaImmediately() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent verge = harness.enterBattlefieldAndReturn(player1, new FloodfarmVerge());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void anotherVergeDoesNotEnableBlueMana() {
+        Permanent verge = addReadyVerge(player1);
+        addReadyVerge(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(verge.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }

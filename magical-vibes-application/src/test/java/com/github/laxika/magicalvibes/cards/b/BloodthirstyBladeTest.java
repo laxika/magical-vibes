@@ -156,7 +156,7 @@ class BloodthirstyBladeTest extends BaseCardTest {
     @Test
     void tappedGoadedCreatureDoesNotHaveToAttack() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         Permanent blade = harness.addToBattlefieldAndReturn(player1, new BloodthirstyBlade());
         blade.setAttachedTo(target.getId());
 

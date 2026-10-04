@@ -102,6 +102,23 @@ class EarlyHarvestTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Untaps a basic land tapped after the spell was cast")
+    void untapsLandTappedWhileSpellIsOnStack() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new EarlyHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castInstant(player1, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.tapPermanent(player1, 0);
+        assertThat(forest.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castEarlyHarvest(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new EarlyHarvest()));
         harness.addMana(player1, ManaColor.GREEN, 3);

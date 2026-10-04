@@ -13,18 +13,16 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Fleshbag Marauder")
-@CardUsed({FleshbagMarauder.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({FleshbagMarauder.class, GrizzlyBears.class, GiantSpider.class, ThroneOfBone.class})
 class FleshbagMarauderTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB makes each player sacrifice their only creature automatically")
     void etbMakesEachPlayerSacrifice() {
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         setupAndCast();
         harness.passBothPriorities(); // Resolve creature → ETB trigger on stack
@@ -41,15 +39,15 @@ class FleshbagMarauderTest extends BaseCardTest {
     @Test
     @DisplayName("A player with multiple creatures chooses which to sacrifice")
     void playerWithMultipleCreaturesChooses() {
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(new Permanent(new GiantSpider()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
 
         setupAndCast();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        // Controller auto-sacrifices the Marauder; opponent with two creatures is prompted.
+        // The opponent with two creatures must choose which one to sacrifice.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -61,9 +59,8 @@ class FleshbagMarauderTest extends BaseCardTest {
     @DisplayName("Answering the sacrifice choice resumes and clears the parked ETB resolution")
     void answeringSacrificeChoiceClearsParkedResolution() {
         GameData gd = harness.getGameData();
-        Permanent p2Bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(p2Bears);
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GiantSpider()));
+        Permanent p2Bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
 
         setupAndCast();
         harness.passBothPriorities();
@@ -86,11 +83,9 @@ class FleshbagMarauderTest extends BaseCardTest {
         // The opponent owns a "whenever a player casts a black spell, you may pay {1}" trigger
         // plus two creatures, so both the may-pay prompt and a real sacrifice choice interleave
         // with the Marauder's parked ETB resolution (fuzz-found dangling-park scenario).
-        gd.playerBattlefields.get(player2.getId())
-                .add(new Permanent(new ThroneOfBone()));
-        Permanent p2Bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(p2Bears);
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GiantSpider()));
+        harness.addToBattlefield(player2, new ThroneOfBone());
+        Permanent p2Bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         setupAndCast();
@@ -99,7 +94,7 @@ class FleshbagMarauderTest extends BaseCardTest {
         harness.passBothPriorities(); // Fleshbag Marauder resolves → ETB trigger on stack
         harness.passBothPriorities(); // ETB resolves → sacrifice choices
 
-        // Controller auto-sacrifices the Marauder (only creature); opponent chooses the Bears.
+        // The opponent chooses the Bears; both players must ultimately sacrifice a creature.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, p2Bears.getId());
 
@@ -111,10 +106,60 @@ class FleshbagMarauderTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("No creature is sacrificed until the opponent has made their choice")
+    void sacrificesWaitForAllChoices() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fleshbag Marauder");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+
+        harness.handlePermanentChosen(player2, bears.getId());
+
+        harness.assertInGraveyard(player1, "Fleshbag Marauder");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Controller may sacrifice another creature and keep the Marauder")
+    void controllerCanKeepMarauder() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Fleshbag Marauder");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Opponent with no creatures does not prevent the controller's sacrifice")
+    void opponentWithNoCreaturesIsSkipped() {
+        harness.addToBattlefield(player2, new ThroneOfBone());
+
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fleshbag Marauder");
+        harness.assertOnBattlefield(player2, "Throne of Bone");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new FleshbagMarauder()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FleshbagMarauder(), "{2}{B}");
     }
 }

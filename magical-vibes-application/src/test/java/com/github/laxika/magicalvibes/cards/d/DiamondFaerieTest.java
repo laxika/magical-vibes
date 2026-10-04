@@ -96,7 +96,7 @@ class DiamondFaerieTest extends BaseCardTest {
     void acceptsColoredSnowManaWithoutTapRestriction() {
         Permanent diamond = harness.addToBattlefieldAndReturn(player1, new DiamondFaerie());
         diamond.setSummoningSick(true);
-        diamond.setTapped(true);
+        diamond.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.GREEN, 1);
 

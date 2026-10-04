@@ -110,7 +110,7 @@ class DoomWhispererTest extends BaseCardTest {
     void canActivateWithEmptyLibraryWhileTappedAndSummoningSick() {
         var whisperer = harness.addToBattlefieldAndReturn(player1, new DoomWhisperer());
         whisperer.setSummoningSick(true);
-        whisperer.setTapped(true);
+        whisperer.tap();
         harness.setLibrary(player1, List.of());
         harness.setLife(player1, 20);
 

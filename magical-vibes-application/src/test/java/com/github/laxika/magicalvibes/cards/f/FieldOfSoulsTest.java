@@ -31,6 +31,9 @@ class FieldOfSoulsTest extends BaseCardTest {
 
         List<Permanent> spirits = findPermanents(player1, "Spirit");
         assertThat(spirits).hasSize(1);
+        assertThat(spirits.getFirst().getCard().isToken()).isTrue();
+        assertThat(spirits.getFirst().getEffectivePower()).isEqualTo(1);
+        assertThat(spirits.getFirst().getEffectiveToughness()).isEqualTo(1);
         assertThat(spirits.getFirst().getCard().getKeywords()).contains(Keyword.FLYING);
     }
 
@@ -68,8 +71,7 @@ class FieldOfSoulsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent zombie = findPermanent(player1, "Zombie");
         Permanent bombardment = findPermanent(player1, "Goblin Bombardment");
@@ -98,6 +100,55 @@ class FieldOfSoulsTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Spirit")).isEmpty();
         harness.assertInHand(player1, "Canopy Spider");
+    }
+
+    @Test
+    @DisplayName("Your creature dying under an opponent's control still creates a Spirit for you")
+    void ownedCreatureDyingUnderOpponentControlCreatesSpirit() {
+        harness.addToBattlefield(player1, new FieldOfSouls());
+        CanopySpider spider = new CanopySpider();
+        spider.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, spider);
+
+        destroyUnenchantedCreaturesFromOpponent();
+
+        harness.assertInGraveyard(player1, "Canopy Spider");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature dying under your control does not create a Spirit")
+    void opponentOwnedCreatureDyingUnderYourControlCreatesNothing() {
+        harness.addToBattlefield(player1, new FieldOfSouls());
+        CanopySpider spider = new CanopySpider();
+        spider.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, spider);
+
+        destroyUnenchantedCreaturesFromOpponent();
+
+        harness.assertInGraveyard(player2, "Canopy Spider");
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A death trigger still creates a Spirit after Field of Souls leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent field = harness.addToBattlefieldAndReturn(player1, new FieldOfSouls());
+        harness.addToBattlefield(player1, new CanopySpider());
+        harness.setHand(player2, List.of(new WindsOfRath(), new Capsize()));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        harness.castAndResolveInstant(player2, 0, field.getId());
+        harness.assertInHand(player1, "Field of Souls");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
     }
 
     /**

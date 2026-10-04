@@ -82,6 +82,7 @@ class AureliasVindicatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Aurelia's Vindicator"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -141,6 +142,7 @@ class AureliasVindicatorTest extends BaseCardTest {
         castFaceDown();
         UUID targetCardId = findPermanent(player2, "Aurelia's Vindicator").getCard().getId();
         turnFaceUpChoosingX(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMultipleCardsChosen(player1, List.of(targetCardId));
         harness.passBothPriorities();
 

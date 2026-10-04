@@ -65,7 +65,7 @@ class ChandrasRevolutionTest extends BaseCardTest {
     void alreadyTappedLandStillSkipsItsNextUntap() {
         Permanent creature = addCreatureReady(player2, new ColossalDreadmaw());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        land.setTapped(true);
+        land.tap();
 
         castRevolution(creature.getId(), land.getId());
 

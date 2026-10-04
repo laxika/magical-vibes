@@ -172,7 +172,7 @@ class CaribouRangeTest extends BaseCardTest {
     @DisplayName("A tapped enchanted land cannot create a Caribou")
     void tappedLandCannotCreateToken() {
         Range range = attachedRange(player1);
-        range.forest().setTapped(true);
+        range.forest().tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

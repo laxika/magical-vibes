@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "MIC", collectorNumber = "168")
 @CardRegistration(set = "ONC", collectorNumber = "148")
 @CardRegistration(set = "WOC", collectorNumber = "153")
+@CardRegistration(set = "FIC", collectorNumber = "378")
 public class CanopyVista extends Card {
 
     public CanopyVista() {

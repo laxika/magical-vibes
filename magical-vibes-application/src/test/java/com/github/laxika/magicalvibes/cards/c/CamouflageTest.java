@@ -100,7 +100,7 @@ class CamouflageTest extends BaseCardTest {
     void tappedCreatureDoesNotBlock() {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         castCamouflage();
 

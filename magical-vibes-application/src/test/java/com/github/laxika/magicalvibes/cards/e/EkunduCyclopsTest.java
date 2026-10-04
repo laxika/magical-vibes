@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EkunduCyclops.class, ViashinoWarrior.class})
+@CardUsed({EkunduCyclops.class, ViashinoWarrior.class, Errantry.class, Humility.class})
 class EkunduCyclopsTest extends BaseCardTest {
 
     @Test
@@ -82,5 +83,57 @@ class EkunduCyclopsTest extends BaseCardTest {
         addCreatureReady(player2, new EkunduCyclops());
 
         assertThatCode(() -> declareAttackers(player1, List.of(0))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Cyclops is not required to attack alongside an ally")
+    void notForcedWhenSummoningSick() {
+        harness.addToBattlefield(player1, new EkunduCyclops());
+        addCreatureReady(player1, new ViashinoWarrior());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Attacking with one Cyclops requires another ready Cyclops to attack")
+    void anotherCyclopsAlsoMustAttack() {
+        addCreatureReady(player1, new EkunduCyclops());
+        addCreatureReady(player1, new EkunduCyclops());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must also attack");
+    }
+
+    @Test
+    @DisplayName("Both Cyclopes may attack together without another creature")
+    void bothCyclopesMayAttack() {
+        addCreatureReady(player1, new EkunduCyclops());
+        addCreatureReady(player1, new EkunduCyclops());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0, 1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @CardUsed(Errantry.class)
+    @DisplayName("Cyclops may stay back when the attacking ally can only attack alone")
+    void notForcedWhenAllyCanOnlyAttackAlone() {
+        addCreatureReady(player1, new EkunduCyclops());
+        Permanent ally = addCreatureReady(player1, new ViashinoWarrior());
+        Permanent errantry = harness.addToBattlefieldAndReturn(player1, new Errantry());
+        errantry.setAttachedTo(ally.getId());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    @DisplayName("Cyclops is not required to join an ally after losing all abilities")
+    void notForcedAfterLosingAbilities() {
+        addCreatureReady(player1, new EkunduCyclops());
+        addCreatureReady(player1, new ViashinoWarrior());
+        harness.addToBattlefield(player1, new Humility());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(1))).doesNotThrowAnyException();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.s.SimicSignet;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvolutionVat.class, MistralCharger.class, SimicSignet.class})
+@CardUsed({EvolutionVat.class, MistralCharger.class, SimicSignet.class, DoublingSeason.class})
 class EvolutionVatTest extends BaseCardTest {
 
     @Test
@@ -122,6 +123,90 @@ class EvolutionVatTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("An already tapped creature still gets a counter and can repeatedly double it")
+    void alreadyTappedCreatureCanRepeatedlyDoubleCounters() {
+        addReadyVat(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        target.setTapped(true);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Doubling uses the counter count at resolution and leaves other counter types alone")
+    void doublesCurrentCountersAtResolution() {
+        addReadyVat(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        target.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Doubling zero +1/+1 counters does not create a counter")
+    void doublingZeroCountersDoesNothing() {
+        addReadyVat(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Doubling Season replaces the counter placement from the granted ability")
+    void grantedDoublingAppliesCounterReplacement() {
+        addReadyVat(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        harness.addToBattlefield(player1, new DoublingSeason());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
     private Permanent addReadyVat(Player player) {
         Permanent vat = addCreatureReady(player, new EvolutionVat());
         harness.forceActivePlayer(player);

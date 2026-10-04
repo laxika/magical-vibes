@@ -2,15 +2,12 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,11 +44,61 @@ class EarthshakerGiantTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("The entering Giant is excluded but another Giant is boosted")
+    void excludesOnlyTheSourcePermanent() {
+        Permanent otherGiant = harness.addToBattlefieldAndReturn(player1, new EarthshakerGiant());
+        castEarthshakerGiant();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(otherGiant.getId()))
+                .findFirst().orElseThrow();
+        assertThat(otherGiant.getPowerModifier()).isEqualTo(3);
+        assertThat(otherGiant.getToughnessModifier()).isEqualTo(3);
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the effects")
+    void doesNotAffectLaterCreatures() {
+        castEarthshakerGiant();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(laterCreature.getPowerModifier()).isZero();
+        assertThat(laterCreature.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures present when the trigger resolves receive the effects")
+    void determinesRecipientsAtResolution() {
+        harness.castFromHand(player1, new EarthshakerGiant(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even if the Giant has left the battlefield")
+    void resolvesWithoutSourceOnBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new EarthshakerGiant(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent != creature);
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
     private void castEarthshakerGiant() {
-        harness.setHand(player1, List.of(new EarthshakerGiant()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EarthshakerGiant(), "{4}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

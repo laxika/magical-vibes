@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.s.SandbarMerfolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Exhume.class, SandbarMerfolk.class, DarkRitual.class})
 class ExhumeTest extends BaseCardTest {
@@ -96,12 +98,85 @@ class ExhumeTest extends BaseCardTest {
         assertThat(battlefieldCards(player2)).containsExactly(player2First);
     }
 
+    @Test
+    @DisplayName("A player with multiple creatures cannot decline the return")
+    void cannotDeclineReturningCreature() {
+        Card first = new SandbarMerfolk();
+        Card second = new SandbarMerfolk();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        castExhume();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(battlefieldCards(player1)).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
+    }
+
+    @Test
+    @DisplayName("The active player chooses first when player two casts Exhume")
+    void activePlayerChoosesFirst() {
+        Card player1First = new SandbarMerfolk();
+        Card player1Second = new SandbarMerfolk();
+        Card player2First = new SandbarMerfolk();
+        Card player2Second = new SandbarMerfolk();
+        harness.setGraveyard(player1, List.of(player1First, player1Second));
+        harness.setGraveyard(player2, List.of(player2First, player2Second));
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Exhume()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleGraveyardCardChosen(player2, 1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(battlefieldCards(player1)).containsExactly(player1Second);
+        assertThat(battlefieldCards(player2)).containsExactly(player2Second);
+    }
+
+    @Test
+    @DisplayName("The opponent still returns a creature when the caster has only noncreatures")
+    void opponentReturnsCreatureWithoutCasterCreature() {
+        Card instant = new DarkRitual();
+        Card creature = new SandbarMerfolk();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setGraveyard(player2, List.of(creature));
+
+        castExhume();
+
+        assertThat(battlefieldCards(player1)).isEmpty();
+        assertThat(battlefieldCards(player2)).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(instant);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves with both graveyards empty")
+    void resolvesWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        castExhume();
+
+        assertThat(battlefieldCards(player1)).isEmpty();
+        assertThat(battlefieldCards(player2)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Exhume");
+    }
+
     private void castExhume() {
         harness.setHand(player1, List.of(new Exhume()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private List<Card> battlefieldCards(com.github.laxika.magicalvibes.model.Player player) {

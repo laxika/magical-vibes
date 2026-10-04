@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +24,8 @@ class DyingWailTest extends BaseCardTest {
     @Test
     void enchantedCreatureDeathTargetsPlayerAndMakesThemDiscardTwoCards() {
         Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-        Permanent dyingWail = new Permanent(new DyingWail());
+        Permanent dyingWail = harness.addToBattlefieldAndReturn(player1, new DyingWail());
         dyingWail.setAttachedTo(spider.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dyingWail);
         harness.setHand(player2, new ArrayList<>(List.of(
                 new GrizzlyBears(), new FountainOfYouth(), new GiantSpider())));
 
@@ -75,6 +76,32 @@ class DyingWailTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void discardsAsManyAsPossibleFromShortHand(int handSize) {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent dyingWail = harness.addToBattlefieldAndReturn(player1, new DyingWail());
+        dyingWail.setAttachedTo(spider.getId());
+        harness.setHand(player2, handSize == 0 ? List.of() : List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new FountainOfYouth()));
+
+        spider.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        if (handSize == 1) {
+            harness.handleCardChosen(player2, 0);
+            harness.assertInGraveyard(player2, "Grizzly Bears");
+        }
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Dying Wail");
+    }
     @Test
     void cannotEnchantNoncreature() {
         harness.addToBattlefield(player1, new FountainOfYouth());

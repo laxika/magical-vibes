@@ -62,11 +62,126 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
 
-        harness.castInstant(player2, 0, tyrannosaurus.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, tyrannosaurus.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        harness.assertInGraveyard(player1, "Flaming Tyrannosaurus");
+    }
+
+    @Test
+    @DisplayName("An opponent casting from exile does not trigger your Paradox ability")
+    void opponentsExiledSpellDoesNotTriggerParadox() {
+        Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
+        FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
+        harness.setExile(player2, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        harness.addMana(player2, ManaColor.RED, 7);
+        gd.activePlayerId = player2.getId();
+
+        harness.castFromExile(player2, spell.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(tyrannosaurus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Paradox can target its own controller")
+    void paradoxCanDamageItsController() {
+        Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
+        FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(tyrannosaurus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Paradox does not put a counter on its source when its only target becomes illegal")
+    void illegalTargetPreventsCounter() {
+        Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(tyrannosaurus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting Flaming Tyrannosaurus from exile does not trigger its own ability")
+    void doesNotTriggerForItsOwnCast() {
+        FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castFromExile(player1, spell.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Flaming Tyrannosaurus");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Paradox deals lethal damage to a creature and still adds a counter")
+    void paradoxCanKillCreatureTarget() {
+        Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(tyrannosaurus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Paradox still deals damage after its source dies")
+    void paradoxResolvesAfterSourceDies() {
+        Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
+        FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.RED, 7);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.castAndResolveInstant(player2, 0, tyrannosaurus.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        assertThat(tyrannosaurus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertInGraveyard(player1, "Flaming Tyrannosaurus");
     }
 }

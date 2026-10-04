@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.e.EnduringInnocence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FearOfTheDark.class})
+@CardUsed({FearOfTheDark.class, EnduringInnocence.class})
 class FearOfTheDarkTest extends BaseCardTest {
 
     @Test
@@ -34,7 +32,7 @@ class FearOfTheDarkTest extends BaseCardTest {
     @DisplayName("A defending Glimmer creature prevents the attack trigger")
     void doesNotGrantKeywordsWhenDefenderControlsGlimmerCreature() {
         Permanent fear = addCreatureReady(player1, new FearOfTheDark());
-        addCreatureReady(player2, glimmerCreature());
+        addCreatureReady(player2, new EnduringInnocence());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -49,7 +47,7 @@ class FearOfTheDarkTest extends BaseCardTest {
         Permanent fear = addCreatureReady(player1, new FearOfTheDark());
 
         declareAttackers(List.of(0));
-        addCreatureReady(player2, glimmerCreature());
+        addCreatureReady(player2, new EnduringInnocence());
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, fear, Keyword.MENACE)).isFalse();
@@ -72,13 +70,50 @@ class FearOfTheDarkTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, fear, Keyword.DEATHTOUCH)).isFalse();
     }
 
-    private static Card glimmerCreature() {
-        Card card = new Card();
-        card.setName("Glimmer");
-        card.setType(CardType.CREATURE);
-        card.setSubtypes(List.of(CardSubtype.GLIMMER));
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
+    @Test
+    void attackersOwnGlimmerDoesNotPreventKeywords() {
+        Permanent fear = addCreatureReady(player1, new FearOfTheDark());
+        addCreatureReady(player1, new EnduringInnocence());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, fear, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, fear, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void noncreatureGlimmerDoesNotPreventKeywords() {
+        Permanent fear = addCreatureReady(player1, new FearOfTheDark());
+        Permanent glimmer = addCreatureReady(player2, new EnduringInnocence());
+        glimmer.addMarkedDamage(null, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player2, "Enduring Innocence");
+        assertThat(returned.getId()).isNotEqualTo(glimmer.getId());
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, fear, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, fear, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void removingGlimmerAfterAttackDoesNotCreateTrigger() {
+        Permanent fear = addCreatureReady(player1, new FearOfTheDark());
+        Permanent glimmer = addCreatureReady(player2, new EnduringInnocence());
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).isEmpty();
+        gd.playerBattlefields.get(player2.getId()).remove(glimmer);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, fear, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, fear, Keyword.DEATHTOUCH)).isFalse();
     }
 }

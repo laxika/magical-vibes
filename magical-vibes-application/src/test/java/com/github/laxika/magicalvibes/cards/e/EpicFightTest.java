@@ -34,9 +34,7 @@ class EpicFightTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast(new int[]{0}, List.of(creature.getId()));
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
@@ -75,6 +73,60 @@ class EpicFightTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalSorceryWithModes(player1, 0, 1, 2,
                 new int[]{1}, List.of(opposingCreature.getId(), ownCreature.getId()), null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doublingModeCanTargetOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(new int[]{0}, List.of(creature.getId()));
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    void bothModesCanUseSeparateCreatures() {
+        Permanent doubled = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(new int[]{0, 1}, List.of(doubled.getId(), fighter.getId(), opponent.getId()));
+
+        assertThat(doubled.getEffectivePower()).isEqualTo(4);
+        assertThat(doubled.getEffectiveToughness()).isEqualTo(4);
+        assertThat(doubled.getMarkedDamage()).isZero();
+        assertThat(fighter.getEffectivePower()).isEqualTo(3);
+        assertThat(fighter.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doublingStillResolvesWhenOpposingFighterLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        prepareCard();
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(creature.getId(), creature.getId(), opponent.getId()), null);
+        harness.getPermanentRemovalService().removePermanentToHand(gd, opponent);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertInHand(player2, "Hill Giant");
+    }
+
+    @Test
+    void fightModeRequiresOpponentControlledSecondTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(player1, 0, 1, 2,
+                new int[]{1}, List.of(first.getId(), second.getId()), null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

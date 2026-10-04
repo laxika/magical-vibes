@@ -60,7 +60,6 @@ class AronBenaliasRuinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, fodder.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fodder);
         harness.assertInGraveyard(player1, "Academy Wall");

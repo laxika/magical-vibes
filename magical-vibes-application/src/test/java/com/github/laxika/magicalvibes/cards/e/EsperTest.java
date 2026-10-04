@@ -40,13 +40,42 @@ class EsperTest extends BaseCardTest {
     }
 
     @Test
-    void artifactSpellsCostOneLessForThePlanarController() {
+    void artifactSpellsCostOneLessForEveryPlayer() {
         assertThat(harness.getCastingCostService()
                 .getCastCostModifier(gd, player1.getId(), new PalladiumMyr())).isEqualTo(-1);
         assertThat(harness.getCastingCostService()
-                .getCastCostModifier(gd, player2.getId(), new PalladiumMyr())).isZero();
+                .getCastCostModifier(gd, player2.getId(), new PalladiumMyr())).isEqualTo(-1);
         assertThat(harness.getCastingCostService()
                 .getCastCostModifier(gd, player1.getId(), new GrizzlyBears())).isZero();
+    }
+
+    @Test
+    void chaosDoesNotAffectCreaturesEnteringAfterItResolves() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        Permanent white = harness.addToBattlefieldAndReturn(player1, new SavannahLions());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Memnite());
+
+        assertThat(gqs.isArtifact(gd, white)).isFalse();
+        for (Permanent permanent : List.of(white, artifact)) {
+            assertThat(permanent.hasKeyword(Keyword.VIGILANCE)).isFalse();
+            assertThat(permanent.hasKeyword(Keyword.MENACE)).isFalse();
+            assertThat(permanent.hasKeyword(Keyword.LIFELINK)).isFalse();
+        }
+    }
+
+    @Test
+    void chaosUsesCreaturesPresentAtResolutionRatherThanAtTriggerTime() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        Permanent white = harness.addToBattlefieldAndReturn(player1, new SavannahLions());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, white)).isTrue();
+        assertThat(white.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(white.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(white.hasKeyword(Keyword.LIFELINK)).isTrue();
     }
 
     @Test

@@ -27,6 +27,7 @@ import java.util.Set;
 public class ArmguardFamiliar extends Card {
 
     public ArmguardFamiliar() {
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,

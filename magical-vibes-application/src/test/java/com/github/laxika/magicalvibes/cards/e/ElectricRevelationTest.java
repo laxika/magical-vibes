@@ -17,6 +17,41 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ElectricRevelationTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Discard is paid while casting, before any cards are drawn")
+    void discardIsPaidBeforeResolution() {
+        harness.setHand(player1, List.of(new Forest(), new ElectricRevelation()));
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithDiscard(player1, 1, null, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Electric Revelation");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Electric Revelation");
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be cast with an empty hand")
+    void flashbackCannotCastWithoutCardToDiscard() {
+        harness.setGraveyard(player1, List.of(new ElectricRevelation()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFlashbackWithDiscard(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Electric Revelation");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Discards a card, then draws two cards")
     void discardsThenDrawsTwo() {
         harness.setHand(player1, List.of(new ElectricRevelation(), new Forest()));

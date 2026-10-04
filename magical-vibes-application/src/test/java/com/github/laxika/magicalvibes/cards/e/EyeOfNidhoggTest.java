@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +23,7 @@ class EyeOfNidhoggTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureBecomesBlackDragonWithGrantedAbilities() {
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
@@ -38,7 +37,7 @@ class EyeOfNidhoggTest extends BaseCardTest {
 
     @Test
     void effectsStopWhenAuraIsRemoved() {
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = attachAura(player1, creature);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
@@ -53,8 +52,8 @@ class EyeOfNidhoggTest extends BaseCardTest {
 
     @Test
     void returnsToOwnersHandWhenPutIntoGraveyardFromBattlefield() {
-        Permanent aura = attachAura(player1, addReadyCreature(player1, new GrizzlyBears()));
-        addReadyCreature(player2, new ElvishLyrist());
+        Permanent aura = attachAura(player1, addCreatureReady(player1, new GrizzlyBears()));
+        addCreatureReady(player2, new ElvishLyrist());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -80,13 +79,39 @@ class EyeOfNidhoggTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    void returnsToOwnerWhenControlledByAnotherPlayer() {
+        Permanent aura = attachAura(player1, addCreatureReady(player1, new GrizzlyBears()));
+        aura.getCard().setOwnerId(player2.getId());
+        addCreatureReady(player2, new ElvishLyrist());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Eye of Nidhogg");
+        harness.assertNotInHand(player1, "Eye of Nidhogg");
+        harness.assertNotInGraveyard(player2, "Eye of Nidhogg");
     }
 
+    @Test
+    void canCastAndResolveOnOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EyeOfNidhogg()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Eye of Nidhogg").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
+    }
     private Permanent attachAura(Player controller, Permanent creature) {
         Permanent aura = new Permanent(new EyeOfNidhogg());
         aura.setAttachedTo(creature.getId());

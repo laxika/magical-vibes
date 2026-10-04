@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.o.ObzedatGhostCouncil;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -70,13 +69,59 @@ class FireLordZukoTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ObzedatGhostCouncil());
         exileAtEndStep(true);
 
-        runUpkeepOf(player1);
+        advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(zuko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void creatureCastFromExileDoesNotTriggerAgainWhenItEntersFromTheStack() {
+        Permanent zuko = addReadyZuko();
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        EternalScourge scourge = new EternalScourge();
+        harness.setExile(player1, List.of(scourge));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFromExile(player1, scourge.getId());
+        resolveAllTriggers();
+
+        assertThat(zuko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Eternal Scourge")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentsSpellCastFromExileDoesNotTriggerZuko() {
+        Permanent zuko = addReadyZuko();
+        EternalScourge scourge = new EternalScourge();
+        harness.setExile(player2, List.of(scourge));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromExile(player2, scourge.getId());
+        resolveAllTriggers();
+
+        assertThat(zuko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player2, "Eternal Scourge");
+    }
+
+    @Test
+    void firebendingUsesPowerWhenTheTriggerResolves() {
+        Permanent zuko = addReadyZuko();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        zuko.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(4);
     }
 
     private Permanent addReadyZuko() {
@@ -93,10 +138,4 @@ class FireLordZukoTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    private void runUpkeepOf(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

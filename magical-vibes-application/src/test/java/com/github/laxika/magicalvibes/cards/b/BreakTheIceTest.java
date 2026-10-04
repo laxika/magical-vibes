@@ -69,7 +69,7 @@ class BreakTheIceTest extends BaseCardTest {
     @DisplayName("A tapped colorless-producing land remains a legal target")
     void destroysTappedColorlessProducingLand() {
         Permanent wastes = harness.addToBattlefieldAndReturn(player2, new Wastes());
-        wastes.setTapped(true);
+        wastes.tap();
 
         castBreakTheIce(wastes.getId());
 

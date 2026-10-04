@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeafGilder;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,15 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DwynenGiltLeafDaen.class, LlanowarElves.class, GrizzlyBears.class,
+        LeafGilder.class, Disperse.class})
 class DwynenGiltLeafDaenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Other Elf creatures you control get +1/+1")
     void buffsOtherOwnElves() {
-        harness.addToBattlefield(player1, new LlanowarElves());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new DwynenGiltLeafDaen());
-
-        Permanent elf = findPermanent(player1, "Llanowar Elves");
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
@@ -28,13 +32,9 @@ class DwynenGiltLeafDaenTest extends BaseCardTest {
     @Test
     @DisplayName("Dwynen does not buff itself, non-Elves, or opponent Elves")
     void doesNotBuffOthers() {
-        harness.addToBattlefield(player1, new DwynenGiltLeafDaen());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
-
-        Permanent dwynen = findPermanent(player1, "Dwynen, Gilt-Leaf Daen");
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        Permanent opponentElf = findPermanent(player2, "Llanowar Elves");
+        Permanent dwynen = harness.addToBattlefieldAndReturn(player1, new DwynenGiltLeafDaen());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentElf = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         assertThat(gqs.getEffectivePower(gd, dwynen)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, dwynen)).isEqualTo(4);
@@ -71,7 +71,7 @@ class DwynenGiltLeafDaenTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Opponent's attacking Elves are not counted")
+    @DisplayName("Opponent's Elves are not counted")
     void doesNotCountOpponentElves() {
         addCreatureReady(player1, new DwynenGiltLeafDaen());
         addCreatureReady(player2, new LlanowarElves());
@@ -94,5 +94,50 @@ class DwynenGiltLeafDaenTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The attack trigger survives Dwynen leaving and counts only remaining attacking Elves")
+    void countsRemainingElvesAfterDwynenLeaves() {
+        Permanent dwynen = addCreatureReady(player1, new DwynenGiltLeafDaen());
+        Permanent elf = addCreatureReady(player1, new LeafGilder());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1));
+            assertThat(gd.stack).hasSize(1);
+            harness.assertLife(player1, 20);
+            harness.castAndResolveInstant(player1, 0, dwynen.getId());
+            harness.assertNotOnBattlefield(player1, "Dwynen, Gilt-Leaf Daen");
+            assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
+            resolveAllTriggers();
+        });
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("No life is gained if the only attacking Elf leaves before the trigger resolves")
+    void gainsNoLifeWhenNoAttackingElvesRemain() {
+        Permanent dwynen = addCreatureReady(player1, new DwynenGiltLeafDaen());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            harness.assertLife(player1, 20);
+            harness.castAndResolveInstant(player1, 0, dwynen.getId());
+            harness.assertNotOnBattlefield(player1, "Dwynen, Gilt-Leaf Daen");
+            resolveAllTriggers();
+        });
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

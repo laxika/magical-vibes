@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "MM3", collectorNumber = "50")
 @CardRegistration(set = "SLD", collectorNumber = "808")
 @CardRegistration(set = "SIS", collectorNumber = "23")
+@CardRegistration(set = "FIC", collectorNumber = "469")
 public class SnapcasterMage extends Card {
 
     public SnapcasterMage() {

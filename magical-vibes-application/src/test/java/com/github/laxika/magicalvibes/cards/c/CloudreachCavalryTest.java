@@ -81,7 +81,7 @@ class CloudreachCavalryTest extends BaseCardTest {
         Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CloudreachCavalry());
         Permanent firstBird = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
         Permanent secondBird = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
-        secondBird.setTapped(true);
+        secondBird.tap();
 
         assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(3);

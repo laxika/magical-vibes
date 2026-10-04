@@ -93,7 +93,7 @@ class CapriciousSliverTest extends BaseCardTest {
     void opposingSliverDoesNotExileTopCard() {
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(topCard));
-        addCreatureReady(player1, new CapriciousSliver()).setTapped(true);
+        addCreatureReady(player1, new CapriciousSliver()).tap();
         addAttackingCreature(player2, new SinewSliver());
 
         resolveCombat(player2);

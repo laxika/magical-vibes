@@ -43,7 +43,7 @@ public class ExileAllOpponentsHandsEffectHandler implements NormalEffectHandlerB
             List<Card> toExile = new ArrayList<>(hand);
             hand.clear();
             for (Card card : toExile) {
-                gameData.addToExile(playerId, card);
+                gameData.addToExile(playerId, card, entry.getSourcePermanentId());
             }
 
             String playerName = gameData.playerIdToName.get(playerId);

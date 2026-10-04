@@ -56,6 +56,38 @@ class ElvishLyristTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mana of another color cannot pay the green activation cost")
+    void cannotActivateWithWrongColorMana() {
+        Permanent lyrist = addCreatureReady(player1, new ElvishLyrist());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(lyrist.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Elvish Lyrist");
+        harness.assertNotInGraveyard(player1, "Elvish Lyrist");
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without choosing an enchantment target")
+    void cannotActivateWithoutTarget() {
+        Permanent lyrist = addCreatureReady(player1, new ElvishLyrist());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(lyrist.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Elvish Lyrist");
+        harness.assertNotInGraveyard(player1, "Elvish Lyrist");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot activate with summoning sickness (tap cost)")
     void cannotActivateWithSummoningSickness() {
         harness.addToBattlefield(player1, new ElvishLyrist());

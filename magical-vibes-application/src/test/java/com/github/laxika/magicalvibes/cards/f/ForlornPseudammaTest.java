@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ForlornPseudamma.class})
 class ForlornPseudammaTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,32 @@ class ForlornPseudammaTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Zombie"));
     }
 
+    @Test
+    void alreadyUntappedPseudammaDoesNotTriggerInspired() {
+        harness.addToBattlefield(player1, new ForlornPseudamma());
+
+        advanceToUntapStep();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void acceptingWithoutBlackManaCreatesNoToken() {
+        addTappedPseudamma();
+
+        advanceToUntapStep();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Zombie"));
+    }
+
     private Permanent addTappedPseudamma() {
         Permanent pseudamma = harness.addToBattlefieldAndReturn(player1, new ForlornPseudamma());
         pseudamma.setSummoningSick(false);
@@ -58,9 +86,6 @@ class ForlornPseudammaTest extends BaseCardTest {
     private void advanceToUntapStep() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 }
