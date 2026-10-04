@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.i.IntangibleVirtue;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,12 +20,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GutterGrime.class, DarkthicketWolf.class, BlasphemousAct.class, IntangibleVirtue.class,
+        Naturalize.class, Solemnity.class})
 class GutterGrimeTest extends BaseCardTest {
 
-    // ===== Triggered ability =====
-
+    @CardUsed({GutterGrime.class, DarkthicketWolf.class, BlasphemousAct.class, IntangibleVirtue.class,
+            Naturalize.class, Solemnity.class})
     @Nested
     @DisplayName("Triggered ability")
     class TriggeredAbilityTests {
@@ -30,26 +35,21 @@ class GutterGrimeTest extends BaseCardTest {
         @DisplayName("Gutter Grime survives: creates Ooze token with P/T equal to slime counters")
         void gutterGrimeSurvivesCreatesCorrectToken() {
             harness.addToBattlefield(player1, new GutterGrime());
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new DarkthicketWolf());
 
-            // Kill the bear with an opponent's Wrath so Gutter Grime (enchantment) survives
-            harness.setHand(player2, List.of(new WrathOfGod()));
-            harness.addMana(player2, ManaColor.WHITE, 4);
+            // Kill the wolf with an opponent's Blasphemous Act so Gutter Grime (enchantment) survives
+            harness.setHand(player2, List.of(new BlasphemousAct()));
+            harness.addMana(player2, ManaColor.RED, 9);
             harness.forceActivePlayer(player2);
 
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — bear dies
-
-            GameData gd = harness.getGameData();
+            harness.castAndResolveSorcery(player2, 0, 0); // Resolve Blasphemous Act — wolf dies
 
             // Gutter Grime trigger should be on the stack
             assertThat(gd.stack).isNotEmpty();
             harness.passBothPriorities(); // Resolve the trigger
 
             // Gutter Grime should have 1 slime counter
-            Permanent grime = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Gutter Grime"))
-                    .findFirst().orElse(null);
+            Permanent grime = findPermanent(player1, "Gutter Grime");
             assertThat(grime).isNotNull();
             assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(1);
 
@@ -63,9 +63,6 @@ class GutterGrimeTest extends BaseCardTest {
             assertThat(ooze.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(ooze.getCard().getSubtypes()).contains(CardSubtype.OOZE);
 
-            // The token's "P/T equal to slime counters" ability is a characteristic-defining
-            // ability that SETS base P/T in layer 7a (CR 604.3, CR 613.3a) — it is a base
-            // override in the layered queries, not an additive bonus term.
             assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(1);
         }
@@ -74,18 +71,15 @@ class GutterGrimeTest extends BaseCardTest {
         @DisplayName("Multiple creature deaths produce multiple slime counters and tokens")
         void multipleDeathsMultipleTokens() {
             harness.addToBattlefield(player1, new GutterGrime());
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new DarkthicketWolf());
+            harness.addToBattlefield(player1, new DarkthicketWolf());
 
-            // Use opponent's Wrath so Gutter Grime survives
-            harness.setHand(player2, List.of(new WrathOfGod()));
-            harness.addMana(player2, ManaColor.WHITE, 4);
+            // Use opponent's Blasphemous Act so Gutter Grime survives
+            harness.setHand(player2, List.of(new BlasphemousAct()));
+            harness.addMana(player2, ManaColor.RED, 9);
             harness.forceActivePlayer(player2);
 
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — both bears die
-
-            GameData gd = harness.getGameData();
+            harness.castAndResolveSorcery(player2, 0, 0); // Resolve Blasphemous Act — both wolves die
 
             // Two triggers on the stack
             assertThat(gd.stack).hasSize(2);
@@ -94,9 +88,7 @@ class GutterGrimeTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve second trigger
 
             // Gutter Grime should have 2 slime counters
-            Permanent grime = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Gutter Grime"))
-                    .findFirst().orElse(null);
+            Permanent grime = findPermanent(player1, "Gutter Grime");
             assertThat(grime).isNotNull();
             assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(2);
 
@@ -104,9 +96,6 @@ class GutterGrimeTest extends BaseCardTest {
             List<Permanent> oozes = findPermanents(player1, "Ooze");
             assertThat(oozes).hasSize(2);
 
-            // Both tokens should have P/T equal to 2 (current slime counter count) — the
-            // CDA sets base P/T in layer 7a (CR 604.3, CR 613.3a), so assert the layered
-            // queries rather than adding a bonus term onto the printed 0/0.
             for (Permanent ooze : oozes) {
                 assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
                 assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
@@ -118,94 +107,140 @@ class GutterGrimeTest extends BaseCardTest {
         void doesNotTriggerOnTokenCreatureDeath() {
             harness.addToBattlefield(player1, new GutterGrime());
 
-            // Create a token creature directly
-            Card tokenCard = new Card();
-            tokenCard.setName("Bear Token");
-            tokenCard.setType(CardType.CREATURE);
-            tokenCard.setManaCost("");
-            tokenCard.setToken(true);
-            tokenCard.setColor(CardColor.GREEN);
-            tokenCard.setPower(2);
-            tokenCard.setToughness(2);
-            tokenCard.setSubtypes(List.of(CardSubtype.BEAR));
-            Permanent tokenPerm = new Permanent(tokenCard);
-            harness.getGameData().playerBattlefields.get(player1.getId()).add(tokenPerm);
+            harness.addToBattlefield(player1, new DarkthicketWolf());
+            harness.setHand(player2, List.of(new BlasphemousAct()));
+            harness.addMana(player2, ManaColor.RED, 9);
+            harness.forceActivePlayer(player2);
+            harness.castAndResolveSorcery(player2, 0, 0);
+            harness.passBothPriorities();
+            assertThat(findPermanents(player1, "Ooze")).hasSize(1);
 
-            // Use opponent's Wrath so Gutter Grime survives
-            harness.setHand(player2, List.of(new WrathOfGod()));
-            harness.addMana(player2, ManaColor.WHITE, 4);
+            // Use opponent's Blasphemous Act so Gutter Grime survives
+            harness.setHand(player2, List.of(new BlasphemousAct()));
+            harness.addMana(player2, ManaColor.RED, 9);
             harness.forceActivePlayer(player2);
 
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — token dies
-
-            GameData gd = harness.getGameData();
+            harness.castAndResolveSorcery(player2, 0, 0); // Resolve Blasphemous Act — token dies
 
             // No triggers should have fired — stack should be empty
             assertThat(gd.stack).isEmpty();
 
-            // No slime counters
-            Permanent grime = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Gutter Grime"))
-                    .findFirst().orElse(null);
+            // The token death must not add a slime counter
+            Permanent grime = findPermanent(player1, "Gutter Grime");
             assertThat(grime).isNotNull();
-            assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(0);
+            assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(1);
         }
 
         @Test
         @DisplayName("Does not trigger when opponent's nontoken creature dies")
         void doesNotTriggerOnOpponentCreatureDeath() {
             harness.addToBattlefield(player1, new GutterGrime());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new DarkthicketWolf());
 
-            // Use player1's Wrath so Gutter Grime (enchantment) survives, opponent's bear dies
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            // Use player1's Blasphemous Act so Gutter Grime (enchantment) survives, opponent's wolf dies
+            harness.setHand(player1, List.of(new BlasphemousAct()));
+            harness.addMana(player1, ManaColor.RED, 9);
 
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — opponent's bear dies
-
-            GameData gd = harness.getGameData();
+            harness.castAndResolveSorcery(player1, 0, 0); // Resolve Blasphemous Act — opponent's wolf dies
 
             // Gutter Grime should have 0 slime counters
-            Permanent grime = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Gutter Grime"))
-                    .findFirst().orElse(null);
+            Permanent grime = findPermanent(player1, "Gutter Grime");
             assertThat(grime).isNotNull();
             assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(0);
         }
 
         @Test
-        @DisplayName("Effect fizzles when Gutter Grime leaves the battlefield before trigger resolves")
-        void effectFizzlesWhenGutterGrimeDestroyed() {
+        @DisplayName("Creates a token even if Gutter Grime leaves before resolution")
+        void createsTokenWhenGutterGrimeDestroyed() {
             harness.addToBattlefield(player1, new GutterGrime());
-            harness.addToBattlefield(player1, new GrizzlyBears());
-
-            // Use player1's Wrath — destroys both Gutter Grime (nah, enchantments are safe)
-            // Actually Wrath only destroys creatures, so Gutter Grime survives.
-            // Let me instead put Gutter Grime on player1 and a bear on player1,
-            // then manually remove Gutter Grime before the trigger resolves.
-
-            // Kill the bear
-            harness.setHand(player2, List.of(new WrathOfGod()));
-            harness.addMana(player2, ManaColor.WHITE, 4);
+            harness.addToBattlefield(player1, new IntangibleVirtue());
+            harness.addToBattlefield(player1, new DarkthicketWolf());
+            harness.setHand(player2, List.of(new BlasphemousAct(), new Naturalize()));
+            harness.addMana(player2, ManaColor.RED, 9);
+            harness.addMana(player2, ManaColor.GREEN, 2);
             harness.forceActivePlayer(player2);
+            harness.castAndResolveSorcery(player2, 0, 0);
+            assertThat(gd.stack).hasSize(1);
 
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath — bear dies, trigger goes on stack
+            harness.castAndResolveInstant(player2, 0, findPermanent(player1, "Gutter Grime").getId());
+            assertThat(findPermanents(player1, "Gutter Grime")).isEmpty();
+            harness.passBothPriorities();
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.stack).isNotEmpty();
-
-            // Remove Gutter Grime from battlefield before the trigger resolves
-            gd.playerBattlefields.get(player1.getId())
-                    .removeIf(p -> p.getCard().getName().equals("Gutter Grime"));
-
-            harness.passBothPriorities(); // Resolve trigger — Gutter Grime is gone
-
-            // No Ooze tokens should exist (effect fizzled)
             List<Permanent> oozes = findPermanents(player1, "Ooze");
-            assertThat(oozes).isEmpty();
+            assertThat(oozes).hasSize(1);
+            assertThat(gqs.getEffectivePower(gd, oozes.getFirst())).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, oozes.getFirst())).isEqualTo(1);
+        }
+
+        @Test
+        @CardUsed({GutterGrime.class, DarkthicketWolf.class, BlasphemousAct.class,
+                IntangibleVirtue.class, Solemnity.class})
+        @DisplayName("Counter prevention does not prevent token creation")
+        void createsTokenWhenSlimeCounterCannotBePlaced() {
+            harness.addToBattlefield(player1, new GutterGrime());
+            harness.addToBattlefield(player1, new IntangibleVirtue());
+            harness.addToBattlefield(player1, new Solemnity());
+            harness.addToBattlefield(player1, new DarkthicketWolf());
+            harness.setHand(player2, List.of(new BlasphemousAct()));
+            harness.addMana(player2, ManaColor.RED, 9);
+            harness.forceActivePlayer(player2);
+            harness.castAndResolveSorcery(player2, 0, 0);
+            harness.passBothPriorities();
+
+            assertThat(findPermanent(player1, "Gutter Grime").getCounterCount(CounterType.SLIME)).isZero();
+            List<Permanent> oozes = findPermanents(player1, "Ooze");
+            assertThat(oozes).hasSize(1);
+            assertThat(gqs.getEffectivePower(gd, oozes.getFirst())).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, oozes.getFirst())).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Existing tokens become 0/0 when their source leaves")
+        void existingTokensLoseBasePowerAndToughnessWhenSourceLeaves() {
+            harness.addToBattlefield(player1, new GutterGrime());
+            harness.addToBattlefield(player1, new IntangibleVirtue());
+            harness.addToBattlefield(player1, new DarkthicketWolf());
+            harness.setHand(player2, List.of(new BlasphemousAct(), new Naturalize()));
+            harness.addMana(player2, ManaColor.RED, 9);
+            harness.addMana(player2, ManaColor.GREEN, 2);
+            harness.forceActivePlayer(player2);
+            harness.castAndResolveSorcery(player2, 0, 0);
+            harness.passBothPriorities();
+            Permanent ooze = findPermanent(player1, "Ooze");
+            assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
+
+            harness.castAndResolveInstant(player2, 0, findPermanent(player1, "Gutter Grime").getId());
+
+            assertThat(findPermanents(player1, "Ooze")).containsExactly(ooze);
+            assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Tokens refer only to the Gutter Grime that created them")
+        void tokensTrackTheirOwnSourceOnly() {
+            harness.addToBattlefield(player1, new GutterGrime());
+            harness.addToBattlefield(player1, new GutterGrime());
+            harness.addToBattlefield(player1, new DarkthicketWolf());
+            List<Permanent> grimes = findPermanents(player1, "Gutter Grime");
+            grimes.getFirst().setCounterCount(CounterType.SLIME, 2);
+            harness.setHand(player2, List.of(new BlasphemousAct()));
+            harness.addMana(player2, ManaColor.RED, 9);
+            harness.forceActivePlayer(player2);
+            harness.castAndResolveSorcery(player2, 0, 0);
+            assertThat(gd.stack).hasSize(2);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(grimes.getFirst().getCounterCount(CounterType.SLIME)).isEqualTo(3);
+            assertThat(grimes.getLast().getCounterCount(CounterType.SLIME)).isEqualTo(1);
+            List<Permanent> oozes = findPermanents(player1, "Ooze");
+            assertThat(oozes).hasSize(2);
+            assertThat(oozes.stream().map(ooze -> gqs.getEffectivePower(gd, ooze)).toList())
+                    .containsExactlyInAnyOrder(1, 3);
+            assertThat(oozes.stream().map(ooze -> gqs.getEffectiveToughness(gd, ooze)).toList())
+                    .containsExactlyInAnyOrder(1, 3);
         }
     }
 }
