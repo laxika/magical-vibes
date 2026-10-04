@@ -93,7 +93,7 @@ class ElvishHydromancerTest extends BaseCardTest {
     void copyDoesNotInheritCountersOrTappedState() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new ElvishHydromancer());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new ElvishHydromancer()));
         addKickedMana();
 

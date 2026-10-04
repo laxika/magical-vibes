@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -79,6 +80,102 @@ class GoNinjaGoTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature an opponent controls");
     }
 
+    @Test
+    void rejectsAThirdModeNotPresentInOracleText() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        assertThatThrownBy(() -> castGoNinjaGo(2, List.of(ownCreature.getId(), opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void damageModeDealsNoDamageWithoutControlledCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castGoNinjaGo(1, List.of(target.getId()));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void bothModesCalculatePowerAfterBlinkRemovesCounters() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        ownCreature.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castGoNinjaGo(new int[]{0, 1}, List.of(ownCreature.getId(), target.getId()));
+
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(ownCreature.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(returned.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void blinkReturnsBorrowedCreatureToItsOwnerBeforeCalculatingDamage() {
+        GrizzlyBears borrowedCard = new GrizzlyBears();
+        borrowedCard.setOwnerId(player2.getId());
+        Permanent borrowedCreature = harness.addToBattlefieldAndReturn(player1, borrowedCard);
+        gd.stolenCreatures.put(borrowedCreature.getId(), player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castGoNinjaGo(new int[]{0, 1}, List.of(borrowedCreature.getId(), target.getId()));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isNotEqualTo(borrowedCreature.getId());
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void losingBlinkTargetDoesNotStopDamageMode() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castGoNinjaGo(new int[]{0, 1}, List.of(ownCreature.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
+        gd.playerGraveyards.get(player1.getId()).add(ownCreature.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void losingDamageTargetDoesNotStopBlinkMode() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castGoNinjaGo(new int[]{0, 1}, List.of(ownCreature.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getPermanentId(player1, "Grizzly Bears")).isNotEqualTo(ownCreature.getId());
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void rejectsRepeatingDamageThroughInventedCombinedMode() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstOpponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent secondOpponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        assertThatThrownBy(() -> castGoNinjaGo(new int[]{1, 2},
+                List.of(firstOpponentCreature.getId(), ownCreature.getId(), secondOpponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private void castGoNinjaGo(int mode, List<UUID> targetIds) {
         castGoNinjaGo(new int[]{mode}, targetIds);
     }

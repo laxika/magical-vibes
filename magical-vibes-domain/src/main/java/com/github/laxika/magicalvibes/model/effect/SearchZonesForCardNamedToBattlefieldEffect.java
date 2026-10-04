@@ -8,6 +8,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link SearchLibraryAndOrGraveyardForNamedCardToHandEffect} but puts the card onto the
  * battlefield instead of into hand (Gate to the Afterlife's God-Pharaoh's Gift tutor).
  *
+ * <p>The attached-Aura variant first offers graveyard, library, or both. Only searching the
+ * library shuffles it; choosing both allows a choice across matching cards from both zones.
+ * {@code selectedZones} carries that resolution-time decision.
+ *
  * <p>{@code includeHand} covers wordings that list the hand as a searchable zone (Gate to the
  * Afterlife); Arachnus Spinner searches only graveyard and library. {@code attachToTarget} makes
  * the found card enter attached to the resolving entry's target creature (an Aura tutor); the
@@ -17,11 +21,18 @@ public record SearchZonesForCardNamedToBattlefieldEffect(
         String cardName,
         boolean includeHand,
         boolean attachToTarget,
-        java.util.List<String> additionalCardNames
+        java.util.List<String> additionalCardNames,
+        java.util.Set<com.github.laxika.magicalvibes.model.Zone> selectedZones
 ) implements CardEffect {
 
     public SearchZonesForCardNamedToBattlefieldEffect {
         additionalCardNames = java.util.List.copyOf(additionalCardNames);
+        selectedZones = java.util.Set.copyOf(selectedZones);
+    }
+
+    public SearchZonesForCardNamedToBattlefieldEffect(String cardName, boolean includeHand,
+            boolean attachToTarget, java.util.List<String> additionalCardNames) {
+        this(cardName, includeHand, attachToTarget, additionalCardNames, java.util.Set.of());
     }
 
     public SearchZonesForCardNamedToBattlefieldEffect(String cardName, boolean includeHand, boolean attachToTarget) {

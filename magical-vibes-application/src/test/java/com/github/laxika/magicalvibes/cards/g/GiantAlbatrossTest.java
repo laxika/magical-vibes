@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
 import com.github.laxika.magicalvibes.cards.s.SeaTroll;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
+import com.github.laxika.magicalvibes.cards.w.WillowFaerie;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantAlbatross.class, DwarvenTrader.class, SeaTroll.class})
+@CardUsed({GiantAlbatross.class, DwarvenTrader.class, SeaTroll.class, WillowFaerie.class, TormodsCrypt.class})
 class GiantAlbatrossTest extends BaseCardTest {
 
     /**
@@ -88,7 +90,7 @@ class GiantAlbatrossTest extends BaseCardTest {
     @DisplayName("A controller who can't pay 2 life gets no choice — the creature is destroyed")
     void controllerWhoCannotPayLosesTheCreature() {
         killByCreatureUntilMayPrompt(new DwarvenTrader());
-        gd.playerLifeTotals.put(player2.getId(), 1);
+        harness.setLife(player2, 1);
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -102,17 +104,11 @@ class GiantAlbatrossTest extends BaseCardTest {
         Permanent albatross = addCreatureReady(player1, new GiantAlbatross());
         albatross.setAttacking(true);
 
-        DwarvenTrader firstBlockerCard = new DwarvenTrader();
-        firstBlockerCard.setPower(5);
-        firstBlockerCard.setToughness(5);
-        Permanent firstBlocker = addCreatureReady(player2, firstBlockerCard);
+        Permanent firstBlocker = addCreatureReady(player2, new WillowFaerie());
         firstBlocker.setBlocking(true);
         firstBlocker.addBlockingTarget(0);
 
-        DwarvenTrader secondBlockerCard = new DwarvenTrader();
-        secondBlockerCard.setPower(5);
-        secondBlockerCard.setToughness(5);
-        Permanent secondBlocker = addCreatureReady(player2, secondBlockerCard);
+        Permanent secondBlocker = addCreatureReady(player2, new WillowFaerie());
         secondBlocker.setBlocking(true);
         secondBlocker.addBlockingTarget(0);
 
@@ -125,10 +121,10 @@ class GiantAlbatrossTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(findPermanents(player2, "Dwarven Trader")).hasSize(1);
+        assertThat(findPermanents(player2, "Willow Faerie")).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(card -> card.getName())
-                .containsExactly("Dwarven Trader");
+                .containsExactly("Willow Faerie");
         harness.assertLife(player2, 18);
     }
 
@@ -143,5 +139,46 @@ class GiantAlbatrossTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Sea Troll");
         assertThat(troll.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Exiling the Albatross in response does not erase its death trigger's damage history")
+    void deathTriggerStillDestroysDamagerAfterAlbatrossIsExiled() {
+        Permanent albatross = addCreatureReady(player1, new GiantAlbatross());
+        albatross.setBlocking(true);
+        albatross.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new WillowFaerie());
+        attacker.setAttacking(true);
+        harness.addToBattlefield(player2, new TormodsCrypt());
+
+        resolveCombat(player2);
+        harness.assertInGraveyard(player1, "Giant Albatross");
+        harness.activateAbility(player2, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertNotInGraveyard(player1, "Giant Albatross");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(albatross.getCard());
+
+        addAlbatrossPaymentMana();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Willow Faerie");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A creature that did not damage the Albatross is unaffected")
+    void leavesUnrelatedCreatureAlone() {
+        killByCreatureUntilMayPrompt(new DwarvenTrader());
+        addCreatureReady(player2, new SeaTroll());
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Dwarven Trader");
+        harness.assertOnBattlefield(player2, "Sea Troll");
+        harness.assertLife(player2, 20);
     }
 }

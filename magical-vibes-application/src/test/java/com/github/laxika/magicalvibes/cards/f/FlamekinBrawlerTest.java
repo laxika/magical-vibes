@@ -74,7 +74,7 @@ class FlamekinBrawlerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent brawler = harness.addToBattlefieldAndReturn(player1, new FlamekinBrawler());
         brawler.setSummoningSick(true);
-        brawler.setTapped(true);
+        brawler.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

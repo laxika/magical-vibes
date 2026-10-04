@@ -185,10 +185,7 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
      */
     private Permanent resolveSourcePermanent(GameData gameData, StackEntry entry) {
         if (entry.getSourcePermanentId() != null) {
-            Permanent byId = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (byId != null) {
-                return byId;
-            }
+            return gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         }
         if (entry.getCard() == null) {
             return null;

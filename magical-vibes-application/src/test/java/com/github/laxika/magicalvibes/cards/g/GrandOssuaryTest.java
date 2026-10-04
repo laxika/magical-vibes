@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.Assassinate;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -49,12 +50,58 @@ class GrandOssuaryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, dying.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, dying.getId());
         harness.passBothPriorities();
 
         assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(secondTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void recipientGainingShroudBeforeResolutionDoesNotReceiveCounters() {
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        dying.tap();
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 3);
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, dying.getId());
+        recipient.getPersistentGrantedKeywords().add(Keyword.SHROUD);
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opposingCreatureDeathUsesItsControllerAndLastKnownPower() {
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        dying.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        dying.tap();
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 5);
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, dying.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void chaosStillPlaneswalksWhenNeitherPlayerControlsCreatures() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.planechase.faceUp).extracting(object -> object.getCard().getName())
+                .containsExactly("Panopticon");
     }
 
     @Test

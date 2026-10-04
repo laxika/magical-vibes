@@ -67,4 +67,50 @@ class GreatUglyLookingGoblinTest extends BaseCardTest {
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
     }
+
+    @Test
+    void menaceTracksCountersOnTheGoblinItself() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GreatUglyLookingGoblin());
+
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isFalse();
+        goblin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isTrue();
+        goblin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void menaceEndsWhenTheGoblinLeavesTheBattlefield() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GreatUglyLookingGoblin());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
+
+        goblin.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Great Ugly-Looking Goblin");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void creatureCanBeCastFromAdventureExileAndGrantsMenaceToItsArmy() {
+        GreatUglyLookingGoblin card = new GreatUglyLookingGoblin();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+        Permanent army = findPermanent(player1, "Goblin Army");
+        assertThat(gqs.hasKeyword(gd, army, Keyword.MENACE)).isFalse();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Great Ugly-Looking Goblin");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gqs.hasKeyword(gd, army, Keyword.MENACE)).isTrue();
+    }
 }

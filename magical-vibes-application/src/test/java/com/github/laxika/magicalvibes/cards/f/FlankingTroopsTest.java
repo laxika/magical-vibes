@@ -90,7 +90,7 @@ class FlankingTroopsTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         addCreatureReady(player1, new FlankingTroops());
         Permanent forestBear = addCreatureReady(player2, new ForestBear());
-        forestBear.setTapped(true);
+        forestBear.tap();
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, forestBear.getId());

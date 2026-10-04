@@ -137,6 +137,7 @@ class AwakeningOfVituGhaziTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, land.getId());
         harness.passBothPriorities();
+        declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isLand(gd, land)).isTrue();

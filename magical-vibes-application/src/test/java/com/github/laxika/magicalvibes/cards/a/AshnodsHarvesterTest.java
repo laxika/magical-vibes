@@ -55,7 +55,7 @@ class AshnodsHarvesterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent harvester = findPermanent(player1, "Ashnod's Harvester");
-        assertThat(harvester.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, harvester, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Ashnod's Harvester");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "1")
 @CardRegistration(set = "SLD", collectorNumber = "154")
+@CardRegistration(set = "ZNC", collectorNumber = "10")
 public class AdmonitionAngel extends Card {
 
     private static final PermanentAllOfPredicate TARGET = new PermanentAllOfPredicate(List.of(

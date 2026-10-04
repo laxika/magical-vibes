@@ -68,4 +68,46 @@ class GeothermalCreviceTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.assertOnBattlefield(player1, "Geothermal Crevice");
     }
+
+    @Test
+    @DisplayName("Neither mana ability can be activated while the newly played land is tapped")
+    void cannotActivateEitherAbilityOnEntry() {
+        harness.setHand(player1, List.of(new GeothermalCrevice()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertOnBattlefield(player1, "Geothermal Crevice");
+        harness.assertNotInGraveyard(player1, "Geothermal Crevice");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("After untapping, the played land can be sacrificed for mana without using the stack")
+    void playedLandCanProduceManaAfterUntapping() {
+        harness.setHand(player1, List.of(new GeothermalCrevice()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+        harness.performUntapStep(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.assertNotOnBattlefield(player1, "Geothermal Crevice");
+        harness.assertInGraveyard(player1, "Geothermal Crevice");
+        assertThat(gd.stack).isEmpty();
+    }
 }

@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "180")
+@CardRegistration(set = "LEA", collectorNumber = "151")
 @CardRegistration(set = "8ED", collectorNumber = "186")
 @CardRegistration(set = "9ED", collectorNumber = "183")
 @CardRegistration(set = "POR", collectorNumber = "129")
 @CardRegistration(set = "5ED", collectorNumber = "231")
 @CardRegistration(set = "4ED", collectorNumber = "195")
 @CardRegistration(set = "SUM", collectorNumber = "152")
+@CardRegistration(set = "LEB", collectorNumber = "152")
 @CardRegistration(set = "3ED", collectorNumber = "152")
 @CardRegistration(set = "2ED", collectorNumber = "152")
 public class Flashfires extends Card {

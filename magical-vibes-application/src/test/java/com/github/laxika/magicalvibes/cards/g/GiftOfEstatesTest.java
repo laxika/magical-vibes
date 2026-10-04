@@ -142,6 +142,55 @@ class GiftOfEstatesTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The last available Plains is revealed even when fewer than three are found")
+    void revealsLastAvailablePlains() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+        harness.passBothPriorities();
+        int logBefore = gd.gameLog.size();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.subList(logBefore, gd.gameLog.size()))
+                .anyMatch(entry -> entry.plainText().contains("reveals Plains"));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An empty library completes the search without asking for a card")
+    void emptyLibraryCompletesSearch() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Plains");
+        harness.assertInGraveyard(player1, "Gift of Estates");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The land comparison is checked on resolution rather than when cast")
+    void noSearchWhenLandAdvantageDisappearsBeforeResolution() {
+        harness.addToBattlefield(player2, new Forest());
+        setupAndCast();
+        harness.addToBattlefield(player1, new Plains());
+        harness.setLibrary(player1, List.of(new Plains()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Plains");
+        harness.assertInGraveyard(player1, "Gift of Estates");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new GiftOfEstates(), "{1}{W}");
     }

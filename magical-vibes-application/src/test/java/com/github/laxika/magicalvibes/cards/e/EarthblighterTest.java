@@ -84,7 +84,7 @@ class EarthblighterTest extends BaseCardTest {
     void canSacrificeTappedGoblinToDestroyOwnLand() {
         Permanent earthblighter = addReadyEarthblighter(player1);
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
-        goblin.setTapped(true);
+        goblin.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -134,7 +134,7 @@ class EarthblighterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
-        addReadyEarthblighter(player1).setTapped(true);
+        addReadyEarthblighter(player1).tap();
         harness.addToBattlefield(player1, new RagingGoblin());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.BLACK, 3);

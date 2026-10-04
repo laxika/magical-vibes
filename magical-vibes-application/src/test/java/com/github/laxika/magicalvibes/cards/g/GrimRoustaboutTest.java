@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
+import com.github.laxika.magicalvibes.cards.e.ExperimentOne;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrimRoustabout.class, DrudgeBeetle.class})
 class GrimRoustaboutTest extends BaseCardTest {
 
     @Test
@@ -41,11 +45,9 @@ class GrimRoustaboutTest extends BaseCardTest {
     void unleashedCantBlock() {
         Permanent roustabout = addCreatureReady(player1, new GrimRoustabout());
         roustabout.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DrudgeBeetle());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -54,11 +56,9 @@ class GrimRoustaboutTest extends BaseCardTest {
     @DisplayName("Without a +1/+1 counter it blocks normally")
     void blocksWithoutCounter() {
         addCreatureReady(player1, new GrimRoustabout());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DrudgeBeetle());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(findPermanent(player1, "Grim Roustabout").isBlocking()).isTrue();
@@ -84,14 +84,10 @@ class GrimRoustaboutTest extends BaseCardTest {
         roustabout.setBlocking(true);
         roustabout.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new DrudgeBeetle());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Grim Roustabout");
         Permanent survivor = findPermanent(player1, "Grim Roustabout");
@@ -106,14 +102,10 @@ class GrimRoustaboutTest extends BaseCardTest {
         roustabout.setBlocking(true);
         roustabout.addBlockingTarget(0);
 
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new DrudgeBeetle());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertInGraveyard(player1, "Grim Roustabout");
     }
@@ -122,6 +114,43 @@ class GrimRoustaboutTest extends BaseCardTest {
     @DisplayName("Cannot activate regeneration without enough mana")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new GrimRoustabout());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @CardUsed({ExperimentOne.class})
+    @DisplayName("The unleash counter is included when checking evolve on entry")
+    void unleashedEntryTriggersEvolve() {
+        Permanent experiment = addCreatureReady(player1, new ExperimentOne());
+
+        castRoustabout(true);
+        resolveAllTriggers();
+
+        assertThat(experiment.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing its last +1/+1 counter allows it to block again")
+    void blocksAfterLastCounterRemoved() {
+        castRoustabout(true);
+        Permanent roustabout = findPermanent(player1, "Grim Roustabout");
+        roustabout.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        addCreatureReady(player2, new DrudgeBeetle());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(roustabout.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot pay the black portion of regeneration")
+    void cannotRegenerateWithoutBlackMana() {
+        addCreatureReady(player1, new GrimRoustabout());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

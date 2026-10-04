@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "83")
 @CardRegistration(set = "MKC", collectorNumber = "135")
+@CardRegistration(set = "ZNC", collectorNumber = "52")
 public class PriceOfFame extends Card {
 
     public PriceOfFame() {

@@ -19,11 +19,8 @@ class GiantsBoulderTest extends BaseCardTest {
     @Test
     @DisplayName("Entering the battlefield scries two cards")
     void enteringBattlefieldScriesTwo() {
-        harness.setHand(player1, List.of(new GiantsBoulder()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new GiantsBoulder(), "{1}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -71,5 +68,67 @@ class GiantsBoulderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(boulder);
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeDestroyingAnArtifact() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GiantsBoulder());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantsBoulder());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void canTargetItselfAndIsStillSacrificed() {
+        Permanent boulder = harness.addToBattlefieldAndReturn(player1, new GiantsBoulder());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, 1, null, boulder.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(boulder);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(boulder.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(boulder.getCard());
+    }
+
+    @Test
+    void tappedBoulderCannotActivateDestructionAbility() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GiantsBoulder());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantsBoulder());
+        source.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotProduceManaWithoutPayingOneMana() {
+        Permanent boulder = harness.addToBattlefieldAndReturn(player1, new GiantsBoulder());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(boulder.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

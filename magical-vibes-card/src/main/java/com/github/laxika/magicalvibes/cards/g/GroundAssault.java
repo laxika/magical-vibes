@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "GTC", collectorNumber = "168")
 @CardRegistration(set = "MM3", collectorNumber = "169")
 @CardRegistration(set = "2X2", collectorNumber = "223")
+@CardRegistration(set = "ZNC", collectorNumber = "91")
 public class GroundAssault extends Card {
 
     public GroundAssault() {

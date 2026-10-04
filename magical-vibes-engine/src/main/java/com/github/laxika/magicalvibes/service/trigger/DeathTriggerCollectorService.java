@@ -807,6 +807,7 @@ public class DeathTriggerCollectorService {
             );
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
+            entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
             match.gameData().stack.add(entry);
         }
         return true;
@@ -1021,6 +1022,7 @@ public class DeathTriggerCollectorService {
             entry.setDyingPermanentManaValue(sd.dyingPermanent() != null
                     ? sd.dyingPermanent().getCard().getManaValue()
                     : sd.dyingCard().getManaValue());
+            entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
             match.gameData().stack.add(entry);
         }
         return true;
@@ -1279,7 +1281,7 @@ public class DeathTriggerCollectorService {
                 || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolvedEffect)),
-                    null, new Permanent(match.permanent())
+                    null, new Permanent(match.permanent()), match.permanent().getCard().getTargetFilter()
             ));
         } else {
             gameData.stack.add(new StackEntry(

@@ -25,8 +25,7 @@ class GreatDefenderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GreatDefender()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
@@ -39,8 +38,7 @@ class GreatDefenderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GreatDefender()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
@@ -53,8 +51,7 @@ class GreatDefenderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GreatDefender()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -62,6 +59,20 @@ class GreatDefenderTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated casts on your own creature each use mana value rather than boosted toughness")
+    void repeatedCastsUseManaValueAndStackOnOwnCreature() {
+        Permanent target = addCreatureReady(player1, new RagingBull());
+        harness.setHand(player1, List.of(new GreatDefender(), new GreatDefender()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
     }
 
     @Test

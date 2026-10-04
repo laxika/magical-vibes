@@ -46,11 +46,56 @@ class GrimInitiateTest extends BaseCardTest {
         assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
     }
 
+    @Test
+    @DisplayName("Amass chooses only one of multiple controlled Armies")
+    void deathTriggerChoosesOneArmy() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
+        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Permanent initiate = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
+
+        destroyInitiate(initiate.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Army does not prevent creating your own Army")
+    void deathTriggerIgnoresOpponentsArmy() {
+        Permanent opponentArmy = harness.addToBattlefieldAndReturn(player2, new GrimInitiate());
+        opponentArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Permanent initiate = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
+
+        destroyInitiate(initiate.getId());
+
+        assertThat(findPermanent(player1, "Zombie Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
+        assertThat(opponentArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Amass checks for an Army when the death trigger resolves")
+    void deathTriggerUsesArmyThatArrivesBeforeResolution() {
+        Permanent initiate = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, initiate.getId());
+        Permanent army = harness.addToBattlefieldAndReturn(player1, new GrimInitiate());
+        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+
+        harness.passBothPriorities();
+
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Zombie Army")).isEmpty();
+    }
     private void destroyInitiate(UUID initiateId) {
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castInstant(player1, 0, initiateId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, initiateId);
         harness.passBothPriorities();
     }
 }

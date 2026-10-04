@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "10E", collectorNumber = "257")
+@CardRegistration(set = "LEB", collectorNumber = "191")
 @CardRegistration(set = "SUM", collectorNumber = "190")
 @CardRegistration(set = "M10", collectorNumber = "173")
 @CardRegistration(set = "9ED", collectorNumber = "233")
@@ -12,5 +13,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "4ED", collectorNumber = "238")
 @CardRegistration(set = "3ED", collectorNumber = "190")
 @CardRegistration(set = "2ED", collectorNumber = "191")
+@CardRegistration(set = "LEA", collectorNumber = "190")
 public class CrawWurm extends Card {
 }

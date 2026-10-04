@@ -106,7 +106,7 @@ class DutifulThrullTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent thrull = harness.addToBattlefieldAndReturn(player1, new DutifulThrull());
         thrull.setSummoningSick(true);
-        thrull.setTapped(true);
+        thrull.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

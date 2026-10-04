@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "CON", collectorNumber = "31")
 @CardRegistration(set = "2XM", collectorNumber = "58")
 @CardRegistration(set = "BRC", collectorNumber = "87")
+@CardRegistration(set = "ARC", collectorNumber = "7")
 public class MasterTransmuter extends Card {
 
     public MasterTransmuter() {

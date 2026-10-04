@@ -93,12 +93,50 @@ class GempalmStriderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
 
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Fugitive Wizard");
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cycling boosts Elves present when the trigger resolves")
+    void cyclingBoostsElvesEnteringBeforeResolution() {
+        harness.setHand(player1, List.of(new GempalmStrider()));
+        harness.setLibrary(player1, List.of(new FugitiveWizard()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Gempalm Strider");
+        harness.assertNotInHand(player1, "Fugitive Wizard");
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new DefiantElf());
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+        harness.assertNotInHand(player1, "Fugitive Wizard");
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Fugitive Wizard");
+    }
+
+    @Test
+    @DisplayName("Cycling draws a card even when there are no Elves")
+    void cyclingDrawsWithoutElves() {
+        harness.setHand(player1, List.of(new GempalmStrider()));
+        harness.setLibrary(player1, List.of(new FugitiveWizard()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Gempalm Strider");
+        harness.assertInHand(player1, "Fugitive Wizard");
     }
 
     private void addCyclingMana() {

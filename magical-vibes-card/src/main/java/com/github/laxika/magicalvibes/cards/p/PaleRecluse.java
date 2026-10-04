@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "74")
+@CardRegistration(set = "ARC", collectorNumber = "91")
 public class PaleRecluse extends Card {
 
     public PaleRecluse() {

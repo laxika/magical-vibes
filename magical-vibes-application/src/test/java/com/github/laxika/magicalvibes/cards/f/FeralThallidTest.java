@@ -96,7 +96,7 @@ class FeralThallidTest extends BaseCardTest {
     void tappedSummoningSickThallidCanRegenerate() {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new FeralThallid());
         thallid.setSummoningSick(true);
-        thallid.setTapped(true);
+        thallid.tap();
         thallid.setCounterCount(CounterType.FUNGUS, 3);
 
         harness.activateAbility(player1, 0, null, null);

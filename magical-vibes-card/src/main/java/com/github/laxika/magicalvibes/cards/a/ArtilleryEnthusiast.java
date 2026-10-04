@@ -24,7 +24,7 @@ public class ArtilleryEnthusiast extends Card {
                 new PermanentIsModifiedPredicate()));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(
+                DiscardCardThenEffect.continuing(
                         null,
                         new SeekCardsToHandEffect(
                                 new Fixed(1),

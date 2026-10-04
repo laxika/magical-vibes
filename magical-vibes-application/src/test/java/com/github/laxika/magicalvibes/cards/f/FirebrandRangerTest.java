@@ -130,7 +130,7 @@ class FirebrandRangerTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped Firebrand Ranger")
     void cannotActivateWhileTapped() {
         Permanent ranger = addCreatureReady(player1, new FirebrandRanger());
-        ranger.setTapped(true);
+        ranger.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

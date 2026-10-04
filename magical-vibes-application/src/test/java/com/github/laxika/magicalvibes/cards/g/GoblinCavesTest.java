@@ -75,6 +75,54 @@ class GoblinCavesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting Goblin Caves on an opponent's basic Mountain attaches it and boosts Goblins")
+    void castingOnOpponentsMountainBoostsGoblins() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        harness.setHand(player1, List.of(new GoblinCaves()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, mountain.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Goblin Caves").getAttachedTo()).isEqualTo(mountain.getId());
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Goblin Caves can legally enchant a non-Mountain without boosting Goblins")
+    void castingOnNonMountainIsLegal() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CityOfShadows());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        harness.setHand(player1, List.of(new GoblinCaves()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Goblin Caves").getAttachedTo()).isEqualTo(land.getId());
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Goblin Caves stack their bonuses and stop applying when the land leaves")
+    void multipleCavesStackAndStopWhenLandLeaves() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        attachCaves(mountain);
+        attachCaves(mountain);
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(6);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mountain);
+
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Goblin Caves cannot target a nonland permanent")
     void cannotTargetNonLand() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new Squire());

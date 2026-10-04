@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
 import com.github.laxika.magicalvibes.cards.r.RitualOfSteel;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GrimFeast.class, DarkBanishing.class, FeralShadow.class, Incinerate.class,
-        RitualOfSteel.class, ZhalfirinKnight.class})
+        RitualOfSteel.class, ZhalfirinKnight.class, AnimateArtifact.class, NevinyrralsDisk.class})
 class GrimFeastTest extends BaseCardTest {
 
     @Test
@@ -135,9 +137,8 @@ class GrimFeastTest extends BaseCardTest {
     void usesLastKnownEffectiveToughness() {
         harness.addToBattlefield(player1, new GrimFeast());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ZhalfirinKnight());
-        Permanent ritual = new Permanent(new RitualOfSteel());
+        Permanent ritual = harness.addToBattlefieldAndReturn(player2, new RitualOfSteel());
         ritual.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(ritual);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
@@ -149,5 +150,47 @@ class GrimFeastTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
+    }
+
+    @Test
+    @DisplayName("Gains life when an animated noncreature artifact dies")
+    void gainsLifeForAnimatedArtifact() {
+        harness.addToBattlefield(player1, new GrimFeast());
+        Permanent disk = harness.addToBattlefieldAndReturn(player2, new NevinyrralsDisk());
+        harness.setHand(player1, List.of(new AnimateArtifact(), new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, disk.getId());
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, disk)).isTrue();
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, disk.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Nevinyrral's Disk");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
+    }
+
+    @Test
+    @DisplayName("Triggers for opposing creatures destroyed simultaneously with Grim Feast")
+    void triggersWhenDestroyedSimultaneouslyWithCreatures() {
+        Permanent disk = harness.addToBattlefieldAndReturn(player1, new NevinyrralsDisk());
+        harness.addToBattlefield(player1, new GrimFeast());
+        harness.addToBattlefield(player2, new FeralShadow());
+        harness.addToBattlefield(player2, new ZhalfirinKnight());
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        disk.setTapped(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grim Feast");
+        harness.assertInGraveyard(player2, "Feral Shadow");
+        harness.assertInGraveyard(player2, "Zhalfirin Knight");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 3);
     }
 }

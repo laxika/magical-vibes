@@ -131,4 +131,25 @@ class GlimmerdustNapTest extends BaseCardTest {
         assertThat(bears.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Can enchant your own tapped creature without preventing other creatures from untapping")
+    void onlyEnchantedCreatureStaysTapped() {
+        Permanent enchanted = addCreatureReady(player1, new GoldmeadowDodger());
+        enchanted.tap();
+        Permanent other = addCreatureReady(player1, new GoldmeadowDodger());
+        other.tap();
+
+        harness.setHand(player1, List.of(new GlimmerdustNap()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glimmerdust Nap");
+        advanceToUpkeep(player1);
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Glimmerdust Nap");
+    }
+
 }

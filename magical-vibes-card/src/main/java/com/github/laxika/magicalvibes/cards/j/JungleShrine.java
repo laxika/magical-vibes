@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "FIC", collectorNumber = "406")
 @CardRegistration(set = "C16", collectorNumber = "304")
 @CardRegistration(set = "C17", collectorNumber = "257")
+@CardRegistration(set = "ZNC", collectorNumber = "132")
 public class JungleShrine extends Card {
 
     public JungleShrine() {

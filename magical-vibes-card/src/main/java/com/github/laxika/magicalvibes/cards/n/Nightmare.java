@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "108")
+@CardRegistration(set = "LEA", collectorNumber = "118")
 @CardRegistration(set = "SUM", collectorNumber = "120")
 @CardRegistration(set = "10E", collectorNumber = "164")
 @CardRegistration(set = "M10", collectorNumber = "107")
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "W17", collectorNumber = "17")
 @CardRegistration(set = "ANB", collectorNumber = "54")
 @CardRegistration(set = "2ED", collectorNumber = "119")
+@CardRegistration(set = "LEB", collectorNumber = "119")
 public class Nightmare extends Card {
 
     public Nightmare() {

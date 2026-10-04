@@ -99,7 +99,7 @@ class ArchonOfCrueltyTest extends BaseCardTest {
         harness.setHand(player2, List.of(new OrnithopterOfParadise()));
         harness.setLibrary(player1, List.of(new OrnithopterOfParadise()));
         harness.addToBattlefield(player2, new OrnithopterOfParadise());
-        harness.addToBattlefield(player2, new GeyadroneDihada());
+        harness.enterBattlefieldAndReturn(player2, new GeyadroneDihada());
         addArchonMana();
 
         harness.castCreature(player1, 0, player2.getId());

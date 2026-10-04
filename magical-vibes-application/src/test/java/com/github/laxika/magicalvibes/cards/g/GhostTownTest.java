@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,7 @@ class GhostTownTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -63,5 +65,49 @@ class GhostTownTest extends BaseCardTest {
                 .hasMessageContaining("opponent's turn");
 
         harness.assertOnBattlefield(player1, "Ghost Town");
+    }
+
+    @Test
+    @DisplayName("A tapped Ghost Town can return during the opponent's end step")
+    void tappedLandCanBounceDuringOpponentsEndStep() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GhostTown());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Ghost Town");
+        harness.assertNotInHand(player1, "Ghost Town");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ghost Town");
+        harness.assertInHand(player1, "Ghost Town");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated bounce activations do not return another Ghost Town")
+    void repeatedBounceDoesNothingAfterSourceLeaves() {
+        GhostTown source = new GhostTown();
+        harness.addToBattlefield(player1, source);
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new GhostTown());
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherLand);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherLand);
     }
 }

@@ -151,6 +151,8 @@ class AtalanJackalTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                java.util.Map.of(blocker.getId(), 1, player2.getId(), 1));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);

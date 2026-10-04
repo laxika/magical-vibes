@@ -80,9 +80,9 @@ public class BolsterEffectHandler implements NormalEffectHandlerBean {
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, 1,
                 bolster.recordChoice()
                         ? new MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference(
-                        CounterType.PLUS_ONE_PLUS_ONE, amount)
+                        CounterType.PLUS_ONE_PLUS_ONE, amount, false, true)
                         : new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(
-                        CounterType.PLUS_ONE_PLUS_ONE, amount),
+                        CounterType.PLUS_ONE_PLUS_ONE, amount, true),
                 "Choose a creature to bolster.");
     }
 }

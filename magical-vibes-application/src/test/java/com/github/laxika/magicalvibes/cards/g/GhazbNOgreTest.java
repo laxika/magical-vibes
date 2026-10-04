@@ -80,4 +80,51 @@ class GhazbNOgreTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ghazbán Ogre");
         harness.assertNotOnBattlefield(player2, "Ghazbán Ogre");
     }
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void noTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new GhazbNOgre());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertNotOnBattlefield(player2, "Ghazbán Ogre");
+    }
+
+    @Test
+    @DisplayName("Uses the life leader at resolution rather than at trigger time")
+    void lifeLeaderChangesBeforeResolution() {
+        harness.addToBattlefield(player1, new GhazbNOgre());
+        harness.setLife(player1, 25);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.setLife(player2, 30);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertOnBattlefield(player2, "Ghazbán Ogre");
+    }
+
+    @Test
+    @DisplayName("Triggers during the new controller's upkeep and can return control")
+    void triggersForNewController() {
+        harness.addToBattlefield(player1, new GhazbNOgre());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Ghazbán Ogre");
+
+        harness.setLife(player1, 25);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertNotOnBattlefield(player2, "Ghazbán Ogre");
+    }
 }

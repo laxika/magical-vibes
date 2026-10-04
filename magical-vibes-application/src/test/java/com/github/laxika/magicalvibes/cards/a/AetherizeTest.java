@@ -51,8 +51,11 @@ class AetherizeTest extends BaseCardTest {
     @Test
     @DisplayName("Returns an attacking creature to its owner rather than its controller")
     void returnsStolenAttackerToOwner() {
-        Permanent attacker = addAttacker(player2);
-        attacker.getCard().setOwnerId(player1.getId());
+        DiscipleOfTheOldWays creature = new DiscipleOfTheOldWays();
+        creature.setOwnerId(player1.getId());
+        Permanent attacker = addCreatureReady(player2, creature);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
 
         castAetherize();
         harness.passBothPriorities();

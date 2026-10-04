@@ -20,7 +20,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "2ED", collectorNumber = "241")
+@CardRegistration(set = "LEB", collectorNumber = "241")
 @CardRegistration(set = "ME4", collectorNumber = "195")
+@CardRegistration(set = "LEA", collectorNumber = "240")
 public class CyclopeanTomb extends Card {
 
     public CyclopeanTomb() {

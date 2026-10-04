@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,26 +14,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrandWarlordRadha.class, LlanowarElves.class})
 class GrandWarlordRadhaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking with two creatures triggers mana production — choosing RED adds 2 red mana")
     void attackWithTwoCreaturesAddsChosenColorMana() {
-        Permanent radha = new Permanent(new GrandWarlordRadha());
-        radha.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(radha);
+        addCreatureReady(player1, new GrandWarlordRadha());
 
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
+        addCreatureReady(player1, new LlanowarElves());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // Declare both Radha and the bear as attackers
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
 
         // Resolve the attack trigger — should prompt for mana color choice
         harness.passBothPriorities();
@@ -47,25 +40,13 @@ class GrandWarlordRadhaTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing GREEN adds green mana equal to attacking creature count")
     void choosingGreenAddsGreenMana() {
-        Permanent radha = new Permanent(new GrandWarlordRadha());
-        radha.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(radha);
+        addCreatureReady(player1, new GrandWarlordRadha());
 
-        Permanent bear1 = new Permanent(new GrizzlyBears());
-        bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
+        addCreatureReady(player1, new LlanowarElves());
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
-        bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
+        addCreatureReady(player1, new LlanowarElves());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // Declare all 3 creatures as attackers
-        gs.declareAttackers(gd, player1, List.of(0, 1, 2));
+        declareAttackers(List.of(0, 1, 2));
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
@@ -78,21 +59,12 @@ class GrandWarlordRadhaTest extends BaseCardTest {
     @Test
     @DisplayName("Radha does not need to attack herself — trigger fires when other creatures attack")
     void radhaDoesNotNeedToAttack() {
-        Permanent radha = new Permanent(new GrandWarlordRadha());
-        radha.setSummoningSick(true); // Radha has summoning sickness, can't attack
-        gd.playerBattlefields.get(player1.getId()).add(radha);
+        Permanent radha = harness.addToBattlefieldAndReturn(player1, new GrandWarlordRadha());
+        radha.setSummoningSick(true); // Radha stays back even though haste allows her to attack
 
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
+        addCreatureReady(player1, new LlanowarElves());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // Only the bear attacks (index 1)
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(1));
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
@@ -105,16 +77,9 @@ class GrandWarlordRadhaTest extends BaseCardTest {
     @Test
     @DisplayName("Radha's mana does not drain at step transitions but other mana does")
     void persistentManaDoesNotDrainButOtherManaDoes() {
-        Permanent radha = new Permanent(new GrandWarlordRadha());
-        radha.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(radha);
+        addCreatureReady(player1, new GrandWarlordRadha());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
@@ -135,48 +100,98 @@ class GrandWarlordRadhaTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Persistent mana is cleared at end of turn and drains on next step transition")
+    @DisplayName("Radha's unspent mana expires when the turn ends")
     void persistentManaClearedAtEndOfTurn() {
+        addCreatureReady(player1, new GrandWarlordRadha());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        // Simulate Radha's mana by adding persistent mana directly
-        pool.addPersistentMana(ManaColor.RED, 3);
-
-        // Advance step — persistent mana should survive
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+        harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
-        assertThat(pool.get(ManaColor.RED)).isEqualTo(3);
-
-        // Simulate end of turn by clearing persistent tracking
-        pool.clearPersistentMana();
-
-        // Now advance step — mana should drain
         gs.advanceStep(gd);
         assertThat(pool.get(ManaColor.RED)).isZero();
     }
 
     @Test
+    @DisplayName("Two attackers can produce one red and one green mana")
+    void attackingCreaturesCanProduceMixedMana() {
+        addCreatureReady(player1, new GrandWarlordRadha());
+        addCreatureReady(player1, new LlanowarElves());
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "RED");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "GREEN");
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Radha can attack immediately and produce mana")
+    void hasteAllowsImmediateAttack() {
+        Permanent radha = harness.addToBattlefieldAndReturn(player1, new GrandWarlordRadha());
+        radha.setSummoningSick(true);
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Radha's trigger resolves after Radha leaves the battlefield")
+    void triggerSurvivesSourceRemoval() {
+        addCreatureReady(player1, new GrandWarlordRadha());
+        addCreatureReady(player1, new LlanowarElves());
+        declareAttackers(List.of(0, 1));
+        gd.playerBattlefields.get(player1.getId()).remove(0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering attacking do not increase Radha's mana")
+    void enteringAttackingDoesNotIncreaseMana() {
+        addCreatureReady(player1, new GrandWarlordRadha());
+        declareAttackers(List.of(0));
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        elf.setAttacking(true);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponents' attacking creatures do not trigger Radha")
+    void opponentsAttackDoesNotProduceMana() {
+        harness.addToBattlefield(player1, new GrandWarlordRadha());
+        addCreatureReady(player2, new LlanowarElves());
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Attacker count is locked at trigger time — removing attacker before resolution doesn't change mana amount")
     void attackerCountLockedAtTriggerTime() {
-        Permanent radha = new Permanent(new GrandWarlordRadha());
-        radha.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(radha);
+        addCreatureReady(player1, new GrandWarlordRadha());
 
-        Permanent bear1 = new Permanent(new GrizzlyBears());
-        bear1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear1);
+        addCreatureReady(player1, new LlanowarElves());
 
-        Permanent bear2 = new Permanent(new GrizzlyBears());
-        bear2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear2);
+        addCreatureReady(player1, new LlanowarElves());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // Declare 3 creatures as attackers
-        gs.declareAttackers(gd, player1, List.of(0, 1, 2));
+        declareAttackers(List.of(0, 1, 2));
 
         // Remove one attacker from battlefield before trigger resolves (simulating kill spell)
         gd.playerBattlefields.get(player1.getId()).remove(2);
@@ -193,9 +208,8 @@ class GrandWarlordRadhaTest extends BaseCardTest {
     @Test
     @DisplayName("No mana is produced when no creatures attack (trigger does not fire)")
     void noManaWhenNoCreaturesAttack() {
-        Permanent radha = new Permanent(new GrandWarlordRadha());
-        radha.setSummoningSick(true); // Can't attack
-        gd.playerBattlefields.get(player1.getId()).add(radha);
+        Permanent radha = harness.addToBattlefieldAndReturn(player1, new GrandWarlordRadha());
+        radha.setSummoningSick(true);
 
         // No attack declared — just verify initial state
         harness.forceActivePlayer(player1);

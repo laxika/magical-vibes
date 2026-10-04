@@ -113,6 +113,100 @@ class GrabTheReinsTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    void entwineCanSacrificeTheStolenCreature() {
+        Permanent stolen = addCreatureReady(player2, new LumengridWarden());
+        stolen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        cast(new int[]{0, 1}, List.of(stolen.getId(), player2.getId()), true);
+        harness.handlePermanentChosen(player1, stolen.getId());
+
+        harness.assertLife(player2, 17);
+        harness.assertNotOnBattlefield(player1, "Lumengrid Warden");
+        harness.assertNotOnBattlefield(player2, "Lumengrid Warden");
+        harness.assertInGraveyard(player2, "Lumengrid Warden");
+        harness.assertNotInGraveyard(player1, "Lumengrid Warden");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void damageModeWithNoCreatureDealsNoDamage() {
+        cast(new int[]{1}, List.of(player2.getId()), false);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entwineStillSacrificesAndDealsDamageWhenControlTargetLeaves() {
+        Permanent stolen = addCreatureReady(player2, new LumengridWarden());
+        Permanent sacrifice = addCreatureReady(player1, new LumengridWarden());
+        prepareCast(true);
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(stolen.getId(), player2.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(stolen);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Lumengrid Warden");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entwineStillSacrificesWhenOnlyDamageTargetLeaves() {
+        Permanent stolen = addCreatureReady(player2, new LumengridWarden());
+        Permanent damageTarget = addCreatureReady(player2, new LumengridWarden());
+        prepareCast(true);
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(stolen.getId(), damageTarget.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(damageTarget);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, stolen.getId());
+
+        harness.assertInGraveyard(player2, "Lumengrid Warden");
+        harness.assertNotOnBattlefield(player1, "Lumengrid Warden");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entwineCanUseTheSameCreatureForBothTargets() {
+        Permanent target = addCreatureReady(player2, new LumengridWarden());
+        Permanent sacrifice = addCreatureReady(player1, new LumengridWarden());
+
+        cast(new int[]{0, 1}, List.of(target.getId(), target.getId()), true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Lumengrid Warden");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void controlModeDoesNotUntapTheCreature() {
+        Permanent target = addCreatureReady(player2, new LumengridWarden());
+        target.setTapped(true);
+
+        cast(new int[]{0}, List.of(target.getId()), false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void choosingBothModesRequiresTheAdditionalMana() {
+        Permanent target = addCreatureReady(player2, new LumengridWarden());
+        prepareCast(false);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(target.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void prepareCast(boolean entwined) {
         harness.setHand(player1, List.of(new GrabTheReins()));
         harness.addMana(player1, ManaColor.RED, entwined ? 2 : 1);

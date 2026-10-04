@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GriftersBladeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Entering Grifter's Blade may attach it to a creature you control")
+    @DisplayName("Entering Grifter's Blade attaches it to the chosen creature you control")
     void enteringMayAttachToControlledCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
         harness.setHand(player1, List.of(new GriftersBlade()));
@@ -128,11 +128,61 @@ class GriftersBladeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new GriftersBlade()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
 
         harness.castArtifact(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grifter's Blade");
+    }
+
+    @Test
+    @DisplayName("Entry attachment chooses among legal creatures without paying equip")
+    void entryAttachmentCanChooseSecondCreatureWithoutEquipMana() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.setHand(player1, List.of(new GriftersBlade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(findPermanent(player1, "Grifter's Blade").getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Equip requires its mana payment")
+    void equipCannotBeActivatedWithoutMana() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new GriftersBlade());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blade.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash does not allow equip during the opponent's turn")
+    void equipCannotBeActivatedDuringOpponentsTurn() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new GriftersBlade());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blade.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

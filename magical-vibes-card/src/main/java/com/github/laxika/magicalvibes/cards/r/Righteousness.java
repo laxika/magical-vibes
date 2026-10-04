@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "36")
+@CardRegistration(set = "LEA", collectorNumber = "36")
 @CardRegistration(set = "2ED", collectorNumber = "37")
 @CardRegistration(set = "10E", collectorNumber = "36")
 @CardRegistration(set = "M10", collectorNumber = "27")
@@ -21,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "37")
 @CardRegistration(set = "3ED", collectorNumber = "37")
 @CardRegistration(set = "DDL", collectorNumber = "20")
+@CardRegistration(set = "LEB", collectorNumber = "37")
 public class Righteousness extends Card {
 
     public Righteousness() {

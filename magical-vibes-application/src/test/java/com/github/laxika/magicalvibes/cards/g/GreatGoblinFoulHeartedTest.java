@@ -70,6 +70,62 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opposingArmy, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Great Goblin gains trample when it is itself an Army")
+    void sourceArmyAlsoGainsTrample() {
+        Permanent goblin = addCreatureReady(player1, new GreatGoblinFoulHearted());
+        goblin.getGrantedSubtypes().add(CardSubtype.ARMY);
+
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Amass chooses one of multiple Armies and preserves its other types")
+    void choosesOneExistingArmy() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+
+        castGreatGoblin();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, second)).contains(CardSubtype.BEAR, CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Army does not prevent creating your own Army")
+    void opposingArmyIsNotAmassed() {
+        Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+
+        castGreatGoblin();
+
+        assertThat(findPermanent(player1, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("The attack trigger still amasses after Great Goblin leaves")
+    void attackTriggerSurvivesSourceLeaving() {
+        Permanent goblin = addCreatureReady(player1, new GreatGoblinFoulHearted());
+        declareAttackers(List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(goblin);
+        resolveAllTriggers();
+
+        Permanent army = findPermanent(player1, "Goblin Army");
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, army, Keyword.TRAMPLE)).isFalse();
+    }
+
     private void castGreatGoblin() {
         harness.setHand(player1, List.of(new GreatGoblinFoulHearted()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -78,6 +134,6 @@ class GreatGoblinFoulHeartedTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

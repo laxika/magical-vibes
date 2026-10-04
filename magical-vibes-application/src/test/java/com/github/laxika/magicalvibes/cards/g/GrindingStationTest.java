@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BlindCreeper;
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -109,6 +110,57 @@ class GrindingStationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Grinding Station triggers when it enters the battlefield itself")
+    void enteringStationTriggersItself() {
+        harness.castFromHand(player1, new GrindingStation(), "{2}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grinding Station");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Grinding Station can target its controller and sacrifice a tapped artifact")
+    void canMillControllerAndSacrificeTappedArtifact() {
+        Permanent station = harness.addToBattlefieldAndReturn(player1, new GrindingStation());
+        Permanent bauble = harness.addToBattlefieldAndReturn(player1, new ConjurersBauble());
+        bauble.tap();
+        harness.setLibrary(player1, List.of(
+                new BlindCreeper(), new BlindCreeper(), new BlindCreeper(), new BlindCreeper()));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.handlePermanentChosen(player1, bauble.getId());
+        harness.passBothPriorities();
+
+        assertThat(station.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Conjurer's Bauble");
+        harness.assertInGraveyard(player1, "Conjurer's Bauble");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof BlindCreeper).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Milling fewer than three remaining cards empties the library without losing the game")
+    void millsAllRemainingCardsFromShortLibrary() {
+        harness.addToBattlefield(player1, new GrindingStation());
+        harness.setLibrary(player2, List.of(new BlindCreeper(), new BlindCreeper()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
     private void castArtifactFor(Player player) {

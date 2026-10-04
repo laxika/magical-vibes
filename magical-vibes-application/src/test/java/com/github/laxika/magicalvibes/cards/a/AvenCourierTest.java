@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,10 @@ class AvenCourierTest extends BaseCardTest {
         opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, courier.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handlePermanentChosen(player1, courier.getId());
+            resolveAllTriggers();
+        });
 
         assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

@@ -61,6 +61,7 @@ class ArchwingDragonTest extends BaseCardTest {
         ArchwingDragon second = new ArchwingDragon();
         harness.addToBattlefield(player1, first);
         harness.addToBattlefield(player1, second);
+        harness.setHand(player1, java.util.List.of());
 
         advanceToEndStep(player1);
 

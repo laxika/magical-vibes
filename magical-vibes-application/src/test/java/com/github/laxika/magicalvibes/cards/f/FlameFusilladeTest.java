@@ -87,7 +87,7 @@ class FlameFusilladeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertLife(player2, 19);
 
-        forest.setTapped(false);
+        forest.untap();
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 

@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "34")
+@CardRegistration(set = "MAT", collectorNumber = "84")
+@CardRegistration(set = "MAT", collectorNumber = "134")
+@CardRegistration(set = "MAT", collectorNumber = "169")
+@CardRegistration(set = "MAT", collectorNumber = "213")
 public class TheKenrithsRoyalFuneral extends Card {
 
     public TheKenrithsRoyalFuneral() {

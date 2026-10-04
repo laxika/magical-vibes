@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "49")
+@CardRegistration(set = "E01", collectorNumber = "25")
 public class IorRuinExpedition extends Card {
 
     public IorRuinExpedition() {

@@ -70,6 +70,48 @@ class GerrardsCommandTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Can untap and boost your own creature without affecting other creatures")
+    void affectsOnlyTheTargetedCreature() {
+        Permanent target = addCreatureReady(player1, new AuroraGriffin());
+        target.tap();
+        Permanent other = addTappedCreature();
+
+        castGerrardsCommand(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Neither effect applies when the target leaves before resolution")
+    void targetLeavingBattlefieldPreventsBothEffects() {
+        Permanent target = addTappedCreature();
+        Permanent other = addTappedCreature();
+        harness.setHand(player1, List.of(new GerrardsCommand()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof GerrardsCommand);
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
     private Permanent addTappedCreature() {
         Permanent creature = addCreatureReady(player2, new AuroraGriffin());
         creature.tap();

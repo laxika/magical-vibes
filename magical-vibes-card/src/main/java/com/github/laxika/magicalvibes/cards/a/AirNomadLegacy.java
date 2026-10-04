@@ -14,7 +14,7 @@ public class AirNomadLegacy extends Card {
 
     public AirNomadLegacy() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

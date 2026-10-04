@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "UMA", collectorNumber = "192")
 @CardRegistration(set = "ECC", collectorNumber = "118")
 @CardRegistration(set = "NCC", collectorNumber = "320")
+@CardRegistration(set = "ARC", collectorNumber = "74")
 public class WickerboughElder extends Card {
 
     public WickerboughElder() {

@@ -94,4 +94,69 @@ class GoblinCharbelcherTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         finishLibraryOrder();
     }
+
+    @Test
+    void putsAllRevealedCardsBelowUnrevealedCardsInChosenOrder() {
+        Card first = new Frogmite();
+        Card second = new GoblinCharbelcher();
+        Card land = new Forest();
+        Card unrevealed = new Mountain();
+
+        activateAt(player2.getId(), List.of(first, second, land, unrevealed));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(first, second, land);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, land, first, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void doesNotRevealOrReorderWhenTheOnlyTargetLeavesTheBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Frogmite());
+        Card first = new Frogmite();
+        Card land = new Mountain();
+        harness.setLibrary(player1, List.of(first, land));
+        Permanent charbelcher = harness.addToBattlefieldAndReturn(player1, new GoblinCharbelcher());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(charbelcher.isTapped()).isTrue();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void resolvesAfterCharbelcherLeavesTheBattlefield() {
+        Card first = new Frogmite();
+        Card land = new Mountain();
+        harness.setLibrary(player1, List.of(first, land));
+        Permanent charbelcher = harness.addToBattlefieldAndReturn(player1, new GoblinCharbelcher());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(charbelcher);
+        gd.playerGraveyards.get(player1.getId()).add(charbelcher.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        finishLibraryOrder();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, land);
+    }
+
+    @Test
+    void canTargetItsController() {
+        activateAt(player1.getId(), List.of(new Frogmite(), new Mountain()));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        finishLibraryOrder();
+    }
 }

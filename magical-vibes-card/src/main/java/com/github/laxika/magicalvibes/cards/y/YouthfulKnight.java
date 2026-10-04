@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ATH", collectorNumber = "19")
 @CardRegistration(set = "ELD", collectorNumber = "37")
 @CardRegistration(set = "MM3", collectorNumber = "29")
+@CardRegistration(set = "E01", collectorNumber = "22")
 public class YouthfulKnight extends Card {
 }

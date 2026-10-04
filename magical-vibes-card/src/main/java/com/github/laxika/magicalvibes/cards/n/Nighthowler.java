@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MB1", collectorNumber = "129")
 @CardRegistration(set = "PIO", collectorNumber = "98")
 @CardRegistration(set = "C15", collectorNumber = "129")
+@CardRegistration(set = "ZNC", collectorNumber = "49")
 public class Nighthowler extends Card {
 
     public Nighthowler() {

@@ -76,8 +76,8 @@ class FathomSeerTest extends BaseCardTest {
     void tappedIslandsAreReturnedImmediatelyButDrawingUsesTheStack() {
         Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
-        firstIsland.setTapped(true);
-        secondIsland.setTapped(true);
+        firstIsland.tap();
+        secondIsland.tap();
         Card firstDraw = new FathomSeer();
         Card secondDraw = new FathomSeer();
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));

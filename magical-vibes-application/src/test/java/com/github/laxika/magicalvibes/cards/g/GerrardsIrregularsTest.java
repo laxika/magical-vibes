@@ -42,8 +42,7 @@ class GerrardsIrregularsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -54,5 +53,27 @@ class GerrardsIrregularsTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @CardUsed({GerrardsIrregulars.class})
+    @DisplayName("Trample permits assigning all combat damage to the blocker")
+    void mayAssignAllDamageToBlocker() {
+        Permanent blocker = addCreatureReady(player2, new GerrardsIrregulars());
+        harness.setHand(player1, List.of(new GerrardsIrregulars()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 4));
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Gerrard's Irregulars");
+        harness.assertNotOnBattlefield(player2, "Gerrard's Irregulars");
+        harness.assertInGraveyard(player1, "Gerrard's Irregulars");
+        harness.assertInGraveyard(player2, "Gerrard's Irregulars");
     }
 }

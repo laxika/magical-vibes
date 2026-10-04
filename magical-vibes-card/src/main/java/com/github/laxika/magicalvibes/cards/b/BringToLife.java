@@ -28,10 +28,10 @@ public class BringToLife extends Card {
                         "Target must be a noncreature artifact you control"
                 );
         target(noncreatureArtifactYouControl)
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4))
                 .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
                         0, 0, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.PERMANENT));
+                        GrantScope.TARGET, EffectDuration.PERMANENT))
+                .addEffect(EffectSlot.SPELL,
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4));
     }
 }

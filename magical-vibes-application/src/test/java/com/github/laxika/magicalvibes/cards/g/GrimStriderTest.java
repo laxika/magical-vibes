@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrimStrider.class, Forest.class})
 class GrimStriderTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,7 @@ class GrimStriderTest extends BaseCardTest {
     @Test
     @DisplayName("Gets -1/-1 for each card in its controller's hand")
     void shrinksPerCardInHand() {
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Forest(), new GrimStrider()));
         Permanent strider = addStrider(player1);
 
         // 6/6 with -2/-2 for the two cards in hand
@@ -39,7 +41,7 @@ class GrimStriderTest extends BaseCardTest {
     @DisplayName("Only counts the controller's hand, not the opponent's")
     void ignoresOpponentHand() {
         harness.setHand(player1, List.of(new Forest()));
-        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Forest()));
+        harness.setHand(player2, List.of(new Forest(), new GrimStrider(), new Forest()));
         Permanent strider = addStrider(player1);
 
         // Only player1's single card counts
@@ -70,20 +72,47 @@ class GrimStriderTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, strider)).isEqualTo(5);
 
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
+        harness.setHand(player1, List.of(new Forest(), new GrimStrider(), new Forest()));
         assertThat(gqs.getEffectivePower(gd, strider)).isEqualTo(3);
 
         harness.setHand(player1, List.of());
         assertThat(gqs.getEffectivePower(gd, strider)).isEqualTo(6);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Casting removes Grim Strider itself from the hand count")
+    void castingCountsOnlyCardsRemainingInHand() {
+        harness.setHand(player1, List.of(new GrimStrider(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grim Strider");
+        Permanent strider = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, strider)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, strider)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Negative toughness also puts Grim Strider in the graveyard")
+    void diesWithMoreThanSixCardsInHand() {
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        Permanent strider = addStrider(player1);
+
+        assertThat(gqs.getEffectivePower(gd, strider)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, strider)).isEqualTo(-1);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grim Strider");
+        harness.assertInGraveyard(player1, "Grim Strider");
+    }
 
     private Permanent addStrider(Player player) {
-        Card card = new GrimStrider();
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrimStrider());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

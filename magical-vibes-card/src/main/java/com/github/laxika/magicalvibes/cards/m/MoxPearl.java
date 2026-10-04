@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "VMA", collectorNumber = "7")
 @CardRegistration(set = "2ED", collectorNumber = "264")
+@CardRegistration(set = "LEA", collectorNumber = "263")
+@CardRegistration(set = "LEB", collectorNumber = "264")
 public class MoxPearl extends Card {
 
     public MoxPearl() {

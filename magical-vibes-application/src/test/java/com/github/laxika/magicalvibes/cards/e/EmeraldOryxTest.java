@@ -26,7 +26,7 @@ class EmeraldOryxTest extends BaseCardTest {
     @Test
     void tappedForestStillPreventsBlocking() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         assertBlockRejected();
     }
 

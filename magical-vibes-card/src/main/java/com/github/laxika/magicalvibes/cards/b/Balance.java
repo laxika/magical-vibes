@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "VMA", collectorNumber = "14")
 @CardRegistration(set = "SLD", collectorNumber = "173")
 @CardRegistration(set = "ME4", collectorNumber = "6")
+@CardRegistration(set = "LEA", collectorNumber = "3")
+@CardRegistration(set = "LEB", collectorNumber = "3")
 public class Balance extends Card {
 
     public Balance() {

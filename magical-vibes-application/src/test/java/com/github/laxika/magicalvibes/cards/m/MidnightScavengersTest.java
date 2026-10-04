@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianRager;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,17 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MidnightScavengers.class, LlanowarElves.class, GrizzlyBears.class,
-        HillGiant.class, LeoninScimitar.class})
+        HillGiant.class, LeoninScimitar.class, PhyrexianRager.class})
 class MidnightScavengersTest extends BaseCardTest {
 
     private void castMidnightScavengers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new MidnightScavengers()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MidnightScavengers(), "{4}{B}");
         harness.passBothPriorities(); // resolve creature → ETB graveyard targeting
     }
 

@@ -1,20 +1,17 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AvacynsPilgrim;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GreymondAvacynsStalwart.class, AvacynsPilgrim.class, GrizzlyBears.class, EliteVanguard.class})
+@CardUsed({GreymondAvacynsStalwart.class, GrizzlyBears.class, EliteVanguard.class})
 class GreymondAvacynsStalwartTest extends BaseCardTest {
 
     @Test
@@ -70,6 +67,61 @@ class GreymondAvacynsStalwartTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, greymond)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, secondHuman)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, secondHuman)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Vigilance and lifelink choice grants both abilities without first strike")
+    void vigilanceAndLifelinkChoice() {
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
+        Permanent greymond = castGreymond("Vigilance and lifelink");
+
+        assertThat(gqs.hasKeyword(gd, greymond, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, greymond, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, greymond, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, human, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, human, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent Humans and your non-Humans do not satisfy the four-Human threshold")
+    void onlyControlledHumansCountTowardThreshold() {
+        Permanent greymond = castGreymond("First strike and vigilance");
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
+        harness.addToBattlefield(player1, new EliteVanguard());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent opponentHuman = harness.addToBattlefieldAndReturn(player2, new EliteVanguard());
+
+        assertThat(gqs.getEffectivePower(gd, greymond)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new EliteVanguard());
+
+        assertThat(gqs.getEffectivePower(gd, greymond)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentHuman)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentHuman)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Humans lose Greymond's abilities and bonus when he leaves even with four Humans remaining")
+    void leavingBattlefieldRemovesContinuousEffects() {
+        Permanent greymond = castGreymond("First strike and lifelink");
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new EliteVanguard());
+        }
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(greymond);
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isFalse();
     }
 
     private Permanent castGreymond(String choice) {

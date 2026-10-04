@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "119")
+@CardRegistration(set = "LEA", collectorNumber = "132")
 @CardRegistration(set = "7ED", collectorNumber = "169")
 @CardRegistration(set = "5ED", collectorNumber = "203")
 @CardRegistration(set = "4ED", collectorNumber = "168")
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDD", collectorNumber = "41")
 @CardRegistration(set = "GVL", collectorNumber = "41")
 @CardRegistration(set = "2ED", collectorNumber = "133")
+@CardRegistration(set = "LEB", collectorNumber = "133")
 public class WallOfBone extends Card {
 
     public WallOfBone() {

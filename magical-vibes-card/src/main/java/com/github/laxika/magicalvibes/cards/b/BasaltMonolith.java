@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "235")
+@CardRegistration(set = "LEA", collectorNumber = "231")
 @CardRegistration(set = "3ED", collectorNumber = "235")
 @CardRegistration(set = "2XM", collectorNumber = "232")
 @CardRegistration(set = "ME4", collectorNumber = "182")
@@ -22,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "MB2", collectorNumber = "217")
 @CardRegistration(set = "LTC", collectorNumber = "274")
 @CardRegistration(set = "CMA", collectorNumber = "210")
+@CardRegistration(set = "LEB", collectorNumber = "232")
 public class BasaltMonolith extends Card {
 
     public BasaltMonolith() {

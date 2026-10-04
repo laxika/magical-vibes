@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationSe
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -110,6 +111,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CardChoiceHandlerService {
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
@@ -137,6 +139,7 @@ public class CardChoiceHandlerService {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
 
     /** Gives the chosen card in hand a persistent offspring-as-kicker implementation. */
@@ -624,12 +627,18 @@ public class CardChoiceHandlerService {
                         ? null
                         : gameQueryService.findPermanentById(gameData, returnSourceToHandId);
                 boolean exchangeSourceStillPresent = returnSourceToHandId == null
-                        || (sourceToReturn != null && sourceToReturn.isAttached()
-                        && targetId.equals(sourceToReturn.getAttachedTo()));
+                        || (sourceToReturn != null
+                        && java.util.Objects.equals(targetId, sourceToReturn.getAttachedTo()));
                 if (!exchangeSourceStillPresent) {
                     hand.add(cardIndex, card);
                 } else {
-                    boolean entered = resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
+                    boolean entered;
+                    if (returnSourceToHandId != null && targetId == null) {
+                        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+                        entered = true;
+                    } else {
+                        entered = resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
+                    }
                     if (entered && returnSourceToHandId != null) {
                         Permanent source = gameQueryService.findPermanentById(gameData, returnSourceToHandId);
                         if (source != null) {
@@ -1119,6 +1128,11 @@ public class CardChoiceHandlerService {
         finalizePendingReturnToHandOnDiscard(gameData);
         applyPendingGainLifeOnDiscardType(gameData);
 
+        if (followUp.pendingSpellCast() != null) {
+            exileFreeCastQueueSupport.completeCastAfterDiscard(gameData, followUp.pendingSpellCast());
+            return;
+        }
+
         // After cleanup discard, apply end-of-turn resets (CR 514.2)
         if (gameData.cleanupDiscardPending) {
             gameData.cleanupDiscardPending = false;
@@ -1347,6 +1361,15 @@ public class CardChoiceHandlerService {
                         for (Permanent permanent : battlefield) {
                             if (targetPredicateEvaluationService.matchesPermanent(
                                     targetPredicate, permanent, filterContext)) {
+                                try {
+                                    var targeting = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                                            false, null, List.of(thenEffect), "");
+                                    targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId,
+                                            targeting, List.of(thenEffect), permanent.getId(), null,
+                                            sourceCard, thenEffectXValue);
+                                } catch (IllegalStateException invalidTarget) {
+                                    continue;
+                                }
                                 validPermanentTargets.add(permanent.getId());
                             }
                         }

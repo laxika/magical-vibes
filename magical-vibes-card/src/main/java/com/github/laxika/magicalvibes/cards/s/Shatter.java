@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "103")
+@CardRegistration(set = "LEA", collectorNumber = "173")
 @CardRegistration(set = "TPR", collectorNumber = "159")
 @CardRegistration(set = "MRD", collectorNumber = "105")
 @CardRegistration(set = "KTK", collectorNumber = "120")
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DKM", collectorNumber = "20")
 @CardRegistration(set = "3ED", collectorNumber = "175")
 @CardRegistration(set = "2ED", collectorNumber = "174")
+@CardRegistration(set = "LEB", collectorNumber = "174")
 public class Shatter extends Card {
 
     public Shatter() {

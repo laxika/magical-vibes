@@ -55,10 +55,50 @@ class GreedyFreebooterTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("An empty library does not prevent the death trigger from creating a Treasure")
+    void deathTriggerCreatesTreasureWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new GreedyFreebooter());
+        destroyFreebooter();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The dying Freebooter's controller scries and receives the Treasure")
+    void opponentControlledFreebooterRewardsOpponent() {
+        Card top = new GreedyFreebooter();
+        Card next = new GreedyFreebooter();
+        harness.setLibrary(player2, List.of(top, next));
+        harness.addToBattlefield(player2, new GreedyFreebooter());
+        destroyFreebooter();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        PendingInteraction.Scry scry = (PendingInteraction.Scry) gd.interaction.activeInteraction();
+        assertThat(scry.playerId()).isEqualTo(player2.getId());
+        assertThat(scry.cards()).containsExactly(top);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(next, top);
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void destroyFreebooter() {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

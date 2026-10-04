@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.r.RighteousAvengers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -21,7 +22,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GreatWall.class, BarbaryApes.class})
+@CardUsed({GreatWall.class, BarbaryApes.class, RighteousAvengers.class})
 class GreatWallTest extends BaseCardTest {
 
     @Test
@@ -48,6 +49,36 @@ class GreatWallTest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Great Wall controlled by the attacker permits blocking plainswalk creatures")
+    void attackersGreatWallPermitsBlocking() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.PLAINS));
+        harness.addToBattlefield(player1, new GreatWall());
+        Permanent attacker = addCreatureReady(player1, new RighteousAvengers());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+    }
+
+    @Test
+    @DisplayName("Plainswalk prevents blocking again after Great Wall leaves the battlefield")
+    void plainswalkReturnsAfterGreatWallLeaves() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.PLAINS));
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new GreatWall());
+        Permanent attacker = addCreatureReady(player1, new RighteousAvengers());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        gd.playerBattlefields.get(player2.getId()).remove(wall);
+        gd.playerGraveyards.get(player2.getId()).add(wall.getCard());
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {

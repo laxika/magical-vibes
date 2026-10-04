@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "2XM", collectorNumber = "29")
 @CardRegistration(set = "C21", collectorNumber = "102")
 @CardRegistration(set = "C16", collectorNumber = "76")
+@CardRegistration(set = "ARC", collectorNumber = "5")
 public class SanctumGargoyle extends Card {
 
     public SanctumGargoyle() {

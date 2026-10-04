@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
  * Puts {@code amount} counters of {@code counterType} on the creature the source Aura is attached
@@ -11,8 +13,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * creature is captured onto the stack entry at activation, before costs are paid — the counters
  * still land even though the bounce cost detaches the Aura first.
  */
-public record PutCountersOnEnchantedCreatureEffect(CounterType counterType, int amount)
+public record PutCountersOnEnchantedCreatureEffect(CounterType counterType, DynamicAmount amount)
         implements AttachedPermanentSelfTargetingEffect {
+
+    public PutCountersOnEnchantedCreatureEffect(CounterType counterType, int amount) {
+        this(counterType, new Fixed(amount));
+    }
 
     @Override
     public TargetSpec targetSpec() {

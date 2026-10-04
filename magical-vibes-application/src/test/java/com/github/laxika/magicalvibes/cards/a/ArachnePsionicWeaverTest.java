@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GallantCitizen;
 import com.github.laxika.magicalvibes.cards.p.PrisonBreak;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,6 +23,33 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArachnePsionicWeaver.class, GallantCitizen.class, PrisonBreak.class, Shock.class})
 class ArachnePsionicWeaverTest extends BaseCardTest {
+
+    @Test
+    void simulationCopyIsolatesPreparedReanimatedPermanent() {
+        ArachnePsionicWeaver arachne = new ArachnePsionicWeaver();
+        harness.setGraveyard(player1, List.of(arachne));
+        harness.setHand(player1, List.of(new PrisonBreak()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castSorcery(player1, 0, arachne.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice liveChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        ChoiceContext.CardTypeOnEnterChoice liveContext = (ChoiceContext.CardTypeOnEnterChoice) liveChoice.context();
+        GameData simulation = gd.simulationCopy();
+        PendingInteraction.ColorChoice simulatedChoice = simulation.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        ChoiceContext.CardTypeOnEnterChoice simulatedContext = (ChoiceContext.CardTypeOnEnterChoice) simulatedChoice.context();
+        simulatedContext.preparedPermanent().setChosenCardType(CardType.SORCERY);
+        simulatedContext.preparedPermanent().setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        assertThat(liveContext.preparedPermanent().getChosenCardType()).isNull();
+        assertThat(liveContext.preparedPermanent().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Arachne, Psionic Weaver");
+        harness.handleListChoice(player1, CardType.INSTANT.name());
+        Permanent entered = findPermanent(player1, "Arachne, Psionic Weaver");
+        assertThat(entered.getChosenCardType()).isEqualTo(CardType.INSTANT);
+        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 
     @Test
     void looksAtOpponentHandAndChoosesNoncreatureCardType() {

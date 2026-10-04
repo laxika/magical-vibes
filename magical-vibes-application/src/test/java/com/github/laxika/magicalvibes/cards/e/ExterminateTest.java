@@ -139,7 +139,7 @@ class ExterminateTest extends BaseCardTest {
     void cannotPayReplicateWithTappedDalek() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DalekDrone());
         Permanent dalek = harness.addToBattlefieldAndReturn(player1, new DalekDrone());
-        dalek.setTapped(true);
+        dalek.tap();
 
         assertThatThrownBy(() -> castExterminate(target, List.of(dalek.getId())))
                 .isInstanceOf(IllegalStateException.class);

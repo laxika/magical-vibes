@@ -2856,6 +2856,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, permanentId, etbTargetId, context, options, prompt, java.util.List.of());
         }
 
+        /** Isolates a prepared as-entry permanent when this choice is copied for simulation. */
+        public ColorChoice copyCardTypeOnEnterPermanent() {
+            if (!(context instanceof ChoiceContext.CardTypeOnEnterChoice typeChoice)
+                    || typeChoice.preparedPermanent() == null) {
+                return this;
+            }
+            ChoiceContext.CardTypeOnEnterChoice copiedContext = new ChoiceContext.CardTypeOnEnterChoice(
+                    typeChoice.card(), typeChoice.controllerId(), typeChoice.excludedTypes(),
+                    new Permanent(typeChoice.preparedPermanent()));
+            return new ColorChoice(playerId, permanentId, etbTargetId, copiedContext,
+                    options, prompt, disabledOptions);
+        }
+
         /** Same decision with a new greyed-out subset; the decision's identity and options are unchanged. */
         public ColorChoice withDisabledOptions(java.util.List<String> disabled) {
             return new ColorChoice(playerId, permanentId, etbTargetId, context, options, prompt, disabled);
@@ -4685,6 +4698,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                          int remainingCount, DiscardFollowUp followUp, String prompt,
                          CardType stopAfterDiscardingType, CardPredicate stopAfterDiscardingPredicate, boolean declinable)
             implements PendingInteraction, HandChoice {
+
+        /** Copies the mutable spell payload when simulating a discard cost payment. */
+        public DiscardChoice deepCopy() {
+            DiscardFollowUp copiedFollowUp = followUp.pendingSpellCast() == null ? followUp
+                    : followUp.withPendingSpellCast(new StackEntry(followUp.pendingSpellCast()));
+            return new DiscardChoice(playerId, validIndices, remainingCount, copiedFollowUp, prompt,
+                    stopAfterDiscardingType, stopAfterDiscardingPredicate, declinable);
+        }
 
         public DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
                              int remainingCount, DiscardFollowUp followUp, String prompt) {

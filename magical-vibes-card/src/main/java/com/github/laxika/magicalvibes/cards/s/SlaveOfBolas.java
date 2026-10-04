@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ARB", collectorNumber = "136")
 @CardRegistration(set = "DDH", collectorNumber = "67")
+@CardRegistration(set = "E01", collectorNumber = "86")
 public class SlaveOfBolas extends Card {
 
     public SlaveOfBolas() {

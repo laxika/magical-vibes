@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(GeneratedHorizons.class)
+@CardUsed({GeneratedHorizons.class})
 class GeneratedHorizonsTest extends BaseCardTest {
 
     @Test
@@ -44,5 +44,62 @@ class GeneratedHorizonsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Forest")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates the Forest only when the upkeep trigger resolves")
+    void createsTokenOnlyOnTriggerResolution() {
+        harness.addToBattlefield(player1, new GeneratedHorizons());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each copy creates a Forest only for its controller")
+    void multipleCopiesTriggerForTheirOwnController() {
+        harness.addToBattlefield(player1, new GeneratedHorizons());
+        harness.addToBattlefield(player1, new GeneratedHorizons());
+        harness.addToBattlefield(player2, new GeneratedHorizons());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+        assertThat(findPermanents(player2, "Forest")).isEmpty();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Forest")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creates another Forest on each subsequent controller upkeep")
+    void createsAnotherForestOnSubsequentUpkeep() {
+        harness.addToBattlefield(player1, new GeneratedHorizons());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Forest"))
+                .allSatisfy(forest -> assertThat(forest.isTapped()).isFalse());
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "MOR", collectorNumber = "72")
+@CardRegistration(set = "ZNC", collectorNumber = "51")
 public class OonasBlackguard extends Card {
 
     public OonasBlackguard() {

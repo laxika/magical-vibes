@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "116")
+@CardRegistration(set = "ARC", collectorNumber = "58")
 public class GleefulSabotage extends Card {
 
     public GleefulSabotage() {

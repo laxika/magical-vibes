@@ -13,11 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "51")
+@CardRegistration(set = "LEB", collectorNumber = "32")
 @CardRegistration(set = "4ED", collectorNumber = "40")
 @CardRegistration(set = "SUM", collectorNumber = "31")
 @CardRegistration(set = "3ED", collectorNumber = "31")
 @CardRegistration(set = "ME4", collectorNumber = "22")
 @CardRegistration(set = "2ED", collectorNumber = "32")
+@CardRegistration(set = "LEA", collectorNumber = "31")
 public class PersonalIncarnation extends Card {
 
     public PersonalIncarnation() {

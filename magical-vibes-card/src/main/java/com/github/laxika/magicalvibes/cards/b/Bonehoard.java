@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "C16", collectorNumber = "245")
 @CardRegistration(set = "NEC", collectorNumber = "147")
 @CardRegistration(set = "CMA", collectorNumber = "211")
+@CardRegistration(set = "ZNC", collectorNumber = "108")
 public class Bonehoard extends Card {
 
     public Bonehoard() {

@@ -126,6 +126,8 @@ class AvatarsWrathTest extends BaseCardTest {
 
     @Test
     void restrictionLastsThroughOpponentsTurnAndExpiresOnControllersNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HogMonkey());
         harness.setHand(player1, List.of(new AvatarsWrath()));
         addAvatarWrathMana();

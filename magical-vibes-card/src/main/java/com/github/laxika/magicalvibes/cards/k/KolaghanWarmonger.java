@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "17")
+@CardRegistration(set = "MAT", collectorNumber = "67")
+@CardRegistration(set = "MAT", collectorNumber = "117")
+@CardRegistration(set = "MAT", collectorNumber = "201")
 public class KolaghanWarmonger extends Card {
 
     public KolaghanWarmonger() {

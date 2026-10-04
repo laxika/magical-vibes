@@ -87,7 +87,7 @@ class DwarvenDemolitionTeamTest extends BaseCardTest {
 
         Permanent team = addCreatureReady(player1, new DwarvenDemolitionTeam());
         Permanent wall = addCreatureReady(player2, new WallOfStone());
-        team.setTapped(true);
+        team.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(team), 0, null, wall.getId()))

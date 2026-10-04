@@ -167,6 +167,7 @@ class AloraRogueCompanionTest extends BaseCardTest {
         returnAttackerAtEndStep();
         assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 3);

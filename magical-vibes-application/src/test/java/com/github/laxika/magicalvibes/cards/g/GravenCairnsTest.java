@@ -88,4 +88,39 @@ class GravenCairnsTest extends BaseCardTest {
         assertThat(land.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Producing colorless mana taps the land and prevents filtering with it")
+    void colorlessAbilityPreventsSecondActivation() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GravenCairns());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Filtering taps the land and prevents producing additional colorless mana")
+    void filterAbilityPreventsSecondActivation() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GravenCairns());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(land.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

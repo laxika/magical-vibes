@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "CON", collectorNumber = "47")
 @CardRegistration(set = "M19", collectorNumber = "101")
+@CardRegistration(set = "ARC", collectorNumber = "18")
 public class InfectiousHorror extends Card {
 
     public InfectiousHorror() {

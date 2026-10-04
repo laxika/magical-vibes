@@ -128,4 +128,88 @@ class GreelMindRakerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a player");
     }
+
+    @Test
+    @DisplayName("An empty target hand does not prevent activation or paying the costs")
+    void canTargetPlayerWithEmptyHand() {
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        Permanent greel = readyGreel();
+
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(greel.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent greel = readyGreel();
+        greel.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(greel.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Greel cannot activate")
+    void cannotActivateWhenTapped() {
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Permanent greel = readyGreel();
+        greel.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Greel dies, with the activation costs already paid")
+    void abilityResolvesAfterSourceDies() {
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of(new LightningBolt(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+        Permanent greel = readyGreel();
+
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(greel.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+
+        harness.castInstant(player2, 0, greel.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Greel, Mind Raker");
+        harness.assertInGraveyard(player1, "Greel, Mind Raker");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
 }

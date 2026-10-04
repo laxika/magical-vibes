@@ -19,6 +19,8 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "250")
 @CardRegistration(set = "3ED", collectorNumber = "250")
 @CardRegistration(set = "2ED", collectorNumber = "247")
+@CardRegistration(set = "LEA", collectorNumber = "246")
+@CardRegistration(set = "LEB", collectorNumber = "247")
 public class HelmOfChatzuk extends Card {
 
     public HelmOfChatzuk() {

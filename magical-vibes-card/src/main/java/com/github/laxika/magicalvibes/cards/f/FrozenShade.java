@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "112")
 @CardRegistration(set = "3ED", collectorNumber = "112")
 @CardRegistration(set = "2ED", collectorNumber = "110")
+@CardRegistration(set = "LEA", collectorNumber = "109")
+@CardRegistration(set = "LEB", collectorNumber = "110")
 public class FrozenShade extends Card {
 
     public FrozenShade() {

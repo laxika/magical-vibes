@@ -179,6 +179,45 @@ class GoblinSnowmanTest extends BaseCardTest {
                 .count()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Tapping Goblin Snowman for its ability preserves combat damage prevention")
+    void tappedSnowmanStillPreventsCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        Permanent snowman = addCreatureReady(player2, new GoblinSnowman());
+
+        blockWithSnowman();
+        resolveAllTriggers();
+        harness.activateAbility(player2, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(snowman.isTapped()).isTrue();
+        assertThat(snowman.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Goblin Snowman");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Goblin Snowman can block and prevent damage but cannot pay its tap cost")
+    void summoningSickSnowmanCanBlockButCannotActivate() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        Permanent snowman = harness.addToBattlefieldAndReturn(player2, new GoblinSnowman());
+
+        blockWithSnowman();
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        resolveCombat();
+
+        assertThat(snowman.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Goblin Snowman");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+    }
+
     /** Declares player1's first creature as an attacker and blocks it with player2's Goblin Snowman. */
     private void blockWithSnowman() {
         declareAttackersAndPrepareBlockers(List.of(0));

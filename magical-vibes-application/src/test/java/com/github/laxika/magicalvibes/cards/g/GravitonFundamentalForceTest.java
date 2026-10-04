@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,12 +31,17 @@ class GravitonFundamentalForceTest extends BaseCardTest {
 
         drawCard();
         drawCard();
-        harness.passBothPriorities();
+        harness.passPriority(player1);
         harness.handleListChoice(player1, FLYING_MODE);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -49,7 +55,7 @@ class GravitonFundamentalForceTest extends BaseCardTest {
 
         drawCard();
         drawCard();
-        harness.passBothPriorities();
+        harness.passPriority(player1);
         harness.handleListChoice(player1, TAP_MODE);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -61,16 +67,96 @@ class GravitonFundamentalForceTest extends BaseCardTest {
     @DisplayName("The modal trigger only allows creature targets")
     void rejectsNonCreatureTarget() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new GravitonFundamentalForce());
         prepareLibrary();
 
         drawCard();
         drawCard();
-        harness.passBothPriorities();
+        harness.passPriority(player1);
         harness.handleListChoice(player1, TAP_MODE);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The mode and target are announced before opponents can respond")
+    void announcesTargetBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GravitonFundamentalForce());
+        prepareLibrary();
+
+        drawCard();
+        drawCard();
+        harness.passPriority(player1);
+        harness.handleListChoice(player1, TAP_MODE);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(target.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the second draw triggers, not the first or third")
+    void triggersOnlyOnSecondDraw() {
+        harness.addToBattlefield(player1, new GravitonFundamentalForce());
+        prepareLibrary();
+
+        drawCard();
+        assertThat(gd.stack).isEmpty();
+
+        drawCard();
+        assertThat(gd.stack).hasSize(1);
+
+        drawCard();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's second draw does not trigger Graviton")
+    void ignoresOpponentDraws() {
+        harness.addToBattlefield(player1, new GravitonFundamentalForce());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Draws before Graviton enters count toward the second card each turn")
+    void countsDrawBeforeEnteringBattlefield() {
+        prepareLibrary();
+        drawCard();
+        harness.addToBattlefield(player1, new GravitonFundamentalForce());
+
+        drawCard();
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller's second draw also triggers during an opponent's turn")
+    void triggersDuringOpponentTurn() {
+        harness.addToBattlefield(player1, new GravitonFundamentalForce());
+        prepareLibrary();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        drawCard();
+        assertThat(gd.stack).isEmpty();
+        drawCard();
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     private void prepareLibrary() {

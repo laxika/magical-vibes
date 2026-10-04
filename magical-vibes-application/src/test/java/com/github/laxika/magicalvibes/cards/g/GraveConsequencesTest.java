@@ -17,6 +17,63 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GraveConsequencesTest extends BaseCardTest {
 
     @Test
+    @DisplayName("All players choose before the selected graveyard cards are exiled simultaneously")
+    void waitsForAllChoicesBeforeExilingCards() {
+        Card ownCard = new CabalTrainee();
+        Card opponentCard = new HaplessResearcher();
+        Card drawn = new GraveConsequences();
+
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.castFromHand(player1, new GraveConsequences(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .playerId()).isEqualTo(player2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(ownCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+
+        harness.handleMultipleCardsChosen(player2, List.of(opponentCard.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    @DisplayName("The active player chooses first even when the nonactive player casts the spell")
+    void nonactiveCasterDrawsAfterActivePlayerChoosesFirst() {
+        Card activeCard = new CabalTrainee();
+        Card casterCard = new HaplessResearcher();
+        Card drawn = new GraveConsequences();
+
+        harness.forceActivePlayer(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of(activeCard));
+        harness.setGraveyard(player2, List.of(casterCard));
+        harness.setLibrary(player2, List.of(drawn));
+        harness.castFromHand(player2, new GraveConsequences(), "{1}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .playerId()).isEqualTo(player1.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .playerId()).isEqualTo(player2.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(casterCard.getId()));
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).contains(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+    }
+
+    @Test
     @DisplayName("Each player chooses graveyard exiles in APNAP order, loses for the remainder, and the controller draws")
     void eachPlayerChoosesAndLosesForRemainingGraveyardCards() {
         Card ownFirst = new GraveConsequences();

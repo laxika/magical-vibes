@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "91")
+@CardRegistration(set = "MAT", collectorNumber = "59")
 @CardRegistration(set = "MAT", collectorNumber = "9")
+@CardRegistration(set = "MAT", collectorNumber = "109")
+@CardRegistration(set = "MAT", collectorNumber = "155")
+@CardRegistration(set = "MAT", collectorNumber = "193")
 @CardRegistration(set = "TLE", collectorNumber = "20")
 public class TrainingGrounds extends Card {
 

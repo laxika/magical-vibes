@@ -112,7 +112,7 @@ class FlyingDroneTest extends BaseCardTest {
     @Test
     void freeActivationStillRequiresAnUntappedSource() {
         Permanent drone = addCreatureReady(player1, new FlyingDrone());
-        drone.setTapped(true);
+        drone.tap();
         harness.enterBattlefieldAndReturn(player1, new SkyshroudFalcon());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

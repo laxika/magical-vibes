@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GoblinDynamo.class, AvenEnvoy.class})
 class GoblinDynamoTest extends BaseCardTest {
@@ -66,6 +67,104 @@ class GoblinDynamoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Aven Envoy");
+    }
+
+    @Test
+    @DisplayName("Zero X still costs red mana and sacrifices Dynamo without dealing damage")
+    void sacrificeAbilityAllowsZeroX() {
+        addReadyDynamo(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, 0, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Goblin Dynamo");
+        harness.assertInGraveyard(player1, "Goblin Dynamo");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dynamo can target itself with its tap ability")
+    void tapAbilityCanTargetItself() {
+        Permanent dynamo = addReadyDynamo(player1);
+
+        harness.activateAbility(player1, 0, null, dynamo.getId());
+        harness.passBothPriorities();
+
+        assertThat(dynamo.isTapped()).isTrue();
+        assertThat(dynamo.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Goblin Dynamo");
+    }
+
+    @Test
+    @DisplayName("Self-targeted sacrifice ability loses its target after paying the sacrifice cost")
+    void sacrificeAbilityCanTargetItself() {
+        Permanent dynamo = addReadyDynamo(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, 4, dynamo.getId());
+
+        harness.assertInGraveyard(player1, "Goblin Dynamo");
+        harness.assertNotOnBattlefield(player1, "Goblin Dynamo");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both tap costs are prevented by summoning sickness")
+    void summoningSicknessPreventsBothAbilities() {
+        harness.addToBattlefield(player1, new GoblinDynamo());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 3, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Goblin Dynamo");
+        harness.assertNotInGraveyard(player1, "Goblin Dynamo");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Dynamo cannot activate either ability")
+    void tappedDynamoCannotActivateEitherAbility() {
+        Permanent dynamo = addReadyDynamo(player1);
+        dynamo.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 3, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Goblin Dynamo");
+        harness.assertNotInGraveyard(player1, "Goblin Dynamo");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability requires red mana even when X is zero")
+    void sacrificeAbilityRequiresRedMana() {
+        Permanent dynamo = addReadyDynamo(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(dynamo.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Goblin Dynamo");
+        harness.assertNotInGraveyard(player1, "Goblin Dynamo");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyDynamo(Player player) {

@@ -28,8 +28,7 @@ class ReanimateTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         harness.assertOnBattlefield(player1, "Canopy Spider");
         harness.assertNotInGraveyard(player1, "Canopy Spider");
@@ -48,8 +47,7 @@ class ReanimateTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         harness.assertOnBattlefield(player1, "Canopy Spider");
         harness.assertNotInGraveyard(player2, "Canopy Spider");

@@ -133,7 +133,7 @@ class FealtyToTheRealmTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castFealtyToTheRealm(player1, creature);
         creature.setSummoningSick(false);
-        creature.setTapped(true);
+        creature.tap();
 
         declareAttackers(player1, List.of());
 

@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "103")
+@CardRegistration(set = "LEA", collectorNumber = "81")
 @CardRegistration(set = "2ED", collectorNumber = "82")
 @CardRegistration(set = "7ED", collectorNumber = "99")
 @CardRegistration(set = "5ED", collectorNumber = "128")
 @CardRegistration(set = "4ED", collectorNumber = "105")
 @CardRegistration(set = "SUM", collectorNumber = "84")
 @CardRegistration(set = "3ED", collectorNumber = "84")
+@CardRegistration(set = "LEB", collectorNumber = "82")
 public class StealArtifact extends Card {
 
     public StealArtifact() {

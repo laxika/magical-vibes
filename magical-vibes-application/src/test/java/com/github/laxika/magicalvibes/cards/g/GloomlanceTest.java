@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         Forest.class, Swamp.class})
 class GloomlanceTest extends BaseCardTest {
 
-    // ===== Green creature: destroyed + controller discards =====
 
     @Test
     @DisplayName("Green creature is destroyed and its controller discards a card")
@@ -31,21 +30,22 @@ class GloomlanceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Swamp(), new Forest()));
         castGloomlance(target);
 
-        // Discard runs first while the creature is still on the battlefield.
+        // Destruction precedes the discard choice.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player2.getId());
 
-        harness.handleCardChosen(player2, 0); // player2 discards Swamp
+        harness.assertInGraveyard(player2, "Devoted Druid");
+        harness.assertNotOnBattlefield(player2, "Devoted Druid");
+
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         harness.assertInGraveyard(player2, "Swamp");
-        // ...and the creature is destroyed after the discard resolves.
         harness.assertInGraveyard(player2, "Devoted Druid");
     }
 
-    // ===== White creature: destroyed + controller discards =====
 
     @Test
     @DisplayName("White creature is destroyed and its controller discards a card")
@@ -61,7 +61,6 @@ class GloomlanceTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Safehold Sentry");
     }
 
-    // ===== Non-green-non-white creature: destroyed, no discard =====
 
     @Test
     @DisplayName("Red creature is destroyed but its controller does not discard")
@@ -76,7 +75,6 @@ class GloomlanceTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Inescapable Brute");
     }
 
-    // ===== Green creature but empty hand: destroyed, nothing to discard =====
 
     @Test
     @DisplayName("Green creature with empty-handed controller is still destroyed")
@@ -89,7 +87,6 @@ class GloomlanceTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Devoted Druid");
     }
 
-    // ===== Targeting =====
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
@@ -102,12 +99,34 @@ class GloomlanceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+
+
+    @Test
+    @DisplayName("Targeting your own green creature makes you discard after destroying it")
+    void ownGreenCreatureControllerDiscards() {
+        UUID target = addCreatureReady(player1, new DevotedDruid()).getId();
+        harness.setHand(player1, List.of(new Gloomlance(), new Swamp()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, target);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.assertInGraveyard(player1, "Devoted Druid");
+        harness.assertNotOnBattlefield(player1, "Devoted Druid");
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertInHand(player2, "Forest");
+    }
 
     private void castGloomlance(UUID targetId) {
         harness.setHand(player1, List.of(new Gloomlance()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, List.of(targetId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(targetId));
     }
 }

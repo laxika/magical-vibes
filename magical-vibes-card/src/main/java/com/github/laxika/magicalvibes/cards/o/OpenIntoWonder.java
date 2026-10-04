@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "AKH", collectorNumber = "64")
+@CardRegistration(set = "ZNC", collectorNumber = "34")
 public class OpenIntoWonder extends Card {
 
     public OpenIntoWonder() {

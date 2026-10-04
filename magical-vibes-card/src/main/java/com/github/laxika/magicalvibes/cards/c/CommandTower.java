@@ -40,6 +40,7 @@ import java.util.List;
 @CardRegistration(set = "EOC", collectorNumber = "59")
 @CardRegistration(set = "CMM", collectorNumber = "420")
 @CardRegistration(set = "CMM", collectorNumber = "659")
+@CardRegistration(set = "CC1", collectorNumber = "8")
 @CardRegistration(set = "WHO", collectorNumber = "263")
 @CardRegistration(set = "WHO", collectorNumber = "264")
 @CardRegistration(set = "WHO", collectorNumber = "265")
@@ -85,8 +86,10 @@ import java.util.List;
 @CardRegistration(set = "DRC", collectorNumber = "59")
 @CardRegistration(set = "DRC", collectorNumber = "60")
 @CardRegistration(set = "CMA", collectorNumber = "245")
+@CardRegistration(set = "CC2", collectorNumber = "8")
 @CardRegistration(set = "ELD", collectorNumber = "333")
 @CardRegistration(set = "SCD", collectorNumber = "297")
+@CardRegistration(set = "ZNC", collectorNumber = "124")
 public class CommandTower extends Card {
 
     public CommandTower() {

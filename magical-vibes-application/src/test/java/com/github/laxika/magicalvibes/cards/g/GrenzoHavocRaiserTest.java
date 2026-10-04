@@ -32,7 +32,7 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleListChoice(player1, GOAD_MODE);
 
         PendingInteraction.PermanentChoice choice =
@@ -41,6 +41,7 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactly(target.getId());
 
         harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
 
         assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
     }
@@ -56,8 +57,9 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
         int handSizeBeforeCast = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleListChoice(player1, EXILE_MODE);
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
@@ -137,9 +139,7 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
     }
 
     private void addGrenzoAttacking() {
-        Card grenzo = new GrenzoHavocRaiser();
-        grenzo.setName("Grenzo, Havoc Raiser");
-        addCreatureReady(player1, grenzo);
+        addCreatureReady(player1, new GrenzoHavocRaiser());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
@@ -147,9 +147,83 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
 
     private void resolveGrenzoTrigger(String mode) {
         resolveCombat();
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
         harness.handleListChoice(player1, mode);
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Mode and goad target are chosen before opponents can respond to the trigger")
+    void choosesModeAndTargetBeforeResolution() {
+        addGrenzoAttacking();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, GOAD_MODE);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Goad cannot be chosen when the damaged player controls no legal creature target")
+    void cannotChooseGoadWithoutLegalTarget() {
+        addGrenzoAttacking();
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options().stream()
+                .filter(option -> !choice.disabledOptions().contains(option)).toList())
+                .contains(EXILE_MODE)
+                .doesNotContain(GOAD_MODE);
+    }
+
+    @Test
+    @DisplayName("Exile mode does nothing when the damaged player's library is empty")
+    void emptyLibraryDoesNotGrantPermission() {
+        addGrenzoAttacking();
+        harness.setLife(player2, 20);
+        harness.setLibrary(player2, List.of());
+
+        resolveGrenzoTrigger(EXILE_MODE);
+
+        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).isEmpty();
+        assertThat(gd.exilePlayAnyManaType).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("An uncast exiled card stays in exile after its permission expires")
+    void castPermissionExpiresAtEndOfTurn() {
+        addGrenzoAttacking();
+        Card topCard = new Divination();
+        harness.setLibrary(player2, List.of(topCard, new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        resolveGrenzoTrigger(EXILE_MODE);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayAnyManaType).doesNotContain(topCard.getId());
     }
 
 }

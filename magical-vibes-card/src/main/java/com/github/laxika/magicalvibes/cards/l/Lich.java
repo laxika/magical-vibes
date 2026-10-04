@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "2ED", collectorNumber = "114")
 @CardRegistration(set = "ME4", collectorNumber = "89")
+@CardRegistration(set = "LEA", collectorNumber = "113")
+@CardRegistration(set = "LEB", collectorNumber = "114")
 public class Lich extends Card {
 
     public Lich() {

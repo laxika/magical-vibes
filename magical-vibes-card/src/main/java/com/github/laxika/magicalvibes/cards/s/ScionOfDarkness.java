@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "79")
 @CardRegistration(set = "2X2", collectorNumber = "86")
+@CardRegistration(set = "ARC", collectorNumber = "23")
 public class ScionOfDarkness extends Card {
 
     public ScionOfDarkness() {

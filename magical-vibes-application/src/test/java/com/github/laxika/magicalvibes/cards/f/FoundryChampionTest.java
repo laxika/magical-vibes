@@ -139,7 +139,7 @@ class FoundryChampionTest extends BaseCardTest {
     @DisplayName("Pump abilities can be activated repeatedly while summoning sick and tapped")
     void pumpsAccumulateWithoutTapCosts() {
         Permanent champion = harness.addToBattlefieldAndReturn(player1, new FoundryChampion());
-        champion.setTapped(true);
+        champion.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 

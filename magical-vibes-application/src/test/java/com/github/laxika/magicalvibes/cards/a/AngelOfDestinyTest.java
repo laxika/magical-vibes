@@ -122,6 +122,7 @@ class AngelOfDestinyTest extends BaseCardTest {
         addCreatureReady(player1, new AngelOfDestiny());
         harness.setLife(player1, 35);
 
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 

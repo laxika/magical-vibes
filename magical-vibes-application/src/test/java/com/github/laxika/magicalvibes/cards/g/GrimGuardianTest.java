@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrimGuardian.class, GloriousAnthem.class, GrizzlyBears.class})
 class GrimGuardianTest extends BaseCardTest {
 
     @Test
@@ -18,11 +15,7 @@ class GrimGuardianTest extends BaseCardTest {
     void ownEntryTriggers() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new GrimGuardian()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrimGuardian(), "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -35,10 +28,7 @@ class GrimGuardianTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new GrimGuardian());
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -51,10 +41,7 @@ class GrimGuardianTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new GrimGuardian());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -66,14 +53,50 @@ class GrimGuardianTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new GrimGuardian());
-        harness.setHand(player2, List.of(new GloriousAnthem()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
         harness.forceActivePlayer(player2);
 
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A second Grim Guardian triggers both Guardians exactly once")
+    void secondGuardianTriggersBothGuardians() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GrimGuardian());
+
+        harness.castFromHand(player1, new GrimGuardian(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Constellation resolves after Grim Guardian dies")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        var guardian = harness.enterBattlefieldAndReturn(player1, new GrimGuardian());
+        harness.assertLife(player2, 20);
+
+        guardian.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Grim Guardian");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
     }
 }

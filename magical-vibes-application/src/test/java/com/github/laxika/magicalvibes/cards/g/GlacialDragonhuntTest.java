@@ -25,8 +25,7 @@ class GlacialDragonhuntTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
@@ -45,8 +44,7 @@ class GlacialDragonhuntTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
@@ -62,8 +60,7 @@ class GlacialDragonhuntTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -91,6 +88,59 @@ class GlacialDragonhuntTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void canDiscardANonlandWithNoCreaturesOnTheBattlefield() {
+        harness.setHand(player1, List.of(new GlacialDragonhunt()));
+        harness.setLibrary(player1, List.of(new Shock()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Glacial Dragonhunt");
+        harness.assertNotInHand(player1, "Shock");
+    }
+
+    @Test
+    void canTargetOwnCreatureAndDamageWaitsForTriggerResolution() {
+        harness.setHand(player1, List.of(new GlacialDragonhunt()));
+        harness.setLibrary(player1, List.of(new Shock()));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    void harmonizeCanPayFullCostWithoutTappingACreature() {
+        Card spell = new GlacialDragonhunt();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Glacial Dragonhunt");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 

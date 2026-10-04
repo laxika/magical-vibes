@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.d.DelverOfSecrets;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.StonecoilSerpent;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,7 +100,7 @@ class ExtinctionEventTest extends BaseCardTest {
     @ValueSource(strings = {"ODD", "EVEN"})
     void faceDownCreatureCountsAsEven(String parity) {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrystallineGiant());
-        creature.setFaceDown(true);
+        creature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
         castExtinctionEvent();
         harness.handleListChoice(player1, parity);

@@ -111,7 +111,7 @@ class FlowstoneEmbraceTest extends BaseCardTest {
     @Test
     void repeatedActivationsKillCreatureAndPutUnattachedAuraInGraveyard() {
         Permanent creature = addCreatureReady(player1, new FomoriNomad());
-        creature.setTapped(true);
+        creature.tap();
         attachFlowstoneEmbrace(player1, creature);
         Permanent aura = findPermanent(player1, "Flowstone Embrace");
 
@@ -120,7 +120,7 @@ class FlowstoneEmbraceTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
-        aura.setTapped(false);
+        aura.untap();
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 

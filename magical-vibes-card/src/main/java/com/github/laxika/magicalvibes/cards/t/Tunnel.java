@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "SUM", collectorNumber = "181")
 @CardRegistration(set = "3ED", collectorNumber = "181")
 @CardRegistration(set = "2ED", collectorNumber = "179")
+@CardRegistration(set = "LEA", collectorNumber = "178")
+@CardRegistration(set = "LEB", collectorNumber = "179")
 public class Tunnel extends Card {
 
     public Tunnel() {

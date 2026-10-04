@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "UDS", collectorNumber = "109")
 @CardRegistration(set = "TSB", collectorNumber = "80")
+@CardRegistration(set = "ARC", collectorNumber = "60")
 public class HuntingMoa extends Card {
 
     public HuntingMoa() {

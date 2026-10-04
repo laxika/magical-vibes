@@ -122,7 +122,7 @@ class ElectricEelTest extends BaseCardTest {
     @Test
     void abilityCanBeActivatedWhileTapped() {
         Permanent eel = addCreatureReady(player1, new ElectricEel());
-        eel.setTapped(true);
+        eel.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 

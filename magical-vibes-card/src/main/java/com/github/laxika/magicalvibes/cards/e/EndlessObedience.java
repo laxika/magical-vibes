@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "94")
+@CardRegistration(set = "ZNC", collectorNumber = "41")
 public class EndlessObedience extends Card {
 
     public EndlessObedience() {

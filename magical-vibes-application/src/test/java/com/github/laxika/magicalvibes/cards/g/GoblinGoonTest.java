@@ -63,4 +63,66 @@ class GoblinGoonTest extends BaseCardTest {
 
         assertThat(goon.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Goblin Goon counts itself when the defending player controls no creatures")
+    void canAttackAsOnlyCreatureAgainstEmptyBattlefield() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new GoblinGoon());
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Cannot attack when controlling fewer creatures, including tapped defenders")
+    void cannotAttackWhenDefenderControlsMoreCreatures() {
+        addCreatureReady(player1, new GoblinGoon());
+        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
+        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tapped friendly creatures count toward the attack restriction")
+    void canAttackWithTappedFriendlyCreature() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new GoblinGoon());
+        addCreatureReady(player1, new FugitiveWizard()).setTapped(true);
+        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Cannot block when the attacking player controls more creatures")
+    void cannotBlockWhenAttackerControlsMoreCreatures() {
+        addCreatureReady(player1, new FugitiveWizard());
+        addCreatureReady(player1, new FugitiveWizard()).setTapped(true);
+        addCreatureReady(player2, new GoblinGoon());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tapped friendly creatures count toward the block restriction")
+    void canBlockWithTappedFriendlyCreature() {
+        addCreatureReady(player1, new FugitiveWizard());
+        Permanent goon = addCreatureReady(player2, new GoblinGoon());
+        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(goon.isBlocking()).isTrue();
+    }
 }

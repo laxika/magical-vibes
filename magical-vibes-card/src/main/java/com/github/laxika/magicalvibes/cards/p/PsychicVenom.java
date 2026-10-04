@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ME1", collectorNumber = "46")
 @CardRegistration(set = "3ED", collectorNumber = "76")
 @CardRegistration(set = "2ED", collectorNumber = "76")
+@CardRegistration(set = "LEA", collectorNumber = "75")
+@CardRegistration(set = "LEB", collectorNumber = "76")
 public class PsychicVenom extends Card {
 
     public PsychicVenom() {

@@ -53,7 +53,7 @@ class FearOfImmobilityTest extends BaseCardTest {
     @Test
     void putsStunCounterOnAlreadyTappedOpponentCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WaryWatchdog());
-        target.setTapped(true);
+        target.tap();
 
         castFearOfImmobility(target);
 

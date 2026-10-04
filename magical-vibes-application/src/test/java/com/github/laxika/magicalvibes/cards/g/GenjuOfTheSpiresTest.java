@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
+import com.github.laxika.magicalvibes.cards.w.WearAway;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GenjuOfTheSpires.class, Mountain.class, Forest.class, StoneRain.class})
+@CardUsed({GenjuOfTheSpires.class, Mountain.class, Forest.class, StoneRain.class, WearAway.class})
 class GenjuOfTheSpiresTest extends BaseCardTest {
 
     @Test
@@ -110,6 +111,58 @@ class GenjuOfTheSpiresTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(attachedGenjuId));
     }
 
+    @Test
+    @DisplayName("Destroying Genju in response does not stop its pending animation")
+    void animationResolvesAfterAuraIsDestroyed() {
+        Permanent mountain = addMountainWithGenju();
+        UUID genjuId = harness.getPermanentId(player1, "Genju of the Spires");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Genju of the Spires")),
+                null, null);
+
+        harness.setHand(player2, List.of(new WearAway()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, genjuId);
+        harness.assertInGraveyard(player1, "Genju of the Spires");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, mountain)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
+        assertThat(gqs.isLand(gd, mountain)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying Genju after animation leaves the Mountain animated")
+    void animationPersistsAfterAuraIsDestroyed() {
+        Permanent mountain = addMountainWithGenju();
+        activateGenju();
+
+        harness.setHand(player1, List.of(new WearAway()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Genju of the Spires"));
+
+        harness.assertInGraveyard(player1, "Genju of the Spires");
+        assertThat(gqs.isCreature(gd, mountain)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activation does not add power or toughness")
+    void repeatedActivationDoesNotStackStats() {
+        Permanent mountain = addMountainWithGenju();
+        activateGenju();
+        activateGenju();
+
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, mountain)).containsExactly(CardSubtype.SPIRIT);
+    }
+
     private Permanent addMountainWithGenju() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new GenjuOfTheSpires()));
@@ -137,7 +190,6 @@ class GenjuOfTheSpiresTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new StoneRain()));
         harness.addMana(player2, ManaColor.RED, 3);
-        harness.castSorcery(player2, 0, mountain.getId());
-        harness.passBothPriorities(); // resolve Stone Rain
+        harness.castAndResolveSorcery(player2, 0, mountain.getId());
     }
 }

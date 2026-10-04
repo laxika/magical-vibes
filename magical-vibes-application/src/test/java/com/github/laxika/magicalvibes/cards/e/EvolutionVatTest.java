@@ -128,7 +128,7 @@ class EvolutionVatTest extends BaseCardTest {
     void alreadyTappedCreatureCanRepeatedlyDoubleCounters() {
         addReadyVat(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
-        target.setTapped(true);
+        target.tap();
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, null, target.getId());

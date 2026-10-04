@@ -86,7 +86,7 @@ class FirescreamerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent firescreamer = harness.addToBattlefieldAndReturn(player1, new Firescreamer());
         firescreamer.setSummoningSick(true);
-        firescreamer.setTapped(true);
+        firescreamer.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

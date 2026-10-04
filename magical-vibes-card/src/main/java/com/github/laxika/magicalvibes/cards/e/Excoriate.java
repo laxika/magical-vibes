@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "10")
+@CardRegistration(set = "E01", collectorNumber = "5")
 public class Excoriate extends Card {
 
     public Excoriate() {

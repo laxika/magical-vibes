@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GenerousGift.class, GrizzlyBears.class, Forest.class})
+@CardUsed({GenerousGift.class, GrizzlyBears.class, Forest.class, DarksteelIngot.class})
 class GenerousGiftTest extends BaseCardTest {
 
     @Test
@@ -59,6 +60,48 @@ class GenerousGiftTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Creates an Elephant for an indestructible permanent's controller")
+    void createsElephantWhenTargetIsIndestructible() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        castGenerousGift(target);
+
+        harness.assertOnBattlefield(player2, "Darksteel Ingot");
+        harness.assertNotInGraveyard(player2, "Darksteel Ingot");
+        assertThat(findPermanents(player2, "Elephant")).hasSize(1);
+        assertThat(findPermanents(player1, "Elephant")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can destroy your own permanent and give you the Elephant")
+    void canTargetOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castGenerousGift(target);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(findPermanents(player1, "Elephant")).hasSize(1);
+        assertThat(findPermanents(player2, "Elephant")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not create an extra Elephant when its target has already been destroyed")
+    void doesNotCreateTokenWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new GenerousGift(), new GenerousGift()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(findPermanents(player2, "Elephant")).hasSize(1);
+        assertThat(findPermanents(player1, "Elephant")).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castGenerousGift(Permanent target) {

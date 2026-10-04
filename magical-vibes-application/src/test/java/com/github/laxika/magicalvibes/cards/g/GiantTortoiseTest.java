@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantTortoise.class})
+@CardUsed({GiantTortoise.class, LightningBolt.class})
 class GiantTortoiseTest extends BaseCardTest {
 
     @Test
@@ -55,5 +59,32 @@ class GiantTortoiseTest extends BaseCardTest {
 
         tortoise.untap();
         assertThat(gqs.getEffectiveToughness(gd, tortoise)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Untapped tortoise survives three damage thanks to its toughness bonus")
+    void untappedSurvivesThreeDamage() {
+        Permanent tortoise = harness.addToBattlefieldAndReturn(player2, new GiantTortoise());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, tortoise.getId());
+
+        harness.assertOnBattlefield(player2, "Giant Tortoise");
+        harness.assertNotInGraveyard(player2, "Giant Tortoise");
+    }
+
+    @Test
+    @DisplayName("Tapped tortoise dies to three damage without its toughness bonus")
+    void tappedDiesToThreeDamage() {
+        Permanent tortoise = harness.addToBattlefieldAndReturn(player2, new GiantTortoise());
+        tortoise.tap();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, tortoise.getId());
+
+        harness.assertNotOnBattlefield(player2, "Giant Tortoise");
+        harness.assertInGraveyard(player2, "Giant Tortoise");
     }
 }

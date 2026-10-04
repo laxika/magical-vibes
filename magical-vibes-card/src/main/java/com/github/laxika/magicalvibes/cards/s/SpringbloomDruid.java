@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "OTC", collectorNumber = "208")
 @CardRegistration(set = "EOC", collectorNumber = "51")
 @CardRegistration(set = "KHC", collectorNumber = "74")
+@CardRegistration(set = "ZNC", collectorNumber = "83")
 public class SpringbloomDruid extends Card {
 
     public SpringbloomDruid() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "ELD", collectorNumber = "295")
 @CardRegistration(set = "CMM", collectorNumber = "275")
 @CardRegistration(set = "DSC", collectorNumber = "172")
+@CardRegistration(set = "ZNC", collectorNumber = "61")
 public class BeanstalkGiant extends Card {
 
     public BeanstalkGiant() {

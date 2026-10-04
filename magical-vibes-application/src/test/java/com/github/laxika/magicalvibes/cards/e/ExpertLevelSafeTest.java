@@ -118,7 +118,7 @@ class ExpertLevelSafeTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 1);
         harness.handleXValueChosen(player2, 2);
 
-        safe.setTapped(false);
+        safe.untap();
         addManaForAbility();
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

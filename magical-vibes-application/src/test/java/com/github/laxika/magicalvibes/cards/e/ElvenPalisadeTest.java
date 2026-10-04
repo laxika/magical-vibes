@@ -139,7 +139,7 @@ class ElvenPalisadeTest extends BaseCardTest {
     void canSacrificeTappedForest() {
         harness.addToBattlefield(player1, new ElvenPalisade());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent attacker = addAttacker(player1);
         declareAttackerWithBlocker(player1, attacker);
 

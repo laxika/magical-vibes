@@ -177,7 +177,7 @@ class EyeOfYawgmothTest extends BaseCardTest {
         Permanent other = addCreatureReady(player1, new SpinelessThug());
         other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent chosenCreature = harness.addToBattlefieldAndReturn(player1, new SpinelessThug());
-        chosenCreature.setTapped(true);
+        chosenCreature.tap();
         Card first = new EyeOfYawgmoth();
         Card second = new SpinelessThug();
         Card third = new EyeOfYawgmoth();
@@ -208,7 +208,7 @@ class EyeOfYawgmothTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped Eye")
     void cannotActivateWhileTapped() {
         Permanent eye = addReadyEye();
-        eye.setTapped(true);
+        eye.tap();
         addCreatureReady(player1, new SpinelessThug());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

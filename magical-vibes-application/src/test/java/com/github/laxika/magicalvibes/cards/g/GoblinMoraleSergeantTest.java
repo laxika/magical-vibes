@@ -80,6 +80,68 @@ class GoblinMoraleSergeantTest extends BaseCardTest {
     }
 
     @Test
+    void decliningConjureLeavesLibraryUnchanged() {
+        addCreatureReady(player1, new GoblinMoraleSergeant());
+        Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        declareAttackers(List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void decliningEnlistDoesNotOfferConjure() {
+        addCreatureReady(player1, new GoblinMoraleSergeant());
+        Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(supporter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void enlistingPreviouslyConjuredCreatureStillOffersDuplicate() {
+        addCreatureReady(player1, new GoblinMoraleSergeant());
+        Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        Card conjured = gd.playerHands.get(player1.getId()).getFirst();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromHand(player1, conjured, "{1}{G}");
+        harness.passBothPriorities();
+        Permanent duplicate = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(conjured.getId()))
+                .findFirst().orElseThrow();
+        addCreatureReady(player1, new GoblinMoraleSergeant());
+
+        declareAttackers(List.of(3));
+        harness.handleMultiplePermanentsChosen(player1, List.of(duplicate.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     void tokenEnlistedCreatureDoesNotTrigger() {
         addCreatureReady(player1, new GoblinMoraleSergeant());
         Card tokenBear = new GrizzlyBears();

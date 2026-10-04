@@ -149,6 +149,7 @@ public class Card {
     private String name;
     private CardType type;
     private String manaCost;
+    private Integer combinedManaValue;
     /** Cached parsed ManaCost, invalidated on setManaCost. */
     @Getter(AccessLevel.NONE)
     private ManaCost parsedManaCost;
@@ -330,6 +331,7 @@ public class Card {
             this.type = oracle.type();
             this.additionalTypes = oracle.additionalTypes();
             this.manaCost = oracle.manaCost();
+            this.combinedManaValue = oracle.combinedManaValue();
             this.color = oracle.color();
             this.colors = oracle.colors();
             this.colorIdentity = oracle.colorIdentity();
@@ -380,6 +382,7 @@ public class Card {
         this.name = source.name;
         this.type = source.type;
         this.manaCost = source.manaCost;
+        this.combinedManaValue = source.combinedManaValue;
         this.parsedManaCost = source.parsedManaCost;
         this.color = source.color;
         this.colors = source.colors;
@@ -523,6 +526,7 @@ public class Card {
         this.name = face.name;
         this.type = face.type;
         this.manaCost = face.manaCost;
+        this.combinedManaValue = face.combinedManaValue;
         this.parsedManaCost = face.parsedManaCost;
         this.color = face.color;
         this.colors = face.colors;
@@ -1652,10 +1656,10 @@ public class Card {
      * description beginning with "Cycling", so the reminder text is built from the cost here
      * rather than retyped per card.
      *
-     * <p>Cycling that does something extra as it resolves (the Sojourners and Resounding cycles,
-     * Deem Worthy) is a different ability — build those with
-     * {@link #addHandActivatedAbility(ActivatedAbility)} and list the extra effect ahead of the
-     * draw. Typecycling and landcycling likewise search rather than draw.
+     * <p>Abilities triggered by cycling (such as the Sojourners and Resounding cycles) belong
+     * in {@link EffectSlot#ON_SELF_CYCLED}; they trigger separately from the cycling draw ability.
+     * Typecycling and landcycling instead use a hand activated ability that searches rather
+     * than draws.
      */
     public void addCycling(String cost) {
         addHandActivatedAbility(new ActivatedAbility(false, cost,
@@ -1800,6 +1804,7 @@ public class Card {
     public void setManaCost(String manaCost) {
         assertMutable();
         this.manaCost = manaCost;
+        this.combinedManaValue = null;
         this.parsedManaCost = null;
     }
 
@@ -1818,6 +1823,7 @@ public class Card {
     }
 
     public int getManaValue() {
+        if (combinedManaValue != null) return combinedManaValue;
         ManaCost cost = getParsedManaCost();
         return cost != null ? cost.getManaValue() : 0;
     }

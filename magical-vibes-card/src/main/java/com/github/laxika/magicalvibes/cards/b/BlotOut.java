@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "12")
+@CardRegistration(set = "MAT", collectorNumber = "62")
+@CardRegistration(set = "MAT", collectorNumber = "112")
+@CardRegistration(set = "MAT", collectorNumber = "196")
 public class BlotOut extends Card {
 
     public BlotOut() {

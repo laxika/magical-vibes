@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "GN3", collectorNumber = "66")
 @CardRegistration(set = "SOA", collectorNumber = "36")
 @CardRegistration(set = "SLD", collectorNumber = "2389")
+@CardRegistration(set = "ARC", collectorNumber = "29")
 public class Zombify extends Card {
 
     public Zombify() {

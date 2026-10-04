@@ -83,8 +83,10 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (amount <= 0) {
             return;
         }
-        if (e.subtypes().contains(CardSubtype.CLUE)) {
-            triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
+        if (e.investigate() && gameData.pendingTokenCreationReplacement == null) {
+            for (int action = 0; action < amount; action++) {
+                triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
+            }
         }
         int power = amountEvaluationService.evaluate(gameData, e.power(), context);
         int toughness = amountEvaluationService.evaluate(gameData, e.toughness(), context);

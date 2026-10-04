@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "228")
+@CardRegistration(set = "ZNC", collectorNumber = "110")
 public class DimirKeyrune extends Card {
 
     public DimirKeyrune() {

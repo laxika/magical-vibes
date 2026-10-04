@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "182")
+@CardRegistration(set = "LEA", collectorNumber = "130")
 @CardRegistration(set = "6ED", collectorNumber = "160")
 @CardRegistration(set = "5ED", collectorNumber = "196")
 @CardRegistration(set = "4ED", collectorNumber = "164")
@@ -32,6 +33,7 @@ import java.util.Set;
 @CardRegistration(set = "DMR", collectorNumber = "103")
 @CardRegistration(set = "ME4", collectorNumber = "99")
 @CardRegistration(set = "2ED", collectorNumber = "131")
+@CardRegistration(set = "LEB", collectorNumber = "131")
 public class Terror extends Card {
 
     public Terror() {

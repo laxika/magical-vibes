@@ -107,7 +107,7 @@ class EnslavedScoutTest extends BaseCardTest {
     @Test
     void canActivateWhileTapped() {
         Permanent scout = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
-        scout.setTapped(true);
+        scout.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "MRD", collectorNumber = "104")
 @CardRegistration(set = "DDG", collectorNumber = "70")
 @CardRegistration(set = "C21", collectorNumber = "179")
+@CardRegistration(set = "ARC", collectorNumber = "46")
 public class SeethingSong extends Card {
 
     public SeethingSong() {

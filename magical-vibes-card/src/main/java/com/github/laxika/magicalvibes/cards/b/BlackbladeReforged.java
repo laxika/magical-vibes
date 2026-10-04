@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "BRR", collectorNumber = "6")
 @CardRegistration(set = "DMC", collectorNumber = "178")
 @CardRegistration(set = "NEC", collectorNumber = "146")
+@CardRegistration(set = "ZNC", collectorNumber = "107")
 public class BlackbladeReforged extends Card {
 
     public BlackbladeReforged() {

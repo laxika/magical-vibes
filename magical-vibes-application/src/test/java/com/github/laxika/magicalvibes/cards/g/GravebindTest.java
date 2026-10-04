@@ -89,9 +89,7 @@ class GravebindTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -148,6 +146,57 @@ class GravebindTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Wall of Pine Needles");
         harness.assertInGraveyard(player2, "Wall of Pine Needles");
+    }
+
+    @Test
+    @DisplayName("Casting during upkeep waits until the next turn's upkeep to draw")
+    void castingDuringUpkeepDoesNotDrawDuringSameTurn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new Gravebind()));
+        harness.setLibrary(player1, List.of(new BalduvianBears(), new ZuranOrb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Balduvian Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The delayed draw survives the target's death and triggers only once")
+    void delayedDrawSurvivesTargetDeathAndTriggersOnlyOnce() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new Gravebind()));
+        harness.setLibrary(player1, List.of(new ZuranOrb(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Zuran Orb");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private Permanent addRegeneratingCreature(Player player) {

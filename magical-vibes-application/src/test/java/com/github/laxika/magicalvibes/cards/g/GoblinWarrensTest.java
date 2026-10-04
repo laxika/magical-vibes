@@ -144,6 +144,35 @@ class GoblinWarrensTest extends BaseCardTest {
                 .hasMessageContaining("Not enough permanents to sacrifice");
     }
 
+    @Test
+    @DisplayName("Tapped Goblins are sacrificed before the ability resolves")
+    void tappedGoblinsArePaidAsCostsBeforeResolution() {
+        Permanent warrens = harness.addToBattlefieldAndReturn(player1, new GoblinWarrens());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        Permanent otherGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        goblin.setTapped(true);
+        otherGoblin.setTapped(true);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(warrens), null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(goblin.getCard(), otherGoblin.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(warrens);
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(3)
+                .allSatisfy(token -> {
+                    assertThat(token.isTapped()).isFalse();
+                    assertThat(token.isSummoningSick()).isTrue();
+                });
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
+    }
+
     private int indexOf(Permanent perm) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(perm);
     }

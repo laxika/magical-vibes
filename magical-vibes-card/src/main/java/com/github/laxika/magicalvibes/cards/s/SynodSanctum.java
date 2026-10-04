@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "252")
+@CardRegistration(set = "ARC", collectorNumber = "120")
 public class SynodSanctum extends Card {
 
     public SynodSanctum() {
