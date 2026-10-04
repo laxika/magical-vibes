@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BountyOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IntoTheVoid;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
@@ -15,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HinataDawnCrowned.class, LightningStrike.class, IntoTheVoid.class, GrizzlyBears.class})
+@CardUsed({HinataDawnCrowned.class, LightningStrike.class, IntoTheVoid.class, GrizzlyBears.class,
+        BountyOfMight.class})
 class HinataDawnCrownedTest extends BaseCardTest {
 
     @Test
@@ -78,5 +80,58 @@ class HinataDawnCrownedTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(
                 player2, 0, List.of(firstBear.getId(), secondBear.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void repeatedTargetGetsOnlyOneReduction() {
+        Permanent hinata = harness.addToBattlefieldAndReturn(player1, new HinataDawnCrowned());
+        harness.setHand(player1, List.of(new BountyOfMight()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, List.of(hinata.getId(), hinata.getId(), hinata.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void repeatedTargetGetsOnlyOneOpponentTax() {
+        Permanent hinata = harness.addToBattlefieldAndReturn(player1, new HinataDawnCrowned());
+        harness.setHand(player2, List.of(new BountyOfMight()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+
+        harness.castInstant(player2, 0, List.of(hinata.getId(), hinata.getId(), hinata.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void zeroTargetsGiveNoDiscount() {
+        harness.addToBattlefield(player1, new HinataDawnCrowned());
+        harness.setHand(player1, List.of(new IntoTheVoid()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void zeroTargetsGiveNoOpponentTax() {
+        harness.addToBattlefield(player1, new HinataDawnCrowned());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new IntoTheVoid()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player2, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
