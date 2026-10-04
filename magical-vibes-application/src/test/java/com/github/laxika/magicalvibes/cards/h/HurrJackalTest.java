@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,10 +16,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HurrJackal.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class})
+@CardUsed({HurrJackal.class, DrudgeSkeletons.class, Forest.class, GrizzlyBears.class, LightningBolt.class})
 class HurrJackalTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -144,6 +147,54 @@ class HurrJackalTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
+
+    @Test
+    @DisplayName("The ability can target Hurr Jackal itself without a regeneration ability")
+    void canTargetItself() {
+        Permanent jackal = addCreatureReady(player1, new HurrJackal());
+
+        harness.activateAbility(player1, 0, null, jackal.getId());
+        harness.passBothPriorities();
+
+        assertThat(jackal.isCantRegenerateThisTurn()).isTrue();
+        harness.assertOnBattlefield(player1, "Hurr Jackal");
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Hurr Jackal dies in response")
+    void abilityResolvesAfterSourceDies() {
+        Permanent jackal = addCreatureReady(player1, new HurrJackal());
+        Permanent skeleton = addRegeneratingSkeleton(player2);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, skeleton.getId());
+        harness.castAndResolveInstant(player2, 0, jackal.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hurr Jackal");
+        assertThat(skeleton.isCantRegenerateThisTurn()).isTrue();
+        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A regeneration shield created after the restriction cannot save the creature")
+    void laterRegenerationShieldDoesNotPreventDestruction() {
+        addCreatureReady(player1, new HurrJackal());
+        Permanent skeleton = addCreatureReady(player2, new DrudgeSkeletons());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, skeleton.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, skeleton.getId());
+
+        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertInGraveyard(player2, "Drudge Skeletons");
+    }
 
     private Permanent addRegeneratingSkeleton(Player player) {
         Permanent perm = addCreatureReady(player, new DrudgeSkeletons());
