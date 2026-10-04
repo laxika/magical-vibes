@@ -19,7 +19,7 @@ class GustcloakCavalierTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking offers to tap a target creature")
     void attackingMayTapTargetCreature() {
-        Permanent cavalier = addCavalier();
+        addCavalier();
         Permanent bears = addCreatureReady(player2);
 
         declareAttackers(player1, List.of(0));
@@ -138,6 +138,39 @@ class GustcloakCavalierTest extends BaseCardTest {
         assertThat(cavalier.isAttacking()).isFalse();
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger can tap a creature controlled by its controller")
+    void attackingMayTapFriendlyCreature() {
+        addCavalier();
+        Permanent bear = addCreatureReady(player1);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bear.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bear.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already untapped Cavalier can still be removed from combat")
+    void untappedCavalierCanRetreat() {
+        Permanent cavalier = addCavalier();
+        cavalier.setAttacking(true);
+        cavalier.setAttackTarget(player2.getId());
+        Permanent blocker = addCreatureReady(player2, new BenalishCavalry());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cavalier.isTapped()).isFalse();
+        assertThat(cavalier.isAttacking()).isFalse();
+        assertThat(cavalier.getAttackTarget()).isNull();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     private Permanent addCavalier() {
