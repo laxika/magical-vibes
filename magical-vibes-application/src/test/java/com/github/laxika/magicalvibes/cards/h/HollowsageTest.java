@@ -96,6 +96,42 @@ class HollowsageTest extends BaseCardTest {
         return perm;
     }
 
+    @Test
+    @DisplayName("A player with an empty hand can be targeted and discards nothing")
+    void emptyHandIsLegalTarget() {
+        addHollowsageTapped(player1);
+        harness.setHand(player2, List.of());
+
+        runUntapStep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The targeted player chooses exactly one card from their hand")
+    void targetChoosesOneCard() {
+        addHollowsageTapped(player1);
+        SafeholdSentry keptCard = new SafeholdSentry();
+        SafeholdSentry discardedCard = new SafeholdSentry();
+        harness.setHand(player2, List.of(keptCard, discardedCard));
+
+        runUntapStep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     /**
      * Advances from the opponent's turn into the given player's untap step so the engine actually
      * runs the untap (which is what fires the "becomes untapped" trigger).
@@ -105,7 +141,7 @@ class HollowsageTest extends BaseCardTest {
         harness.forceActivePlayer(opponent);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
+        harness.passUntil(opponent, TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // CLEANUP -> next turn: untaps and enqueues the trigger
     }
