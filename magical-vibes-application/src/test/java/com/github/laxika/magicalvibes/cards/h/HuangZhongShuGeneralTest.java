@@ -51,24 +51,41 @@ class HuangZhongShuGeneralTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Each Huang Zhong can be blocked by one creature")
-    void eachHuangZhongCanBeBlockedByOneCreature() {
+    @DisplayName("Huang Zhong's restriction does not limit blockers for another attacker")
+    void restrictionDoesNotApplyToOtherAttackers() {
         Permanent firstAttacker = addCreatureReady(player1, new HuangZhongShuGeneral());
         firstAttacker.setAttacking(true);
-        Permanent secondAttacker = addCreatureReady(player1, new HuangZhongShuGeneral());
+        Permanent secondAttacker = addCreatureReady(player1, new ShuFootSoldiers());
         secondAttacker.setAttacking(true);
 
         Permanent firstBlocker = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent secondBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent thirdBlocker = addCreatureReady(player2, new ShuFootSoldiers());
 
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
-                new BlockerAssignment(1, 1)
+                new BlockerAssignment(1, 1),
+                new BlockerAssignment(2, 1)
         ));
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+        assertThat(thirdBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Huang Zhong may go unblocked even when the defender has a creature")
+    void canGoUnblocked() {
+        addCreatureReady(player1, new HuangZhongShuGeneral());
+        addCreatureReady(player2, new ShuFootSoldiers());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 }
