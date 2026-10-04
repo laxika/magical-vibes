@@ -50,6 +50,25 @@ class HopeAndGloryTest extends BaseCardTest {
     }
 
     @Test
+    void boostsUntappedTargetsWithoutAffectingOtherCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AngelicCurator());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AngelicCurator());
+        Permanent unchosen = addTappedCreature();
+
+        castHopeAndGlory(first, second);
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(second.isTapped()).isFalse();
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(unchosen.isTapped()).isTrue();
+        assertThat(unchosen.getPowerModifier()).isZero();
+        assertThat(unchosen.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("The +1/+1 bonuses expire at end of turn")
     void bonusesExpireAtEndOfTurn() {
         Permanent first = addTappedCreature();
@@ -57,7 +76,6 @@ class HopeAndGloryTest extends BaseCardTest {
         castHopeAndGlory(first, second);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(first.getPowerModifier()).isZero();
