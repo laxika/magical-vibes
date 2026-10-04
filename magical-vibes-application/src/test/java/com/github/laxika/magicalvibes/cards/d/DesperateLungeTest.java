@@ -40,7 +40,9 @@ class DesperateLungeTest extends BaseCardTest {
 
     @Test
     void boostAndFlyingWearOffAtCleanup() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        int powerBefore = gqs.getEffectivePower(gd, bear);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, bear);
         harness.setHand(player1, List.of(new DesperateLunge()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -53,9 +55,8 @@ class DesperateLungeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(toughnessBefore);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
     }
 
