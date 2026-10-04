@@ -52,13 +52,51 @@ class GoblinPyromancerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goblin Piledriver")).isEmpty();
         assertThat(findPermanents(player2, "Goblin Piledriver")).isEmpty();
         assertThat(findPermanents(player1, "Goblin Pyromancer")).isEmpty();
         assertThat(findPermanents(player1, "Glory Seeker")).hasSize(1);
+    }
+
+    @Test
+    void destroysGoblinsAtTheBeginningOfOpponentsEndStep() {
+        harness.addToBattlefield(player1, new GoblinPyromancer());
+        harness.addToBattlefield(player1, new GoblinPiledriver());
+        harness.addToBattlefield(player2, new GoblinPiledriver());
+        harness.addToBattlefield(player2, new GlorySeeker());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin Pyromancer")).isEmpty();
+        assertThat(findPermanents(player1, "Goblin Piledriver")).isEmpty();
+        assertThat(findPermanents(player2, "Goblin Piledriver")).isEmpty();
+        assertThat(findPermanents(player2, "Glory Seeker")).hasSize(1);
+    }
+
+    @Test
+    void multipleEntryTriggersStackTheirBoostsOnExistingGoblins() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinPiledriver());
+        Permanent nonGoblin = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+
+        harness.castFromHand(player1, new GoblinPyromancer(), "{3}{R}");
+        resolveAllTriggers();
+        Permanent firstPyromancer = findPermanent(player1, "Goblin Pyromancer");
+
+        harness.castFromHand(player1, new GoblinPyromancer(), "{3}{R}");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, firstPyromancer)).isEqualTo(8);
+        assertThat(findPermanents(player1, "Goblin Pyromancer"))
+                .extracting(permanent -> gqs.getEffectivePower(gd, permanent))
+                .containsExactlyInAnyOrder(8, 5);
+        assertThat(gqs.getEffectivePower(gd, nonGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
     }
 }
