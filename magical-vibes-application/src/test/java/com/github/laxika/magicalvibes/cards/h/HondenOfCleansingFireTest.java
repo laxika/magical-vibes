@@ -61,4 +61,31 @@ class HondenOfCleansingFireTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
+
+    @Test
+    @DisplayName("The trigger still gains life after its source leaves, counting only remaining Shrines")
+    void sourceLeavingDoesNotRemoveTrigger() {
+        var source = harness.addToBattlefieldAndReturn(player1, new HondenOfCleansingFire());
+        harness.addToBattlefield(player1, new HondenOfLifesWeb());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, source));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Gains no life if no Shrines remain when the trigger resolves")
+    void gainsNoLifeWhenLastShrineLeaves() {
+        var source = harness.addToBattlefieldAndReturn(player1, new HondenOfCleansingFire());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, source));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
 }
