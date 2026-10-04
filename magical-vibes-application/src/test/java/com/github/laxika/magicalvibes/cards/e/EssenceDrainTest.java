@@ -24,8 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({EssenceDrain.class, GrizzlyBears.class, AirElemental.class, Forest.class, StoryCircle.class})
 class EssenceDrainTest extends BaseCardTest {
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting Essence Drain targeting a player puts it on the stack")
     void castingTargetingPlayerPutsOnStack() {
@@ -39,8 +37,6 @@ class EssenceDrainTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
-
-    // ===== Damage to player and life gain =====
 
     @Test
     @DisplayName("Essence Drain deals 3 damage to target player and controller gains 3 life")
@@ -96,13 +92,10 @@ class EssenceDrainTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest");
     }
 
-    // ===== Damage to creature =====
-
     @Test
     @DisplayName("Essence Drain deals 3 damage to target creature and kills it if toughness <= 3")
     void deals3DamageToCreatureAndKillsIt() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new EssenceDrain()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -119,8 +112,7 @@ class EssenceDrainTest extends BaseCardTest {
     @Test
     @DisplayName("Essence Drain deals 3 damage to creature with toughness > 3 without killing it")
     void deals3DamageToCreatureWithoutKillingIt() {
-        Permanent elemental = new Permanent(new AirElemental());
-        gd.playerBattlefields.get(player2.getId()).add(elemental);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         harness.setHand(player1, List.of(new EssenceDrain()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -133,8 +125,6 @@ class EssenceDrainTest extends BaseCardTest {
         // Controller still gains 3 life
         harness.assertLife(player1, 18);
     }
-
-    // ===== Self-target at low life (CR 704.3 loss deferral) =====
 
     @Test
     @DisplayName("Targeting yourself at 3 life: 3 damage then +3 life, you survive at 3")
@@ -152,13 +142,10 @@ class EssenceDrainTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Essence Drain fizzles when target creature is removed before resolution")
     void fizzlesWhenTargetCreatureRemoved() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new EssenceDrain()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -171,6 +158,35 @@ class EssenceDrainTest extends BaseCardTest {
 
         // Spell fizzles — no life gain
         harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Essence Drain can target its controller's creature and gain life above 20")
+    void targetsOwnCreatureAndGainsLifeAboveTwenty() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EssenceDrain()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Essence Drain gains the full 3 life even when the opponent has only 1 life")
+    void gainsFullLifeWhenDamageIsLethalToOpponent() {
+        harness.setHand(player1, List.of(new EssenceDrain()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, -2);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
 

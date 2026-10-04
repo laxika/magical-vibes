@@ -92,7 +92,7 @@ class CityOfShadowsTest extends BaseCardTest {
     void exileCostIsPaidBeforeCounterIsAdded() {
         Permanent city = addReadyCity();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

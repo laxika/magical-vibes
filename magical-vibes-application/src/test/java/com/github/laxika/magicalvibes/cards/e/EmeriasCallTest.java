@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.CliffhavenSellSword;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EmeriasCall.class, EmeriaShatteredSkyclave.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({EmeriasCall.class, EmeriaShatteredSkyclave.class, GrizzlyBears.class, SerraAngel.class,
+        CliffhavenSellSword.class})
 class EmeriasCallTest extends BaseCardTest {
 
     @Test
@@ -86,5 +88,68 @@ class EmeriasCallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Only non-Angels controlled when Emeria's Call resolves gain indestructible")
+    void protectsOnlyExistingControlledNonAngels() {
+        Permanent existing = addCreatureReady(player1, new CliffhavenSellSword());
+        Permanent opposing = addCreatureReady(player2, new CliffhavenSellSword());
+
+        castEmeriasCall();
+
+        Permanent later = addCreatureReady(player1, new CliffhavenSellSword());
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(findPermanents(player1, "Angel Warrior")).allSatisfy(token ->
+                assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse());
+    }
+
+    @Test
+    @DisplayName("Indestructible persists through the opponent's turn")
+    void indestructiblePersistsThroughOpponentsTurn() {
+        Permanent creature = addCreatureReady(player1, new CliffhavenSellSword());
+        castEmeriasCall();
+
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining the life payment makes the land face enter tapped")
+    void backFaceEntersTappedWhenPaymentDeclined() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new EmeriasCall()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The land face enters tapped when its controller cannot afford 3 life")
+    void backFaceEntersTappedWithInsufficientLife() {
+        harness.setLife(player1, 2);
+        harness.setHand(player1, List.of(new EmeriasCall()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

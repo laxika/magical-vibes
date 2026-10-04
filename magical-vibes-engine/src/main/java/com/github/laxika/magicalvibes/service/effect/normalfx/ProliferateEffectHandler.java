@@ -65,7 +65,8 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         for (UUID playerId : gameData.playerIds) {
             if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0
                     || gameData.playerRadCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0) {
+                    || gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0
+                    || gameData.playerExperienceCounters.getOrDefault(playerId, 0) > 0) {
                 eligiblePlayerIds.add(playerId);
             }
         }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.ParadiseDruid;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SimicSignet;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,11 +17,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElorenWilds.class, Forest.class, ParadiseDruid.class, SolRing.class, Shock.class})
+@CardUsed({ElorenWilds.class, Forest.class, ParadiseDruid.class, SolRing.class, Shock.class, SimicSignet.class})
 class ElorenWildsTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -56,13 +59,32 @@ class ElorenWildsTest extends BaseCardTest {
 
     @Test
     void givesAnAdditionalManaOfTheChosenTypeForAnAnyColorPermanent() {
-        var druid = harness.addToBattlefieldAndReturn(player2, new ParadiseDruid());
-        druid.setSummoningSick(false);
+        addCreatureReady(player2, new ParadiseDruid());
 
         harness.activateAbility(player2, 0, null, null);
         harness.handleListChoice(player2, "BLUE");
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"GREEN", "BLUE"})
+    void tappingPlayerChoosesTheExtraManaTypeWhenMultipleTypesWereProduced(String chosenType) {
+        harness.addToBattlefield(player2, new SimicSignet());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player2, chosenType);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN))
+                .isEqualTo(chosenType.equals("GREEN") ? 2 : 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE))
+                .isEqualTo(chosenType.equals("BLUE") ? 2 : 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

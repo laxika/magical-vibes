@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -72,7 +71,7 @@ class ForiysianTotemTest extends BaseCardTest {
     void animatedTotemDoesNotGrantOtherCreaturesAnAdditionalBlock() {
         Permanent totem = addReadyTotem(player2);
         animate(totem, player2);
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         int bearsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
         addAttackers(2);
         beginBlockerDeclaration();
@@ -98,15 +97,84 @@ class ForiysianTotemTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, totem)).isFalse();
     }
 
-    private Permanent addReadyTotem(Player player) {
-        return addReadyCreature(player, new ForiysianTotem());
+    @Test
+    @DisplayName("Repeated animation does not allow Foriysian Totem to block three attackers")
+    void repeatedAnimationDoesNotStackAdditionalBlocks() {
+        Permanent totem = addReadyTotem(player2);
+        animate(totem, player2);
+        animate(totem, player2);
+        addAttackers(3);
+        beginBlockerDeclaration();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Another Totem does not increase an animated Totem's blocking limit")
+    void otherTotemDoesNotIncreaseBlockingLimit() {
+        Permanent totem = addReadyTotem(player2);
+        animate(totem, player2);
+        Permanent otherTotem = addReadyTotem(player2);
+        animate(otherTotem, player2);
+        addAttackers(3);
+        beginBlockerDeclaration();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    @DisplayName("An animated Totem retains its mana ability")
+    void animatedTotemCanTapForMana() {
+        Permanent totem = addReadyTotem(player1);
+        animate(totem, player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(totem.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered Totem can animate but cannot tap for mana while a creature")
+    void newlyEnteredAnimatedTotemCannotTapForMana() {
+        Permanent totem = harness.addToBattlefieldAndReturn(player1, new ForiysianTotem());
+        animate(totem, player1);
+
+        assertThat(gqs.isCreature(gd, totem)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(totem.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Totem can tap for mana and animate while tapped")
+    void newlyEnteredNoncreatureTotemCanTapThenAnimate() {
+        Permanent totem = harness.addToBattlefieldAndReturn(player1, new ForiysianTotem());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        animate(totem, player1);
+
+        assertThat(gqs.isCreature(gd, totem)).isTrue();
+        assertThat(totem.isTapped()).isTrue();
+    }
+
+    private Permanent addReadyTotem(Player player) {
+        return addCreatureReady(player, new ForiysianTotem());
     }
 
     private void animate(Permanent totem, Player player) {
@@ -119,15 +187,12 @@ class ForiysianTotemTest extends BaseCardTest {
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
             attacker.setAttacking(true);
         }
     }
 
     private void beginBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
     }
 }

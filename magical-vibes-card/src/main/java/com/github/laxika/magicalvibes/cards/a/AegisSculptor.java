@@ -20,6 +20,8 @@ import java.util.List;
 public class AegisSculptor extends Card {
 
     public AegisSculptor() {
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                new com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect(2));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.unless(
                 new AllOf(List.of(new GraveyardCardThreshold(2, new CardTruePredicate()))),
                 new MayEffect(

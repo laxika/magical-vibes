@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.DNedainBlade;
+import com.github.laxika.magicalvibes.cards.d.DwarvenWarriors;
+import com.github.laxika.magicalvibes.cards.g.Guttersnipe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +20,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(FLiAndKLiJoyous.class)
+@CardUsed({FLiAndKLiJoyous.class, DNedainBlade.class, DwarvenWarriors.class, Guttersnipe.class})
 class FLiAndKLiJoyousTest extends BaseCardTest {
 
     private static final Set<CardSubtype> ALLOWED_SUBTYPES =
@@ -82,9 +85,81 @@ class FLiAndKLiJoyousTest extends BaseCardTest {
     }
 
     private Permanent addReadySource() {
+        return addCreatureReady(player1, new FLiAndKLiJoyous());
+    }
+
+    @Test
+    void hasteAllowsManaAbilityOnTurnItEnters() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new FLiAndKLiJoyous());
-        source.setSummoningSick(false);
-        return source;
+        source.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaForColor(ALLOWED_SUBTYPES, ManaColor.RED)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bothManaCanPayColoredAndGenericPartsOfDwarfSpell() {
+        addRestrictedMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new DwarvenWarriors()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dwarven Warriors");
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaForColor(ALLOWED_SUBTYPES, ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void redManaPaysGenericEquipmentCostButCannotReplaceWhiteMana() {
+        addRestrictedMana();
+        harness.setHand(player1, List.of(new DNedainBlade()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaForColor(ALLOWED_SUBTYPES, ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void restrictedManaCannotPayForEquipAbility() {
+        addRestrictedMana();
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new DNedainBlade());
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blade.getAttachedTo()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaForColor(ALLOWED_SUBTYPES, ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void restrictedManaCannotPayForUnrelatedRedCreature() {
+        addRestrictedMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Guttersnipe()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaForColor(ALLOWED_SUBTYPES, ManaColor.RED)).isEqualTo(2);
     }
 
     private void addRestrictedMana() {

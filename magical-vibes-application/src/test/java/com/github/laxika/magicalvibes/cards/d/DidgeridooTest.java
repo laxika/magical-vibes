@@ -133,7 +133,7 @@ class DidgeridooTest extends BaseCardTest {
     @DisplayName("A tapped Didgeridoo can activate repeatedly, putting one Minotaur per activation")
     void tappedDidgeridooCanActivateRepeatedly() {
         addDidgeridoo();
-        findPermanent(player1, "Didgeridoo").setTapped(true);
+        findPermanent(player1, "Didgeridoo").tap();
         harness.setHand(player1, List.of(new AnabaShaman(), new AnabaShaman()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

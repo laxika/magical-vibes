@@ -222,14 +222,53 @@ class FearTest extends BaseCardTest {
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Island());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-
-        Permanent island = findPermanent(player1, "Island");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a noncreature artifact")
+    void cannotEnchantNoncreatureArtifact() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+        harness.setHand(player1, List.of(new Fear()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mine.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Removing one of two Fear Auras preserves fear until the last Aura leaves")
+    void fearPersistsUntilLastAuraLeaves() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Fear(), new Fear()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        List<Permanent> auras = findPermanents(player1, "Fear");
+        assertThat(auras).hasSize(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FEAR)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(auras.getFirst());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FEAR)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(auras.getLast());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FEAR)).isFalse();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

@@ -126,4 +126,38 @@ class FleetingImageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(image.getId()));
     }
+
+    @Test
+    @DisplayName("Multiple activations return only their source, once")
+    void multipleActivationsDoNotReturnAnotherImage() {
+        FleetingImage source = new FleetingImage();
+        harness.addToBattlefield(player1, source);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new FleetingImage());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getId().equals(source.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Fleeting Image")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new FleetingImage());
+        addCreatureReady(player2, new FleetingImage());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
+        harness.assertInGraveyard(player1, "Fleeting Image");
+        harness.assertInGraveyard(player2, "Fleeting Image");
+    }
 }

@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.Concentrate;
 import com.github.laxika.magicalvibes.cards.d.DaringApprentice;
-import com.github.laxika.magicalvibes.cards.p.Pendelhaven;
-import com.github.laxika.magicalvibes.cards.w.WindsOfChange;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -19,13 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FlashCounter.class, Boomerang.class, Concentrate.class, DaringApprentice.class,
-        Pendelhaven.class, WindsOfChange.class})
+        Island.class})
 class FlashCounterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting puts it on the stack targeting an instant spell")
     void castingTargetsInstantSpell() {
-        Permanent pendelhaven = harness.addToBattlefieldAndReturn(player1, new Pendelhaven());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -34,7 +33,7 @@ class FlashCounterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, pendelhaven.getId());
+        harness.castInstant(player1, 0, island.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, boomerang.getId());
 
@@ -46,7 +45,7 @@ class FlashCounterTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving counters the instant spell")
     void countersInstantSpell() {
-        Permanent pendelhaven = harness.addToBattlefieldAndReturn(player1, new Pendelhaven());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -55,20 +54,19 @@ class FlashCounterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, pendelhaven.getId());
+        harness.castInstant(player1, 0, island.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         harness.assertInGraveyard(player1, "Boomerang");
-        harness.assertOnBattlefield(player1, "Pendelhaven");
+        harness.assertOnBattlefield(player1, "Island");
         assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Fizzles if the target instant spell is no longer on the stack")
     void fizzlesIfTargetInstantSpellRemoved() {
-        Permanent pendelhaven = harness.addToBattlefieldAndReturn(player1, new Pendelhaven());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -77,7 +75,7 @@ class FlashCounterTest extends BaseCardTest {
         harness.setHand(player2, List.of(flashCounter));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, pendelhaven.getId());
+        harness.castInstant(player1, 0, island.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, boomerang.getId());
 
@@ -92,17 +90,15 @@ class FlashCounterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-instant spell")
     void cannotTargetNonInstantSpell() {
-        WindsOfChange windsOfChange = new WindsOfChange();
-        harness.setHand(player1, List.of(windsOfChange));
-        harness.addMana(player1, ManaColor.RED, 1);
+        Concentrate concentrate = new Concentrate();
+        harness.castFromHand(player1, concentrate, "{2}{U}{U}");
 
         harness.setHand(player2, List.of(new FlashCounter()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0);
         harness.passPriority(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, windsOfChange.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, concentrate.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -125,5 +121,37 @@ class FlashCounterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, apprentice.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can counter an instant controlled by its own controller")
+    void countersOwnInstant() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang, new FlashCounter()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, island.getId());
+        harness.castAndResolveInstant(player1, 0, boomerang.getId());
+
+        harness.assertInGraveyard(player1, "Boomerang");
+        harness.assertInGraveyard(player1, "Flash Counter");
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a target instant spell")
+    void cannotCastWithoutTarget() {
+        harness.setHand(player1, List.of(new FlashCounter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Flash Counter");
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -7,14 +7,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -44,9 +42,8 @@ public class AstrologiansPlanisphere extends Card {
         addEffect(EffectSlot.STATIC,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_CONTROLLER_DRAWS,
-                        new OncePerTurnTriggerEffect(new ConditionalEffect(
-                                new ControllerDrewAtLeastCardsThisTurn(3),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                        new NthCardDrawTriggerEffect(3,
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

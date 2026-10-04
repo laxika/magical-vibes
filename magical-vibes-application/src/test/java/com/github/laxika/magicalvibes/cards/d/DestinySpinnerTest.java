@@ -205,7 +205,7 @@ class DestinySpinnerTest extends BaseCardTest {
     void animationDoesNotUntapLandAndExpiresAtEndOfTurn() {
         harness.addToBattlefield(player1, new DestinySpinner());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, land.getId());

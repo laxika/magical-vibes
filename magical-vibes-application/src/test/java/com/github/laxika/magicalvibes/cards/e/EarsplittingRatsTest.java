@@ -83,6 +83,51 @@ class EarsplittingRatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent still discards when casting the Rats empties the controller's hand")
+    void opponentDiscardsWhenControllerHasEmptyHand() {
+        harness.setHand(player1, List.of(new EarsplittingRats()));
+        harness.setHand(player2, List.of(new EarsplittingRats(), new EarsplittingRats()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Earsplitting Rats");
+        harness.assertOnBattlefield(player1, "Earsplitting Rats");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Rats pays its discard cost before regeneration resolves")
+    void tappedSummoningSickRatsCanRegenerate() {
+        Permanent rats = harness.addToBattlefieldAndReturn(player1, new EarsplittingRats());
+        rats.setSummoningSick(true);
+        rats.setTapped(true);
+        harness.setHand(player1, List.of(new EarsplittingRats()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Earsplitting Rats");
+        assertThat(rats.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+        assertThat(rats.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Earsplitting Rats");
+    }
+
+    @Test
     @DisplayName("The regeneration shield saves it from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent rats = addCreatureReady(player1, new EarsplittingRats());

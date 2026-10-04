@@ -52,7 +52,7 @@ class CoalGolemTest extends BaseCardTest {
     @DisplayName("Coal Golem can be sacrificed while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         var golem = harness.addToBattlefieldAndReturn(player1, new CoalGolem());
-        golem.setTapped(true);
+        golem.tap();
         golem.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

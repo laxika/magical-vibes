@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.action;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 import java.util.UUID;
 
 /**
@@ -10,6 +12,11 @@ import java.util.UUID;
 public record DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost(
         UUID permanentId,
         UUID controllerId,
-        int maxManaValue
+        int maxManaValue,
+        Card sourceCard
 ) implements DelayedAction {
+    public DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost(
+            UUID permanentId, UUID controllerId, int maxManaValue) {
+        this(permanentId, controllerId, maxManaValue, null);
+    }
 }

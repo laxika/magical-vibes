@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.w.WallOfVines;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FelotharTheSteadfast.class, Forest.class, GoblinPiker.class, GrizzlyBears.class,
-        HillGiant.class, WallOfVines.class})
+        HillGiant.class, WallOfVines.class, GloriousAnthem.class})
 class FelotharTheSteadfastTest extends BaseCardTest {
 
     @Test
@@ -87,10 +88,68 @@ class FelotharTheSteadfastTest extends BaseCardTest {
         harness.assertInHand(player1, "Hill Giant");
     }
 
+    @Test
+    @DisplayName("Felothar itself deals combat damage equal to its toughness")
+    void felotharDealsFiveCombatDamage() {
+        Permanent felothar = addReadyCreature(player1, new FelotharTheSteadfast());
+        harness.setLife(player2, 20);
+        beginAttackers(player1);
+        gs.declareAttackers(gd, player1, List.of(battlefieldIndex(player1, felothar)));
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Sacrificing a zero-power creature draws without discarding")
+    void zeroPowerSacrificeDoesNotDiscard() {
+        Permanent felothar = addReadyCreature(player1, new FelotharTheSteadfast());
+        Permanent wall = addReadyCreature(player1, new WallOfVines());
+        addReadyCreature(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, felothar), 0, null, null);
+        harness.handlePermanentChosen(player1, wall.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.assertInGraveyard(player1, "Wall of Vines");
+    }
+
+    @Test
+    @DisplayName("Sacrifice uses power and toughness including static boosts before leaving the battlefield")
+    void sacrificeIncludesStaticBoosts() {
+        Permanent felothar = addReadyCreature(player1, new FelotharTheSteadfast());
+        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        addReadyCreature(player1, new GoblinPiker());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new HillGiant(), new HillGiant(), new HillGiant(), new Forest()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, felothar), 0, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player1.getId())).allSatisfy(card ->
+                assertThat(card).isInstanceOf(HillGiant.class));
+    }
+
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
@@ -108,6 +167,6 @@ class FelotharTheSteadfastTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(activePlayer.getId()));
+        harness.beginAttackerDeclarationInput();
     }
 }

@@ -25,8 +25,7 @@ class FanaticalFeverTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FanaticalFever()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
@@ -40,8 +39,7 @@ class FanaticalFeverTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FanaticalFever()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
@@ -55,14 +53,39 @@ class FanaticalFeverTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FanaticalFever()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated casts stack their boosts and affect only the target")
+    void repeatedCastsStackOnlyOnTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new FanaticalFever(), new FanaticalFever()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(8);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

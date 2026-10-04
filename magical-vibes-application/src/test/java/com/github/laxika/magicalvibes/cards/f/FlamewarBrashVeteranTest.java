@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FlamewarBrashVeteran.class, FlamewarStreetwiseOperative.class, MishrasBauble.class,
         GrizzlyBears.class, Mountain.class})
@@ -97,13 +100,107 @@ class FlamewarBrashVeteranTest extends BaseCardTest {
         assertThat(gd.findExiledCard(opponentOwned.getId())).isNotNull();
     }
 
+    @Test
+    void returnAbilityReturnsIntelCardsExiledByAnEarlierFlamewar() {
+        Permanent earlierFlamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
+        Card marked = new Mountain();
+        gd.addToExile(player1.getId(), marked, earlierFlamewar.getId(), true);
+        gd.exiledCardsWithIntelCounters.add(marked.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(earlierFlamewar);
+        addCreatureReady(player1, new FlamewarBrashVeteran());
+        Card discarded = new Mountain();
+        harness.setHand(player1, List.of(discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(marked);
+        assertThat(gd.findExiledCard(marked.getId())).isNull();
+    }
+
+    @Test
+    void returnAbilityCanDiscardAnEmptyHand() {
+        Permanent flamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
+        Card marked = new Mountain();
+        gd.addToExile(player1.getId(), marked, flamewar.getId(), true);
+        gd.exiledCardsWithIntelCounters.add(marked.getId());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(marked);
+    }
+
+    @Test
+    void livingMetalDoesNotMakeFlamewarACreatureOnAnOpponentsTurn() {
+        Permanent flamewar = castConvertedFlamewar();
+
+        harness.forceActivePlayer(player2);
+
+        assertThat(gqs.isCreature(gd, flamewar)).isFalse();
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.isCreature(gd, flamewar)).isTrue();
+    }
+
+    @Test
+    void sacrificeAbilityCannotSacrificeFlamewarItself() {
+        Permanent flamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(flamewar);
+        assertThat(flamewar.isTransformed()).isFalse();
+        assertThat(flamewar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void sacrificeAbilityCannotBeActivatedDuringCombat() {
+        Permanent flamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
+        Permanent bauble = harness.addToBattlefieldAndReturn(player1, new MishrasBauble());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(flamewar, bauble);
+        assertThat(flamewar.isTransformed()).isFalse();
+    }
+
+    @Test
+    void faceDownIntelCardsAreHiddenFromBothPlayers() throws Exception {
+        Permanent flamewar = addCreatureReady(player1, new FlamewarBrashVeteran());
+        Card marked = new Mountain();
+        gd.addToExile(player1.getId(), marked, flamewar.getId(), true);
+        gd.exiledCardsWithIntelCounters.add(marked.getId());
+
+        harness.publishState();
+
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            String message = connection.getMessagesContaining("\"type\":\"GAME_STATE\"").getLast();
+            GameStateMessage state = new JacksonConfig().objectMapper().readValue(message, GameStateMessage.class);
+            var flamewarView = state.battlefields().stream().flatMap(List::stream)
+                    .filter(permanent -> permanent.id().equals(flamewar.getId())).findFirst().orElseThrow();
+            assertThat(flamewarView.faceDownExiledCards()).isEmpty();
+            assertThat(flamewarView.faceDownExiledCount()).isEqualTo(1);
+        }
+    }
+
     private Permanent castConvertedFlamewar() {
         harness.setHand(player1, List.of(new FlamewarBrashVeteran()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Flamewar, Streetwise Operative");
     }
 }

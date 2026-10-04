@@ -123,13 +123,61 @@ class FledglingDragonTest extends BaseCardTest {
 
     @Test
     void thresholdPumpAbilityIsUnavailableBelowSevenCards() {
-        Permanent dragon = addCreatureReady(player1, new FledglingDragon());
+        addCreatureReady(player1, new FledglingDragon());
         harness.setGraveyard(player1, graveyardWithSevenCardsForJudReview().subList(0, 6));
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Permanent has no activated ability");
+    }
+
+    @Test
+    void activatedPumpResolvesAfterThresholdIsLost() {
+        Permanent dragon = addCreatureReady(player1, new FledglingDragon());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        assertStats(dragon, 2, 2);
+        harness.passBothPriorities();
+
+        assertStats(dragon, 3, 2);
+    }
+
+    @Test
+    void resolvedPumpPersistsWhenThresholdIsLostAndRegained() {
+        Permanent dragon = addCreatureReady(player1, new FledglingDragon());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertStats(dragon, 6, 5);
+
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        assertStats(dragon, 3, 2);
+
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        assertStats(dragon, 6, 5);
+    }
+
+    @Test
+    void pumpCanBeActivatedRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new FledglingDragon());
+        dragon.setSummoningSick(true);
+        dragon.setTapped(true);
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertStats(dragon, 7, 5);
+        assertThat(dragon.isTapped()).isTrue();
     }
 
     private List<Card> graveyardWithSevenCardsForJudReview() {

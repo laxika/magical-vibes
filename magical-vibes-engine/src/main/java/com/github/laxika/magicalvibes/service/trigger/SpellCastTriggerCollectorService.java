@@ -1879,7 +1879,7 @@ public class SpellCastTriggerCollectorService {
     }
 
     private int kickedCount(StackEntry spellEntry) {
-        int count = spellEntry.isKicked() ? 1 : 0;
+        int count = spellEntry.isKicked() && !spellEntry.getCard().getKeywords().contains(Keyword.BARGAIN) ? 1 : 0;
         int repeatedMultikickerCount = spellEntry.getCard().getEffects(EffectSlot.SPELL).stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)

@@ -4,32 +4,31 @@ import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Extractor Demon")
+@CardUsed({ExtractorDemon.class, CruelEdict.class, Forest.class, GrizzlyBears.class, Unsummon.class})
 class ExtractorDemonTest extends BaseCardTest {
-
-    // ===== Whenever another creature leaves the battlefield, you may have target player mill two =====
 
     @Test
     @DisplayName("Another creature dying lets the controller make a target player mill two cards")
     void anotherCreatureDyingMillsTargetPlayer() {
         harness.addToBattlefield(player1, new ExtractorDemon());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        setDeck(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -39,11 +38,11 @@ class ExtractorDemonTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // Cruel Edict resolves → player2 sacrifices Grizzly Bears
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // Extractor Demon trigger resolves → "may" prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -55,7 +54,7 @@ class ExtractorDemonTest extends BaseCardTest {
     void decliningMillsNoOne() {
         harness.addToBattlefield(player1, new ExtractorDemon());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        setDeck(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -65,6 +64,7 @@ class ExtractorDemonTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -89,13 +89,12 @@ class ExtractorDemonTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities(); // Unsummon resolves → Grizzly Bears returns to hand
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // Extractor Demon trigger resolves → "may" prompt
 
         harness.assertInHand(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
-
-    // ===== Unearth {2}{B} =====
 
     @Test
     @DisplayName("Unearth returns Extractor Demon to the battlefield with haste")
@@ -107,7 +106,7 @@ class ExtractorDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Extractor Demon");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Extractor Demon");
     }
 
@@ -130,10 +129,78 @@ class ExtractorDemonTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Extractor Demon"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The controller may target themselves and mills only the available cards")
+    void canMillOwnShortLibrary() {
+        harness.addToBattlefield(player1, new ExtractorDemon());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        harness.castInstant(player1, 0, findPermanent(player2, "Grizzly Bears").getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
     }
+
+    @Test
+    @DisplayName("Bouncing an unearthed Demon exiles it and does not trigger its own ability")
+    void unearthBounceExilesWithoutSelfTrigger() {
+        harness.setGraveyard(player1, List.of(new ExtractorDemon()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, findPermanent(player1, "Extractor Demon").getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Extractor Demon");
+        harness.assertNotInGraveyard(player1, "Extractor Demon");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(c -> c instanceof ExtractorDemon);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c instanceof ExtractorDemon);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Unearth cannot be activated outside a main phase")
+    void unearthRequiresMainPhase() {
+        harness.setGraveyard(player1, List.of(new ExtractorDemon()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Extractor Demon");
+        harness.assertNotOnBattlefield(player1, "Extractor Demon");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Unearth requires its full mana cost")
+    void unearthRequiresThreeMana() {
+        harness.setGraveyard(player1, List.of(new ExtractorDemon()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Extractor Demon");
+        harness.assertNotOnBattlefield(player1, "Extractor Demon");
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

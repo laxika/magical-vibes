@@ -106,7 +106,8 @@ class ArachnogenesisTestMarRegression extends BaseCardTest {
         castArachnogenesis(player1);
         harness.setHand(player1, List.of(new TerrifyingPresence()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castInstant(player1, 0, bear.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         resolveCombat(player2);
         harness.assertLife(player1, 20);
     }
@@ -120,7 +121,8 @@ class ArachnogenesisTestMarRegression extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new TerrifyingPresence()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castInstant(player1, 0, bear.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         castArachnogenesis(player1);
         resolveCombat(player2);
         harness.assertLife(player1, 20);
@@ -155,7 +157,8 @@ class ArachnogenesisTestMarRegression extends BaseCardTest {
         harness.setHand(controller, List.of(new Arachnogenesis()));
         harness.addMana(controller, ManaColor.GREEN, 1);
         harness.addMana(controller, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(controller, 0);
+        harness.castInstant(controller, 0);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 
     private Permanent addAttacker(Card card) {

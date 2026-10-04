@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExplosiveDerailment.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({ExplosiveDerailment.class, FountainOfYouth.class, GrizzlyBears.class, Ornithopter.class})
 class ExplosiveDerailmentTest extends BaseCardTest {
 
     @Test
@@ -57,9 +58,8 @@ class ExplosiveDerailmentTest extends BaseCardTest {
     @DisplayName("The damage mode rejects an artifact target")
     void rejectsArtifactForDamageMode() {
         harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent artifact = findPermanent(player2, "Fountain of Youth");
-
-        assertThatThrownBy(() -> cast(new int[]{0}, List.of(artifact.getId()), 2))
+        assertThatThrownBy(() -> cast(new int[]{0},
+                List.of(harness.getPermanentId(player2, "Fountain of Youth")), 2))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -70,6 +70,62 @@ class ExplosiveDerailmentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> cast(new int[]{1}, List.of(creature.getId()), 2))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Both modes can target the same artifact creature")
+    void bothModesCanShareTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+
+        cast(new int[]{0, 1}, List.of(target.getId(), target.getId()), 4);
+
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertInGraveyard(player1, "Explosive Derailment");
+    }
+
+    @Test
+    @DisplayName("A single mode requires its additional two mana")
+    void rejectsUnpaidAdditionalCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> cast(new int[]{0}, List.of(target.getId()), 1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Both modes require four additional mana")
+    void rejectsUnderpaidBothModes() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        assertThatThrownBy(() -> cast(new int[]{0, 1},
+                List.of(creature.getId(), artifact.getId()), 2))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("The artifact mode still resolves when the creature target leaves")
+    void resolvesRemainingLegalTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new ExplosiveDerailment()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(creature.getId(), artifact.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerHands.get(player2.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Explosive Derailment");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     private void cast(int[] modes, List<java.util.UUID> targets, int additionalColorlessMana) {

@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(EtchedCornfield.class)
+@CardUsed({EtchedCornfield.class})
 class EtchedCornfieldTest extends BaseCardTest {
 
     @Test
@@ -49,6 +49,42 @@ class EtchedCornfieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enters untapped when its controller has less than 13 life")
+    void entersUntappedWhenControllerHasLessThanThirteenLife() {
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 20);
+
+        playCornfield(player1);
+
+        assertThat(findCornfield(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when an opponent has less than 13 life")
+    void entersUntappedWhenOpponentHasLessThanThirteenLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 12);
+
+        playCornfield(player1);
+
+        assertThat(findCornfield(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can produce mana immediately after entering untapped")
+    void producesManaOnTheTurnItEnters() {
+        harness.setLife(player1, 13);
+        playCornfield(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(findCornfield(player1).isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingProducesGreenMana() {
         addReadyCornfield(player1);
@@ -74,10 +110,7 @@ class EtchedCornfieldTest extends BaseCardTest {
     }
 
     private Permanent addReadyCornfield(Player player) {
-        Permanent permanent = new Permanent(new EtchedCornfield());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new EtchedCornfield());
     }
 
     private Permanent findCornfield(Player player) {

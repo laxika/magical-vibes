@@ -94,6 +94,59 @@ class FloodedStrandTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Plains can be fetched as the only matching land")
+    void fetchesPlains() {
+        activateSearchWithLibrary(List.of(new Plains(), new Mountain()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        assertThat(findPermanent(player1, "Plains").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Mountain");
+    }
+
+    @Test
+    @DisplayName("Island can be fetched as the only matching land")
+    void fetchesIsland() {
+        activateSearchWithLibrary(List.of(new Island(), new Mountain()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(findPermanent(player1, "Island").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Mountain");
+    }
+
+    @Test
+    @DisplayName("Searching an empty library still pays the costs and finishes resolving")
+    void emptyLibraryFinishesResolving() {
+        activateSearchWithLibrary(List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Flooded Strand");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying life leaves a player at one life and the search still resolves")
+    void canActivateAtTwoLife() {
+        harness.setLife(player1, 2);
+        activateSearchWithLibrary(List.of(new Island()));
+        harness.assertLife(player1, 1);
+        harness.assertInGraveyard(player1, "Flooded Strand");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertLife(player1, 1);
+    }
     private void activateSearch() {
         activateSearchWithLibrary(List.of(new Plains(), new Island(), new Mountain(), new WirewoodElf()));
     }

@@ -79,6 +79,7 @@ class AvaraxTest extends BaseCardTest {
 
         assertThat(avarax.getPowerModifier()).isEqualTo(1);
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(avarax.getPowerModifier()).isEqualTo(0);
@@ -134,6 +135,7 @@ class AvaraxTest extends BaseCardTest {
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(source.getPowerModifier()).isZero();

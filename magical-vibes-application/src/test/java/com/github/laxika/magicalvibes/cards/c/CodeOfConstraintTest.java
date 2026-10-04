@@ -67,7 +67,7 @@ class CodeOfConstraintTest extends BaseCardTest {
     void addendumAppliesDuringPostcombatMainAndLocksExactlyOneUntap() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new CodeOfConstraint()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 3);

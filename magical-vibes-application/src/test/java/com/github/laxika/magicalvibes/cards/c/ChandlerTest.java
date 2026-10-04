@@ -127,7 +127,7 @@ class ChandlerTest extends BaseCardTest {
     @DisplayName("Cannot activate while Chandler is already tapped")
     void cannotActivateWhileTapped() {
         Permanent chandler = addCreatureReady(player1, new Chandler());
-        chandler.setTapped(true);
+        chandler.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ClockworkGnomes());
         harness.addMana(player1, ManaColor.RED, 3);
 

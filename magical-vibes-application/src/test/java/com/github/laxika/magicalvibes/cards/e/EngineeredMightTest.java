@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EngineeredMight.class, GrizzlyBears.class, FountainOfYouth.class})
 class EngineeredMightTest extends BaseCardTest {
 
     @Test
@@ -54,10 +56,7 @@ class EngineeredMightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
@@ -72,6 +71,67 @@ class EngineeredMightTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Target creature mode can benefit an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        cast(0, List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Own-creatures mode affects creatures present at resolution, not later entrants")
+    void ownCreaturesAreDeterminedAtResolution() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EngineeredMight()));
+        addMana();
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        Permanent beforeResolution = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreatureReady(player1, new GrizzlyBears());
+
+        for (Permanent affected : List.of(first, beforeResolution)) {
+            assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, affected)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, affected, Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, affected, Keyword.TRAMPLE)).isFalse();
+        }
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Own-creatures mode wears off at end of turn")
+    void ownCreaturesModeExpires() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        cast(1, List.of());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        for (Permanent creature : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Own-creatures mode can resolve with no creatures")
+    void ownCreaturesModeWithEmptyBattlefield() {
+        cast(1, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof EngineeredMight);
     }
 
     private void cast(int mode, List<UUID> targetIds) {

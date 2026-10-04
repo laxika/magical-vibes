@@ -56,20 +56,120 @@ class FoodFightTest extends BaseCardTest {
                 .hasMessageContaining("no activated ability");
     }
 
+    @Test
+    void opponentsFoodFightsDoNotIncreaseDamage() {
+        addFoodFight(player1);
+        addFoodFight(player2);
+        addFoodFight(player2);
+        Permanent artifact = addArtifact(player1);
+
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activateArtifact(artifact, player2.getId());
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Spellbook");
+    }
+
+    @Test
+    void damageCountsFoodFightsAtResolution() {
+        addFoodFight(player1);
+        Permanent artifact = addArtifact(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(artifact), null, player2.getId());
+
+        addFoodFight(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void abilityStillDealsOneDamageAfterLastFoodFightLeaves() {
+        Permanent foodFight = addFoodFight(player1);
+        Permanent artifact = addArtifact(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(artifact), null, player2.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, foodFight));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Food Fight");
+        harness.assertInGraveyard(player1, "Spellbook");
+    }
+
+    @Test
+    void nonartifactCreatureDoesNotReceiveAbility() {
+        addFoodFight(player1);
+        Permanent creature = addCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(creature), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    void tappedArtifactCanActivateAndTargetItsController() {
+        addFoodFight(player1);
+        Permanent artifact = addArtifact(player1);
+        artifact.setTapped(true);
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        activateArtifact(artifact, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Spellbook");
+    }
+
+    @Test
+    void cannotActivateWithoutTwoMana() {
+        addFoodFight(player1);
+        Permanent artifact = addArtifact(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(artifact), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        harness.assertNotInGraveyard(player1, "Spellbook");
+    }
+
+    @Test
+    void cannotTargetNoncreatureArtifact() {
+        addFoodFight(player1);
+        Permanent artifact = addArtifact(player1);
+        Permanent target = addArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(artifact), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
     private Permanent addFoodFight(com.github.laxika.magicalvibes.model.Player player) {
         return harness.addToBattlefieldAndReturn(player, new FoodFight());
     }
 
     private Permanent addArtifact(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player, new Spellbook());
-        artifact.setSummoningSick(false);
-        return artifact;
+        return harness.addToBattlefieldAndReturn(player, new Spellbook());
     }
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+        return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
 
     private void activateArtifact(Permanent artifact, java.util.UUID targetId) {

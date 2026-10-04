@@ -70,7 +70,7 @@ class BrightstoneRitualTest extends BaseCardTest {
     @DisplayName("Adds mana only to the caster, including for tapped opposing Goblins")
     void addsManaOnlyToCaster() {
         harness.addToBattlefield(player1, new GoblinSkyRaider());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.addToBattlefield(player2, new GoblinSkyRaider());
 
         harness.castFromHand(player2, new BrightstoneRitual(), "{R}");

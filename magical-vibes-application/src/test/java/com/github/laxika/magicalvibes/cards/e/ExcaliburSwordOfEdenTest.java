@@ -85,4 +85,72 @@ class ExcaliburSwordOfEdenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("legendary creature");
     }
+
+    @Test
+    @DisplayName("A legal attachment to a nonlegendary creature survives state-based actions")
+    void nonlegendaryAttachmentRemainsAttached() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent excalibur = harness.addToBattlefieldAndReturn(player1, new ExcaliburSwordOfEden());
+        excalibur.setAttachedTo(creature.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(excalibur.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(12);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's historic permanents do not reduce Excalibur's cost")
+    void opponentHistoricPermanentsDoNotReduceCost() {
+        harness.addToBattlefield(player2, new JhoirasFamiliar());
+        harness.addToBattlefield(player2, new IsamaruHoundOfKonda());
+        harness.addToBattlefield(player2, new HistoryOfBenalia());
+        harness.setHand(player1, List.of(new ExcaliburSwordOfEden()));
+        harness.addMana(player1, ManaColor.COLORLESS, 11);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Historic mana values and Familiar's separate reduction give an exact cost of three")
+    void exactReducedCostIsRequired() {
+        harness.addToBattlefield(player1, new JhoirasFamiliar());
+        harness.addToBattlefield(player1, new IsamaruHoundOfKonda());
+        harness.addToBattlefield(player1, new HistoryOfBenalia());
+        harness.setHand(player1, List.of(new ExcaliburSwordOfEden()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Historic mana value above twelve reduces Excalibur's cost to zero")
+    void reductionCanMakeSpellFree() {
+        harness.addToBattlefield(player1, new ExcaliburSwordOfEden());
+        harness.addToBattlefield(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new ExcaliburSwordOfEden()));
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's legendary creature")
+    void equipRejectsOpponentsLegendaryCreature() {
+        harness.addToBattlefield(player1, new ExcaliburSwordOfEden());
+        Permanent creature = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

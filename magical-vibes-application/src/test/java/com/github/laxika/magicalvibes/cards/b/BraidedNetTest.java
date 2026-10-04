@@ -91,7 +91,7 @@ class BraidedNetTest extends BaseCardTest {
         Permanent net = harness.enterBattlefieldAndReturn(player1, new BraidedNet());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BraidedNet());
         harness.addToBattlefield(player2, new BraidedNet());
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -109,7 +109,7 @@ class BraidedNetTest extends BaseCardTest {
         harness.performUntapStep(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isTapped()).isFalse();
-        target.setTapped(true);
+        target.tap();
         harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
 

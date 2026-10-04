@@ -153,7 +153,7 @@ class CorruptedRootsTest extends BaseCardTest {
     void enchantingTappedLandDoesNotTrigger() {
         harness.addToBattlefield(player2, new Forest());
         Permanent land = findPermanent(player2, "Forest");
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of(new CorruptedRoots()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -170,7 +170,7 @@ class CorruptedRootsTest extends BaseCardTest {
         addLandWithAura(player1);
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();
-        findPermanent(player1, "Forest").setTapped(false);
+        findPermanent(player1, "Forest").untap();
 
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();

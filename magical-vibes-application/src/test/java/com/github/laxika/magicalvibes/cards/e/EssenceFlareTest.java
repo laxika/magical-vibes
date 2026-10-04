@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EssenceFlare.class, BalduvianBears.class, ZuranOrb.class})
+@CardUsed({EssenceFlare.class, BalduvianBears.class, ZuranOrb.class, Disenchant.class})
 class EssenceFlareTest extends BaseCardTest {
 
     @Test
@@ -98,8 +99,57 @@ class EssenceFlareTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        // Second -0/-1 brings toughness to 0; SBA destroys the creature (and the Aura falls off).
+        // Zero toughness puts the creature into the graveyard; the unattached Aura follows.
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Casting Essence Flare attaches it to an opponent's creature and grants the boost")
+    void castingAttachesAndBoostsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new EssenceFlare()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(aura -> {
+                    assertThat(aura.getCard()).isInstanceOf(EssenceFlare.class);
+                    assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+                });
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Destroying the Aura in response does not stop its upkeep counter, which remains afterward")
+    void pendingCounterSurvivesAuraRemoval() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceFlare());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        advanceToUpkeep(player2);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Essence Flare");
+        assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
     }
 
     @Test

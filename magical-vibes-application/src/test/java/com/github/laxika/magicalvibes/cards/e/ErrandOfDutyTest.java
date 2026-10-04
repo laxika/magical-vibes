@@ -44,4 +44,24 @@ class ErrandOfDutyTest extends BaseCardTest {
         assertThat(knight.getCard().getSubtypes()).containsExactly(CardSubtype.KNIGHT);
         assertThat(knight.getCard().isToken()).isTrue();
     }
+
+    @Test
+    @DisplayName("Casting on the opponent's turn creates an untapped token for the caster")
+    void createsTokenForCasterOnOpponentsTurn() {
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player2, new ErrandOfDuty(), "{1}{W}");
+
+        assertThat(findPermanents(player2, "Knight")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Knight")).isEmpty();
+        assertThat(findPermanents(player2, "Knight")).hasSize(1);
+        Permanent knight = findPermanent(player2, "Knight");
+        assertThat(knight.isTapped()).isFalse();
+        assertThat(knight.isSummoningSick()).isTrue();
+        assertThat(knight.hasKeyword(Keyword.BANDING)).isTrue();
+        harness.assertInGraveyard(player2, "Errand of Duty");
+        assertThat(gd.stack).isEmpty();
+    }
 }

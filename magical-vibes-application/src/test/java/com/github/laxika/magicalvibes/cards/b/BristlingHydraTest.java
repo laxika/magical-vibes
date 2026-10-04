@@ -87,7 +87,7 @@ class BristlingHydraTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent hydra = addReadyHydra();
         hydra.setSummoningSick(true);
-        hydra.setTapped(true);
+        hydra.tap();
         gd.playerEnergyCounters.put(player1.getId(), 6);
 
         harness.activateAbility(player1, 0, null, null);

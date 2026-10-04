@@ -784,6 +784,12 @@ public class GameData {
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public UUID combatDamageExemptControllerId;
+    /** Independent turn-long source exemptions, grouped by the controller evaluating each filter. */
+    public final Map<UUID, Set<PermanentPredicate>> combatDamageExemptPredicatesByController = new ConcurrentHashMap<>();
+    /** Opponents chosen for a simultaneous attacking-token-copy event, keyed by its choice batch. */
+    public final Map<UUID, List<UUID>> pendingAttackingCopyOpponents = new ConcurrentHashMap<>();
+    /** Remaining independent opponent choices for each attacking-token-copy event. */
+    public final Map<UUID, Integer> pendingAttackingCopyChoices = new ConcurrentHashMap<>();
     public boolean allPermanentsEnterTappedThisTurn;
     /** Per-player filters for permanents that enter tapped under that player's control this turn. */
     public final Map<UUID, Set<PermanentPredicate>> permanentEnterTappedFiltersThisTurn = new ConcurrentHashMap<>();
@@ -6543,6 +6549,11 @@ public class GameData {
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.preventAllDamageFromNonHumanSources = this.preventAllDamageFromNonHumanSources;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
+        this.combatDamageExemptPredicatesByController.forEach((controllerId, predicates) ->
+                copy.combatDamageExemptPredicatesByController.put(controllerId, new HashSet<>(predicates)));
+        this.pendingAttackingCopyOpponents.forEach((batchId, opponents) ->
+                copy.pendingAttackingCopyOpponents.put(batchId, new ArrayList<>(opponents)));
+        copy.pendingAttackingCopyChoices.putAll(this.pendingAttackingCopyChoices);
         copy.combatDamageExemptControllerId = this.combatDamageExemptControllerId;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         this.permanentEnterTappedFiltersThisTurn.forEach((playerId, filters) -> {

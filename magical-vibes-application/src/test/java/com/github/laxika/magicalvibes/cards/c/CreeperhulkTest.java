@@ -78,7 +78,7 @@ class CreeperhulkTest extends BaseCardTest {
     void tappedSummoningSickSourceCanTargetItself() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Creeperhulk());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         activateCreeperhulk(source);

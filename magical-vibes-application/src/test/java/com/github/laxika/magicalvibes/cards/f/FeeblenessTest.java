@@ -56,9 +56,8 @@ class FeeblenessTest extends BaseCardTest {
     @DisplayName("Enchanted creature gets -2/-1")
     void enchantedCreatureGetsDebuff() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
-        Permanent aura = new Permanent(new Feebleness());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Feebleness());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
@@ -68,9 +67,8 @@ class FeeblenessTest extends BaseCardTest {
     @DisplayName("Creature returns to base stats when Feebleness is removed")
     void effectsStopWhenRemoved() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
-        Permanent aura = new Permanent(new Feebleness());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Feebleness());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -79,10 +77,9 @@ class FeeblenessTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Feebleness destroys a 1/1 creature through its toughness reduction")
+    @DisplayName("Feebleness puts a 1/1 creature into the graveyard through its toughness reduction")
     void killsCreatureWithOneToughness() {
-        harness.addToBattlefield(player1, new ScrybRanger());
-        Permanent creature = findPermanent(player1, "Scryb Ranger");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ScrybRanger());
         harness.setHand(player1, List.of(new Feebleness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -113,15 +110,52 @@ class FeeblenessTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Feebleness")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new PrismaticLens());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PrismaticLens());
         harness.setHand(player1, List.of(new Feebleness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Prismatic Lens");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Feebleness affects only the enchanted opponent's creature")
+    void debuffsOpponentsCreatureOnly() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+        harness.setHand(player1, List.of(new Feebleness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Two Feebleness Auras reduce toughness to zero and both go to their owner's graveyard")
+    void stackingAurasKillCreatureAndBothAurasGoToGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+        harness.setHand(player1, List.of(new Feebleness(), new Feebleness()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benalish Cavalry");
+        harness.assertInGraveyard(player2, "Benalish Cavalry");
+        harness.assertNotOnBattlefield(player1, "Feebleness");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Feebleness)
+                .hasSize(2);
     }
 }

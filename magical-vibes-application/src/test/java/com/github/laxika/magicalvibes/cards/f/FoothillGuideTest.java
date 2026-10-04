@@ -80,4 +80,76 @@ class FoothillGuideTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Foothill Guide");
     }
+
+    @Test
+    void goblinAbilityCannotTargetFaceUpGuide() {
+        addCreatureReady(player1, new GoblinSledder());
+        Permanent guide = addCreatureReady(player2, new FoothillGuide());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, guide.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Goblin Sledder");
+    }
+
+    @Test
+    void faceDownGuideCanBeTargetedByGoblinAbility() {
+        harness.setHand(player1, List.of(new FoothillGuide()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent guide = findPermanent(player1, "Foothill Guide");
+        assertThat(guide.isFaceDown()).isTrue();
+        addCreatureReady(player2, new GoblinSledder());
+
+        harness.activateAbility(player2, 0, null, guide.getId());
+        harness.passBothPriorities();
+
+        assertThat(guide.getEffectivePower()).isEqualTo(3);
+        assertThat(guide.getEffectiveToughness()).isEqualTo(3);
+        harness.assertInGraveyard(player2, "Goblin Sledder");
+    }
+
+    @Test
+    void faceDownGuideTakesCombatDamageFromGoblin() {
+        harness.setHand(player1, List.of(new FoothillGuide()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent guide = findPermanent(player1, "Foothill Guide");
+        assertThat(guide.isFaceDown()).isTrue();
+        guide.setBlocking(true);
+        guide.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new GoblinSledder());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        assertThat(guide.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Foothill Guide");
+        harness.assertInGraveyard(player2, "Goblin Sledder");
+    }
+
+    @Test
+    void turningFaceUpMakesGoblinAbilityTargetIllegalOnResolution() {
+        harness.setHand(player1, List.of(new FoothillGuide()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent guide = findPermanent(player1, "Foothill Guide");
+        assertThat(guide.isFaceDown()).isTrue();
+        addCreatureReady(player2, new GoblinSledder());
+
+        harness.activateAbility(player2, 0, null, guide.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(guide.isFaceDown()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(guide.getEffectivePower()).isEqualTo(1);
+        assertThat(guide.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }

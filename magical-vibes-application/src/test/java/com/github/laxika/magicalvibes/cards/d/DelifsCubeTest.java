@@ -143,7 +143,7 @@ class DelifsCubeTest extends BaseCardTest {
     @DisplayName("A tapped Cube can regenerate and pays its counter before resolution")
     void tappedCubePaysRegenerationCounterImmediately() {
         Permanent cube = harness.addToBattlefieldAndReturn(player1, new DelifsCube());
-        cube.setTapped(true);
+        cube.tap();
         cube.setCounterCount(CounterType.CUBE, 1);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new IcatianPhalanx());
         harness.addMana(player1, ManaColor.COLORLESS, 2);

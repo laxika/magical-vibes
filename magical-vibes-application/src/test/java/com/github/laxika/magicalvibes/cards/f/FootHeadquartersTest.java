@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(FootHeadquarters.class)
 class FootHeadquartersTest extends BaseCardTest {
@@ -54,10 +55,39 @@ class FootHeadquartersTest extends BaseCardTest {
         assertThat(headquarters.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Life gain trigger resolves after the land leaves the battlefield")
+    void lifeGainResolvesAfterSourceLeaves() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FootHeadquarters()));
+
+        harness.playLand(player1, 0);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Tapped headquarters cannot activate its mana ability")
+    void tappedHeadquartersCannotActivate() {
+        Permanent headquarters = addReadyHeadquarters();
+        headquarters.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
     private Permanent addReadyHeadquarters() {
-        Permanent headquarters = new Permanent(new FootHeadquarters());
-        headquarters.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(headquarters);
-        return headquarters;
+        return harness.addToBattlefieldAndReturn(player1, new FootHeadquarters());
     }
 }

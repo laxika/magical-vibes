@@ -85,6 +85,41 @@ class EarlyWinterTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Enchantment mode cannot target its controller")
+    void enchantmentModeRejectsControllerTarget() {
+        harness.addToBattlefield(player1, new GreaterAuramancy());
+        harness.setHand(player1, List.of(new EarlyWinter()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Creature mode can exile a creature its controller owns")
+    void exilesOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castEarlyWinter(0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(creature.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+    }
+
+    @Test
+    @DisplayName("Enchantment mode leaves the caster's enchantments alone")
+    void enchantmentModeOnlyExilesOpponentsEnchantment() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GreaterAuramancy());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GreaterAuramancy());
+        castEarlyWinter(1, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(own);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposing);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opposing.getCard());
+    }
+
     private void castEarlyWinter(int mode, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new EarlyWinter()));
         harness.addMana(player1, ManaColor.BLACK, 5);

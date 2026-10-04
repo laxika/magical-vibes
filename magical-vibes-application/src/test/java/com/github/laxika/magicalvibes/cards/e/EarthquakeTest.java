@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.Levitation;
 import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Earthquake.class, Forest.class, GrizzlyBears.class, MesaFalcon.class, SerraAngel.class})
+@CardUsed({Earthquake.class, Forest.class, GrizzlyBears.class, Levitation.class, MesaFalcon.class, SerraAngel.class})
 class EarthquakeTest extends BaseCardTest {
 
     @Test
@@ -174,5 +175,55 @@ class EarthquakeTest extends BaseCardTest {
 
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Earthquake respects flying granted by a continuous effect")
+    void earthquakeDoesNotDamageCreaturesWithGrantedFlying() {
+        harness.addToBattlefield(player1, new Levitation());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(flyer.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Earthquake causes a draw when both players take lethal damage")
+    void earthquakeDrawsWhenBothPlayersTakeLethalDamage() {
+        harness.setLife(player1, 3);
+        harness.setLife(player2, 3);
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isNull();
+        assertThat(gameLogContains("The game is a draw.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Earthquake with X=0 still resolves and goes to the graveyard")
+    void earthquakeWithXZeroGoesToGraveyard() {
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Earthquake");
+        harness.assertNotInHand(player1, "Earthquake");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

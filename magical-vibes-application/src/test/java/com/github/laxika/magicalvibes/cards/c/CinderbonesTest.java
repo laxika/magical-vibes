@@ -102,7 +102,7 @@ class CinderbonesTest extends BaseCardTest {
     void regenerationDoesNotRequireTappingOrHaste() {
         Permanent cinderbones = harness.addToBattlefieldAndReturn(player1, new Cinderbones());
         cinderbones.setSummoningSick(true);
-        cinderbones.setTapped(true);
+        cinderbones.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

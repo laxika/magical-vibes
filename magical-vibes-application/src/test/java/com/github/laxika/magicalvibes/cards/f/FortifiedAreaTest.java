@@ -20,6 +20,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FortifiedAreaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Multiple copies stack their power bonuses and retain banding when one leaves")
+    void multipleCopiesStackAndRemainingCopyRetainsBanding() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new FortifiedArea());
+        harness.addToBattlefield(player1, new FortifiedArea());
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfWood());
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Wall loses the bonus and banding when it moves to the opponent's control")
+    void effectsFollowWallController() {
+        harness.addToBattlefield(player1, new FortifiedArea());
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfWood());
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(wall);
+        gd.playerBattlefields.get(player2.getId()).add(wall);
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Wall creatures you control get +1/+0")
     void buffsOwnWalls() {
         harness.addToBattlefield(player1, new FortifiedArea());

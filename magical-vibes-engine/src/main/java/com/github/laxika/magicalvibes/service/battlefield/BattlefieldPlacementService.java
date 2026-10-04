@@ -260,6 +260,8 @@ public class BattlefieldPlacementService {
         LandEquilibriumSupport.ReplacementPlan landEquilibriumPlan = null;
         RevealSubtypeOrEntersTappedEffect conditionalRevealEffect = null;
         RevealSubtypeOrEntersWithCountersEffect conditionalRevealWithCountersEffect = null;
+        boolean instructedToEnterTapped = permanent.isTapped();
+        permanent.enterUntapped();
         try {
             if (sacrificeAllPermanentsAsEntersEffectHandler != null) {
                 sacrificeAllPermanentsAsEntersEffectHandler.applyIfPresent(gameData, controllerId, permanent);
@@ -287,9 +289,21 @@ public class BattlefieldPlacementService {
             applyTurnScopedFilteredEnterTappedEffects(gameData, controllerId, permanent);
             enchantedPlayerCreaturesEnterTappedEffectHandler.apply(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
+            boolean enteredTappedBeforeUntappedReplacement = permanent.isTapped();
+            if (instructedToEnterTapped) permanent.tap();
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
             applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
             applyAllPermanentsEnterUntapped(gameData, permanent);
+            if (permanent.getChosenTappedEntryState() != null) {
+                if (permanent.getChosenTappedEntryState()) permanent.tap();
+                else permanent.enterUntapped();
+            } else if (enteredTappedBeforeUntappedReplacement && !permanent.isTapped()) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        controllerId, null, null, new com.github.laxika.magicalvibes.model.ChoiceContext.TappedEntryStateChoice(request),
+                        List.of("Tapped", "Untapped"), "Choose whether " + permanent.getCard().getName()
+                        + " enters tapped or untapped."));
+                return;
+            }
             if (!permanent.isFaceDown() && permanent.getCard().hasType(CardType.PLANESWALKER)
                     && permanent.getCard().getLoyalty() != null
                     && permanent.getCounterCount(CounterType.LOYALTY) == 0) {
@@ -1021,7 +1035,7 @@ public class BattlefieldPlacementService {
         Set<CardType> enterTappedTypes = EnumSet.noneOf(CardType.class);
 
         gameData.forEachPermanent((playerId, source) -> {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 EnterPermanentsOfTypesTappedEffect enterTapped;
                 if (effect instanceof EnterPermanentsOfTypesTappedEffect direct) {
                     enterTapped = direct;
@@ -1085,7 +1099,7 @@ public class BattlefieldPlacementService {
                 return;
             }
             for (Permanent source : battlefield) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                     if (effect instanceof ControlledLandsEnterUntappedEffect) {
                         enteringPermanent.untap();
                         return;
@@ -1097,7 +1111,7 @@ public class BattlefieldPlacementService {
 
     private void applyAllPermanentsEnterUntapped(GameData gameData, Permanent enteringPermanent) {
         gameData.forEachPermanent((sourcePlayerId, source) -> {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 AllPermanentsEnterUntappedEffect enterUntapped = null;
                 if (effect instanceof AllPermanentsEnterUntappedEffect direct) {
                     enterUntapped = direct;
@@ -1143,7 +1157,7 @@ public class BattlefieldPlacementService {
             if (!sourcePlayerId.equals(enteringControllerId)) {
                 return;
             }
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 if (effect instanceof PermanentsEnterUntappedEffect enterUntapped
                         && predicateEvaluationService.matchesPermanentPredicate(
                         gameData, enteringPermanent, enterUntapped.filter())) {
@@ -1156,7 +1170,7 @@ public class BattlefieldPlacementService {
 
     private void applyGlobalFilteredEnterTappedEffects(GameData gameData, Permanent enteringPermanent) {
         gameData.forEachPermanent((sourcePlayerId, source) -> {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 if (effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped
                         && !enterTapped.opponentsOnly()
                         && (enterTapped.filter() != null || enterTapped.castOnly())
@@ -1190,7 +1204,7 @@ public class BattlefieldPlacementService {
         }
         int manaValue = enteringPermanent.getCard().getManaValue();
         gameData.forEachPermanent((playerId, source) -> {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 if (!(effect instanceof CreaturesOfUnchosenParityEnterTappedEffect)) {
                     continue;
                 }
@@ -1554,7 +1568,9 @@ public class BattlefieldPlacementService {
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        List<CardEffect> entryEffects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+        entryEffects.addAll(permanent.getCard().getEffects(EffectSlot.STATIC));
+        for (CardEffect effect : entryEffects) {
             entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue);
         }
     }
@@ -1984,7 +2000,7 @@ public class BattlefieldPlacementService {
                     .withSourceControllerId(controllerId)
                     .withSourcePermanentSnapshot(source)
                     .withSourcePermanentId(source.getId());
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 CardEffect activeEffect = effect;
                 if (effect instanceof ConditionalEffect conditional) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -2044,7 +2060,7 @@ public class BattlefieldPlacementService {
                     .withSourcePermanentSnapshot(source)
                     .withSourcePermanentId(source.getId())
                     .withEnteringControllerId(controllerId);
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 if (!(effect instanceof ControlledPermanentEntryCharacteristicsEffect characteristics)
                         || !predicateEvaluationService.matchesPermanentPredicate(
                         permanent, characteristics.enteringPermanentPredicate(), sourceContext)) {
@@ -2145,7 +2161,7 @@ public class BattlefieldPlacementService {
         boolean noCounters = gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId);
         int additionalCounters = 0;
         for (Permanent source : battlefield) {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 if (!(effect instanceof ControlledCreaturesEnterWithSourcePowerCountersEffect e)) continue;
                 if (!permanent.getGrantedSubtypes().contains(e.addedSubtype())) {
                     permanent.getGrantedSubtypes().add(e.addedSubtype());

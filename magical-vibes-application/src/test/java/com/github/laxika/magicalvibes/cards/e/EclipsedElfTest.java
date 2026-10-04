@@ -9,13 +9,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EclipsedElf.class, LlanowarElves.class, Swamp.class, Forest.class, Plains.class, GrizzlyBears.class})
 class EclipsedElfTest extends BaseCardTest {
 
     @Test
@@ -72,10 +75,93 @@ class EclipsedElfTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 
+    @Test
+    @DisplayName("Either eligible basic land can be put into hand")
+    void canChooseSwampOrForest() {
+        for (Card land : List.of(new Swamp(), new Forest())) {
+            setupTopCards(List.of(land));
+            castAndResolveEtb();
+
+            harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+            assertThat(gd.playerHands.get(player1.getId())).contains(land);
+            assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
+    }
+
+    @Test
+    @DisplayName("Only the top four are considered and the rest go below untouched cards")
+    void preservesUntouchedLibraryCardsAboveBottomedCards() {
+        Forest forest = new Forest();
+        Plains first = new Plains();
+        Plains second = new Plains();
+        GrizzlyBears bear = new GrizzlyBears();
+        Swamp fifth = new Swamp();
+        LlanowarElves sixth = new LlanowarElves();
+        setupTopCards(List.of(forest, first, second, bear, fifth, sixth));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(forest.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library.subList(0, 2)).containsExactly(fifth, sixth);
+        assertThat(library.subList(2, 5)).containsExactlyInAnyOrder(first, second, bear);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A sole matching card can still be declined")
+    void canDeclineWithOneCardInLibrary() {
+        Forest forest = new Forest();
+        setupTopCards(List.of(forest));
+        castAndResolveEtb();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a draw")
+    void emptyLibraryResolvesWithoutChoice() {
+        setupTopCards(List.of());
+        castAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Eclipsed Elf");
+    }
+
+    @Test
+    @DisplayName("The choice rejects nonmatching cards and taking two eligible cards")
+    void rejectsInvalidSelectionsWithoutLosingChoice() {
+        Forest forest = new Forest();
+        Swamp swamp = new Swamp();
+        Plains plains = new Plains();
+        setupTopCards(List.of(forest, swamp, plains));
+        castAndResolveEtb();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(plains.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(swamp.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(swamp);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     private void castAndResolveEtb() {

@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,10 +16,9 @@ public class AmoeboidChangeling extends Card {
 
     public AmoeboidChangeling() {
         // {T}: Target creature gains all creature types until end of turn.
-        // Changeling grants "every creature type", so we grant CHANGELING for the turn.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.TARGET)),
+                List.of(new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET)),
                 "{T}: Target creature gains all creature types until end of turn.",
                 TargetFilters.creature()));
 

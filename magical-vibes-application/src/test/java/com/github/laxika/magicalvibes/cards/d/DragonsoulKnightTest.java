@@ -87,7 +87,7 @@ class DragonsoulKnightTest extends BaseCardTest {
     void tappedSummoningSickKnightCanBecomeDragon() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new DragonsoulKnight());
         knight.setSummoningSick(true);
-        knight.setTapped(true);
+        knight.tap();
         addWubrg(player1);
 
         harness.activateAbility(player1, 0, null, null);

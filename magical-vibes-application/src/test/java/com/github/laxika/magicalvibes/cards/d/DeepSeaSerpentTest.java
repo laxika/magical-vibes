@@ -70,7 +70,7 @@ class DeepSeaSerpentTest extends BaseCardTest {
     @DisplayName("A tapped Island satisfies the attack restriction")
     void canAttackWhenDefendersIslandIsTapped() {
         harness.setLife(player2, 20);
-        harness.addToBattlefieldAndReturn(player2, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Island()).tap();
         addCreatureReady(player1, new DeepSeaSerpent());
 
         declareAttackers(List.of(0));

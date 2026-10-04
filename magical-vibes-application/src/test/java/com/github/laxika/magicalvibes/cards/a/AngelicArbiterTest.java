@@ -168,7 +168,7 @@ class AngelicArbiterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Snakeform()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castInstant(player1, 0, arbiter.getId());
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

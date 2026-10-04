@@ -148,7 +148,8 @@ public class ExileSupport {
         gameData.queueDelayedAction(new PendingExileReturn(
                 card, ownerId, returnTapped, false, returnStep, plusOnePlusOneCounters,
                 cards.size() == 1 ? List.of() : cards.subList(1, cards.size()),
-                onlyOnControllersTurn, false, false, false, timingControllerId, null, false));
+                onlyOnControllersTurn, false, false, false, timingControllerId, null, false)
+                .withTriggerSource(entry.getCard(), entry.getControllerId()));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

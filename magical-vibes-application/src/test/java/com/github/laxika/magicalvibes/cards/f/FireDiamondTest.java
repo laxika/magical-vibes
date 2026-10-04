@@ -47,4 +47,32 @@ class FireDiamondTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being cast")
+    void entersTappedWithoutBeingCast() {
+        Permanent diamond = harness.enterBattlefieldAndReturn(player1, new FireDiamond());
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly cast Diamond can produce mana immediately after being untapped")
+    void newlyCastDiamondCanProduceManaAfterUntapping() {
+        harness.castFromHand(player1, new FireDiamond(), "{2}");
+        harness.passBothPriorities();
+        Permanent diamond = findPermanent(player1, "Fire Diamond");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        diamond.untap();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

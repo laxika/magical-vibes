@@ -65,7 +65,7 @@ class DevkarinDissidentTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent dissident = harness.addToBattlefieldAndReturn(player1, new DevkarinDissident());
         dissident.setSummoningSick(true);
-        dissident.setTapped(true);
+        dissident.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, null);

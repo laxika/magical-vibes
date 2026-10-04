@@ -187,7 +187,7 @@ public class TokenCopySupport {
         }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<Permanent> simultaneouslyEntered = tokens;
         List<UUID> createdIds = new ArrayList<>();
         int tokenIndex = 0;
         for (Permanent tokenPermanent : tokens) {
@@ -233,12 +233,14 @@ public class TokenCopySupport {
 
             Card sourceCard = tokenPermanent.getCard();
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
+        }
+        for (Permanent tokenPermanent : tokens) {
+            Card sourceCard = tokenPermanent.getCard();
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, tokenControllerId, sourceCard, null, false);
             if (sourceCard.isSaga()) {
                 sagaChapterService.initializeSaga(gameData, tokenPermanent, sourceCard, tokenControllerId);
             }
-
             if (effect.initialCounters() != null && !effect.initialCounters().isEmpty()
                     && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
                 for (var counterEntry : effect.initialCounters().entrySet()) {
@@ -248,7 +250,6 @@ public class TokenCopySupport {
                     }
                 }
             }
-            simultaneouslyEntered.add(tokenPermanent);
         }
 
         battlefieldEntryService.checkAllyTokenEntersTriggers(

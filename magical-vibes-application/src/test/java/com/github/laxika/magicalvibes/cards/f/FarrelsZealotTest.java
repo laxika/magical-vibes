@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FarrelsZealot.class, FarrelitePriest.class})
+@CardUsed({FarrelsZealot.class, FarrelitePriest.class, Skullcrack.class})
 class FarrelsZealotTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -129,5 +131,61 @@ class FarrelsZealotTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The unblocked attacker can target itself and die to its own ability")
+    void acceptedAbilityCanTargetItself() {
+        Permanent attacker = addAttacker();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Farrel's Zealot");
+        harness.assertInGraveyard(player1, "Farrel's Zealot");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An illegal target stops the whole ability and allows normal combat damage")
+    void targetLeavingBeforeResolutionAllowsCombatDamage() {
+        Permanent attacker = addAttacker();
+        Permanent victim = addDefenderCreature();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1, victim.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerHands.get(player2.getId()).add(victim.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Accepting assigns no combat damage even when damage cannot be prevented")
+    @CardUsed({FarrelsZealot.class, FarrelitePriest.class, Skullcrack.class})
+    void acceptedAbilityAssignsNoUnpreventableCombatDamage() {
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.setHand(player1, List.of(new Skullcrack()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.assertLife(player2, 17);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Farrelite Priest");
+        harness.assertLife(player2, 17);
     }
 }

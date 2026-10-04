@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GalvanicBlast;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,23 +19,19 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Embersmith.class, GrizzlyBears.class, Spellbook.class, SuntailHawk.class, GalvanicBlast.class, Memnite.class})
 class EmbersmithTest extends BaseCardTest {
 
-    // ===== Trigger fires on artifact cast =====
-
     @Test
-    @DisplayName("Casting an artifact spell triggers may ability prompt")
-    void artifactCastTriggersMayPrompt() {
+    @DisplayName("Casting an artifact requires a target before the payment decision")
+    void artifactCastRequiresTargetBeforePayment() {
         harness.addToBattlefield(player1, new Embersmith());
-        harness.setHand(player1, List.of(new Spellbook()));
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
-
-    // ===== Accept, pay, target creature =====
 
     @Test
     @DisplayName("Accepting pays {1} and deals 1 damage to target creature, killing a 1/1")
@@ -41,16 +39,11 @@ class EmbersmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Embersmith());
         harness.addToBattlefield(player2, new SuntailHawk());
         UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
-        harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castArtifact(player1, 0);
-
-        // Accept the may ability
-        harness.handleMayAbilityChosen(player1, true);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
 
         // Should be prompting for target selection
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the creature target
@@ -60,8 +53,9 @@ class EmbersmithTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Embersmith"));
 
-        // Resolve triggered ability
+        // Payment is offered only when the targeted trigger resolves.
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Suntail Hawk (1/1) should be destroyed by 1 damage
         harness.assertNotOnBattlefield(player2, "Suntail Hawk");
@@ -71,25 +65,21 @@ class EmbersmithTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
     }
 
-    // ===== Accept, pay, target player =====
-
     @Test
     @DisplayName("Accepting pays {1} and deals 1 damage to target player")
     void acceptPaysDamageToPlayer() {
         harness.addToBattlefield(player1, new Embersmith());
-        harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castArtifact(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
-
+        harness.castFromHand(player1, new Spellbook(), "{0}");
         // Choose the opponent as the target
         harness.handlePermanentChosen(player1, player2.getId());
 
         // Resolve triggered ability
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Resolve Spellbook
         harness.passBothPriorities();
@@ -97,22 +87,20 @@ class EmbersmithTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
-    // ===== Decline =====
-
     @Test
     @DisplayName("Declining may ability does not deal damage or spend mana")
     void declineDoesNothing() {
         harness.addToBattlefield(player1, new Embersmith());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gd = harness.getGameData();
         // No triggered ability on stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Embersmith"));
@@ -124,25 +112,17 @@ class EmbersmithTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Non-artifact does not trigger =====
-
     @Test
     @DisplayName("Non-artifact spell does not trigger Embersmith")
     void nonArtifactDoesNotTrigger() {
         harness.addToBattlefield(player1, new Embersmith());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
-
-    // ===== Opponent's artifact does not trigger =====
 
     @Test
     @DisplayName("Opponent casting artifact does not trigger Embersmith")
@@ -153,37 +133,106 @@ class EmbersmithTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Spellbook()));
+        harness.castFromHand(player2, new Spellbook(), "{0}");
 
-        harness.castArtifact(player2, 0);
-
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
-    // ===== Cannot pay =====
-
     @Test
-    @DisplayName("Accepting with no mana treats as decline")
+    @DisplayName("Without mana the trigger still targets and resolves without damage")
     void cannotPayTreatsAsDecline() {
         harness.addToBattlefield(player1, new Embersmith());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Spellbook()));
-        // No mana added — cannot pay {1}
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
 
-        // May prompt fires
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
+        // Target selection is required even without mana.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
-        // Accept, but cannot pay
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 20);
 
         // No triggered ability on stack
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Embersmith"));
+    }
+
+    @Test
+    @DisplayName("Mana is not spent until the targeted trigger resolves")
+    void manaIsNotSpentWhenTriggerIsStacked() {
+        harness.addToBattlefield(player1, new Embersmith());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Embersmith can target its controller")
+    void canDamageController() {
+        harness.addToBattlefield(player1, new Embersmith());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Casting an artifact creature triggers before that creature enters")
+    void artifactCreatureCastTriggers() {
+        harness.addToBattlefield(player1, new Embersmith());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new Memnite(), "{0}");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Memnite");
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents resolution and the payment choice")
+    void removedTargetDoesNotSpendMana() {
+        harness.addToBattlefield(player1, new Embersmith());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new Spellbook(), "{0}");
+        harness.handlePermanentChosen(player1, targetId);
+
+        harness.setHand(player2, List.of(new GalvanicBlast()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
     }
 }

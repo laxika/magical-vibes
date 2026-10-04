@@ -114,9 +114,9 @@ class ClickslitherTest extends BaseCardTest {
     @DisplayName("Sacrifice is paid immediately and the boost waits for resolution")
     void sacrificeIsPaidBeforeAbilityResolves() {
         Permanent clickslither = harness.addToBattlefieldAndReturn(player1, new Clickslither());
-        clickslither.setTapped(true);
+        clickslither.tap();
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinGoon());
-        goblin.setTapped(true);
+        goblin.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

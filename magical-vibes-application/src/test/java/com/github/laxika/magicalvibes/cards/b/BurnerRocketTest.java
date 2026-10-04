@@ -81,7 +81,7 @@ class BurnerRocketTest extends BaseCardTest {
     void flashDuringOpponentsTurn() {
         Permanent doll = addCreatureReady(player1, new WretchedDoll());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.BEGIN_COMBAT);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.setHand(player1, List.of(new BurnerRocket()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

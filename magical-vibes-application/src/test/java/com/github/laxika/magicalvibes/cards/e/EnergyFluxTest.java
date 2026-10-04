@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.DeadlyInsect;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.h.HithlainRope;
 import com.github.laxika.magicalvibes.cards.k.KyrenToy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,9 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EnergyFlux.class, KyrenToy.class, DeadlyInsect.class})
+@CardUsed({EnergyFlux.class, KyrenToy.class, DeadlyInsect.class, Disenchant.class, HithlainRope.class})
 class EnergyFluxTest extends BaseCardTest {
 
     private void addEnergyFlux(Player controller) {
@@ -158,5 +162,75 @@ class EnergyFluxTest extends BaseCardTest {
                 .filteredOn(card -> card.getName().equals("Kyren Toy"))
                 .hasSize(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Two Energy Flux copies require two separate payments for one artifact")
+    void multipleCopiesRequireSeparatePayments() {
+        addEnergyFlux(player1);
+        addEnergyFlux(player2);
+        addKyrenToy(player1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Kyren Toy");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Kyren Toy");
+        harness.assertInGraveyard(player1, "Kyren Toy");
+    }
+
+    @Test
+    @DisplayName("An artifact entering after upkeep begins receives no trigger that upkeep")
+    void artifactEnteringAfterUpkeepBeginsDoesNotTrigger() {
+        addEnergyFlux(player1);
+
+        advanceToUpkeep(player1);
+        addKyrenToy(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Kyren Toy");
+    }
+
+    @Test
+    @DisplayName("Removing Energy Flux after upkeep begins does not remove the artifact's trigger")
+    void removingEnergyFluxDoesNotStopPendingTrigger() {
+        Permanent flux = harness.addToBattlefieldAndReturn(player1, new EnergyFlux());
+        addKyrenToy(player1);
+        harness.setHand(player1, List.of(new Disenchant()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, flux.getId());
+        harness.assertInGraveyard(player1, "Energy Flux");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Kyren Toy");
+        harness.assertInGraveyard(player1, "Kyren Toy");
+    }
+
+    @Test
+    @DisplayName("An artifact that cannot be sacrificed survives declining the upkeep payment")
+    void sacrificeProhibitionPreventsUnpaidPenalty() {
+        addEnergyFlux(player1);
+        harness.addToBattlefield(player1, new HithlainRope());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Hithlain Rope");
+        harness.assertNotInGraveyard(player1, "Hithlain Rope");
     }
 }

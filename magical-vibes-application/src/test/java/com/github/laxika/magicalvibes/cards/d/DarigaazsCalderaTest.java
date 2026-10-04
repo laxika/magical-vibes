@@ -161,7 +161,7 @@ class DarigaazsCalderaTest extends BaseCardTest {
     void returnsTappedNonLairLandAmongLairs() {
         Permanent existingLair = harness.addToBattlefieldAndReturn(player1, new DarigaazsCaldera());
         Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
-        moraine.setTapped(true);
+        moraine.tap();
         DarigaazsCaldera caldera = playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);

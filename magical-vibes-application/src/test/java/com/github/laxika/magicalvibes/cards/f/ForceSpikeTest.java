@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ForceSpike.class, LlanowarElves.class, Shock.class})
+@CardUsed({ForceSpike.class, LlanowarElves.class, Shock.class, Forest.class})
 class ForceSpikeTest extends BaseCardTest {
     @Test
     @DisplayName("Counters spell when opponent has no mana to pay {1}")
@@ -63,8 +63,7 @@ class ForceSpikeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -89,8 +88,7 @@ class ForceSpikeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -135,5 +133,46 @@ class ForceSpikeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(forceSpike);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Allows the spell controller to generate mana while paying during resolution")
+    void canActivateManaAbilityToPayDuringResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        LlanowarElves elves = new LlanowarElves();
+        harness.castFromHand(player1, elves, "{G}");
+
+        harness.setHand(player2, List.of(new ForceSpike()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elves.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target its controller's spell and accept any color for the generic payment")
+    void canTargetOwnSpellAndPayWithDifferentColor() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.castFromHand(player1, elves, "{G}");
+        harness.setHand(player1, List.of(new ForceSpike()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, elves.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Force Spike");
     }
 }

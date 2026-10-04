@@ -49,7 +49,8 @@ class ArmorOfThornsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(3);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.CLEANUP, () -> harness.passUntil(TurnStep.CLEANUP));
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
     }
@@ -68,7 +69,8 @@ class ArmorOfThornsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.CLEANUP, () -> harness.passUntil(TurnStep.CLEANUP));
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
         assertThat(gd.stack).hasSize(1);
@@ -88,11 +90,12 @@ class ArmorOfThornsTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castEnchantment(player1, 0, falcon.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.CLEANUP, () -> harness.passUntil(TurnStep.CLEANUP));
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
         assertThat(gd.stack).hasSize(1);
@@ -142,7 +145,8 @@ class ArmorOfThornsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(3);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.CLEANUP, () -> harness.passUntil(TurnStep.CLEANUP));
 
         harness.assertOnBattlefield(player1, "Armor of Thorns");
         assertThat(gd.stack).hasSize(1);

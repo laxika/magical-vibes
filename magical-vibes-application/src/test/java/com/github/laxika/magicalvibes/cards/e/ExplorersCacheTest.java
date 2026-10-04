@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExplorersCache.class, LlanowarElves.class, Shock.class})
+@CardUsed({ExplorersCache.class, LlanowarElves.class, Shock.class, MarchOfTheMachines.class})
 class ExplorersCacheTest extends BaseCardTest {
 
     @Test
@@ -103,6 +104,79 @@ class ExplorersCacheTest extends BaseCardTest {
         assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void doesNotTriggerForOpponentsCreatureWithCounter() {
+        Permanent cache = addReadyCache();
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        elves.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        killWithShock(elves);
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        assertThat(cache.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void targetDyingInResponseDoesNotRemoveSourceCounter() {
+        Permanent cache = addReadyCache();
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, elves.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, elves.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        assertThat(cache.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void sourceLosingItsLastCounterInResponseDoesNotMoveCounter() {
+        Permanent cache = addReadyCache();
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, elves.getId());
+        cache.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotActivateWithSpellOnStackDuringOwnMainPhase() {
+        Permanent cache = addReadyCache();
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elves.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(cache.isTapped()).isFalse();
+    }
+
+    @Test
+    void animatedCacheTriggersForItsOwnDeathWithCounters() {
+        Permanent cache = addReadyCache();
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        cache.setMarkedDamage(4);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Explorer's Cache");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(cache.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyCache() {
         Permanent cache = harness.addToBattlefieldAndReturn(player1, new ExplorersCache());
         cache.setSummoningSick(false);
@@ -119,8 +193,7 @@ class ExplorersCacheTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
     }
 }

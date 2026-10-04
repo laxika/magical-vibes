@@ -71,10 +71,12 @@ class AetherSyphonTest extends BaseCardTest {
     @Test
     void enteringStartsEnginesWithoutResettingExistingSpeed() {
         harness.enterBattlefieldAndReturn(player1, new AetherSyphon());
+        harness.runStateBasedActions();
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
 
         gd.playerSpeeds.put(player1.getId(), 3);
         harness.enterBattlefieldAndReturn(player1, new AetherSyphon());
+        harness.runStateBasedActions();
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(3);
     }
 

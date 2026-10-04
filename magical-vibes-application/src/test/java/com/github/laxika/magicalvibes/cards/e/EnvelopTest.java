@@ -111,12 +111,48 @@ class EnvelopTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, battleScreech.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, battleScreech.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Battle Screech");
         harness.assertNotOnBattlefield(player1, "Bird");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own sorcery")
+    void countersOwnSorcery() {
+        QuietSpeculation sorcery = new QuietSpeculation();
+        harness.setHand(player1, List.of(sorcery, new Envelop()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.castAndResolveInstant(player1, 0, sorcery.getId());
+
+        harness.assertInGraveyard(player1, "Quiet Speculation");
+        harness.assertInGraveyard(player1, "Envelop");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target an instant even when that instant targets a sorcery")
+    void cannotTargetInstant() {
+        QuietSpeculation sorcery = new QuietSpeculation();
+        Envelop firstCounter = new Envelop();
+        harness.setHand(player1, List.of(sorcery, new Envelop()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(firstCounter));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, sorcery.getId());
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, firstCounter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(harness.getGameData().stack).hasSize(2);
     }
 }

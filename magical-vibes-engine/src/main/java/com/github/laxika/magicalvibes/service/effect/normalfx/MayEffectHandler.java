@@ -67,6 +67,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             targetId = groupTargets.getFirst();
         }
 
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect
+                && entry.getDeclaredTargetIds().isEmpty() && targetId == null) {
+            return;
+        }
+
         // Optional hand-ability targets can be omitted (e.g. Decree of Silence cycling).
         // Skip that optional effect while continuing the ability's remaining effects.
         if (targetId == null && entry.isCyclingAbility()

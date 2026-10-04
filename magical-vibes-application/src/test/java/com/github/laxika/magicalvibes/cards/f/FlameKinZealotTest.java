@@ -67,6 +67,32 @@ class FlameKinZealotTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Creatures entering before the trigger resolves receive both effects")
+    void affectsCreaturesPresentAtResolution() {
+        harness.enterBattlefieldAndReturn(player1, new FlameKinZealot());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new Watchwolf());
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple entrance triggers stack their boosts")
+    void multipleTriggersStackBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+
+        castZealot();
+        castZealot();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
     private void castZealot() {
         harness.castFromHand(player1, new FlameKinZealot(), "{1}{R}{R}{W}");
         resolveAllTriggers();

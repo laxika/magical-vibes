@@ -3,19 +3,23 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FeralRidgewolf.class})
 class FeralRidgewolfTest extends BaseCardTest {
 
     
@@ -37,7 +41,7 @@ class FeralRidgewolfTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
     void activatingAbilityPutsOnStack() {
-        Permanent wolf = addReadyWolf(player1);
+        Permanent wolf = addCreatureReady(player1, new FeralRidgewolf());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -53,7 +57,7 @@ class FeralRidgewolfTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability gives +2/+0 to Feral Ridgewolf")
     void resolvingAbilityBoostsPower() {
-        Permanent wolf = addReadyWolf(player1);
+        Permanent wolf = addCreatureReady(player1, new FeralRidgewolf());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -68,7 +72,7 @@ class FeralRidgewolfTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
-        Permanent wolf = addReadyWolf(player1);
+        Permanent wolf = addCreatureReady(player1, new FeralRidgewolf());
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.activateAbility(player1, 0, null, null);
@@ -87,7 +91,7 @@ class FeralRidgewolfTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        Permanent wolf = addReadyWolf(player1);
+        Permanent wolf = addCreatureReady(player1, new FeralRidgewolf());
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -111,18 +115,64 @@ class FeralRidgewolfTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyWolf(player1);
+        addCreatureReady(player1, new FeralRidgewolf());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addReadyWolf(Player player) {
-        FeralRidgewolf card = new FeralRidgewolf();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Ability can be activated while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new FeralRidgewolf());
+        wolf.setSummoningSick(true);
+        wolf.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wolf.getEffectivePower()).isEqualTo(3);
+        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(wolf.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability requires red mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new FeralRidgewolf());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Pumped wolf tramples excess damage over a blocker")
+    void pumpedWolfDealsExcessCombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new FeralRidgewolf());
+        Permanent blocker = addCreatureReady(player2, new FeralRidgewolf());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2, player2.getId(), 1));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 }

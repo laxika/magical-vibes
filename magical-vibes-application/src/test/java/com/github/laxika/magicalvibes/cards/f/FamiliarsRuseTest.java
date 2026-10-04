@@ -22,14 +22,12 @@ class FamiliarsRuseTest extends BaseCardTest {
     @DisplayName("Casting returns a creature to hand and puts the spell on the stack targeting a spell")
     void castingReturnsCreatureAndTargetsSpell() {
         AvianChangeling target = new AvianChangeling();
-        harness.setHand(player1, List.of(target));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castFromHand(player1, target, "{2}{W}");
 
         Permanent toReturn = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
         harness.setHand(player2, List.of(new FamiliarsRuse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstantWithSacrifice(player2, 0, target.getId(), toReturn.getId());
 
@@ -44,14 +42,12 @@ class FamiliarsRuseTest extends BaseCardTest {
     @DisplayName("Resolving counters the target spell")
     void resolvingCountersTargetSpell() {
         AvianChangeling target = new AvianChangeling();
-        harness.setHand(player1, List.of(target));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castFromHand(player1, target, "{2}{W}");
 
         Permanent toReturn = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
         harness.setHand(player2, List.of(new FamiliarsRuse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstantWithSacrifice(player2, 0, target.getId(), toReturn.getId());
         harness.passBothPriorities();
@@ -65,13 +61,11 @@ class FamiliarsRuseTest extends BaseCardTest {
     @DisplayName("Cannot cast without a creature to return")
     void cannotCastWithoutCreatureToReturn() {
         AvianChangeling target = new AvianChangeling();
-        harness.setHand(player1, List.of(target));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castFromHand(player1, target, "{2}{W}");
 
         harness.setHand(player2, List.of(new FamiliarsRuse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player2, 0, target.getId(), null))
@@ -82,14 +76,12 @@ class FamiliarsRuseTest extends BaseCardTest {
     @DisplayName("Cannot return an opponent's creature")
     void cannotReturnOpponentsCreature() {
         AvianChangeling target = new AvianChangeling();
-        harness.setHand(player1, List.of(target));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castFromHand(player1, target, "{2}{W}");
 
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player1, new AvianChangeling());
         harness.setHand(player2, List.of(new FamiliarsRuse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player2, 0, target.getId(), opponentCreature.getId()))
@@ -101,18 +93,57 @@ class FamiliarsRuseTest extends BaseCardTest {
     @DisplayName("Cannot return a noncreature permanent")
     void cannotReturnNoncreaturePermanent() {
         AvianChangeling target = new AvianChangeling();
-        harness.setHand(player1, List.of(target));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castFromHand(player1, target, "{2}{W}");
 
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DolmenGate());
         harness.setHand(player2, List.of(new FamiliarsRuse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player2, 0, target.getId(), artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must be a creature");
+    }
+
+    @Test
+    @DisplayName("Returning an opponent-owned creature you control puts it in its owner's hand")
+    void returnsStolenCreatureToOwnersHand() {
+        AvianChangeling target = new AvianChangeling();
+        harness.castFromHand(player1, target, "{2}{W}");
+        Permanent toReturn = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
+        gd.stolenCreatures.put(toReturn.getId(), player1.getId());
+        harness.setHand(player2, List.of(new FamiliarsRuse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+
+        harness.castInstantWithSacrifice(player2, 0, target.getId(), toReturn.getId());
+
+        harness.assertNotOnBattlefield(player2, "Avian Changeling");
+        assertThat(gd.playerHands.get(player1.getId())).contains(toReturn.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(toReturn.getCard());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Avian Changeling");
+        harness.assertInGraveyard(player2, "Familiar's Ruse");
+    }
+
+    @Test
+    @DisplayName("Can counter your own noncreature spell and return a tapped creature")
+    void countersOwnArtifactSpellReturningTappedCreature() {
+        DolmenGate target = new DolmenGate();
+        harness.castFromHand(player1, target, "{2}");
+        Permanent toReturn = harness.addToBattlefieldAndReturn(player1, new AvianChangeling());
+        toReturn.setTapped(true);
+        harness.setHand(player1, List.of(new FamiliarsRuse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), toReturn.getId());
+
+        harness.assertInHand(player1, "Avian Changeling");
+        harness.assertNotOnBattlefield(player1, "Avian Changeling");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Dolmen Gate");
+        harness.assertInGraveyard(player1, "Familiar's Ruse");
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -52,8 +52,7 @@ class ForcemageAdvocateTest extends BaseCardTest {
     @Test
     void rejectsNonCreatureAsTheSecondTarget() {
         Permanent advocate = addReadyAdvocate();
-        Permanent nonCreature = new Permanent(new EpicStruggle());
-        gd.playerBattlefields.get(player1.getId()).add(nonCreature);
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new EpicStruggle());
         Card returnedCard = new KrosanReclamation();
         harness.setGraveyard(player2, List.of(returnedCard));
 
@@ -78,6 +77,76 @@ class ForcemageAdvocateTest extends BaseCardTest {
                 gd, advocate.getCard(), ability, player1.getId(), index(advocate),
                 List.of(returnedCard.getId()));
         assertThat(creatureTargets.validPermanentIds()).contains(creature.getId());
+    }
+
+    @Test
+    void returnsCardEvenWhenCreatureTargetLeavesBattlefield() {
+        Permanent advocate = addReadyAdvocate();
+        Permanent creature = addCreatureReady(player1, new GiantWarthog());
+        Card returnedCard = new KrosanReclamation();
+        harness.setGraveyard(player2, List.of(returnedCard));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(returnedCard.getId(), creature.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Krosan Reclamation");
+        harness.assertNotInGraveyard(player2, "Krosan Reclamation");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void putsCounterEvenWhenGraveyardTargetLeavesGraveyard() {
+        Permanent advocate = addReadyAdvocate();
+        Permanent creature = addCreatureReady(player2, new GiantWarthog());
+        Card returnedCard = new KrosanReclamation();
+        harness.setGraveyard(player2, List.of(returnedCard));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(returnedCard.getId(), creature.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player2, "Krosan Reclamation");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canPutCounterOnItself() {
+        Permanent advocate = addReadyAdvocate();
+        Card returnedCard = new EpicStruggle();
+        harness.setGraveyard(player2, List.of(returnedCard));
+
+        harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(returnedCard.getId(), advocate.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Epic Struggle");
+        assertThat(advocate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent advocate = harness.addToBattlefieldAndReturn(player1, new ForcemageAdvocate());
+        Card returnedCard = new KrosanReclamation();
+        harness.setGraveyard(player2, List.of(returnedCard));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(returnedCard.getId(), advocate.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent advocate = addReadyAdvocate();
+        advocate.setTapped(true);
+        Card returnedCard = new KrosanReclamation();
+        harness.setGraveyard(player2, List.of(returnedCard));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, index(advocate), 0,
+                List.of(returnedCard.getId(), advocate.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyAdvocate() {

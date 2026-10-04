@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.ParadiseMantle;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FeedbackBolt.class, ChandraNalaar.class, Ornithopter.class, RagingGoblin.class})
+@CardUsed({FeedbackBolt.class, ChandraNalaar.class, Ornithopter.class, ParadiseMantle.class, RagingGoblin.class})
 class FeedbackBoltTest extends BaseCardTest {
 
     private void cast() {
@@ -26,8 +27,7 @@ class FeedbackBoltTest extends BaseCardTest {
 
     private void cast(UUID targetId) {
         prepareCast();
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void prepareCast() {
@@ -94,6 +94,46 @@ class FeedbackBoltTest extends BaseCardTest {
         cast(target.getId());
 
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        int before = gd.getLife(player1.getId());
+        cast(player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(before - 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Counts noncreature artifacts as well as artifact creatures")
+    void countsNoncreatureArtifacts() {
+        harness.addToBattlefield(player1, new ParadiseMantle());
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        int before = gd.getLife(player2.getId());
+        cast();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(before - 2);
+    }
+
+    @Test
+    @DisplayName("Does not count artifact cards outside the battlefield")
+    void ignoresArtifactsOutsideBattlefield() {
+        harness.setGraveyard(player1, List.of(new Ornithopter()));
+        harness.setExile(player1, List.of(new Ornithopter()));
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new FeedbackBolt(), new Ornithopter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        int before = gd.getLife(player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(before);
     }
 
     @Test

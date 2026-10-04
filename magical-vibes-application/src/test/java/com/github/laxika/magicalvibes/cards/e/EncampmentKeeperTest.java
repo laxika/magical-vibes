@@ -1,25 +1,26 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BishopsSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EncampmentKeeper.class, BishopsSoldier.class})
 class EncampmentKeeperTest extends BaseCardTest {
 
-    // ===== Activating ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
-        Permanent keeper = addCreatureReady(player1, new EncampmentKeeper());
+        addCreatureReady(player1, new EncampmentKeeper());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -32,7 +33,7 @@ class EncampmentKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability requires {7}{W} mana")
     void requiresMana() {
-        Permanent keeper = addCreatureReady(player1, new EncampmentKeeper());
+        addCreatureReady(player1, new EncampmentKeeper());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
@@ -44,9 +45,7 @@ class EncampmentKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when summoning sick because ability requires tap")
     void cannotActivateWhenSummoningSick() {
-        Permanent keeper = new Permanent(new EncampmentKeeper());
-        keeper.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(keeper);
+        harness.addToBattlefield(player1, new EncampmentKeeper());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -54,24 +53,25 @@ class EncampmentKeeperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving ability =====
 
     @Test
-    @DisplayName("Resolving sacrifices Encampment Keeper and boosts all own creatures +2/+2")
-    void resolvingSacrificesAndBoosts() {
-        Permanent keeper = addCreatureReady(player1, new EncampmentKeeper());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+    @DisplayName("Sacrifice is paid on activation and resolution boosts all own creatures +2/+2")
+    void sacrificesOnActivationAndBoostsOnResolution() {
+        addCreatureReady(player1, new EncampmentKeeper());
+        Permanent bears = addCreatureReady(player1, new BishopsSoldier());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
 
-        // Encampment Keeper is sacrificed
         harness.assertNotOnBattlefield(player1, "Encampment Keeper");
         harness.assertInGraveyard(player1, "Encampment Keeper");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
-        // Grizzly Bears (2/2) gets +2/+2 = 4/4
+        harness.passBothPriorities();
+
+        // Bishop's Soldier (2/2) gets +2/+2 = 4/4
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
@@ -79,9 +79,9 @@ class EncampmentKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost opponent's creatures")
     void doesNotBoostOpponentCreatures() {
-        Permanent keeper = addCreatureReady(player1, new EncampmentKeeper());
-        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent oppBears = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new EncampmentKeeper());
+        Permanent ownBears = addCreatureReady(player1, new BishopsSoldier());
+        Permanent oppBears = addCreatureReady(player2, new BishopsSoldier());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -100,8 +100,8 @@ class EncampmentKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at cleanup step")
     void boostWearsOffAtCleanup() {
-        Permanent keeper = addCreatureReady(player1, new EncampmentKeeper());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new EncampmentKeeper());
+        Permanent bears = addCreatureReady(player1, new BishopsSoldier());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -117,5 +117,38 @@ class EncampmentKeeperTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A tapped keeper cannot pay the tap cost")
+    void cannotActivateWhenTapped() {
+        Permanent keeper = addCreatureReady(player1, new EncampmentKeeper());
+        keeper.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Encampment Keeper");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Boost includes creatures present at resolution but excludes later arrivals")
+    void boostUsesCreaturesPresentAtResolution() {
+        addCreatureReady(player1, new EncampmentKeeper());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new BishopsSoldier());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

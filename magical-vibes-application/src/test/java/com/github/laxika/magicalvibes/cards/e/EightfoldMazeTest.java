@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,7 +41,7 @@ class EightfoldMazeTest extends BaseCardTest {
     @DisplayName("Cannot cast during declare attackers if you have not been attacked")
     void cannotCastWhenNotAttacked() {
         harness.forceActivePlayer(player1);
-        Permanent attacker = addAttacker(player1, player1, new WuInfantry());
+        Permanent attacker = addCreatureReady(player1, new WuInfantry());
         harness.setHand(player2, List.of(new EightfoldMaze()));
         harness.addMana(player2, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -111,6 +112,33 @@ class EightfoldMazeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Can target a planeswalker attacker after the creature that attacked you is destroyed")
+    void canTargetPlaneswalkerAttackerAfterDirectAttackerIsDestroyed() {
+        Permanent directAttacker = addCreatureReady(player1, new WuInfantry());
+        Permanent planeswalkerAttacker = addCreatureReady(player1, new WuInfantry());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        harness.setHand(player2, List.of(new EightfoldMaze(), new EightfoldMaze()));
+        harness.addMana(player2, ManaColor.WHITE, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0, 1),
+                    Map.of(0, player2.getId(), 1, planeswalker.getId()));
+            harness.castAndResolveInstant(player2, 0, directAttacker.getId());
+            assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(planeswalkerAttacker);
+
+            harness.castAndResolveInstant(player2, 0, planeswalkerAttacker.getId());
+        });
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Wu Infantry");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player2, "Nicol Bolas, Planeswalker");
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {

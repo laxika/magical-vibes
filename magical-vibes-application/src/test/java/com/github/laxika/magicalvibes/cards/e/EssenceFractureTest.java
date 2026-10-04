@@ -83,6 +83,95 @@ class EssenceFractureTest extends BaseCardTest {
         harness.assertInHand(player1, "Glory Seeker");
     }
 
+    @Test
+    void returnsRemainingTargetWhenOtherTargetLeavesBattlefield() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        prepareEssenceFracture();
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.setGraveyard(player1, List.of(first.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Glory Seeker");
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.assertInHand(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player1, "Essence Fracture");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotResolveWhenBothTargetsLeaveBattlefield() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        prepareEssenceFracture();
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        harness.setGraveyard(player1, List.of(first.getCard()));
+        harness.setGraveyard(player2, List.of(second.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player1, "Essence Fracture");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void returnsStolenCreatureToOwnerRatherThanController() {
+        GlorySeeker stolen = new GlorySeeker();
+        stolen.setOwnerId(player2.getId());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, stolen);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        prepareEssenceFracture();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
+
+        harness.assertInHand(player2, "Glory Seeker");
+        harness.assertInHand(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player1, "Glory Seeker");
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cyclingDiscardsAsCostBeforeDrawingOnResolution() {
+        harness.setHand(player1, List.of(new EssenceFracture()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Essence Fracture");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Glory Seeker");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotCycleWithoutBlueMana() {
+        harness.setHand(player1, List.of(new EssenceFracture()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Essence Fracture");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void prepareEssenceFracture() {
         harness.setHand(player1, List.of(new EssenceFracture()));
         harness.addMana(player1, ManaColor.BLUE, 2);

@@ -77,7 +77,7 @@ class CoralhelmGuideTest extends BaseCardTest {
     @Test
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent guide = harness.addToBattlefieldAndReturn(player1, new CoralhelmGuide());
-        guide.setTapped(true);
+        guide.tap();
         guide.setSummoningSick(true);
         addAbilityMana();
 

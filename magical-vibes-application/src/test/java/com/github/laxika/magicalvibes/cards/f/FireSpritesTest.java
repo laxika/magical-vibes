@@ -67,4 +67,21 @@ class FireSpritesTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(sprites.isTapped()).isFalse();
     }
+    @Test
+    @DisplayName("Fire Sprites cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        Permanent sprites = addCreatureReady(player1, new FireSprites());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(sprites.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -132,7 +133,9 @@ class ChainwebAracnirTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LurrusOfTheDreamDen());
         harness.setGraveyard(player1, List.of(new ChainwebAracnir()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        prepareMainPhase(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();

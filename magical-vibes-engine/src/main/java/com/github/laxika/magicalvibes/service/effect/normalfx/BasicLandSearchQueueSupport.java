@@ -135,7 +135,11 @@ public class BasicLandSearchQueueSupport {
         String destinationText = destinationToHand
                 ? " into your hand"
                 : enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
-        String prompt = "You may search your library for up to " + count + " basic land card"
+        if (!followUp.basicLandSearchQueue().optionalSearch()) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+        }
+        String prompt = (followUp.basicLandSearchQueue().optionalSearch() ? "You may search" : "Search")
+                + " your library for up to " + count + " basic land card"
                 + (count == 1 ? "" : "s")
                 + (destinationToHand ? " to reveal and put them" : " and put them")
                 + destinationText + " (" + count + " remaining).";

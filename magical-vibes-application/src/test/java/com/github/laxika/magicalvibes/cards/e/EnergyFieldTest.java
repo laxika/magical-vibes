@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.a.ArcLightning;
 import com.github.laxika.magicalvibes.cards.f.FaithHealer;
 import com.github.laxika.magicalvibes.cards.w.Windfall;
+import com.github.laxika.magicalvibes.cards.w.Whetstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EnergyField.class, ArcLightning.class, ArgothianSwine.class, FaithHealer.class,
-        AbsoluteGrace.class, Windfall.class})
+        AbsoluteGrace.class, Windfall.class, Whetstone.class})
 class EnergyFieldTest extends BaseCardTest {
 
     @Test
@@ -100,11 +101,71 @@ class EnergyFieldTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Windfall(), new Windfall()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Windfall");
         harness.assertInGraveyard(player1, "Energy Field");
+    }
+
+    @Test
+    @DisplayName("Each milled card triggers separately and Energy Field stays until a trigger resolves")
+    void triggersForEachCardMilledFromLibrary() {
+        harness.addToBattlefield(player1, new EnergyField());
+        harness.addToBattlefield(player1, new Whetstone());
+        harness.setLibrary(player1, List.of(new AbsoluteGrace(), new ArgothianSwine()));
+        harness.setLibrary(player2, List.of(new AbsoluteGrace(), new ArgothianSwine()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Absolute Grace");
+        harness.assertInGraveyard(player1, "Argothian Swine");
+        harness.assertOnBattlefield(player1, "Energy Field");
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Energy Field");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cards milled only into an opponent's graveyard do not trigger Energy Field")
+    void doesNotTriggerForOpponentMilledCards() {
+        harness.addToBattlefield(player1, new EnergyField());
+        harness.addToBattlefield(player1, new Whetstone());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(new AbsoluteGrace(), new ArgothianSwine()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Absolute Grace");
+        harness.assertInGraveyard(player2, "Argothian Swine");
+        harness.assertOnBattlefield(player1, "Energy Field");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Energy Field protects its controller but does not protect their creatures")
+    void doesNotPreventDamageToControllerCreatures() {
+        harness.addToBattlefield(player1, new EnergyField());
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
+        harness.setHand(player2, List.of(new ArcLightning()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player2, 0, Map.of(player1.getId(), 1, swine.getId(), 2));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(swine.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Energy Field");
+        harness.assertOnBattlefield(player1, "Argothian Swine");
     }
 }

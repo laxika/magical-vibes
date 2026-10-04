@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
+import com.github.laxika.magicalvibes.cards.a.AdamantWill;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,15 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Eviscerate.class, PrimordialWurm.class, Forest.class, AdamantWill.class})
 class EviscerateTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Eviscerate targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
 
         harness.setHand(player1, List.of(new Eviscerate()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -37,18 +37,16 @@ class EviscerateTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Eviscerate");
+        assertThat(entry.getCard()).isInstanceOf(Eviscerate.class);
         assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(bears);
+        harness.addToBattlefield(player1, new PrimordialWurm());
 
-        Permanent forest = new Permanent(new Forest());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(forest);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.setHand(player1, List.of(new Eviscerate()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -58,49 +56,40 @@ class EviscerateTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving Eviscerate destroys target creature and moves it to graveyard")
     void resolvingDestroysTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
 
         harness.setHand(player1, List.of(new Eviscerate()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Primordial Wurm");
+        harness.assertInGraveyard(player2, "Primordial Wurm");
         harness.assertInGraveyard(player1, "Eviscerate");
     }
 
     @Test
     @DisplayName("Eviscerate goes to graveyard after resolving")
     void evisceratGoesToGraveyardAfterResolving() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
 
         harness.setHand(player1, List.of(new Eviscerate()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Eviscerate");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
 
         harness.setHand(player1, List.of(new Eviscerate()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -115,5 +104,37 @@ class EviscerateTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Eviscerate");
+    }
+    @Test
+    @DisplayName("Can destroy a creature controlled by its caster")
+    void destroysOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
+        harness.setHand(player1, List.of(new Eviscerate()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Primordial Wurm");
+        harness.assertInGraveyard(player1, "Primordial Wurm");
+        harness.assertInGraveyard(player1, "Eviscerate");
+    }
+
+    @Test
+    @DisplayName("Indestructible gained in response prevents destruction")
+    void indestructiblePreventsDestruction() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
+        harness.setHand(player1, List.of(new Eviscerate()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setHand(player2, List.of(new AdamantWill()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Primordial Wurm");
+        harness.assertNotInGraveyard(player2, "Primordial Wurm");
+        harness.assertInGraveyard(player1, "Eviscerate");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }

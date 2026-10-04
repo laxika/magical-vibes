@@ -116,4 +116,59 @@ class EarlyFrostTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("different");
     }
+
+    @Test
+    @DisplayName("Already tapped lands are legal targets and remain tapped")
+    void canTargetAlreadyTappedLand() {
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent untappedLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        tappedLand.setTapped(true);
+        harness.setHand(player1, List.of(new EarlyFrost()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(tappedLand.getId(), untappedLand.getId()));
+
+        assertThat(tappedLand.isTapped()).isTrue();
+        assertThat(untappedLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Still taps remaining lands when one target leaves the battlefield")
+    void tapsRemainingLegalTargets() {
+        Permanent removedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent remainingLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent unchosenLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new EarlyFrost()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(removedLand.getId(), remainingLand.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removedLand);
+        gd.playerGraveyards.get(player2.getId()).add(removedLand.getCard());
+        harness.passBothPriorities();
+
+        assertThat(remainingLand.isTapped()).isTrue();
+        assertThat(unchosenLand.isTapped()).isFalse();
+        assertThat(removedLand.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not tap other lands when every target leaves the battlefield")
+    void doesNotResolveWithAllTargetsGone() {
+        Permanent removedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent unchosenLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new EarlyFrost()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(removedLand.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removedLand);
+        gd.playerGraveyards.get(player2.getId()).add(removedLand.getCard());
+        harness.passBothPriorities();
+
+        assertThat(unchosenLand.isTapped()).isFalse();
+        assertThat(removedLand.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof EarlyFrost);
+    }
 }

@@ -56,6 +56,40 @@ class FlameSpiritTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Pending activations boost only when each ability resolves")
+    void pendingActivationsResolveIndividually() {
+        Permanent flameSpirit = addCreatureReady(player1, new FlameSpirit());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(flameSpirit.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(flameSpirit.getPowerModifier()).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(flameSpirit.getPowerModifier()).isEqualTo(2);
+        assertThat(flameSpirit.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability boosts only its source among multiple copies")
+    void boostsOnlyItsSource() {
+        Permanent first = addCreatureReady(player1, new FlameSpirit());
+        Permanent second = addCreatureReady(player1, new FlameSpirit());
+        Permanent opposing = addCreatureReady(player2, new FlameSpirit());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Ability can be activated while tapped")
     void abilityCanBeActivatedWhileTapped() {
         Permanent flameSpirit = addCreatureReady(player1, new FlameSpirit());
@@ -93,7 +127,6 @@ class FlameSpiritTest extends BaseCardTest {
         assertThat(flameSpirit.getPowerModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(flameSpirit.getPowerModifier()).isEqualTo(0);

@@ -47,4 +47,64 @@ class FireOmenCraneTest extends BaseCardTest {
         assertThat(ownCreature.getMarkedDamage()).isZero();
         assertThat(opposing.getMarkedDamage()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Attack trigger still deals damage after the Crane leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent crane = addCreatureReady(player1, new FireOmenCrane());
+        Permanent opposing = addCreatureReady(player2, new FireOmenCrane());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, opposing.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(crane);
+        gd.playerGraveyards.get(player1.getId()).add(crane.getCard());
+        harness.passBothPriorities();
+
+        assertThat(opposing.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attack trigger does not damage a target that its controller gains control of")
+    void targetMustStillBeControlledByOpponent() {
+        addCreatureReady(player1, new FireOmenCrane());
+        Permanent opposing = addCreatureReady(player2, new FireOmenCrane());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, opposing.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(opposing);
+        gd.playerBattlefields.get(player1.getId()).add(opposing);
+        harness.passBothPriorities();
+
+        assertThat(opposing.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Crane can attack when no opponent controls a creature")
+    void attacksWithoutLegalTargets() {
+        Permanent crane = addCreatureReady(player1, new FireOmenCrane());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(crane.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A Crane that does not attack does not trigger when another creature attacks")
+    void nonAttackingCraneDoesNotTrigger() {
+        addCreatureReady(player1, new FireOmenCrane());
+        addCreatureReady(player1, new FireOmenCrane());
+        Permanent opposing = addCreatureReady(player2, new FireOmenCrane());
+
+        declareAttackers(player1, List.of(1));
+        harness.handlePermanentChosen(player1, opposing.getId());
+        harness.passBothPriorities();
+
+        assertThat(opposing.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

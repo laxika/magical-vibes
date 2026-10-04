@@ -50,9 +50,37 @@ class FinaleOfGloryTest extends BaseCardTest {
     }
 
     private List<Permanent> tokensNamed(String name) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
+        return findPermanents(player1, name).stream()
                 .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> name.equals(permanent.getCard().getName()))
                 .toList();
+    }
+
+    @Test
+    void zeroCreatesNoTokens() {
+        harness.setHand(player1, List.of(new FinaleOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof FinaleOfGlory);
+    }
+
+    @Test
+    void aboveTenCreatesXOfEachTokenForTheController() {
+        harness.setHand(player1, List.of(new FinaleOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 13);
+
+        harness.castSorcery(player1, 0, 11);
+        harness.passBothPriorities();
+
+        assertThat(tokensNamed("Soldier")).hasSize(11);
+        assertThat(tokensNamed("Angel")).hasSize(11);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(22)
+                .allSatisfy(token -> assertThat(token.isTapped()).isFalse());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }

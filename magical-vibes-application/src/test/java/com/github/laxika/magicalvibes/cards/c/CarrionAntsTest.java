@@ -76,7 +76,7 @@ class CarrionAntsTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent ants = harness.addToBattlefieldAndReturn(player1, new CarrionAnts());
         ants.setSummoningSick(true);
-        ants.setTapped(true);
+        ants.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

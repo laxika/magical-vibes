@@ -11,7 +11,7 @@ public class AggressiveInstinct extends Card {
 
     public AggressiveInstinct() {
         target(TargetFilters.creatureYouControl());
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1)
+        target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
     }
 }

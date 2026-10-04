@@ -82,6 +82,50 @@ class EmblazonedGolemTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
     }
 
+    @Test
+    void kickerPaymentUsesEachColorAtMostOnceEvenWhenOneColorHasExtraMana() {
+        harness.setHand(player1, List.of(new EmblazonedGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        castWithKickerX(2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Emblazoned Golem")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void zeroKickerIsLegalAndAddsNoCounters() {
+        harness.setHand(player1, List.of(new EmblazonedGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Emblazoned Golem")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void baseCostCanUseRepeatedColorsWhileKickerUsesDistinctColors() {
+        harness.setHand(player1, List.of(new EmblazonedGolem()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        castWithKickerX(3);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Emblazoned Golem")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
     private void castWithKickerX(int xValue) {
         harness.ensurePriority(player1);
         gs.playCard(gd, player1, 0, xValue, null, null, List.of(), List.of(), false,

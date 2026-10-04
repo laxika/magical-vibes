@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,23 +9,21 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FearlessSkald.class, GrizzlyBears.class})
+@CardUsed({FearlessSkald.class, FurnaceHostCharger.class})
 class FearlessSkaldTest extends BaseCardTest {
 
     @Test
     @DisplayName("Backup puts a +1/+1 counter on another creature and grants double strike")
     void backsUpAnotherCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FurnaceHostCharger());
         castSkald();
 
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(target);
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -45,23 +41,48 @@ class FearlessSkaldTest extends BaseCardTest {
     @Test
     @DisplayName("Backup's granted double strike expires at the end of the turn")
     void grantedDoubleStrikeExpiresAtEndOfTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FurnaceHostCharger());
         castSkald();
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(target);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Backup can put a counter and grant double strike to an opponent's creature")
+    void backsUpOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FurnaceHostCharger());
+        castSkald();
+
+        resolveEtbTargeting(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Backup still resolves after its source leaves the battlefield")
+    void backupResolvesWithoutSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FurnaceHostCharger());
+        castSkald();
+        Permanent skald = findPermanent(player1, "Fearless Skald");
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(skald);
+        gd.playerGraveyards.get(player1.getId()).add(skald.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     private void castSkald() {
-        harness.setHand(player1, List.of(new FearlessSkald()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FearlessSkald(), "{4}{R}");
         harness.passBothPriorities();
     }
 

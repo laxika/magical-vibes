@@ -139,7 +139,7 @@ class BodyDropperTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent bodyDropper = harness.addToBattlefieldAndReturn(player1, new BodyDropper());
         bodyDropper.setSummoningSick(true);
-        bodyDropper.setTapped(true);
+        bodyDropper.tap();
         harness.addToBattlefield(player1, new Goldhound());
         addActivationMana();
 

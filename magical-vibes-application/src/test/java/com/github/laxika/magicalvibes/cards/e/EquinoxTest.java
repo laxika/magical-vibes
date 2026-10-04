@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.Armageddon;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.p.Pyramids;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({
         Equinox.class, Forest.class, StoneRain.class, Armageddon.class,
-        Naturalize.class, GrizzlyBears.class, HolyStrength.class
+        Naturalize.class, GrizzlyBears.class, HolyStrength.class,
+        DarksteelCitadel.class, Pyramids.class
 })
 class EquinoxTest extends BaseCardTest {
 
@@ -162,5 +165,102 @@ class EquinoxTest extends BaseCardTest {
         Permanent equinox = harness.addToBattlefieldAndReturn(player1, new Equinox());
         equinox.setAttachedTo(forest.getId());
         return forest;
+    }
+
+    @Test
+    void doesNotCounterDestructionOfIndestructibleLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new DarksteelCitadel());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Equinox());
+        aura.setAttachedTo(land.getId());
+        StoneRain spell = new StoneRain();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player2, 0, land.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, 0, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Darksteel Citadel");
+        harness.assertInGraveyard(player2, "Stone Rain");
+    }
+
+    @Test
+    void doesNotCounterBoardWipeWhenOnlyControlledLandIsIndestructible() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new DarksteelCitadel());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Equinox());
+        aura.setAttachedTo(land.getId());
+        harness.addToBattlefield(player2, new Forest());
+        Armageddon spell = new Armageddon();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player2, 0);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, 0, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Darksteel Citadel");
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    void checksDestructionReplacementAtAbilityResolution() {
+        Permanent land = attachToForest();
+        harness.addToBattlefield(player1, new Pyramids());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        StoneRain spell = new StoneRain();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player2, 0, land.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, 0, spell.getId());
+        harness.activateAbility(player1, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1,
+                "The next time target land would be destroyed this turn, remove all damage marked on it instead.");
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(land.getLandDestructionShield()).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(land.getLandDestructionShield()).isZero();
+    }
+
+    @Test
+    void activatedAbilityStillCountersAfterAuraIsDestroyed() {
+        Permanent land = attachToForest();
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).get(1);
+        StoneRain spell = new StoneRain();
+        harness.setHand(player2, List.of(spell, new Naturalize()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player2, 0, land.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, 0, spell.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Equinox");
+        harness.assertInGraveyard(player2, "Stone Rain");
+        harness.assertOnBattlefield(player1, "Forest");
     }
 }

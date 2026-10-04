@@ -27,8 +27,7 @@ class EchoOfEonsTest extends BaseCardTest {
         harness.setLibrary(player2, deckOf(20));
         addNormalMana();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
@@ -45,13 +44,64 @@ class EchoOfEonsTest extends BaseCardTest {
         harness.setLibrary(player2, deckOf(20));
         addFlashbackMana();
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
         harness.assertNotInGraveyard(player1, "Echo of Eons");
+    }
+
+    @Test
+    @DisplayName("Both players rebuild empty libraries from their hands and graveyards before drawing")
+    void rebuildsEmptyLibrariesBeforeDrawing() {
+        EchoOfEons spell = new EchoOfEons();
+        List<Card> firstCards = new ArrayList<>();
+        List<Card> secondCards = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            firstCards.add(new EchoOfEons());
+            secondCards.add(new EchoOfEons());
+        }
+        List<Card> firstHand = new ArrayList<>(firstCards.subList(0, 3));
+        firstHand.add(0, spell);
+        harness.setHand(player1, firstHand);
+        harness.setGraveyard(player1, firstCards.subList(3, 7));
+        harness.setHand(player2, secondCards.subList(0, 2));
+        harness.setGraveyard(player2, secondCards.subList(2, 7));
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        addNormalMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(firstCards);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrderElementsOf(secondCards);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Echo of Eons can be flashed back after resolving from hand")
+    void normalCastThenFlashback() {
+        EchoOfEons spell = new EchoOfEons();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, deckOf(20));
+        harness.setLibrary(player2, deckOf(20));
+        addNormalMana();
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+
+        addFlashbackMana();
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7).doesNotContain(spell);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(13).doesNotContain(spell);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(13);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 
     private void addNormalMana() {

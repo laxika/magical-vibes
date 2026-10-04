@@ -310,7 +310,19 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                       List<PendingForcedSacrifice> sacrifices,
                                       boolean shuffleAfterQueue,
                                       List<UUID> searchedPlayerIds,
-                                      boolean destinationToHand) {
+                                      boolean destinationToHand, boolean optionalSearch) {
+
+        public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
+                                    List<PendingForcedSacrifice> sacrifices,
+                                    boolean shuffleAfterQueue, List<UUID> searchedPlayerIds,
+                                    boolean destinationToHand) {
+            this(remainingPicks, sacrifices, shuffleAfterQueue, searchedPlayerIds, destinationToHand, true);
+        }
+
+        public BasicLandSearchQueue withOptionalSearch(boolean optional) {
+            return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
+                    searchedPlayerIds, destinationToHand, optional);
+        }
 
         public BasicLandSearchQueue(List<BasicLandsPick> remainingPicks,
                                     List<PendingForcedSacrifice> sacrifices) {
@@ -338,7 +350,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public BasicLandSearchQueue withRemainingPicks(List<BasicLandsPick> remaining) {
             return new BasicLandSearchQueue(remaining, sacrifices, shuffleAfterQueue, searchedPlayerIds,
-                    destinationToHand);
+                    destinationToHand, optionalSearch);
         }
 
         public BasicLandSearchQueue withSearchedPlayer(UUID playerId) {
@@ -348,12 +360,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             List<UUID> updated = new java.util.ArrayList<>(searchedPlayerIds);
             updated.add(playerId);
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue, updated,
-                    destinationToHand);
+                    destinationToHand, optionalSearch);
         }
 
         public BasicLandSearchQueue toHand() {
             return new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue,
-                    searchedPlayerIds, true);
+                    searchedPlayerIds, true, optionalSearch);
         }
     }
 

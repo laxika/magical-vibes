@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,10 +30,7 @@ class ForkedLightningTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(target.getId(), 4));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // Grizzly Bears is 2/2, 4 damage kills it
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(target.getId()));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -50,11 +46,7 @@ class ForkedLightningTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(target1.getId(), 2, target2.getId(), 2));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // Both are 2/2, both die to 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(target1.getId()))
-                .noneMatch(p -> p.getId().equals(target2.getId()));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -74,12 +66,8 @@ class ForkedLightningTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // Grizzly Bears 2/2 dies to 2, the two Raging Goblins 1/1s die to 1 each
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(bears.getId()))
-                .noneMatch(p -> p.getId().equals(goblin1.getId()))
-                .noneMatch(p -> p.getId().equals(goblin2.getId()));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
     }
 
     @Test
@@ -101,7 +89,7 @@ class ForkedLightningTest extends BaseCardTest {
 
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        // Only assigning 3 damage — should fail
+        // Only assigning 3 damage â€” should fail
         assertThatThrownBy(() ->
                 harness.castSorcery(player1, 0, Map.of(target.getId(), 3))
         ).isInstanceOf(IllegalStateException.class);
@@ -173,5 +161,49 @@ class ForkedLightningTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(protectedTarget.getId()))
                 .noneMatch(p -> p.getId().equals(legalTarget.getId()));
+    }
+    @Test
+    void cannotCastWithoutTargets() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ForkedLightning()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotRedistributeDamageFromAnIllegalTarget() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ForkedLightning()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        Permanent protectedTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castSorcery(player1, 0, Map.of(protectedTarget.getId(), 3, legalTarget.getId(), 1));
+        protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(protectedTarget.getMarkedDamage()).isZero();
+        assertThat(legalTarget.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Forked Lightning");
+    }
+
+    @Test
+    void dealsNoDamageWhenEveryTargetBecomesIllegal() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ForkedLightning()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 4));
+        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Forked Lightning");
     }
 }

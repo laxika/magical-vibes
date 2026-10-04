@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EnclaveElite.class, Island.class})
 class EnclaveEliteTest extends BaseCardTest {
 
     @Test
@@ -38,9 +39,7 @@ class EnclaveEliteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EnclaveElite()));
         harness.addMana(player1, ManaColor.BLUE, 7);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{1}{U}", "{1}{U}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{1}{U}", "{1}{U}"));
         harness.passBothPriorities();
 
         Permanent elite = findElite();
@@ -53,14 +52,11 @@ class EnclaveEliteTest extends BaseCardTest {
     void cannotBeBlockedWhenDefenderControlsIsland() {
         harness.addToBattlefield(player2, new Island());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new EnclaveElite());
 
-        Permanent elite = new Permanent(new EnclaveElite());
+        Permanent elite = harness.addToBattlefieldAndReturn(player1, new EnclaveElite());
         elite.setSummoningSick(false);
         elite.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(elite);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -74,6 +70,59 @@ class EnclaveEliteTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Enters with one counter after one multikicker payment")
+    void entersWithOneCounterWhenKickedOnce() {
+        harness.setHand(player1, List.of(new EnclaveElite()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{1}{U}"));
+        harness.passBothPriorities();
+
+        assertThat(findElite().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot multikick without paying the full additional mana cost")
+    void cannotMultikickWithInsufficientMana() {
+        harness.setHand(player1, List.of(new EnclaveElite()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.castCreatureWithRepeatedCosts(
+                player1, 0, List.of("{1}{U}")))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Enclave Elite");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast grants no multikicker counters")
+    void entersWithoutCountersWhenNotCast() {
+        Permanent elite = harness.enterBattlefieldAndReturn(player1, new EnclaveElite());
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can be blocked when only the attacking player controls an Island")
+    void canBeBlockedWhenOnlyAttackerControlsIsland() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new EnclaveElite());
+        Permanent elite = harness.addToBattlefieldAndReturn(player1, new EnclaveElite());
+        elite.setSummoningSick(false);
+        elite.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(elite))));
+
+        assertThat(blocker.getBlockingTargetIds()).contains(elite.getId());
     }
 
     private Permanent findElite() {

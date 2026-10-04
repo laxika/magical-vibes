@@ -198,7 +198,7 @@ class ConfluxTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(original);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .filter(e -> e.contains("shuffled")).hasSize(1);
+                .filteredOn(e -> e.contains("shuffled")).hasSize(1);
     }
 
     @Test

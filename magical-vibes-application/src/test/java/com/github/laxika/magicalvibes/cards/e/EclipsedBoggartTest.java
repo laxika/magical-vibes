@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EclipsedBoggart.class, GoblinArsonist.class, GrizzlyBears.class, Mountain.class, Plains.class, Swamp.class})
 class EclipsedBoggartTest extends BaseCardTest {
 
     @Test
@@ -72,10 +74,57 @@ class EclipsedBoggartTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 
+    @Test
+    @DisplayName("Choosing a Swamp leaves the untouched library cards above the bottomed cards")
+    void choosingSwampPreservesUntouchedLibrary() {
+        Swamp swamp = new Swamp();
+        Plains first = new Plains();
+        Plains second = new Plains();
+        Plains third = new Plains();
+        Mountain untouched = new Mountain();
+        setupTopCards(List.of(swamp, first, second, third, untouched));
+        castAndResolveEtb();
+
+        harness.handleMultipleCardsChosen(player1, List.of(swamp.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(swamp);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 4))
+                .containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library shorter than four cards still allows choosing a Mountain")
+    void shortLibraryAllowsChoosingMountain() {
+        Mountain mountain = new Mountain();
+        Plains plains = new Plains();
+        setupTopCards(List.of(plains, mountain));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(plains, mountain);
+        harness.handleMultipleCardsChosen(player1, List.of(mountain.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(mountain);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library finishes the triggered ability without a choice")
+    void emptyLibraryFinishesWithoutChoice() {
+        setupTopCards(List.of());
+        castAndResolveEtb();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     private void castAndResolveEtb() {

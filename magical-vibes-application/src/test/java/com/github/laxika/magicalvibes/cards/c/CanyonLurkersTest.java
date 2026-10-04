@@ -75,7 +75,7 @@ class CanyonLurkersTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent lurkers = findPermanent(player1, "Canyon Lurkers");
-        lurkers.setTapped(true);
+        lurkers.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.turnFaceUp(player1, 0);

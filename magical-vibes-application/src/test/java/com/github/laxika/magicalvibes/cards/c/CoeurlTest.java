@@ -82,7 +82,7 @@ class CoeurlTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         addReadyCoeurl(player1);
         Permanent target = addReadyCoeurl(player2);
-        target.setTapped(true);
+        target.tap();
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -107,7 +107,7 @@ class CoeurlTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent coeurl = addReadyCoeurl(player1);
-        coeurl.setTapped(true);
+        coeurl.tap();
         Permanent target = addReadyCoeurl(player2);
         addActivationMana();
 

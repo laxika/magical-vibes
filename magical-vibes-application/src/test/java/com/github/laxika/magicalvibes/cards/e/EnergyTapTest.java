@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,11 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EnergyTap.class, AirElemental.class, GrizzlyBears.class, Island.class})
+@CardUsed({EnergyTap.class, AirElemental.class, GrizzlyBears.class, Island.class, Ornithopter.class})
 class EnergyTapTest extends BaseCardTest {
 
     @Test
@@ -97,5 +99,52 @@ class EnergyTapTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("untapped creature you control");
+    }
+
+    @Test
+    @DisplayName("Taps a zero-mana-value creature without adding mana")
+    void tapsZeroManaValueCreatureWithoutAddingMana() {
+        Permanent ornithopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new EnergyTap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, ornithopter.getId());
+
+        assertThat(ornithopter.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertInGraveyard(player1, "Energy Tap");
+    }
+
+    @Test
+    @DisplayName("Adds no mana when the target leaves the battlefield before resolution")
+    void doesNotAddManaWhenTargetLeavesBattlefield() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EnergyTap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerHands.get(player1.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Energy Tap");
+    }
+
+    @Test
+    @DisplayName("Adds no mana when a legal target cannot become tapped")
+    void doesNotAddManaWhenTargetCannotBecomeTapped() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        // Model the restriction created by Ood Sphere's chaos ability.
+        bears.addTapRestriction(UUID.randomUUID());
+        harness.setHand(player1, List.of(new EnergyTap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertInGraveyard(player1, "Energy Tap");
     }
 }

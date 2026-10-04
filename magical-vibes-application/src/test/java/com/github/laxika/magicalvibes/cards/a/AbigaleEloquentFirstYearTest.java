@@ -55,6 +55,8 @@ class AbigaleEloquentFirstYearTest extends BaseCardTest {
         harness.castCreature(player1, 0, List.of(target.getId()));
         resolveAllTriggers();
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.interaction.clearAwaitingInput();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getCounterCount(CounterType.FLYING)).isEqualTo(1);
@@ -101,6 +103,8 @@ class AbigaleEloquentFirstYearTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, List.of(target.getId()));
         resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.interaction.clearAwaitingInput();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.addMana(player1, ManaColor.WHITE, 1);

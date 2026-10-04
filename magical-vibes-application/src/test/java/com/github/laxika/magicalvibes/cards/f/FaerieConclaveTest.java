@@ -187,8 +187,8 @@ class FaerieConclaveTest extends BaseCardTest {
     // ===== Ability fizzles if removed =====
 
     @Test
-    @DisplayName("Ability fizzles if Faerie Conclave is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without animating anything if its source has left")
+    void abilityDoesNothingIfSourceRemoved() {
         Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -210,6 +210,57 @@ class FaerieConclaveTest extends BaseCardTest {
         Permanent conclave = addCreatureReady(player1, new FaerieConclave());
 
         assertThat(gqs.isCreature(gd, conclave)).isFalse();
+        assertThat(gqs.isLand(gd, conclave)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Faerie Conclave can animate without untapping")
+    void tappedConclaveCanAnimate() {
+        harness.setHand(player1, List.of(new FaerieConclave()));
+        harness.playLand(player1, 0);
+        Permanent conclave = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(conclave.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, conclave)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, conclave)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, conclave)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A newly controlled Conclave can animate but cannot then tap for mana")
+    void newConclaveCannotTapAfterAnimating() {
+        Permanent conclave = harness.addToBattlefieldAndReturn(player1, new FaerieConclave());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, conclave)).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(conclave.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated animation does not increase power or toughness")
+    void repeatedAnimationDoesNotStackStats() {
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, conclave)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, conclave)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, conclave, Keyword.FLYING)).isTrue();
         assertThat(gqs.isLand(gd, conclave)).isTrue();
     }
 

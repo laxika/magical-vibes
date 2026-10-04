@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfiniteGuidelineStation;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FocusFire.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({FocusFire.class, AirElemental.class, GrizzlyBears.class, InfiniteGuidelineStation.class})
 class FocusFireTest extends BaseCardTest {
 
     @Test
@@ -66,10 +68,90 @@ class FocusFireTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
-    private void castAndResolve(Permanent target) {
+    @Test
+    void canTargetBlockingCreature() {
+        Permanent attacker = addAttacker(new AirElemental());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        blocker.setBlocking(true);
+        blocker.getBlockingTargetIds().add(attacker.getId());
+
+        castAndResolve(blocker);
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void cannotTargetNoncreatureSpacecraft() {
+        Permanent station = harness.addToBattlefieldAndReturn(player2, new InfiniteGuidelineStation());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, station.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void countsRealNoncreatureSpacecraft() {
+        harness.addToBattlefield(player1, new InfiniteGuidelineStation());
+        Permanent target = addAttacker(new AirElemental());
+
+        castAndResolve(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void countsAnimatedSpacecraftOnlyOnce() {
+        Permanent station = harness.addToBattlefieldAndReturn(player1, new InfiniteGuidelineStation());
+        station.getCounters().put(CounterType.CHARGE, 12);
+        Permanent target = addAttacker(new AirElemental());
+
+        castAndResolve(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void countsPermanentsAtResolution() {
+        Permanent target = addAttacker(new AirElemental());
         prepareCast();
         harness.castInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new InfiniteGuidelineStation());
+
         harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotDamageTargetThatLeavesCombatBeforeResolution() {
+        Permanent target = addAttacker(new AirElemental());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+        target.setAttacking(false);
+        target.setAttackTarget(null);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Focus Fire");
+    }
+
+    @Test
+    void canTargetOwnAttackingCreatureAndCountsIt() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        target.setAttacking(true);
+        target.setAttackTarget(player2.getId());
+
+        castAndResolve(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    private void castAndResolve(Permanent target) {
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareCast() {
@@ -78,8 +160,7 @@ class FocusFireTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Card card) {
-        harness.addToBattlefield(player2, card);
-        Permanent target = findPermanent(player2, "Air Elemental");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, card);
         target.setSummoningSick(false);
         target.setAttacking(true);
         target.setAttackTarget(player1.getId());

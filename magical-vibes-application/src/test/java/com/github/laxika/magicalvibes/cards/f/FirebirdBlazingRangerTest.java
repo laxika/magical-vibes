@@ -46,6 +46,65 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The boost uses Firebird's power when the trigger resolves")
+    void usesPowerAtResolution() {
+        Permanent firebird = addCreatureReady(player1, new FirebirdBlazingRanger());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        firebird.setPowerModifier(4);
+        resolveAllTriggers();
+
+        assertThat(bears.getPowerModifier()).isEqualTo(5);
+        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(firebird.getPowerModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A negative Firebird power gives no boost")
+    void negativePowerGivesNoBoost() {
+        Permanent firebird = addCreatureReady(player1, new FirebirdBlazingRanger());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        firebird.setPowerModifier(-3);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(bears.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The trigger uses Firebird's last power if it leaves before resolution")
+    void usesLastKnownPowerAfterFirebirdLeaves() {
+        Permanent firebird = addCreatureReady(player1, new FirebirdBlazingRanger());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        firebird.setPowerModifier(2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firebird));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firebird);
+        assertThat(bears.getPowerModifier()).isEqualTo(3);
+        assertThat(bears.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Firebird does not boost attackers when it stays out of combat")
+    void doesNotTriggerWhenOnlyOtherCreaturesAttack() {
+        Permanent firebird = addCreatureReady(player1, new FirebirdBlazingRanger());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(firebird.getPowerModifier()).isZero();
+        assertThat(bears.getPowerModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("The attack boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new FirebirdBlazingRanger());

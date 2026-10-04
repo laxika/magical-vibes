@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.ArgothianEnchantress;
+import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.f.FertileGround;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -20,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EnchantmentAlteration.class, Exploration.class, FertileGround.class, GorillaWarrior.class,
+@CardUsed({EnchantmentAlteration.class, ArgothianEnchantress.class, Confiscate.class,
+        Exploration.class, FertileGround.class, GorillaWarrior.class,
         Island.class, Pacifism.class, SpreadingAlgae.class, Swamp.class})
 class EnchantmentAlterationTest extends BaseCardTest {
 
@@ -32,8 +35,7 @@ class EnchantmentAlterationTest extends BaseCardTest {
         Permanent thirdCreature = addCreature(player2);
         Permanent aura = addAuraAttachedTo(player1, new Pacifism(), firstCreature);
 
-        cast(aura);
-        harness.passBothPriorities();
+        castAndResolve(aura);
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
@@ -54,8 +56,7 @@ class EnchantmentAlterationTest extends BaseCardTest {
         Permanent creature = addCreature(player2);
         Permanent aura = addAuraAttachedTo(player1, new FertileGround(), firstLand);
 
-        cast(aura);
-        harness.passBothPriorities();
+        castAndResolve(aura);
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
@@ -74,8 +75,7 @@ class EnchantmentAlterationTest extends BaseCardTest {
         addLand(player1);
         Permanent aura = addAuraAttachedTo(player1, new SpreadingAlgae(), swamp);
 
-        cast(aura);
-        harness.passBothPriorities();
+        castAndResolve(aura);
 
         assertThat(aura.getAttachedTo()).isEqualTo(swamp.getId());
     }
@@ -84,7 +84,7 @@ class EnchantmentAlterationTest extends BaseCardTest {
     @DisplayName("Cannot target an Aura attached to a noncreature, nonland permanent")
     void cannotTargetAuraAttachedToAnotherType() {
         Permanent unsupportedHost = harness.addToBattlefieldAndReturn(player1, new Exploration());
-        Permanent aura = addAuraAttachedTo(player1, new Pacifism(), unsupportedHost);
+        Permanent aura = addAuraAttachedTo(player1, new Confiscate(), unsupportedHost);
 
         harness.setHand(player1, List.of(new EnchantmentAlteration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -102,8 +102,7 @@ class EnchantmentAlterationTest extends BaseCardTest {
         Permanent secondCreature = addCreature(player1);
         Permanent aura = addAuraAttachedTo(player1, new Pacifism(), firstCreature);
 
-        cast(aura);
-        harness.passBothPriorities();
+        castAndResolve(aura);
 
         assertThat(aura.getAttachedTo()).isEqualTo(secondCreature.getId());
     }
@@ -115,8 +114,7 @@ class EnchantmentAlterationTest extends BaseCardTest {
         addLand(player2);
         Permanent aura = addAuraAttachedTo(player1, new Pacifism(), creature);
 
-        cast(aura);
-        harness.passBothPriorities();
+        castAndResolve(aura);
 
         assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
     }
@@ -136,10 +134,55 @@ class EnchantmentAlterationTest extends BaseCardTest {
         assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    private void cast(Permanent aura) {
+    @Test
+    @DisplayName("Can move an Aura to a creature with shroud because the destination is not targeted")
+    void movesAuraToCreatureWithShroud() {
+        Permanent firstCreature = addCreature(player1);
+        Permanent destination = harness.addToBattlefieldAndReturn(player2, new ArgothianEnchantress());
+        Permanent aura = addAuraAttachedTo(player1, new Pacifism(), firstCreature);
+
+        castAndResolve(aura);
+
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+    }
+
+    @Test
+    @DisplayName("The spell controller chooses where to move an opponent's Aura without changing its controller")
+    void movesOpponentAuraUsingSpellControllersChoice() {
+        Permanent firstCreature = addCreature(player1);
+        Permanent secondCreature = addCreature(player1);
+        Permanent thirdCreature = addCreature(player2);
+        Permanent aura = addAuraAttachedTo(player2, new Pacifism(), firstCreature);
+
+        castAndResolve(aura);
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(secondCreature.getId(), thirdCreature.getId());
+        harness.handlePermanentChosen(player1, thirdCreature.getId());
+
+        assertThat(aura.getAttachedTo()).isEqualTo(thirdCreature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Moves Spreading Algae to another Swamp while excluding other lands")
+    void movesRestrictedLandAuraToLegalLand() {
+        Permanent firstSwamp = addSwamp(player1);
+        Permanent secondSwamp = addSwamp(player2);
+        addLand(player2);
+        Permanent aura = addAuraAttachedTo(player1, new SpreadingAlgae(), firstSwamp);
+
+        castAndResolve(aura);
+
+        assertThat(aura.getAttachedTo()).isEqualTo(secondSwamp.getId());
+    }
+
+    private void castAndResolve(Permanent aura) {
         harness.setHand(player1, List.of(new EnchantmentAlteration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, aura.getId());
+        harness.castAndResolveInstant(player1, 0, aura.getId());
     }
 
     private Permanent addCreature(Player player) {

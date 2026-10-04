@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Fork.class, Disintegrate.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({Fork.class, Disintegrate.class, Fireball.class, GrizzlyBears.class, Unsummon.class})
 class ForkTest extends BaseCardTest {
 
     @Test
@@ -88,6 +88,69 @@ class ForkTest extends BaseCardTest {
 
         harness.assertLife(player2, 16);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canChooseNewTargetsForEveryTargetOfTheCopy() {
+        Permanent firstNewTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondNewTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Fireball fireball = new Fireball();
+        harness.setHand(player1, List.of(fireball));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.setHand(player2, List.of(new Fork()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 4, List.of(player1.getId(), player2.getId()));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, fireball.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, firstNewTarget.getId());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, secondNewTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .doesNotContain(firstNewTarget, secondNewTarget);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstNewTarget.getCard(), secondNewTarget.getCard());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void copiesSpellWithNoTargetsWithoutOfferingRetargeting() {
+        Fireball fireball = new Fireball();
+        harness.setHand(player1, List.of(fireball));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Fork()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, fireball.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Fireball");
+        harness.assertInGraveyard(player2, "Fork");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
     @Test

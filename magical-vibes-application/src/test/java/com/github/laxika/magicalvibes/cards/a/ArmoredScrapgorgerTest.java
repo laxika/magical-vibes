@@ -126,7 +126,6 @@ class ArmoredScrapgorgerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.GREEN.name());
-        harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(source.getCounterCount(CounterType.OIL)).isZero();

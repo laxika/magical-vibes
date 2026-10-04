@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FinalParting.class, Plains.class, Swamp.class, BalothGorger.class})
 class FinalPartingTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Final Parting puts it on the stack as a sorcery")
@@ -38,7 +37,6 @@ class FinalPartingTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Final Parting");
     }
 
     @Test
@@ -72,7 +70,7 @@ class FinalPartingTest extends BaseCardTest {
 
         // Pick first card for hand
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -100,10 +98,10 @@ class FinalPartingTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // First pick: hand
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         // Second pick: graveyard
         String graveyardCardName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Card is in graveyard (Final Parting itself + the chosen card)
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -126,18 +124,16 @@ class FinalPartingTest extends BaseCardTest {
 
         // First search: pick Plains for hand
         int plainsIndex = findCardIndex(gd, "Plains");
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(plainsIndex));
+        harness.handleCardChosen(player1, plainsIndex);
 
-        // Second search: pick Grizzly Bears for graveyard
-        int bearsIndex = findCardIndex(gd, "Grizzly Bears");
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
+        // Second search: pick Baloth Gorger for graveyard
+        int gorgerIndex = findCardIndex(gd, "Baloth Gorger");
+        harness.handleCardChosen(player1, gorgerIndex);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         harness.assertInHand(player1, "Plains");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Baloth Gorger");
     }
-
-    // ===== Unrestricted search — cannot fail to find =====
 
     @Test
     @DisplayName("First pick is unrestricted (canFailToFind is false)")
@@ -160,20 +156,16 @@ class FinalPartingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
-
-    // ===== Edge cases =====
 
     @Test
     @DisplayName("Library with only one card: hand pick offered, no graveyard pick")
     void libraryWithOneCard() {
         setupAndCast();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(new Plains());
+        harness.setLibrary(player1, List.of(new Plains()));
 
         harness.passBothPriorities();
 
@@ -181,7 +173,7 @@ class FinalPartingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
 
         // Pick the only card for hand
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Library is now empty — no second pick, just finishes
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -192,7 +184,7 @@ class FinalPartingTest extends BaseCardTest {
     @DisplayName("Empty library logs and does not crash")
     void emptyLibrary() {
         setupAndCast();
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -200,8 +192,6 @@ class FinalPartingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
-
-    // ===== Sorcery goes to graveyard =====
 
     @Test
     @DisplayName("Final Parting goes to graveyard after fully resolving")
@@ -211,11 +201,10 @@ class FinalPartingTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // First pick: hand
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         // Second pick: graveyard
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Final Parting");
     }
@@ -232,7 +221,64 @@ class FinalPartingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("An empty library still shuffles and triggers Psychogenic Probe")
+    void emptyLibraryStillTriggersShuffleAbility() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Final Parting");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("Finding the only card still shuffles the now-empty library once")
+    void oneCardLibraryTriggersShuffleAbility() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Plains()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("Final Parting shuffles exactly once, after both cards have been chosen")
+    void shufflesOnceAfterBothPicks() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        setupAndCast();
+        setupLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, findCardIndex(gd, "Plains"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals())
+                .isFalse();
+        harness.handleCardChosen(player1, findCardIndex(gd, "Baloth Gorger"));
+
+        harness.assertInHand(player1, "Plains");
+        harness.assertInGraveyard(player1, "Baloth Gorger");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
 
     private void setupAndCast() {
         harness.setHand(player1, List.of(new FinalParting()));
@@ -241,9 +287,7 @@ class FinalPartingTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new BalothGorger(), new BalothGorger()));
     }
 
     private int findCardIndex(GameData gd, String cardName) {

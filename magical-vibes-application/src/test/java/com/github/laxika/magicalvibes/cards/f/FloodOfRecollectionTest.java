@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FloodOfRecollection.class, HolyDay.class, GrizzlyBears.class})
 class FloodOfRecollectionTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class FloodOfRecollectionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FloodOfRecollection()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(target.getId()));
@@ -62,5 +63,45 @@ class FloodOfRecollectionTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card.getId().equals(target.getId()));
         harness.assertInGraveyard(player1, "Flood of Recollection");
+    }
+
+    @Test
+    @DisplayName("Returns only the targeted sorcery, leaving other eligible cards in the graveyard")
+    void returnsOnlyTargetedSorcery() {
+        Card target = new FloodOfRecollection();
+        Card other = new HolyDay();
+        Card spell = new FloodOfRecollection();
+        harness.setGraveyard(player1, List.of(other, target));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Cannot target an instant in an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        Card target = new HolyDay();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new FloodOfRecollection()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a graveyard target")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new FloodOfRecollection()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, (java.util.UUID) null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

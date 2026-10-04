@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -131,6 +132,74 @@ class ErrantMinionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @CardUsed(Skullcrack.class)
+    @DisplayName("Paying mana cannot prevent damage after Skullcrack resolves")
+    void paymentDoesNotPreventUnpreventableDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        attachErrantMinion(creature);
+        advanceToUpkeep(player2);
+
+        harness.setHand(player1, List.of(new Skullcrack()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller can tap a land during payment")
+    void canTapLandDuringPayment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        attachErrantMinion(creature);
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        harness.tapPermanent(player2, gd.playerBattlefields.get(player2.getId()).indexOf(island));
+        harness.handleXValueChosen(player2, 1);
+
+        assertThat(island.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("The triggered ability still deals damage after the Aura leaves the battlefield")
+    void triggerSurvivesAuraLeavingBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        attachErrantMinion(creature);
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Enchanting your own creature damages you during your upkeep")
+    void enchantingOwnCreatureDamagesAuraController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        attachErrantMinion(creature);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
     }
 
     private void attachErrantMinion(Permanent creature) {

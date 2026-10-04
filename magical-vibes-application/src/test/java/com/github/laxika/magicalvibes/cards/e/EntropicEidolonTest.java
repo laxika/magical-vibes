@@ -28,6 +28,10 @@ class EntropicEidolonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertNotOnBattlefield(player1, "Entropic Eidolon");
+        harness.assertInGraveyard(player1, "Entropic Eidolon");
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
@@ -101,5 +105,47 @@ class EntropicEidolonTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+    }
+
+    @Test
+    @DisplayName("Entropic Eidolon can target its controller with its sacrifice ability")
+    void sacrificeAbilityCanTargetItsController() {
+        harness.addToBattlefield(player1, new EntropicEidolon());
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player1, "Entropic Eidolon");
+    }
+
+    @Test
+    @DisplayName("A sacrificed Eidolon returns when its controller casts a multicolored spell")
+    void sacrificedEidolonReturnsFromGraveyard() {
+        EntropicEidolon eidolon = new EntropicEidolon();
+        harness.addToBattlefield(player1, eidolon);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eidolon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(eidolon);
+    }
+
+    @Test
+    @DisplayName("Entropic Eidolon on the battlefield does not trigger for a multicolored spell")
+    void battlefieldEidolonDoesNotTriggerReturn() {
+        harness.addToBattlefield(player1, new EntropicEidolon());
+
+        harness.castFromHand(player1, new AzoriusFirstWing(), "{W}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Entropic Eidolon");
     }
 }

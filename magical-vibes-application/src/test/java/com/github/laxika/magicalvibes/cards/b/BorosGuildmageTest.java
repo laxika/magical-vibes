@@ -25,7 +25,7 @@ class BorosGuildmageTest extends BaseCardTest {
     void tappedSummoningSickGuildmageCanTargetItself(int abilityIndex, ManaColor color, Keyword keyword) {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new BorosGuildmage());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, color, 1);
 

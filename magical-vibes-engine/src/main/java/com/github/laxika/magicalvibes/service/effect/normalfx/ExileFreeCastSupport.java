@@ -114,7 +114,8 @@ public class ExileFreeCastSupport {
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 
-        if (EffectResolution.needsTarget(card)) {
+        if (EffectResolution.needsTarget(card) && (card.getMinTargets() > 0
+                || !exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId).isEmpty())) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
             boolean multiTarget = card.getMaxTargets() > 1;
             boolean hasLegalTargets = multiTarget

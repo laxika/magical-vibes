@@ -173,7 +173,7 @@ class ChemistersTrickTest extends BaseCardTest {
     @Test
     void tappedAffectedCreatureIsNotRequiredToAttack() {
         Permanent target = addCreature(player2);
-        target.setTapped(true);
+        target.tap();
         harness.forceActivePlayer(player2);
         harness.setHand(player1, List.of(new ChemistersTrick()));
         harness.addMana(player1, ManaColor.BLUE, 1);

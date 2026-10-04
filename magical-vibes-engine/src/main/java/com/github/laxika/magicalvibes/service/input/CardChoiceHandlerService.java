@@ -1687,8 +1687,12 @@ public class CardChoiceHandlerService {
         List<Card> chosenCards = new ArrayList<>(revealedHandChoice.chosenCards());
         chosenCards.add(chosenCard);
 
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " chooses ", chosenCard, " from " + targetName + "'s hand."));
+        boolean privateLibraryPlacement = !revealedHandChoice.discardMode() && !revealedHandChoice.exileMode()
+                && !revealedHandChoice.bottomThenDrawMode() && !revealedHandChoice.shuffleIntoLibraryMode()
+                && !revealedHandChoice.keepInHand();
+        gameLogService.append(gameData, privateLibraryPlacement
+                ? GameLog.text(player.getUsername() + " chooses a card from " + targetName + "'s hand.")
+                : GameLog.textCardText(player.getUsername() + " chooses ", chosenCard, " from " + targetName + "'s hand."));
         log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
 
         int remainingChoices = Math.max(revealedHandChoice.remainingCount() - 1, 0);
@@ -1981,8 +1985,7 @@ public class CardChoiceHandlerService {
                     ? "on top of " + targetName + "'s library"
                     : ordinal(libraryPosition) + " from the top of " + targetName + "'s library";
             gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(player.getUsername() + " puts "), chosenCards)
-                            .text(" " + placement + ".").build());
+                    GameLog.text(player.getUsername() + " puts " + chosenCards.size() + " card(s) " + placement + "."));
             log.info("Game {} - {} puts {} {}", gameData.id, player.getUsername(), cardNames, placement);
         }
 
@@ -2609,7 +2612,7 @@ public class CardChoiceHandlerService {
             permanent.tap();
         }
         if (grantHaste) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
         }
         UUID attackTargetId = enterAttacking && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getAttackedTargetId() : null;
@@ -2675,8 +2678,15 @@ public class CardChoiceHandlerService {
         }
 
         if (sacrificeAtEndStep) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
-                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId));
+            if (returnExiledSourceCardId == null) {
+                Card sourceCard = gameData.pendingEffectResolutionEntry == null
+                        ? card : gameData.pendingEffectResolutionEntry.getCard();
+                gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger(
+                        permanent.getId(), playerId, sourceCard));
+            } else {
+                gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
+                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId));
+            }
         }
         if (returnToHandAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),

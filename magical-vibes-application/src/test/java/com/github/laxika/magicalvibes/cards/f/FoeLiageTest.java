@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.CommandTower;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FoeLiage.class, Forest.class})
+@CardUsed({FoeLiage.class, CommandTower.class})
 class FoeLiageTest extends BaseCardTest {
 
     @Test
@@ -18,7 +19,7 @@ class FoeLiageTest extends BaseCardTest {
     void getsCounterWhenLandEntersDuringItsControllersTurn() {
         Permanent foeLiage = harness.addToBattlefieldAndReturn(player1, new FoeLiage());
 
-        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new CommandTower());
         harness.passBothPriorities();
 
         assertThat(foeLiage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -32,7 +33,7 @@ class FoeLiageTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.enterBattlefieldAndReturn(player2, new CommandTower());
         harness.passBothPriorities();
 
         assertThat(foeLiage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -46,9 +47,64 @@ class FoeLiageTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new CommandTower());
         harness.passBothPriorities();
 
+        assertThat(foeLiage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Nonland permanents do not trigger the ability")
+    void nonlandEntryDoesNotTrigger() {
+        Permanent foeLiage = harness.addToBattlefieldAndReturn(player1, new FoeLiage());
+
+        harness.enterBattlefieldAndReturn(player1, new FoeLiage());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(foeLiage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each land entry creates a separate counter trigger")
+    void multipleLandEntriesGiveMultipleCounters() {
+        Permanent foeLiage = harness.addToBattlefieldAndReturn(player1, new FoeLiage());
+
+        harness.enterBattlefieldAndReturn(player1, new CommandTower());
+        harness.enterBattlefieldAndReturn(player2, new CommandTower());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(foeLiage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(foeLiage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each copy puts a counter only on itself")
+    void eachCopyGetsItsOwnCounter() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new FoeLiage());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new FoeLiage());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new FoeLiage());
+
+        harness.enterBattlefieldAndReturn(player2, new CommandTower());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land entering outside its controller's turn creates no trigger")
+    void opponentsTurnDoesNotPutAbilityOnStack() {
+        Permanent foeLiage = harness.addToBattlefieldAndReturn(player2, new FoeLiage());
+
+        harness.enterBattlefieldAndReturn(player2, new CommandTower());
+
+        assertThat(gd.stack).isEmpty();
         assertThat(foeLiage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

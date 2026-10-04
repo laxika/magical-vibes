@@ -85,6 +85,60 @@ class FireNationPalaceTest extends BaseCardTest {
                 .hasMessageContaining("creature you control");
     }
 
+    @Test
+    @DisplayName("An opponent's basic land does not let the Palace enter untapped")
+    void entersTappedWithOnlyOpponentsBasicLand() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent palace = playLand(player1, new FireNationPalace());
+        assertThat(palace.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A nonbasic land does not let the Palace enter untapped")
+    void entersTappedWithOnlyNonbasicLand() {
+        harness.addToBattlefield(player1, new FireNationPalace());
+        Permanent palace = playLand(player1, new FireNationPalace());
+        assertThat(palace.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two granted instances of firebending trigger separately")
+    void repeatedGrantsCreateSeparateAttackTriggers() {
+        harness.addToBattlefield(player1, new FireNationPalace());
+        harness.addToBattlefield(player1, new FireNationPalace());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(2)));
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Granted firebending expires at end of turn")
+    void grantedFirebendingExpires() {
+        harness.addToBattlefield(player1, new FireNationPalace());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
     private Permanent playLand(Player player, com.github.laxika.magicalvibes.model.Card land) {
         harness.setHand(player, List.of(land));
         harness.forceActivePlayer(player);

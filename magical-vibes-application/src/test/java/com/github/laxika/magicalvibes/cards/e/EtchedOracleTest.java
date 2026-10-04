@@ -56,10 +56,7 @@ class EtchedOracleTest extends BaseCardTest {
     void sunburstIgnoresColorlessMana() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new EtchedOracle()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EtchedOracle(), "{4}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Etched Oracle");
@@ -110,6 +107,76 @@ class EtchedOracleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
+    }
+
+    @Test
+    @DisplayName("Sunburst counts colored mana alongside colorless mana")
+    void sunburstCountsMixedPayment() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new EtchedOracle()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Etched Oracle")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counters are paid immediately and the ability survives its source dying")
+    void countersPaidBeforeResolution() {
+        Permanent oracle = addReadyOracle(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(oracle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Etched Oracle");
+        harness.assertInGraveyard(player1, "Etched Oracle");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Tapped summoning-sick Oracle can activate and retains excess counters")
+    void abilityWorksWhileTappedAndSummoningSick() {
+        Permanent oracle = harness.addToBattlefieldAndReturn(player1, new EtchedOracle());
+        oracle.setSummoningSick(true);
+        oracle.setTapped(true);
+        oracle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Etched Oracle");
+        assertThat(oracle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(oracle.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Oracle entering without being cast gets no sunburst counters")
+    void enteringWithoutCastingGetsNoCounters() {
+        Permanent oracle = harness.enterBattlefieldAndReturn(player1, new EtchedOracle());
+        harness.runStateBasedActions();
+
+        assertThat(oracle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Etched Oracle");
+        harness.assertInGraveyard(player1, "Etched Oracle");
     }
 
     private Permanent addReadyOracle(Player player) {

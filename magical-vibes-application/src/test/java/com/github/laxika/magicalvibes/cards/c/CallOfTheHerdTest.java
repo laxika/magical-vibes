@@ -64,7 +64,7 @@ class CallOfTheHerdTest extends BaseCardTest {
         assertThat(elephantTokens()).hasSize(2);
         harness.assertNotInGraveyard(player1, "Call of the Herd");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.getPlayerBattlefield(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     @Test

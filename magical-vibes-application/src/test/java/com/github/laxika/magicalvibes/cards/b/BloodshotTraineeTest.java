@@ -150,7 +150,7 @@ class BloodshotTraineeTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         setupTraineeWithPower(4);
-        findPermanent(player1, "Bloodshot Trainee").setTapped(true);
+        findPermanent(player1, "Bloodshot Trainee").tap();
         UUID targetId = harness.getPermanentId(player2, "Fomori Nomad");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))

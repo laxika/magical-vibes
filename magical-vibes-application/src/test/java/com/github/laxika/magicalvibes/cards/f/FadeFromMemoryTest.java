@@ -81,4 +81,55 @@ class FadeFromMemoryTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(forest);
     }
+
+    @Test
+    @DisplayName("Exiles only the chosen card when other graveyard cards are present")
+    void exilesOnlyChosenCard() {
+        Card target = new Forest();
+        Card other = new Forest();
+        harness.setGraveyard(player2, List.of(target, other));
+        harness.setHand(player1, List.of(new FadeFromMemory()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately but draws only when the ability resolves")
+    void cyclingPaysDiscardBeforeDrawing() {
+        Card cycled = new FadeFromMemory();
+        Card draw = new Forest();
+        harness.setHand(player1, List.of(cycled));
+        harness.setLibrary(player1, List.of(draw));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Fade from Memory");
+        harness.assertInGraveyard(player1, "Fade from Memory");
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be paid with mana of another color")
+    void cyclingRequiresBlackMana() {
+        harness.setHand(player1, List.of(new FadeFromMemory()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Fade from Memory");
+        harness.assertNotInGraveyard(player1, "Fade from Memory");
+        harness.assertNotInHand(player1, "Forest");
+    }
 }

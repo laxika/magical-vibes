@@ -122,6 +122,55 @@ class EnfeeblementTest extends BaseCardTest {
     // ===== Targeting restriction =====
 
     @Test
+    @DisplayName("Removing Enfeeblement restores the surviving creature's power and toughness")
+    void removingAuraEndsDebuff() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
+        Enfeeblement enfeeblement = new Enfeeblement();
+        harness.setHand(player1, List.of(enfeeblement));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() == enfeeblement)
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Enfeeblement");
+        harness.assertOnBattlefield(player2, "Trained Armodon");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Two Enfeeblements combine to kill a 3/3 creature")
+    void multipleAurasCombineDebuffs() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
+        harness.setHand(player1, List.of(new Enfeeblement(), new Enfeeblement()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Trained Armodon");
+        harness.assertNotOnBattlefield(player2, "Trained Armodon");
+        harness.assertNotOnBattlefield(player1, "Enfeeblement");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Enfeeblement)
+                .hasSize(2);
+    }
+
+    @Test
     @DisplayName("Can target a creature with Enfeeblement")
     void canTargetCreature() {
         Permanent armodon = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());

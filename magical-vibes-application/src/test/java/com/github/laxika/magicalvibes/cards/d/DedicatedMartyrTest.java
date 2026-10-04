@@ -33,7 +33,7 @@ class DedicatedMartyrTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         var martyr = harness.addToBattlefieldAndReturn(player1, new DedicatedMartyr());
-        martyr.setTapped(true);
+        martyr.tap();
         martyr.setSummoningSick(true);
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.WHITE, 1);

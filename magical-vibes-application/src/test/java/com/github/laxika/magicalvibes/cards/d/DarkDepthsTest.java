@@ -86,7 +86,7 @@ class DarkDepthsTest extends BaseCardTest {
     @DisplayName("A tapped Dark Depths can remove counters repeatedly without creating a token early")
     void canRemoveCountersRepeatedlyWhileTapped() {
         Permanent darkDepths = addDarkDepths();
-        darkDepths.setTapped(true);
+        darkDepths.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateAbility(player1, 0, null, null);

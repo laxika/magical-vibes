@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,13 +21,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EldritchEvolution.class, AirElemental.class, BenalishKnight.class, GoldMyr.class,
+        GrizzlyBears.class, HillGiant.class, LlanowarElves.class, Plains.class})
 class EldritchEvolutionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting sacrifices the chosen creature and puts the spell on the stack")
     void castingSacrificesCreature() {
-        Permanent sacrifice = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
         harness.setHand(player1, List.of(new EldritchEvolution()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -88,7 +89,7 @@ class EldritchEvolutionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Gold Myr")
@@ -99,9 +100,67 @@ class EldritchEvolutionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Failing to find still exiles the spell and preserves the library cards")
+    void failingToFindStillExilesSpell() {
+        castWithSacrifice(new LlanowarElves());
+        GoldMyr eligible = new GoldMyr();
+        Plains land = new Plains();
+        harness.setLibrary(player1, List.of(eligible, land));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(eligible, land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Eldritch Evolution"));
+        harness.assertNotInGraveyard(player1, "Eldritch Evolution");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No eligible creature still completes resolution and exiles the spell")
+    void noEligibleCreatureStillExilesSpell() {
+        castWithSacrifice(new LlanowarElves());
+        HillGiant tooExpensive = new HillGiant();
+        Plains land = new Plains();
+        harness.setLibrary(player1, List.of(tooExpensive, land));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(tooExpensive, land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Eldritch Evolution"));
+        harness.assertNotInGraveyard(player1, "Eldritch Evolution");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Search puts exactly the chosen creature onto the battlefield untapped")
+    void chosenCreatureEntersUntappedAndLeavesLibrary() {
+        castWithSacrifice(new LlanowarElves());
+        GoldMyr chosen = new GoldMyr();
+        BenalishKnight other = new BenalishKnight();
+        harness.setLibrary(player1, List.of(chosen, other));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(p -> {
+                    assertThat(p.getCard()).isSameAs(chosen);
+                    assertThat(p.isTapped()).isFalse();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void castWithSacrifice(Card sacrificeCard) {
-        Permanent sacrifice = new Permanent(sacrificeCard);
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, sacrificeCard);
 
         harness.setHand(player1, List.of(new EldritchEvolution()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -111,9 +170,7 @@ class EldritchEvolutionTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         // Gold Myr MV2, Benalish Knight MV3, Hill Giant MV4, Air Elemental MV5, Plains (non-creature)
-        deck.addAll(List.of(new GoldMyr(), new BenalishKnight(), new HillGiant(), new AirElemental(), new Plains()));
+        harness.setLibrary(player1, List.of(new GoldMyr(), new BenalishKnight(), new HillGiant(), new AirElemental(), new Plains()));
     }
 }
