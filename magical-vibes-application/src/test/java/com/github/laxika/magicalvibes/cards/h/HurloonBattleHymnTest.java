@@ -22,8 +22,7 @@ class HurloonBattleHymnTest extends BaseCardTest {
         harness.setHand(player1, java.util.List.of(new HurloonBattleHymn()));
         addBaseMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player1, 20);
@@ -53,6 +52,57 @@ class HurloonBattleHymnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature or planeswalker");
+    }
+
+    @Test
+    void kickedSpellCanTargetOwnCreatureAndStillGainsFourLife() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new HurloonBattleHymn()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castKickedInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Hurloon Battle Hymn");
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void kickedSpellDoesNotGainLifeWhenOnlyTargetLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new HurloonBattleHymn()));
+        harness.setHand(player2, java.util.List.of(new HurloonBattleHymn()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castKickedInstant(player1, 0, creature.getId());
+        gs.passPriority(gd, player1);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hurloon Battle Hymn");
+        harness.assertInGraveyard(player2, "Hurloon Battle Hymn");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetAPlayer() {
+        harness.setHand(player1, java.util.List.of(new HurloonBattleHymn()));
+        addBaseMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addBaseMana() {
