@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
+import com.github.laxika.magicalvibes.cards.t.TragicSlip;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HauntedFengraf.class, DawntreaderElk.class, TragicSlip.class})
 class HauntedFengrafTest extends BaseCardTest {
-
-    // ===== Mana ability =====
 
     @Test
     @DisplayName("Tapping for colorless mana adds {C}")
@@ -31,13 +31,11 @@ class HauntedFengrafTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
-    // ===== Sacrifice ability: activation =====
-
     @Test
     @DisplayName("Activating sacrifice ability puts the return on the stack")
     void activatingPutsOnStack() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -51,7 +49,7 @@ class HauntedFengrafTest extends BaseCardTest {
     @DisplayName("Haunted Fengraf is sacrificed as a cost before resolution")
     void sacrificedBeforeResolution() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -64,7 +62,7 @@ class HauntedFengrafTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating sacrifice ability")
     void manaIsConsumedWhenActivating() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -72,40 +70,38 @@ class HauntedFengrafTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
-    // ===== Sacrifice ability: resolution =====
-
     @Test
     @DisplayName("Resolving returns a creature card from graveyard to hand")
     void resolvingReturnsCreature() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Dawntreader Elk");
+        harness.assertNotInGraveyard(player1, "Dawntreader Elk");
     }
 
     @Test
     @DisplayName("Returns exactly one creature at random when several are in the graveyard")
     void returnsOneRandomCreatureFromMultiple() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DawntreaderElk(), new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         long handBears = gd.playerHands.get(player1.getId()).stream()
-                .filter(c -> c.getName().equals("Grizzly Bears"))
+                .filter(c -> c.getName().equals("Dawntreader Elk"))
                 .count();
         assertThat(handBears).isEqualTo(1);
 
         long graveyardBears = gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(c -> c.getName().equals("Grizzly Bears"))
+                .filter(c -> c.getName().equals("Dawntreader Elk"))
                 .count();
         assertThat(graveyardBears).isEqualTo(1);
     }
@@ -114,40 +110,70 @@ class HauntedFengrafTest extends BaseCardTest {
     @DisplayName("Non-creature cards in the graveyard are ignored")
     void ignoresNonCreatures() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new Shock(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new TragicSlip(), new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         // The creature is returned, the instant stays in the graveyard
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Shock");
-        harness.assertNotInHand(player1, "Shock");
+        harness.assertInHand(player1, "Dawntreader Elk");
+        harness.assertInGraveyard(player1, "Tragic Slip");
+        harness.assertNotInHand(player1, "Tragic Slip");
     }
 
     @Test
     @DisplayName("Resolves without returning anything when no creatures are in the graveyard")
     void doesNothingWithNoCreatures() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setGraveyard(player1, List.of(new TragicSlip()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Shock");
-        harness.assertNotInHand(player1, "Shock");
+        harness.assertInGraveyard(player1, "Tragic Slip");
+        harness.assertNotInHand(player1, "Tragic Slip");
     }
 
-    // ===== Validation =====
+    @Test
+    @DisplayName("A creature entering the graveyard after activation can be returned")
+    void usesGraveyardAtResolution() {
+        harness.addToBattlefield(player1, new HauntedFengraf());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        gd.playerGraveyards.get(player1.getId()).add(new DawntreaderElk());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dawntreader Elk");
+        harness.assertNotInGraveyard(player1, "Dawntreader Elk");
+        harness.assertInGraveyard(player1, "Haunted Fengraf");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures in an opponent's graveyard are not returned")
+    void ignoresOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new HauntedFengraf());
+        harness.setGraveyard(player2, List.of(new DawntreaderElk()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dawntreader Elk");
+        harness.assertNotInHand(player1, "Dawntreader Elk");
+        harness.assertNotInHand(player2, "Dawntreader Elk");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Cannot activate sacrifice ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
@@ -159,7 +185,7 @@ class HauntedFengrafTest extends BaseCardTest {
     @DisplayName("Cannot activate sacrifice ability when already tapped")
     void cannotActivateWhenTapped() {
         harness.addToBattlefield(player1, new HauntedFengraf());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DawntreaderElk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         // Tap for mana first
