@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,10 +13,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HighwayRobber.class})
+@CardUsed({HighwayRobber.class, Shock.class})
 class HighwayRobberTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Highway Robber puts it on the stack as a creature spell")
@@ -28,8 +27,6 @@ class HighwayRobberTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
-
-    // ===== Resolving creature spell =====
 
     @Test
     @DisplayName("Resolving puts Highway Robber on battlefield with ETB trigger on stack")
@@ -53,8 +50,6 @@ class HighwayRobberTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== ETB life drain =====
 
     @Test
     @DisplayName("ETB trigger causes target opponent to lose 2 life and controller to gain 2 life")
@@ -98,7 +93,44 @@ class HighwayRobberTest extends BaseCardTest {
         assertThat(gameLogContains("gains 2 life")).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Life totals do not change until the ETB trigger resolves")
+    void lifeDrainWaitsForTriggerResolution() {
+        castHighwayRobber();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Removing Highway Robber does not stop its pending life drain")
+    void lifeDrainResolvesAfterSourceDies() {
+        castHighwayRobber();
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Highway Robber"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Highway Robber");
+        harness.assertNotOnBattlefield(player1, "Highway Robber");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
 
     private void castHighwayRobber() {
         harness.setHand(player1, List.of(new HighwayRobber()));
