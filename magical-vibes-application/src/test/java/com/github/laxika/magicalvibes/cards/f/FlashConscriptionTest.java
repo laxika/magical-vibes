@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;

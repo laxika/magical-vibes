@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.t.TrainedArynx;
 import com.github.laxika.magicalvibes.cards.c.ColossalRattlewurm;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;

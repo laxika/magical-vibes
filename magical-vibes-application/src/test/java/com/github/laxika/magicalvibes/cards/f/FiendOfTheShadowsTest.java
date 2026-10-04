@@ -240,9 +240,9 @@ class FiendOfTheShadowsTest extends BaseCardTest {
     @Test
     void tappedSummoningSickFiendCanRegenerateUsingTappedHuman() {
         Permanent fiend = harness.addToBattlefieldAndReturn(player1, new FiendOfTheShadows());
-        fiend.setTapped(true);
+        fiend.tap();
         Permanent human = harness.addToBattlefieldAndReturn(player1, new ChosenOfMarkov());
-        human.setTapped(true);
+        human.tap();
 
         harness.activateAbility(player1, 0, null, null);
 
