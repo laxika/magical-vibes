@@ -13,11 +13,60 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HydromorphGull.class, BaskingRootwalla.class, CripplingFatigue.class, ChainersEdict.class,
         CabalTorturer.class})
 class HydromorphGullTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can counter your own spell and pays the sacrifice before resolution")
+    void countersOwnSpellAndSacrificesAsCost() {
+        Permanent rootwalla = harness.addToBattlefieldAndReturn(player1, new BaskingRootwalla());
+        harness.addToBattlefield(player1, new HydromorphGull());
+        CripplingFatigue fatigue = new CripplingFatigue();
+        harness.setHand(player1, List.of(fatigue));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.castSorcery(player1, 0, rootwalla.getId());
+
+        harness.activateAbility(player1, 1, null, fatigue.getId());
+
+        harness.assertInGraveyard(player1, "Hydromorph Gull");
+        harness.assertNotOnBattlefield(player1, "Hydromorph Gull");
+        harness.assertNotInGraveyard(player1, "Crippling Fatigue");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Crippling Fatigue");
+        harness.assertOnBattlefield(player1, "Basking Rootwalla");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the only creature targeted makes the counter ability's target illegal")
+    void cannotCounterSpellAfterSacrificingItsOnlyCreatureTarget() {
+        Permanent gull = harness.addToBattlefieldAndReturn(player1, new HydromorphGull());
+        CripplingFatigue fatigue = new CripplingFatigue();
+        harness.setHand(player2, List.of(fatigue));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, gull.getId());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, fatigue.getId());
+        harness.assertInGraveyard(player1, "Hydromorph Gull");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetableId()).isEqualTo(fatigue.getId());
+        harness.assertNotInGraveyard(player2, "Crippling Fatigue");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Crippling Fatigue");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Counters a spell targeting a creature you control")
