@@ -143,11 +143,59 @@ class HeWhoHungersTest extends BaseCardTest {
 
         killHeWhoHungers();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Lantern Kami");
         harness.assertNotInHand(player1, "Lantern Kami");
+    }
+
+    @Test
+    @DisplayName("A newly entered He Who Hungers can sacrifice itself and its ability still resolves")
+    void summoningSickSourceCanSacrificeItselfAndDiscard() {
+        harness.addToBattlefield(player1, new HeWhoHungers());
+        harness.setHand(player2, List.of(new Forest()));
+        mainPhaseWithMana();
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "He Who Hungers");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("An empty opposing hand does not prevent activation or refund the sacrifice")
+    void emptyHandStillPaysSacrifice() {
+        readyHeWhoHungers();
+        harness.setHand(player2, List.of());
+        mainPhaseWithMana();
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "He Who Hungers");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated during your combat phase")
+    void cannotActivateDuringOwnCombat() {
+        readyHeWhoHungers();
+        mainPhaseWithMana();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("main phase");
+        harness.assertOnBattlefield(player1, "He Who Hungers");
     }
 
     @Test
