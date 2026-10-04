@@ -73,6 +73,63 @@ class HickoryWoodlotTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("A played Woodlot produces mana immediately on each use and is sacrificed on its second use")
+    void playedWoodlotLastsForTwoActivations() {
+        harness.setHand(player1, List.of(new HickoryWoodlot()));
+        harness.playLand(player1, 0);
+        Permanent woodlot = findPermanent(player1, "Hickory Woodlot");
+
+        assertThat(gd.stack).isEmpty();
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(greenMana()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(woodlot.isTapped()).isTrue();
+        assertThat(woodlot.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Hickory Woodlot");
+
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(greenMana()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Hickory Woodlot");
+        harness.assertInGraveyard(player1, "Hickory Woodlot");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Extra depletion counters extend the land's use without increasing its mana output")
+    void extraDepletionCountersDoNotChangeManaOutput() {
+        Permanent woodlot = addWoodlot(3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(greenMana()).isEqualTo(2);
+        assertThat(woodlot.getCounterCount(CounterType.DEPLETION)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Hickory Woodlot");
+    }
+
+    @Test
+    @DisplayName("Having no depletion counters does not sacrifice the land outside its mana ability")
+    void noCountersAloneDoesNotCauseSacrifice() {
+        Permanent woodlot = addWoodlot(0);
+        woodlot.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Hickory Woodlot");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(woodlot.isTapped()).isFalse();
+        assertThat(woodlot.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(greenMana()).isZero();
+        harness.assertNotInGraveyard(player1, "Hickory Woodlot");
+    }
+
     private Permanent addWoodlot(int counters) {
         Permanent woodlot = harness.addToBattlefieldAndReturn(player1, new HickoryWoodlot());
         woodlot.setSummoningSick(false);
