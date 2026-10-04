@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "94")
+@CardRegistration(set = "KHM", collectorNumber = "353")
 public class EradicatorValkyrie extends Card {
 
     public EradicatorValkyrie() {

@@ -33,8 +33,7 @@ class FightingChanceTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 1)));
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<String> flips = fightingChanceFlipLogs();
         long losses = flips.stream().filter(log -> log.contains(" loses the coin flip")).count();
@@ -62,8 +61,7 @@ class FightingChanceTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(blockerIndex, 0),
                 new BlockerAssignment(blockerIndex, 1)));
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(fightingChanceFlipLogs()).hasSize(1);
     }
@@ -76,10 +74,33 @@ class FightingChanceTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gameLogContains("coin flip for Fighting Chance")).isFalse();
+    }
+
+    @Test
+    @DisplayName("The defender can cast it, and only blockers' outgoing combat damage is prevented")
+    void defenderCastingDoesNotPreventIncomingDamageOrFlipForIdleCreatures() {
+        Permanent attacker = addCreatureReady(player1, new CinderCrawler());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new CinderCrawler());
+        addCreatureReady(player2, new CinderCrawler());
+        harness.setHand(player2, List.of(new FightingChance()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castAndResolveInstant(player2, 0);
+
+        List<String> flips = fightingChanceFlipLogs();
+        assertThat(flips).hasSize(1);
+        boolean won = flips.getFirst().contains(" wins the coin flip");
+
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(won ? 0 : 1);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
     }
 
     private List<String> fightingChanceFlipLogs() {

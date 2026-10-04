@@ -76,6 +76,57 @@ class FeverCharmTest extends BaseCardTest {
                 .hasMessageContaining("Wizard");
     }
 
+    @Test
+    @DisplayName("Pump mode expires at cleanup and does not grant haste")
+    void pumpExpiresAtCleanup() {
+        Permanent target = addCreatureReady(player1, new GlorySeeker());
+
+        castMode(1, target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Wizard mode can target your own Wizard and lethal damage destroys it")
+    void repeatedDamageDestroysOwnWizard() {
+        Permanent target = addCreatureReady(player1, new ArcanisTheOmnipotent());
+
+        castMode(2, target);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Arcanis the Omnipotent");
+
+        castMode(2, target);
+
+        harness.assertNotOnBattlefield(player1, "Arcanis the Omnipotent");
+        harness.assertInGraveyard(player1, "Arcanis the Omnipotent");
+    }
+
+    @Test
+    @DisplayName("Wizard mode does not resolve when its target returns to hand")
+    void wizardReturningToHandInvalidatesTarget() {
+        Permanent target = addCreatureReady(player2, new ArcanisTheOmnipotent());
+        harness.setHand(player1, List.of(new FeverCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castModalInstant(player1, 0, 2, List.of(target.getId()));
+
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Arcanis the Omnipotent");
+        harness.assertNotOnBattlefield(player2, "Arcanis the Omnipotent");
+        harness.assertInGraveyard(player1, "Fever Charm");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castMode(int modeIndex, Permanent target) {
         harness.setHand(player1, List.of(new FeverCharm()));
         harness.addMana(player1, ManaColor.RED, 1);

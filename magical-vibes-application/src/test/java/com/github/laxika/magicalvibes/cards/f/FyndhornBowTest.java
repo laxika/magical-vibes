@@ -69,4 +69,52 @@ class FyndhornBowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The Bow taps immediately and grants first strike only on resolution")
+    void paysTapCostBeforeResolution() {
+        Permanent bow = harness.addToBattlefieldAndReturn(player1, new FyndhornBow());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+
+        assertThat(bow.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two mana cannot pay the three-mana activation cost")
+    void insufficientManaRejected() {
+        Permanent bow = harness.addToBattlefieldAndReturn(player1, new FyndhornBow());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bow.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if the Bow leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent bow = harness.addToBattlefieldAndReturn(player1, new FyndhornBow());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bow);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+    }
 }

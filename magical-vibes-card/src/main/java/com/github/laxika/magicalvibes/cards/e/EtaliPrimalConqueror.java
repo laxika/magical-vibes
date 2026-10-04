@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "137")
+@CardRegistration(set = "MOM", collectorNumber = "298")
 public class EtaliPrimalConqueror extends Card {
 
     public EtaliPrimalConqueror() {

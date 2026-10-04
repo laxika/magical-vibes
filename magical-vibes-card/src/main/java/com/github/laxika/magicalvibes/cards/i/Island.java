@@ -7,12 +7,15 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PIP", collectorNumber = "319")
+@CardRegistration(set = "SCD", collectorNumber = "340")
+@CardRegistration(set = "RNA", collectorNumber = "261")
 @CardRegistration(set = "M21", collectorNumber = "310")
 @CardRegistration(set = "PIP", collectorNumber = "320")
 @CardRegistration(set = "BRC", collectorNumber = "32")
 @CardRegistration(set = "PIP", collectorNumber = "847")
 @CardRegistration(set = "PIP", collectorNumber = "848")
 @CardRegistration(set = "ANA", collectorNumber = "3a")
+@CardRegistration(set = "KHM", collectorNumber = "395")
 @CardRegistration(set = "WHO", collectorNumber = "199")
 @CardRegistration(set = "WHO", collectorNumber = "1158")
 @CardRegistration(set = "WHO", collectorNumber = "1159")
@@ -541,8 +544,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "40K", collectorNumber = "309")
 @CardRegistration(set = "BRC", collectorNumber = "31")
 @CardRegistration(set = "C18", collectorNumber = "298")
+@CardRegistration(set = "FIC", collectorNumber = "479")
 @CardRegistration(set = "C16", collectorNumber = "340")
 @CardRegistration(set = "C16", collectorNumber = "341")
+@CardRegistration(set = "SCD", collectorNumber = "337")
+@CardRegistration(set = "SCD", collectorNumber = "338")
+@CardRegistration(set = "SCD", collectorNumber = "339")
 public class Island extends Card {
 
     public Island() {

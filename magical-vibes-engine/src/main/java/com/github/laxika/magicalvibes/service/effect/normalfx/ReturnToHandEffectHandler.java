@@ -246,7 +246,10 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                 ? gameQueryService.findPermanentController(gameData, target.getId())
                 : null;
 
-        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+        UUID returnedControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        boolean returned = permanentRemovalService.removePermanentToHand(gameData, target);
+        if (returned) {
+            entry.rememberRemovedPermanentController(target.getId(), returnedControllerId);
             entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());

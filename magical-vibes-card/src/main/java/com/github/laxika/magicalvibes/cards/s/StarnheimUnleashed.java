@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "33")
+@CardRegistration(set = "KHM", collectorNumber = "294")
 public class StarnheimUnleashed extends Card {
 
     public StarnheimUnleashed() {

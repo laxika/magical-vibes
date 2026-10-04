@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "MOC", collectorNumber = "257")
 @CardRegistration(set = "MIC", collectorNumber = "125")
 @CardRegistration(set = "DRC", collectorNumber = "44")
+@CardRegistration(set = "SCD", collectorNumber = "91")
 public class MidnightReaper extends Card {
 
     public MidnightReaper() {

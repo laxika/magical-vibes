@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "119")
+@CardRegistration(set = "SCD", collectorNumber = "156")
 public class SarkhanTheDragonspeaker extends Card {
 
     private static final String DRAW_EMBLEM_TEXT =

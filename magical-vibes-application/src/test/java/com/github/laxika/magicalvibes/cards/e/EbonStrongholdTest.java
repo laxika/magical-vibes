@@ -16,6 +16,46 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EbonStrongholdTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A freshly played tapped Stronghold cannot activate either mana ability")
+    void cannotActivateEitherAbilityWhileTappedFromEntering() {
+        harness.setHand(player1, List.of(new EbonStronghold()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Permanent is already tapped");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Permanent is already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.assertOnBattlefield(player1, "Ebon Stronghold");
+        harness.assertNotInGraveyard(player1, "Ebon Stronghold");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both mana abilities resolve immediately without using the stack")
+    void manaAbilitiesDoNotUseTheStack() {
+        harness.addToBattlefield(player1, new EbonStronghold());
+        harness.addToBattlefield(player1, new EbonStronghold());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Ebon Stronghold");
+    }
+
+    @Test
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
         harness.setHand(player1, List.of(new EbonStronghold()));

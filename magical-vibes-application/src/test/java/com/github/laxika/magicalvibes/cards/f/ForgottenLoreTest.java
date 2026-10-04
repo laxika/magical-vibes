@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ForgottenLore.class, FyndhornElves.class, Forest.class})
+@CardUsed({ForgottenLore.class, FyndhornElves.class, SnowCoveredForest.class})
 class ForgottenLoreTest extends BaseCardTest {
 
     private ForgottenLore castForgottenLore(int extraGreenMana) {
@@ -25,8 +26,7 @@ class ForgottenLoreTest extends BaseCardTest {
         ForgottenLore spell = new ForgottenLore();
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 1 + extraGreenMana);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         return spell;
     }
 
@@ -38,7 +38,7 @@ class ForgottenLoreTest extends BaseCardTest {
     @DisplayName("Opponent chooses from the caster's graveyard; declining the {G} returns that card")
     void declineReturnsTheChosenCard() {
         Card chosenCard = new FyndhornElves();
-        Card otherCard = new Forest();
+        Card otherCard = new SnowCoveredForest();
         harness.setGraveyard(player1, List.of(chosenCard, otherCard));
 
         ForgottenLore spell = castForgottenLore(1);
@@ -59,7 +59,7 @@ class ForgottenLoreTest extends BaseCardTest {
     @DisplayName("Paying {G} repeats the process and the already-chosen card can't be chosen again")
     void payingRepeatsAndExcludesChosenCards() {
         Card firstCard = new FyndhornElves();
-        Card secondCard = new Forest();
+        Card secondCard = new SnowCoveredForest();
         harness.setGraveyard(player1, List.of(firstCard, secondCard));
 
         ForgottenLore spell = castForgottenLore(2);
@@ -83,7 +83,7 @@ class ForgottenLoreTest extends BaseCardTest {
     @DisplayName("No payment is offered when the caster can't afford {G}")
     void noPaymentPromptWithoutMana() {
         Card chosenCard = new FyndhornElves();
-        Card otherCard = new Forest();
+        Card otherCard = new SnowCoveredForest();
         harness.setGraveyard(player1, List.of(chosenCard, otherCard));
 
         castForgottenLore(0);
@@ -136,7 +136,7 @@ class ForgottenLoreTest extends BaseCardTest {
     @DisplayName("Paying twice repeats the process twice and returns only the last chosen card")
     void payingTwiceReturnsOnlyLastChosenCard() {
         Card firstCard = new FyndhornElves();
-        Card secondCard = new Forest();
+        Card secondCard = new SnowCoveredForest();
         Card thirdCard = new FyndhornElves();
         harness.setGraveyard(player1, List.of(firstCard, secondCard, thirdCard));
 
@@ -159,14 +159,81 @@ class ForgottenLoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An empty graveyard resolves with no choice and no card returned")
-    void emptyGraveyardDoesNothing() {
+    @DisplayName("An empty graveyard skips the card choice but still offers payment")
+    void emptyGraveyardStillOffersPayment() {
         harness.setGraveyard(player1, List.of());
 
         castForgottenLore(1);
 
+        PendingInteraction.ColorChoice payment = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(payment).isNotNull();
+        assertThat(payment.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty graveyard permits paying and repeating without returning a card")
+    void emptyGraveyardCanPayAndRepeat() {
+        harness.setGraveyard(player1, List.of());
+
+        ForgottenLore spell = castForgottenLore(2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.PAY);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("The controller can generate mana during resolution to pay for another choice")
+    void canUseManaAbilityToPayDuringResolution() {
+        Card firstCard = new FyndhornElves();
+        Card secondCard = new SnowCoveredForest();
+        harness.setGraveyard(player1, List.of(firstCard, secondCard));
+        harness.addToBattlefield(player1, new SnowCoveredForest());
+        harness.addToBattlefield(player1, new SnowCoveredForest());
+
+        ForgottenLore spell = castForgottenLore(0);
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        gs.tapPermanent(gd, player1, 0);
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.PAY);
+        assertThat(activeGraveyardChoice().cardPool()).containsExactly(secondCard);
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCard, spell);
+    }
+
+    @Test
+    @DisplayName("Mana abilities remain available while the payment choice is pending")
+    void canActivateManaAbilityWhilePaymentIsPending() {
+        Card chosenCard = new FyndhornElves();
+        harness.setGraveyard(player1, List.of(chosenCard));
+        harness.addToBattlefield(player1, new SnowCoveredForest());
+
+        ForgottenLore spell = castForgottenLore(1);
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        gs.tapPermanent(gd, player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -126,6 +127,79 @@ class DwarvenRecruiterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class)).isNull();
         assertThat(gameLogContains("library but it is empty")).isTrue();
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("Searching an empty library still triggers shuffle abilities")
+    void emptyLibraryStillTriggersShuffleAbilities() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("Choosing zero Dwarves still triggers shuffle abilities")
+    void choosingZeroStillTriggersShuffleAbilities() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        setupAndCast();
+        Card dwarf = new DwarvenGrunt();
+        harness.setLibrary(player1, List.of(dwarf));
+
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(dwarf);
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("Selecting the entire library still shuffles before placing the Dwarf on top")
+    void selectingEntireLibraryStillTriggersShuffleAbilities() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        setupAndCast();
+        Card dwarf = new DwarvenGrunt();
+        harness.setLibrary(player1, List.of(dwarf));
+
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(dwarf.getId()));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(dwarf);
+    }
+
+    @Test
+    @DisplayName("The search uses only the controller's library")
+    void doesNotSearchOpponentsLibrary() {
+        setupAndCast();
+        Card ownDwarf = new DwarvenGrunt();
+        Card opposingDwarf = new DwarvenGrunt();
+        Card opposingNonDwarf = new AvenFlock();
+        harness.setLibrary(player1, List.of(ownDwarf));
+        harness.setLibrary(player2, List.of(opposingNonDwarf, opposingDwarf));
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class).pool())
+                .containsExactly(ownDwarf);
+        harness.handleMultipleCardsChosen(player1, List.of(ownDwarf.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownDwarf);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingNonDwarf, opposingDwarf);
     }
 
     private void setupAndCast() {

@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SkophosMazeWarden;
 import com.github.laxika.magicalvibes.cards.s.SkophosWarleader;
-import com.github.laxika.magicalvibes.cards.u.UnderworldRageHound;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -26,8 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         GrizzlyBears.class,
         Plains.class,
         SkophosMazeWarden.class,
-        SkophosWarleader.class,
-        UnderworldRageHound.class
+        SkophosWarleader.class
 })
 class DeathbellowWarCryTest extends BaseCardTest {
 
@@ -36,11 +36,11 @@ class DeathbellowWarCryTest extends BaseCardTest {
     void offersMinotaursWithDifferentNames() {
         Card mazeWarden = new SkophosMazeWarden();
         Card warleader = new SkophosWarleader();
-        Card rageHound = new UnderworldRageHound();
-        Card duplicateRageHound = new UnderworldRageHound();
+        Card brawler = new FelhideBrawler();
+        Card duplicateBrawler = new FelhideBrawler();
         Card bears = new GrizzlyBears();
         Card plains = new Plains();
-        setLibrary(mazeWarden, warleader, rageHound, duplicateRageHound, bears, plains);
+        setLibrary(mazeWarden, warleader, brawler, duplicateBrawler, bears, plains);
 
         castDeathbellowWarCry();
         harness.passBothPriorities();
@@ -48,13 +48,13 @@ class DeathbellowWarCryTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = activeSearch();
         assertThat(search).isNotNull();
         assertThat(search.params().cards())
-                .containsExactlyInAnyOrder(mazeWarden, warleader, rageHound, duplicateRageHound);
+                .containsExactlyInAnyOrder(mazeWarden, warleader, brawler, duplicateBrawler);
         assertThat(search.params().remainingCount()).isEqualTo(4);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
         assertThat(search.params().requireDifferentNames()).isTrue();
 
-        chooseFromLibrary(mazeWarden);
-        assertThat(activeSearch().params().cards()).doesNotContain(duplicateRageHound);
+        chooseFromLibrary(brawler);
+        assertThat(activeSearch().params().cards()).doesNotContain(duplicateBrawler);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
     }
 
@@ -63,22 +63,27 @@ class DeathbellowWarCryTest extends BaseCardTest {
     void putsDifferentNamedMinotaursOntoBattlefield() {
         Card mazeWarden = new SkophosMazeWarden();
         Card warleader = new SkophosWarleader();
-        Card rageHound = new UnderworldRageHound();
+        Card fourthMinotaur = new Card();
+        fourthMinotaur.setName("Fourth Minotaur");
+        fourthMinotaur.setType(CardType.CREATURE);
+        fourthMinotaur.setSubtypes(List.of(CardSubtype.MINOTAUR));
+        fourthMinotaur.setPower(2);
+        fourthMinotaur.setToughness(2);
         Card felhideBrawler = new FelhideBrawler();
-        setLibrary(mazeWarden, warleader, rageHound, felhideBrawler);
+        setLibrary(mazeWarden, warleader, fourthMinotaur, felhideBrawler);
 
         castDeathbellowWarCry();
         harness.passBothPriorities();
 
         chooseFromLibrary(mazeWarden);
         chooseFromLibrary(warleader);
-        chooseFromLibrary(rageHound);
+        chooseFromLibrary(fourthMinotaur);
         chooseFromLibrary(felhideBrawler);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard())
-                .containsExactlyInAnyOrder(mazeWarden, warleader, rageHound, felhideBrawler);
+                .containsExactlyInAnyOrder(mazeWarden, warleader, fourthMinotaur, felhideBrawler);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

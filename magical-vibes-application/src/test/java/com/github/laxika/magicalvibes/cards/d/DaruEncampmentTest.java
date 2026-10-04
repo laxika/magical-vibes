@@ -134,7 +134,7 @@ class DaruEncampmentTest extends BaseCardTest {
         Permanent encampment = addEncampmentReady(player1);
         Permanent soldier = addCreatureReady(player1, new GlorySeeker());
         harness.addMana(player1, ManaColor.WHITE, 1);
-        encampment.setTapped(true);
+        encampment.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

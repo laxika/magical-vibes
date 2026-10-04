@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpe
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileFaceDownPileEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "110")
+@CardRegistration(set = "MOM", collectorNumber = "360")
 public class HoardingBroodlord extends Card {
 
     public HoardingBroodlord() {

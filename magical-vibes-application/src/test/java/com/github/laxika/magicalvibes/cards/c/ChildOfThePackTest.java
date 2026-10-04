@@ -116,7 +116,7 @@ class ChildOfThePackTest extends BaseCardTest {
     void tokenAbilityCanBeActivatedWhileSummoningSickAndTapped() {
         gd.dayNight = DayNight.DAY;
         Permanent child = harness.enterBattlefieldAndReturn(player1, new ChildOfThePack());
-        child.setTapped(true);
+        child.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

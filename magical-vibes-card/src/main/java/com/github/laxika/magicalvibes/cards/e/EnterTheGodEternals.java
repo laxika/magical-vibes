@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "196")
+@CardRegistration(set = "SCD", collectorNumber = "227")
 public class EnterTheGodEternals extends Card {
 
     public EnterTheGodEternals() {

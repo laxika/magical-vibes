@@ -2692,7 +2692,10 @@ public class CombatBlockService {
             }
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             for (int blockerIdx : blockable) {
-                if (assignedBlockerIndices.contains(blockerIdx)) continue;
+                if (assignedBlockerIndices.contains(blockerIdx)
+                        && blockerAssignments.stream().anyMatch(assignment ->
+                        assignment.blockerIndex() == blockerIdx
+                                && mustBeBlockedAttackerIndices.contains(assignment.attackerIndex()))) continue;
                 if (canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
                         defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                     throw new IllegalStateException(attacker.getCard().getName()

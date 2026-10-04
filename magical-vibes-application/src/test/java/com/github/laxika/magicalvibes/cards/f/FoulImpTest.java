@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(FoulImp.class)
+@CardUsed({FoulImp.class})
 class FoulImpTest extends BaseCardTest {
 
     @Test
@@ -58,5 +58,50 @@ class FoulImpTest extends BaseCardTest {
 
     private void castFoulImp() {
         harness.castFromHand(player1, new FoulImp(), "{B}{B}");
+    }
+
+    @Test
+    @DisplayName("Life loss waits until the entry trigger resolves")
+    void lifeLossWaitsForTriggerResolution() {
+        harness.setLife(player1, 20);
+
+        castFoulImp();
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Entering under the opponent's control makes that player lose life")
+    void opponentControlledEntryMakesOpponentLoseLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new FoulImp());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Each entering copy causes its own life loss")
+    void multipleEntriesEachCauseLifeLoss() {
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new FoulImp());
+        resolveAllTriggers();
+        harness.assertLife(player1, 18);
+
+        harness.enterBattlefieldAndReturn(player1, new FoulImp());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 }

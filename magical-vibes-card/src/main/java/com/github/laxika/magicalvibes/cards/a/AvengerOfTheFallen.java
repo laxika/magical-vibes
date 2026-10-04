@@ -20,12 +20,11 @@ import java.util.Set;
 public class AvengerOfTheFallen extends Card {
 
     public AvengerOfTheFallen() {
-        addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
+        addEffect(EffectSlot.ON_ATTACK, com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(new CreateTokenEffect(
                 CardType.CREATURE,
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 "Warrior", 1, 1, CardColor.RED, null, List.of(CardSubtype.WARRIOR),
                 Set.of(), Set.of(), true, false, Map.of(), List.of(), false, false, false, 0, Set.of()
-        ));
-        addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());
+        ), new SacrificeCreatedPermanentsAtEndStepEffect()));
     }
 }

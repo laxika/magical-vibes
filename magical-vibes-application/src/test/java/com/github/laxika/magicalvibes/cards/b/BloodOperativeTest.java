@@ -22,7 +22,7 @@ class BloodOperativeTest extends BaseCardTest {
     void etbExilesTargetGraveyardCard() {
         Card target = new DevkarinDissident();
         harness.setGraveyard(player2, List.of(target));
-        harness.castFromHand(player1, new BloodOperative());
+        harness.castFromHand(player1, new BloodOperative(), "{1}{B}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
@@ -61,7 +61,7 @@ class BloodOperativeTest extends BaseCardTest {
     void etbCanExileNoncreatureFromOwnGraveyard() {
         Card target = new UnexplainedDisappearance();
         harness.setGraveyard(player1, List.of(target));
-        harness.castFromHand(player1, new BloodOperative());
+        harness.castFromHand(player1, new BloodOperative(), "{1}{B}{B}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
@@ -75,7 +75,7 @@ class BloodOperativeTest extends BaseCardTest {
     void etbExileMayBeDeclined() {
         Card target = new DevkarinDissident();
         harness.setGraveyard(player2, List.of(target));
-        harness.castFromHand(player1, new BloodOperative());
+        harness.castFromHand(player1, new BloodOperative(), "{1}{B}{B}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();

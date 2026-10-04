@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Gainsay.class, StormscapeFamiliar.class, MoggJailer.class, DaringLeap.class})
@@ -65,5 +66,60 @@ class GainsayTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, jailer.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canCounterOwnBlueSpell() {
+        StormscapeFamiliar familiar = new StormscapeFamiliar();
+        harness.castFromHand(player1, familiar, "{1}{U}");
+        harness.setHand(player1, List.of(new Gainsay()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, familiar.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Stormscape Familiar");
+        harness.assertInGraveyard(player1, "Gainsay");
+        harness.assertNotOnBattlefield(player1, "Stormscape Familiar");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotResolveWhenTargetWasAlreadyCountered() {
+        StormscapeFamiliar familiar = new StormscapeFamiliar();
+        harness.castFromHand(player1, familiar, "{1}{U}");
+        Gainsay first = new Gainsay();
+        Gainsay second = new Gainsay();
+        harness.setHand(player2, List.of(first, second));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.passPriority(player1);
+
+        harness.castInstant(player2, 0, familiar.getId());
+        harness.castInstant(player2, 0, familiar.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Stormscape Familiar");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(first.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getId())
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.assertNotOnBattlefield(player1, "Stormscape Familiar");
+    }
+
+    @Test
+    void cannotTargetBlueCreatureOnBattlefield() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new StormscapeFamiliar());
+        harness.setHand(player1, List.of(new Gainsay()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, familiar.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Gainsay");
     }
 }

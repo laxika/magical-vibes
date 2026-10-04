@@ -103,7 +103,7 @@ class DefenseGridTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Defense Grid still taxes spells")
     void tappedGridStillTaxesSpells() {
-        harness.addToBattlefieldAndReturn(player1, new DefenseGrid()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new DefenseGrid()).tap();
         harness.forceActivePlayer(player1);
 
         harness.castFromHand(player2, new HolyDay(), "{3}{W}");

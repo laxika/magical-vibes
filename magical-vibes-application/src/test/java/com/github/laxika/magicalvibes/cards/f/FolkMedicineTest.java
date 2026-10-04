@@ -52,10 +52,60 @@ class FolkMedicineTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Gains no life with no creatures, even when the opponent controls creatures")
+    void gainsNoLifeWithoutControlledCreatures() {
+        harness.addToBattlefield(player1, new KrosanVerge());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 15);
+        FolkMedicine spell = new FolkMedicine();
+
+        harness.castFromHand(player1, spell, "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player1, "Folk Medicine");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(spell);
+    }
+
+    @Test
+    @DisplayName("The second player gains life for only their own creatures")
+    void secondPlayerGainsLifeForOwnCreatures() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 15);
+
+        harness.castFromHand(player2, new FolkMedicine(), "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Flashback with no creatures still exiles the spell")
+    void flashbackWithNoCreaturesStillExilesSpell() {
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.setLife(player1, 10);
+        FolkMedicine spell = new FolkMedicine();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        harness.assertNotInGraveyard(player1, "Folk Medicine");
     }
 }

@@ -168,7 +168,7 @@ class DizzyingGazeTest extends BaseCardTest {
     void canActivateRepeatedlyWithoutTappingEnchantedCreature() {
         Permanent aura = addAuraToCreature(new CinderCrawler());
         Permanent creature = findPermanent(player1, "Cinder Crawler");
-        creature.setTapped(true);
+        creature.tap();
         creature.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SabertoothWyvern());
         harness.addMana(player1, ManaColor.RED, 2);

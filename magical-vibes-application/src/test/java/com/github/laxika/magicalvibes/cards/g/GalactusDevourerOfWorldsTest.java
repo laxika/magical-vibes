@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
+import com.github.laxika.magicalvibes.cards.s.SilverSurferGalactussHerald;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GalactusDevourerOfWorlds.class, GrizzlyBears.class})
+@CardUsed({GalactusDevourerOfWorlds.class, SilverSurferGalactussHerald.class, OneWithTheStars.class})
 class GalactusDevourerOfWorldsTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Galactus enters, it exiles target permanent")
     void etbExilesTargetPermanent() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SilverSurferGalactussHerald());
         castGalactus(target);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
@@ -32,9 +31,7 @@ class GalactusDevourerOfWorldsTest extends BaseCardTest {
     @DisplayName("Galactus must attack each combat when able")
     void mustAttackEachCombat() {
         Permanent galactus = addCreatureReady(player1, new GalactusDevourerOfWorlds());
-        beginDeclareAttackers();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
         assertThat(galactus.isAttacking()).isFalse();
@@ -44,10 +41,9 @@ class GalactusDevourerOfWorldsTest extends BaseCardTest {
     @DisplayName("Galactus may stay back while its controller controls Silver Surfer")
     void silverSurferRemovesAttackRequirement() {
         Permanent galactus = addCreatureReady(player1, new GalactusDevourerOfWorlds());
-        harness.addToBattlefield(player1, silverSurfer());
-        beginDeclareAttackers();
+        harness.addToBattlefield(player1, new SilverSurferGalactussHerald());
 
-        gs.declareAttackers(gd, player1, List.of());
+        declareAttackers(List.of());
 
         assertThat(galactus.isAttacking()).isFalse();
     }
@@ -60,19 +56,61 @@ class GalactusDevourerOfWorldsTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void beginDeclareAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+    @Test
+    void noncreatureSilverSurferDoesNotRemoveAttackRequirement() {
+        addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        Permanent surfer = harness.addToBattlefieldAndReturn(player1, new SilverSurferGalactussHerald());
+        harness.setHand(player1, List.of(new OneWithTheStars()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, surfer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, surfer)).isFalse();
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
     }
 
-    private Card silverSurfer() {
-        Card card = new Card();
-        card.setName("Silver Surfer, Galactus's Herald");
-        card.setType(CardType.CREATURE);
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
+    @Test
+    void opponentsSilverSurferDoesNotRemoveAttackRequirement() {
+        addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        harness.addToBattlefield(player2, new SilverSurferGalactussHerald());
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    void tappedGalactusIsNotRequiredToAttack() {
+        Permanent galactus = addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        galactus.setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(galactus.isAttacking()).isFalse();
+    }
+
+    @Test
+    void etbCanExileOwnNoncreaturePermanent() {
+        Permanent surfer = harness.addToBattlefieldAndReturn(player1, new SilverSurferGalactussHerald());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new OneWithTheStars());
+        aura.setAttachedTo(surfer.getId());
+
+        castGalactus(aura);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aura.getCard());
+    }
+
+    @Test
+    void etbCanExileGalactusItselfDespiteIndestructible() {
+        Permanent galactus = harness.enterBattlefieldAndReturn(player1, new GalactusDevourerOfWorlds());
+        harness.handlePermanentChosen(player1, galactus.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(galactus);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(galactus.getCard());
     }
 }

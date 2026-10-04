@@ -79,4 +79,49 @@ class DwarvenLieutenantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, infantry.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Repeated activations stack their boosts without tapping the source")
+    void repeatedActivationsStack() {
+        Permanent dwarf = addCreatureReady(player1, new DwarvenLieutenant());
+        int originalPower = gqs.getEffectivePower(gd, dwarf);
+        int originalToughness = gqs.getEffectiveToughness(gd, dwarf);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, dwarf.getId());
+        harness.activateAbility(player1, 0, null, dwarf.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, dwarf)).isEqualTo(originalPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, dwarf)).isEqualTo(originalToughness);
+        assertThat(dwarf.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Lieutenant can activate its ability")
+    void tappedSummoningSickSourceCanActivate() {
+        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new DwarvenLieutenant());
+        dwarf.setSummoningSick(true);
+        dwarf.setTapped(true);
+        int originalPower = gqs.getEffectivePower(gd, dwarf);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, dwarf.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dwarf)).isEqualTo(originalPower + 1);
+        assertThat(dwarf.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activation requires red mana, not just two generic mana")
+    void cannotActivateWithoutRedMana() {
+        Permanent dwarf = addCreatureReady(player1, new DwarvenLieutenant());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, dwarf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }

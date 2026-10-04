@@ -107,7 +107,7 @@ class CrypticTrilobiteTest extends BaseCardTest {
     void manaAbilityIgnoresTapAndSummoningSickness() {
         Permanent trilobite = addReadyTrilobite(player1, 2);
         trilobite.setSummoningSick(true);
-        trilobite.setTapped(true);
+        trilobite.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

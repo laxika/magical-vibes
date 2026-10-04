@@ -65,10 +65,7 @@ class FalseDemiseTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(creatureCard.getId()));
 
         // The control change has to stick, so the returned permanent is tracked as stolen from its owner.
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getId().equals(creatureCard.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent returned = findPermanent(player1, "Steadfast Guard");
         assertThat(gd.stolenCreatures).containsEntry(returned.getId(), player2.getId());
     }
 
@@ -116,8 +113,7 @@ class FalseDemiseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LastBreath()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gd.findExiledCard(creatureCard.getId())).isNotNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -170,6 +166,46 @@ class FalseDemiseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The returned creature is untapped, undamaged, and summoning sick")
+    void returnsCreatureAsNewPermanent() {
+        Permanent creature = addCreatureReady(player1, new SteadfastGuard());
+        creature.setTapped(true);
+        creature.setMarkedDamage(1);
+        castFalseDemise(player1, creature);
+
+        killCreature(player1, creature);
+
+        Permanent returned = findPermanent(player1, "Steadfast Guard");
+        assertThat(returned.getId()).isNotEqualTo(creature.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.getMarkedDamage()).isZero();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A pending return trigger cannot return a creature that left and reentered the graveyard")
+    void doesNotReturnNewGraveyardObject() {
+        Permanent creature = addCreatureReady(player1, new SteadfastGuard());
+        castFalseDemise(player1, creature);
+        castFalseDemise(player1, creature);
+
+        creature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        Permanent returned = findPermanent(player1, "Steadfast Guard");
+        assertThat(gd.stack).hasSize(1);
+
+        returned.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Steadfast Guard");
+        harness.assertNotOnBattlefield(player1, "Steadfast Guard");
     }
 
     private void castFalseDemise(Player controller, Permanent target) {

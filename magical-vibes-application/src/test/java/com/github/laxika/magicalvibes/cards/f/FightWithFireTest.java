@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.b.BlinkOfAnEye;
+import com.github.laxika.magicalvibes.cards.c.ColdWaterSnapper;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -20,6 +22,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FightWithFire.class, GrizzlyBears.class, HillGiant.class, Plains.class,
+        ChandraNalaar.class, JaceBeleren.class, ImprisonedInTheMoon.class,
+        ColdWaterSnapper.class, BlinkOfAnEye.class})
 class FightWithFireTest extends BaseCardTest {
 
     @Test
@@ -28,7 +33,7 @@ class FightWithFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent bears = addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
@@ -46,7 +51,7 @@ class FightWithFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent bears = addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
@@ -61,8 +66,8 @@ class FightWithFireTest extends BaseCardTest {
         // Base cost {2}{R} + kicker {5}{R} = 9 mana total
         harness.addMana(player1, ManaColor.RED, 9);
 
-        Permanent bears = addToBattlefield(player2, new GrizzlyBears());
-        Permanent giant = addToBattlefield(player2, new HillGiant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         harness.castKickedSorcery(player1, 0, Map.of(
                 bears.getId(), 4,
@@ -86,8 +91,8 @@ class FightWithFireTest extends BaseCardTest {
         // Base cost {2}{R} + kicker {5}{R} = 9 mana total
         harness.addMana(player1, ManaColor.RED, 9);
 
-        // A creature must exist so the base spell is considered playable
-        addToBattlefield(player2, new GrizzlyBears());
+        // The kicked spell may assign all its damage to a player.
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         int player2LifeBefore = gd.getLife(player2.getId());
 
         harness.castKickedSorcery(player1, 0, Map.of(
@@ -105,7 +110,7 @@ class FightWithFireTest extends BaseCardTest {
         // Base cost {2}{R} + kicker {5}{R} = 9 mana total
         harness.addMana(player1, ManaColor.RED, 9);
 
-        Permanent bears = addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         int player2LifeBefore = gd.getLife(player2.getId());
 
         harness.castKickedSorcery(player1, 0, Map.of(
@@ -127,7 +132,7 @@ class FightWithFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 9);
 
-        Permanent bears = addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         // Only assigning 5 damage — should fail
         assertThatThrownBy(() ->
@@ -141,7 +146,7 @@ class FightWithFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 9);
 
-        Permanent bears = addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThatThrownBy(() ->
                 harness.castKickedSorcery(player1, 0, Map.of(
@@ -157,8 +162,8 @@ class FightWithFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 9);
 
-        addToBattlefield(player2, new GrizzlyBears());
-        Permanent plains = addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.p.Plains());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
         assertThatThrownBy(() ->
                 harness.castKickedSorcery(player1, 0, Map.of(
@@ -178,8 +183,8 @@ class FightWithFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 9);
 
-        addToBattlefield(player2, new GrizzlyBears());
-        Permanent chandra = addToBattlefield(player2, new ChandraNalaar());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, 6);
 
         harness.castKickedSorcery(player1, 0, Map.of(
@@ -203,13 +208,12 @@ class FightWithFireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 9);
 
-        addToBattlefield(player2, new GrizzlyBears());
-        Permanent jace = addToBattlefield(player2, new JaceBeleren());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         jace.setCounterCount(CounterType.LOYALTY, 3);
 
-        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
         aura.setAttachedTo(jace.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThatThrownBy(() ->
                 harness.castKickedSorcery(player1, 0, Map.of(
@@ -220,9 +224,117 @@ class FightWithFireTest extends BaseCardTest {
                 .hasMessageContaining("creature, planeswalker, battle, or player");
     }
 
-    private Permanent addToBattlefield(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void kickedCanTargetPlayerWithoutCreaturesOnBattlefield() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 9);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castKickedSorcery(player1, 0, Map.of(player2.getId(), 10));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 10);
+        harness.assertInGraveyard(player1, "Fight with Fire");
+    }
+
+    @Test
+    void unkickedDealsExactlyFiveDamageToOwnCreature() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        Permanent snapper = harness.addToBattlefieldAndReturn(player1, new ColdWaterSnapper());
+        snapper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.castSorcery(player1, 0, snapper.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cold-Water Snapper");
+        assertThat(snapper.getMarkedDamage()).isEqualTo(5);
+    }
+
+    @Test
+    void unkickedDoesNothingWhenItsOnlyTargetLeaves() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire(), new BlinkOfAnEye()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        Permanent snapper = harness.addToBattlefieldAndReturn(player1, new ColdWaterSnapper());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castSorcery(player1, 0, snapper.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, snapper.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cold-Water Snapper");
+        harness.assertInGraveyard(player1, "Fight with Fire");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void kickedCanChooseZeroTargets() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 9);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castKickedSorcery(player1, 0, Map.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        harness.assertInGraveyard(player1, "Fight with Fire");
+    }
+
+    @Test
+    void kickedCannotTargetOpponentsHexproofCreature() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 9);
+        Permanent snapper = harness.addToBattlefieldAndReturn(player2, new ColdWaterSnapper());
+
+        assertThatThrownBy(() -> harness.castKickedSorcery(player1, 0,
+                Map.of(snapper.getId(), 5, player2.getId(), 5)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void unkickedCannotTargetPlayer() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addToBattlefield(player1, new ColdWaterSnapper());
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotPayKickerWithOnlyBaseMana() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castKickedSorcery(player1, 0,
+                Map.of(player2.getId(), 10)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void illegalTargetDoesNotRedistributeItsDamage() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire(), new BlinkOfAnEye()));
+        harness.addMana(player1, ManaColor.RED, 9);
+        Permanent snapper = harness.addToBattlefieldAndReturn(player1, new ColdWaterSnapper());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castKickedSorcery(player1, 0, Map.of(snapper.getId(), 3, player2.getId(), 7));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, snapper.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Cold-Water Snapper");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 7);
     }
 }

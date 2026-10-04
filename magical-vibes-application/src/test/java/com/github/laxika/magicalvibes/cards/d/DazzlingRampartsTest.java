@@ -117,7 +117,7 @@ class DazzlingRampartsTest extends BaseCardTest {
     @DisplayName("Cannot pay the tap cost when already tapped")
     void cannotActivateWhileTapped() {
         Permanent ramparts = addReadyRamparts(player1);
-        ramparts.setTapped(true);
+        ramparts.tap();
         Permanent target = addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -159,7 +159,7 @@ class DazzlingRampartsTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addReadyRamparts(player1);
         Permanent target = addReadyBears(player2);
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());

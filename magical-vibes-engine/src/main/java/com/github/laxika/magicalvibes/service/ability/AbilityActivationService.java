@@ -1888,10 +1888,10 @@ public class AbilityActivationService {
 
     private Integer trackedSacrificedManaValue(CardEffect costEffect, Permanent chosen) {
         if (costEffect instanceof SacrificeCreatureCost cost && cost.trackSacrificedManaValue()) {
-            return chosen.getCard().getManaValue();
+            return gameQueryService.getPermanentManaValue(chosen);
         }
         if (costEffect instanceof SacrificePermanentCost cost && cost.trackSacrificedManaValue()) {
-            return chosen.getCard().getManaValue();
+            return gameQueryService.getPermanentManaValue(chosen);
         }
         if (costEffect instanceof UnattachEquipmentFromSourceCost) {
             return chosen.getCard().getManaValue();
@@ -2115,6 +2115,7 @@ public class AbilityActivationService {
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
+        gameData.recordActivatedAbilityOfGraveyardCard(playerId);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         flushActivatedAbilityCostTriggers(gameData);
 
@@ -3796,6 +3797,8 @@ public class AbilityActivationService {
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
+        ManaPool.NonHandSpellOnlyManaState nonHandAbilityMana = pool != null
+                ? pool.promoteNonHandSpellOnlyMana() : null;
         boolean promotedAbilityOnlyMana = pool != null && pool.promoteAbilityOnlyMana() > 0;
         boolean promotedLandAbilityOnlyMana = pool != null
                 && isLandAbilitySource(gameData, player.getId(), permanentIndex, preResolvedSource)
@@ -3822,6 +3825,9 @@ public class AbilityActivationService {
             }
             if (pool != null && promotedLandAbilityOnlyMana) {
                 pool.restorePromotedLandAbilityOnlyMana();
+            }
+            if (pool != null && nonHandAbilityMana != null) {
+                pool.restorePromotedNonHandSpellOnlyMana(nonHandAbilityMana);
             }
         }
     }
@@ -5138,7 +5144,7 @@ public class AbilityActivationService {
                 if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
                     Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
                     if (autoTarget != null) {
-                        if (sacCost.trackSacrificedManaValue()) effectiveXValue = autoTarget.getCard().getManaValue();
+                        if (sacCost.trackSacrificedManaValue()) effectiveXValue = gameQueryService.getPermanentManaValue(autoTarget);
                         if (sacCost.trackSacrificedPower()) effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
                         if (sacCost.trackSacrificedToughness()) effectiveXValue = gameQueryService.getEffectiveToughness(gameData, autoTarget);
                         if (sacCost.trackSacrificedColorSymbols() != null) {
@@ -5160,7 +5166,7 @@ public class AbilityActivationService {
                             effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
                         }
                         if (sacPermCost.trackSacrificedManaValue()) {
-                            effectiveXValue = autoTarget.getCard().getManaValue();
+                            effectiveXValue = gameQueryService.getPermanentManaValue(autoTarget);
                         }
                         if (sacPermCost.trackSacrificedToughness()) {
                             effectiveXValue = gameQueryService.getEffectiveToughness(gameData, autoTarget);
@@ -5671,7 +5677,7 @@ public class AbilityActivationService {
         Integer updatedXValue = null;
         if (context.costEffect() instanceof SacrificeCreatureCost sacCost) {
             if (sacCost.trackSacrificedManaValue()) {
-                updatedXValue = chosen.getCard().getManaValue();
+                updatedXValue = gameQueryService.getPermanentManaValue(chosen);
             }
             if (sacCost.trackSacrificedPower()) {
                 updatedXValue = gameQueryService.getEffectivePower(gameData, chosen);
@@ -5690,7 +5696,7 @@ public class AbilityActivationService {
                 updatedXValue = gameQueryService.getEffectivePower(gameData, chosen);
             }
             if (sacPermCost.trackSacrificedManaValue()) {
-                updatedXValue = chosen.getCard().getManaValue();
+                updatedXValue = gameQueryService.getPermanentManaValue(chosen);
             }
             if (sacPermCost.trackSacrificedToughness()) {
                 updatedXValue = gameQueryService.getEffectiveToughness(gameData, chosen);
@@ -6024,6 +6030,27 @@ public class AbilityActivationService {
         });
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        if (!gameQueryService.hasLostAllAbilities(gameData, permanent) && !permanent.isFaceDown()) {
+            for (ManaColor color : gameQueryService.intrinsicBasicLandManaColors(gameData, permanent)) {
+                boolean printedLandType = permanent.getCard().getSubtypes().stream().anyMatch(subtype ->
+                        switch (subtype) {
+                            case PLAINS -> color == ManaColor.WHITE;
+                            case ISLAND -> color == ManaColor.BLUE;
+                            case SWAMP -> color == ManaColor.BLACK;
+                            case MOUNTAIN -> color == ManaColor.RED;
+                            case FOREST -> color == ManaColor.GREEN;
+                            default -> false;
+                        });
+                boolean alreadyGranted = abilities.stream().anyMatch(ability -> ability.isRequiresTap()
+                        && ability.getEffects().size() == 1
+                        && ability.getEffects().getFirst() instanceof AwardManaEffect mana
+                        && mana.color() == color);
+                if (!printedLandType && !alreadyGranted) {
+                    abilities.add(new ActivatedAbility(true, null, List.of(new AwardManaEffect(color)),
+                            "{T}: Add {" + color.getCode() + "}."));
+                }
+            }
+        }
         if (gameQueryService.isCreature(gameData, permanent)) {
             for (StackEntry stackEntry : gameData.stack) {
                 for (CardEffect effect : stackEntry.getCard().getEffects(EffectSlot.STATIC)) {
@@ -6686,8 +6713,12 @@ public class AbilityActivationService {
                 preCheck = preCheck.withBlackManaAsPhyrexian();
             }
             ManaPool affordabilityPool = manaPool;
-            if (manaPool != null && isClassLevelUpAbility(abilityEffects)) {
+            if (manaPool != null && manaPool.getNonHandSpellOnlyManaTotal() > 0) {
                 affordabilityPool = copyManaPool(manaPool);
+                affordabilityPool.promoteNonHandSpellOnlyMana();
+            }
+            if (manaPool != null && isClassLevelUpAbility(abilityEffects)) {
+                affordabilityPool = copyManaPool(affordabilityPool);
                 affordabilityPool.promoteInstantSorceryOrClassLevelOnlyMana();
             }
             if (manaPool != null

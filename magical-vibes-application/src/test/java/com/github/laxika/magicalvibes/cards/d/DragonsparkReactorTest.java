@@ -104,7 +104,7 @@ class DragonsparkReactorTest extends BaseCardTest {
     void tappedReactorCanStillBeSacrificedForDamage() {
         Permanent reactor = harness.addToBattlefieldAndReturn(player1, new DragonsparkReactor());
         reactor.setCounterCount(CounterType.CHARGE, 3);
-        reactor.setTapped(true);
+        reactor.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId()));

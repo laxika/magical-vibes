@@ -736,6 +736,16 @@ public sealed interface TriggerContext {
         }
     }
 
+    record ArtifactOrCreatureDeath(Card dyingCard, UUID dyingControllerId,
+                                   UUID graveyardOwnerId, Permanent dyingPermanent,
+                                   int dyingPower, int dyingToughness,
+                                   boolean eventContainsCreature) implements TriggerContext {
+        @Override
+        public boolean causedByCreatureDying() {
+            return eventContainsCreature;
+        }
+    }
+
     /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
      *

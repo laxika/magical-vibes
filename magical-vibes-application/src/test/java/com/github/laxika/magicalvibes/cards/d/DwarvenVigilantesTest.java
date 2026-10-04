@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(DwarvenVigilantes.class)
+@CardUsed({DwarvenVigilantes.class, FlaringPain.class})
 class DwarvenVigilantesTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -35,7 +37,7 @@ class DwarvenVigilantesTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting: unblocked attacker deals power damage to chosen creature and assigns no combat damage")
     void acceptDealsPowerDamageAndPreventsCombatDamage() {
-        Permanent attacker = addAttacker();
+        addAttacker();
         Permanent victim = addDefenderCreature();
         harness.setLife(player2, 20);
 
@@ -54,7 +56,7 @@ class DwarvenVigilantesTest extends BaseCardTest {
     @Test
     @DisplayName("The target may be a creature controlled by the attacking player")
     void canTargetOwnCreature() {
-        Permanent attacker = addAttacker();
+        addAttacker();
         Permanent victim = addCreatureReady(player1, new DwarvenVigilantes());
 
         advanceToUnblockedTargetChoice();
@@ -86,8 +88,7 @@ class DwarvenVigilantesTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of());
+        advanceToUnblockedTargetChoice();
         harness.handlePermanentChosen(player1, victim.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, attacker));
@@ -134,7 +135,7 @@ class DwarvenVigilantesTest extends BaseCardTest {
     @Test
     @DisplayName("Combat-damage prevention wears off at end of turn")
     void preventionWearsOff() {
-        Permanent attacker = addAttacker();
+        addAttacker();
         Permanent victim = addDefenderCreature();
 
         advanceToUnblockedTargetChoice();
@@ -149,5 +150,57 @@ class DwarvenVigilantesTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Assigning no combat damage still applies when damage cannot be prevented")
+    void assignsNoCombatDamageWithFlaringPain() {
+        harness.setHand(player1, List.of(new FlaringPain()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0);
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        advanceToUnblockedTargetChoice();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Declining the ability allows normal combat damage to the defending player")
+    void decliningAllowsCombatDamage() {
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        advanceToUnblockedTargetChoice();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveCombat();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("An illegal target stops the ability from resolving and leaves combat damage unchanged")
+    void targetLeavingDoesNotStopCombatDamage() {
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        advanceToUnblockedTargetChoice();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, victim));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }

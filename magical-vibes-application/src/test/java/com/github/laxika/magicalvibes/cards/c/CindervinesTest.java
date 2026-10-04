@@ -111,7 +111,7 @@ class CindervinesTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
-        assertThat(gd.battlefield.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -162,7 +162,7 @@ class CindervinesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.battlefield.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);

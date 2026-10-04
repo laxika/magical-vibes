@@ -84,4 +84,36 @@ class FlankingTroopsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
     }
+
+    @Test
+    @DisplayName("Attack trigger can target an already tapped creature")
+    void canTargetAlreadyTappedCreature() {
+        addCreatureReady(player1, new FlankingTroops());
+        Permanent forestBear = addCreatureReady(player2, new ForestBear());
+        forestBear.setTapped(true);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, forestBear.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(forestBear.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attack trigger can target Flanking Troops itself")
+    void canTargetItself() {
+        Permanent troops = addCreatureReady(player1, new FlankingTroops());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, troops.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(troops.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }

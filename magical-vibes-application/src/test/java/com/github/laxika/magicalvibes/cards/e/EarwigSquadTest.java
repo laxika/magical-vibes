@@ -27,8 +27,7 @@ class EarwigSquadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EarwigSquad()));
         harness.addMana(player1, ManaColor.BLACK, 3); // prowl {2}{B}
         harness.castWithProwl(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger -> library search
+        resolveAllTriggers();
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
@@ -47,8 +46,7 @@ class EarwigSquadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EarwigSquad()));
         harness.addMana(player1, ManaColor.BLACK, 3); // prowl {2}{B}
         harness.castWithProwl(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
     }
@@ -62,8 +60,7 @@ class EarwigSquadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EarwigSquad()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castWithProwl(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
@@ -116,6 +113,68 @@ class EarwigSquadTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithProwl(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Prowl resolves normally when the opponent's library is empty")
+    void emptyLibraryDoesNotLeaveSearchPending() {
+        setupProwl(CardSubtype.GOBLIN);
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new EarwigSquad()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castWithProwl(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Earwig Squad");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The search cannot be declined or ended before three cards are exiled")
+    void mustFindThreeCardsWhenAvailable() {
+        setupProwl(CardSubtype.GOBLIN);
+        harness.setHand(player1, List.of(new EarwigSquad()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castWithProwl(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Combat damage from Prickly Boggart enables prowl in the second main phase")
+    void actualCombatDamageEnablesProwl() {
+        addCreatureReady(player1, new PricklyBoggart());
+        stockOpponentLibrary();
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.assertLife(player2, 19);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new EarwigSquad()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castWithProwl(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Earwig Squad");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
     }
 
     private void setupProwl(CardSubtype subtype) {

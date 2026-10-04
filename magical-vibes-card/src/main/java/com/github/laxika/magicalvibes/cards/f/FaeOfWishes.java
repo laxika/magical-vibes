@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "44")
+@CardRegistration(set = "ELD", collectorNumber = "282")
 public class FaeOfWishes extends Card {
 
     public FaeOfWishes() {

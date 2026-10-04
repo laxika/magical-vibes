@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "106")
+@CardRegistration(set = "SCD", collectorNumber = "84")
 public class LilianaUntouchedByDeath extends Card {
 
     public LilianaUntouchedByDeath() {

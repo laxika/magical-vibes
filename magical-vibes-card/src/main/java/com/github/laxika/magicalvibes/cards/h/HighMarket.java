@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "C15", collectorNumber = "289")
 @CardRegistration(set = "C21", collectorNumber = "293")
 @CardRegistration(set = "AFC", collectorNumber = "246")
+@CardRegistration(set = "FIC", collectorNumber = "402")
 public class HighMarket extends Card {
 
     public HighMarket() {

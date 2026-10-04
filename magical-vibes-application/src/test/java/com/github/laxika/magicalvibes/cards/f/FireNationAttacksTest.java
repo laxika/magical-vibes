@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(FireNationAttacks.class)
+@CardUsed({FireNationAttacks.class})
 class FireNationAttacksTest extends BaseCardTest {
 
     @Test
@@ -41,6 +41,45 @@ class FireNationAttacksTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+        harness.assertNotInGraveyard(player1, "Fire Nation Attacks");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Fire Nation Attacks"));
+    }
+
+    @Test
+    void onlyAttackingSoldierProducesManaAndDealsTwoDamage() {
+        harness.setHand(player1, List.of(new FireNationAttacks()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        findPermanents(player1, "Soldier").forEach(soldier -> soldier.setSummoningSick(false));
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    void normalCastCanBeFollowedByFlashbackForFourSoldiers() {
+        harness.setHand(player1, List.of(new FireNationAttacks()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fire Nation Attacks");
+        harness.addMana(player1, ManaColor.RED, 9);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(4);
         harness.assertNotInGraveyard(player1, "Fire Nation Attacks");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Fire Nation Attacks"));

@@ -1,8 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.w.Weakness;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GiantCindermaw;
@@ -20,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwordsToPlowshares.class, BalduvianBears.class, BalduvianBarbarians.class, GiantCindermaw.class, KnightOfStromgald.class, Plains.class, GrizzlyBears.class, HillGiant.class, Weakness.class})
+@CardUsed({SwordsToPlowshares.class, BalduvianBears.class, BalduvianBarbarians.class, GiantCindermaw.class, KnightOfStromgald.class, Plains.class})
 class SwordsToPlowsharesTest extends BaseCardTest {
 
     private void giveSwords() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EpicureOfBlood.class, AngelOfMercy.class, SoulWarden.class, GrizzlyBears.class})
 class EpicureOfBloodTest extends BaseCardTest {
 
     @Test
@@ -26,9 +28,7 @@ class EpicureOfBloodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell (ETB triggers)
-        harness.passBothPriorities(); // resolve life gain trigger
-        harness.passBothPriorities(); // resolve Epicure's life loss trigger
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 1);
     }
@@ -37,20 +37,15 @@ class EpicureOfBloodTest extends BaseCardTest {
     @DisplayName("Loses only 1 life regardless of the amount of life gained")
     void losesOneLifeRegardlessOfAmountGained() {
         harness.addToBattlefield(player1, new EpicureOfBlood());
-        harness.addToBattlefield(player1, new SoulWarden());
-
         int startingLife = gd.getLife(player2.getId());
         int controllerLife = gd.getLife(player1.getId());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell (Soul Warden triggers)
-        harness.passBothPriorities(); // resolve Soul Warden's gain 1 life
-        harness.passBothPriorities(); // resolve Epicure's life loss trigger
+        resolveAllTriggers();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife + 1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife + 3);
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 1);
     }
 
@@ -69,8 +64,7 @@ class EpicureOfBloodTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 5);
 
         harness.castCreature(player2, 0);
-        harness.passBothPriorities(); // resolve creature spell (ETB triggers)
-        harness.passBothPriorities(); // resolve life gain trigger
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife + 3);
     }
@@ -87,11 +81,42 @@ class EpicureOfBloodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell (ETB triggers)
-        harness.passBothPriorities(); // resolve life gain trigger
-        harness.passBothPriorities(); // resolve first Epicure trigger
-        harness.passBothPriorities(); // resolve second Epicure trigger
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 2);
+    }
+    @Test
+    @DisplayName("Separate simultaneous life gain triggers each trigger Epicure")
+    void separateLifeGainEventsEachCauseLifeLoss() {
+        harness.addToBattlefield(player1, new EpicureOfBlood());
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.addToBattlefield(player1, new SoulWarden());
+        int controllerLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife + 2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 2);
+    }
+
+    @Test
+    @DisplayName("Life loss trigger still resolves after Epicure leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new EpicureOfBlood());
+        int opponentLife = gd.getLife(player2.getId());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Epicure of Blood"));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 1);
     }
 }

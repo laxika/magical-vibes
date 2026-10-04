@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FalconAndRedwing.class, GrizzlyBears.class})
+@CardUsed({FalconAndRedwing.class})
 class FalconAndRedwingTest extends BaseCardTest {
 
     @Test
@@ -35,7 +34,7 @@ class FalconAndRedwingTest extends BaseCardTest {
     void doesNotTriggerWhenBlocked() {
         Permanent falcon = addCreatureReady(player1, new FalconAndRedwing());
         falcon.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new FalconAndRedwing());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -44,5 +43,49 @@ class FalconAndRedwingTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Bird")).isEmpty();
         assertThat(falcon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void usesDamageDealtRatherThanPowerAtResolution() {
+        Permanent falcon = addCreatureReady(player1, new FalconAndRedwing());
+        falcon.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        falcon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(1);
+        assertThat(falcon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void createsBirdsEvenIfSourceLeavesBeforeResolution() {
+        Permanent falcon = addCreatureReady(player1, new FalconAndRedwing());
+        falcon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        falcon.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(falcon);
+        gd.playerGraveyards.get(player1.getId()).add(falcon.getCard());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(3);
+        assertThat(findPermanents(player1, "Falcon and Redwing")).isEmpty();
+        assertThat(falcon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void createsBirdsForTheAttackingController() {
+        Permanent falcon = addCreatureReady(player2, new FalconAndRedwing());
+        falcon.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Bird")).hasSize(1);
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+        assertThat(falcon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

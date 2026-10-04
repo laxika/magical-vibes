@@ -163,7 +163,7 @@ class DreamTrawlerTest extends BaseCardTest {
     void tappedSummoningSickTrawlerCanGainHexproof() {
         Permanent trawler = harness.addToBattlefieldAndReturn(player1, new DreamTrawler());
         trawler.setSummoningSick(true);
-        trawler.setTapped(true);
+        trawler.tap();
         harness.setHand(player1, List.of(new NyxbornColossus()));
 
         harness.activateAbility(player1, 0, null, null);

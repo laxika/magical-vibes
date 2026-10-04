@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +52,53 @@ class EllieBrickMasterTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Cordyceps Infected")).isEmpty();
+        assertThat(findPermanents(player2, "Cordyceps Infected")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ellie need not attack for another creature's attack to create a token")
+    void anotherCreatureAttackingCreatesToken() {
+        harness.addToBattlefield(player1, new EllieBrickMaster());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Cordyceps Infected")).singleElement().satisfies(token -> {
+            assertThat(token.isTapped()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
+            assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        });
+        assertThat(findPermanents(player2, "Cordyceps Infected")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple creatures attacking the same opponent create only one token")
+    void multipleAttackersCreateOneToken() {
+        addCreatureReady(player1, new EllieBrickMaster());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Cordyceps Infected")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Declaring no attackers creates no token")
+    void noAttackersCreateNoToken() {
+        addCreatureReady(player1, new EllieBrickMaster());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of());
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanents(player1, "Cordyceps Infected")).isEmpty();
         assertThat(findPermanents(player2, "Cordyceps Infected")).isEmpty();

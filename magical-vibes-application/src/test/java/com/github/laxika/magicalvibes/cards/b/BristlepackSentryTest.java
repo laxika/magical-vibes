@@ -52,7 +52,7 @@ class BristlepackSentryTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new BristlepackSentry());
         Permanent grizzly = addCreatureReady(player1, new DroverGrizzly());
-        grizzly.setTapped(true);
+        grizzly.tap();
 
         declareAttackers(List.of(0));
 

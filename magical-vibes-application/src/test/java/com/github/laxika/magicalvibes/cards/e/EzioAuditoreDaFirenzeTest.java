@@ -51,6 +51,11 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.stack).hasSize(1);
+        harness.setLife(player2, 20);
+        harness.passBothPriorities();
+
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
@@ -78,6 +83,81 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Execution can be declined at exactly ten life after combat damage")
+    void canDeclineExecutionAtTenLife() {
+        addAttackingEzio();
+        harness.setLife(player2, 13);
+
+        resolveCombatToMayPrompt();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Execution checks life when the damage trigger resolves")
+    void checksLifeAtResolutionRatherThanTriggerTime() {
+        addAttackingEzio();
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        harness.setLife(player2, 10);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Ezio's combat damage enables freerunning in the postcombat main phase")
+    void combatDamageEnablesGrantedFreerunning() {
+        addAttackingEzio();
+        harness.setLife(player2, 20);
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AssassinInitiate()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Assassin Initiate");
+    }
+
+    @Test
+    @DisplayName("Execution is not offered if the damaged player rises above ten before resolution")
+    void cannotPayAfterLifeRisesAboveTen() {
+        addAttackingEzio();
+        harness.setLife(player2, 13);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        harness.setLife(player2, 11);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("An opponent's Ezio does not grant freerunning to your Assassin spells")
+    void opponentEzioDoesNotGrantFreerunning() {
+        harness.addToBattlefield(player2, new EzioAuditoreDaFirenze());
+        markAssassinCombatDamage();
+        harness.setHand(player1, List.of(new AssassinInitiate()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private Permanent addAttackingEzio() {
         Permanent ezio = addCreatureReady(player1, new EzioAuditoreDaFirenze());
         ezio.setAttacking(true);
@@ -85,10 +165,7 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
     }
 
     private void resolveCombatToMayPrompt() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
     }
 

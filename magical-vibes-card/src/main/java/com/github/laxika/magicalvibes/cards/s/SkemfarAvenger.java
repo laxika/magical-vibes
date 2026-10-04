@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "109")
+@CardRegistration(set = "KHM", collectorNumber = "355")
 public class SkemfarAvenger extends Card {
 
     public SkemfarAvenger() {

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1347")
+@CardRegistration(set = "KHM", collectorNumber = "374")
 public class ValkyrieHarbinger extends Card {
 
     public ValkyrieHarbinger() {

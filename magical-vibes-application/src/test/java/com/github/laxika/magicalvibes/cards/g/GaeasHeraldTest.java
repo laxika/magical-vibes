@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DaringApprentice;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.r.RemoveSoul;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SpiketailHatchling;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GaeasHerald.class, GrizzlyBears.class, RemoveSoul.class, MightOfOaks.class,
-        DaringApprentice.class, SpiketailHatchling.class})
+        DaringApprentice.class, SpiketailHatchling.class, Shock.class, Humility.class})
 class GaeasHeraldTest extends BaseCardTest {
 
     @Test
@@ -34,8 +36,7 @@ class GaeasHeraldTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -60,8 +61,7 @@ class GaeasHeraldTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
         harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -104,8 +104,7 @@ class GaeasHeraldTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.activateAbility(player2, 0, null, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
 
@@ -130,5 +129,71 @@ class GaeasHeraldTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Gaea's Herald");
         harness.assertNotOnBattlefield(player1, "Gaea's Herald");
+    }
+
+    @Test
+    @DisplayName("Removing Herald before a counterspell resolves ends its protection")
+    void removingHeraldInResponseAllowsCounteringCreatureSpell() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new RemoveSoul(), new Shock()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Gaea's Herald"));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Gaea's Herald");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Remove Soul");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("A Herald already on the battlefield protects another Herald spell")
+    void protectsAnotherHeraldSpell() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+        GaeasHerald herald = new GaeasHerald();
+        harness.setHand(player1, List.of(herald));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new RemoveSoul()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, herald.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Gaea's Herald")).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Gaea's Herald");
+        harness.assertInGraveyard(player2, "Remove Soul");
+    }
+
+    @Test
+    @DisplayName("Herald does not protect creature spells after Humility removes its ability")
+    void humilityRemovesCounterProtection() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+        harness.addToBattlefield(player2, new Humility());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new RemoveSoul()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Gaea's Herald");
+        harness.assertInGraveyard(player2, "Remove Soul");
     }
 }

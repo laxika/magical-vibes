@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,18 +20,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FrostTitan.class, RuneclawBear.class, LightningBolt.class, ProdigalPyromancer.class})
 class FrostTitanTest extends BaseCardTest {
-
-    // ===== ETB trigger: tap target permanent + skip next untap =====
 
     @Nested
     @DisplayName("ETB trigger")
+    @CardUsed({FrostTitan.class, RuneclawBear.class})
     class ETBTrigger {
 
         @Test
         @DisplayName("ETB taps target permanent when Frost Titan enters the battlefield")
         void etbTapsTarget() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
             assertThat(bears.isTapped()).isFalse();
             UUID targetId = bears.getId();
@@ -44,7 +46,7 @@ class FrostTitanTest extends BaseCardTest {
         @Test
         @DisplayName("ETB sets skipUntapCount on target permanent")
         void etbSetsSkipUntap() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
             UUID targetId = bears.getId();
 
@@ -58,7 +60,7 @@ class FrostTitanTest extends BaseCardTest {
         @Test
         @DisplayName("Frost Titan enters the battlefield after casting")
         void frostTitanEntersBattlefield() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
             UUID targetId = gd.playerBattlefields.get(player2.getId()).getFirst().getId();
 
             castFrostTitan(targetId);
@@ -68,17 +70,16 @@ class FrostTitanTest extends BaseCardTest {
         }
     }
 
-    // ===== Attack trigger: tap target permanent + skip next untap =====
-
     @Nested
     @DisplayName("Attack trigger")
+    @CardUsed({FrostTitan.class, RuneclawBear.class})
     class AttackTrigger {
 
         @Test
         @DisplayName("Attacking with Frost Titan queues attack trigger for target selection")
         void attackTriggerQueuesForTargetSelection() {
-            Permanent frostTitan = addReadyFrostTitan(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            addCreatureReady(player1, new FrostTitan());
+            harness.addToBattlefield(player2, new RuneclawBear());
 
             declareAttackers(List.of(0));
 
@@ -93,8 +94,8 @@ class FrostTitanTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            Permanent frostTitan = addReadyFrostTitan(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            addCreatureReady(player1, new FrostTitan());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
             assertThat(bears.isTapped()).isFalse();
 
@@ -111,8 +112,8 @@ class FrostTitanTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            Permanent frostTitan = addReadyFrostTitan(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            addCreatureReady(player1, new FrostTitan());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
 
             declareAttackers(List.of(0));
@@ -123,22 +124,21 @@ class FrostTitanTest extends BaseCardTest {
         }
     }
 
-    // ===== Becomes target of opponent spell: counter unless pays {2} =====
-
     @Nested
     @DisplayName("Becomes target of opponent spell trigger")
+    @CardUsed({FrostTitan.class, LightningBolt.class})
     class BecomesTargetTrigger {
 
         @Test
         @DisplayName("Triggers when opponent casts a spell targeting Frost Titan")
         void triggersOnOpponentSpellTargeting() {
-            Permanent frostTitan = addReadyFrostTitan(player1);
+            Permanent frostTitan = addCreatureReady(player1, new FrostTitan());
 
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            harness.setHand(player2, List.of(new Shock()));
+            harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 1);
 
             harness.castInstant(player2, 0, frostTitan.getId());
@@ -152,13 +152,13 @@ class FrostTitanTest extends BaseCardTest {
         @Test
         @DisplayName("Counters opponent's spell when opponent has no mana to pay {2}")
         void countersWhenOpponentCannotPay() {
-            Permanent frostTitan = addReadyFrostTitan(player1);
+            Permanent frostTitan = addCreatureReady(player1, new FrostTitan());
 
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            harness.setHand(player2, List.of(new Shock()));
+            harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 1); // exact cost, no extra mana
 
             harness.castInstant(player2, 0, frostTitan.getId());
@@ -166,21 +166,21 @@ class FrostTitanTest extends BaseCardTest {
             // Resolve the counter trigger — opponent has no mana
             harness.passBothPriorities();
 
-            // Shock should be countered
-            harness.assertInGraveyard(player2, "Shock");
+            // Lightning Bolt should be countered
+            harness.assertInGraveyard(player2, "Lightning Bolt");
             assertThat(gd.stack).isEmpty();
         }
 
         @Test
         @DisplayName("Opponent is prompted to pay when they have mana")
         void opponentPromptedWhenTheyHaveMana() {
-            Permanent frostTitan = addReadyFrostTitan(player1);
+            Permanent frostTitan = addCreatureReady(player1, new FrostTitan());
 
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            harness.setHand(player2, List.of(new Shock()));
+            harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 3); // 1 to cast, 2 extra
 
             harness.castInstant(player2, 0, frostTitan.getId());
@@ -196,13 +196,13 @@ class FrostTitanTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            Permanent frostTitan = addReadyFrostTitan(player1);
+            Permanent frostTitan = addCreatureReady(player1, new FrostTitan());
 
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            harness.setHand(player2, List.of(new Shock()));
+            harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 3);
 
             harness.castInstant(player2, 0, frostTitan.getId());
@@ -210,20 +210,20 @@ class FrostTitanTest extends BaseCardTest {
 
             harness.handleMayAbilityChosen(player2, true); // pay {2}
 
-            // Shock should still be on the stack (not countered)
-            harness.assertNotInGraveyard(player2, "Shock");
+            // Lightning Bolt should still be on the stack (not countered)
+            harness.assertNotInGraveyard(player2, "Lightning Bolt");
         }
 
         @Test
         @DisplayName("Spell is countered when opponent declines to pay")
         void spellCounteredWhenOpponentDeclines() {
-            Permanent frostTitan = addReadyFrostTitan(player1);
+            Permanent frostTitan = addCreatureReady(player1, new FrostTitan());
 
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
 
-            harness.setHand(player2, List.of(new Shock()));
+            harness.setHand(player2, List.of(new LightningBolt()));
             harness.addMana(player2, ManaColor.RED, 3);
 
             harness.castInstant(player2, 0, frostTitan.getId());
@@ -231,27 +231,78 @@ class FrostTitanTest extends BaseCardTest {
 
             harness.handleMayAbilityChosen(player2, false); // decline to pay
 
-            // Shock should be countered
-            harness.assertInGraveyard(player2, "Shock");
+            // Lightning Bolt should be countered
+            harness.assertInGraveyard(player2, "Lightning Bolt");
         }
 
         @Test
         @DisplayName("Does NOT trigger when controller casts a spell targeting Frost Titan")
         void doesNotTriggerOnControllerSpell() {
-            Permanent frostTitan = addReadyFrostTitan(player1);
+            Permanent frostTitan = addCreatureReady(player1, new FrostTitan());
 
-            harness.setHand(player1, List.of(new Shock()));
+            harness.setHand(player1, List.of(new LightningBolt()));
             harness.addMana(player1, ManaColor.RED, 1);
 
             harness.castInstant(player1, 0, frostTitan.getId());
 
-            // Only the Shock spell on the stack — no triggered ability
+            // Only the Lightning Bolt spell on the stack — no triggered ability
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning Bolt");
         }
     }
 
-    // ===== Helpers =====
+    @Test
+    void alreadyTappedTargetSkipsOnlyItsNextUntapStep() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        bear.setTapped(true);
+
+        castFrostTitan(bear.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+        assertThat(bear.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bear.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bear.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetItselfOnEntering() {
+        harness.setHand(player1, List.of(new FrostTitan()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent titan = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handlePermanentChosen(player1, titan.getId());
+        harness.passBothPriorities();
+
+        assertThat(titan.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(titan.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(titan.isTapped()).isFalse();
+    }
+
+    @Test
+    void countersOpponentsActivatedAbilityWithoutRemovingItsSource() {
+        Permanent titan = addCreatureReady(player1, new FrostTitan());
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, titan.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(titan.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Prodigal Pyromancer");
+        assertThat(pyromancer.isTapped()).isTrue();
+        harness.assertNotInGraveyard(player2, "Prodigal Pyromancer");
+    }
 
     private void castFrostTitan(UUID targetId) {
         harness.setHand(player1, List.of(new FrostTitan()));
@@ -259,10 +310,4 @@ class FrostTitanTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, targetId);
     }
 
-    private Permanent addReadyFrostTitan(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new FrostTitan());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

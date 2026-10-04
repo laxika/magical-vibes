@@ -125,7 +125,7 @@ class CharRumblerTest extends BaseCardTest {
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent source = addReadyCharRumbler(player1);
         Permanent other = addReadyCharRumbler(player1);
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 1);
 

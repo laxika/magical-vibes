@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "185")
+@CardRegistration(set = "KHM", collectorNumber = "365")
 public class OldGrowthTroll extends Card {
 
     public OldGrowthTroll() {

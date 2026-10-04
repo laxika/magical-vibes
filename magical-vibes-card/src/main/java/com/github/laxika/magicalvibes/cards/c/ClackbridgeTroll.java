@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "84")
+@CardRegistration(set = "ELD", collectorNumber = "353")
 public class ClackbridgeTroll extends Card {
 
     public ClackbridgeTroll() {

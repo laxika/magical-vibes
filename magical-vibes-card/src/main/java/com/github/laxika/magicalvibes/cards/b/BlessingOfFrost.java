@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "161")
+@CardRegistration(set = "KHM", collectorNumber = "362")
 public class BlessingOfFrost extends Card {
 
     public BlessingOfFrost() {

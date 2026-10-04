@@ -124,6 +124,55 @@ class EaterOfTheDeadTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
     }
 
+    @Test
+    void tappingAfterActivationAllowsExileAndUntap() {
+        Permanent eater = addReadyEater();
+        Card creature = new Scarecrow();
+        harness.setGraveyard(player2, List.of(creature));
+
+        harness.activateAbility(player1, indexOf(eater), 0, null, creature.getId(), Zone.GRAVEYARD);
+        eater.tap();
+        harness.passBothPriorities();
+
+        assertThat(eater.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void sourceLeavingTappedStillExilesTarget() {
+        Permanent eater = addReadyEater();
+        Card creature = new Scarecrow();
+        harness.setGraveyard(player2, List.of(creature));
+
+        harness.activateAbility(player1, indexOf(eater), 0, null, creature.getId(), Zone.GRAVEYARD);
+        eater.tap();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, eater);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(eater);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eater.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void sourceLeavingUntappedDoesNotExileTarget() {
+        Permanent eater = addReadyEater();
+        eater.tap();
+        Card creature = new Scarecrow();
+        harness.setGraveyard(player2, List.of(creature));
+
+        harness.activateAbility(player1, indexOf(eater), 0, null, creature.getId(), Zone.GRAVEYARD);
+        eater.untap();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, eater);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(eater);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
     private Permanent addReadyEater() {
         Permanent eater = harness.addToBattlefieldAndReturn(player1, new EaterOfTheDead());
         eater.setSummoningSick(false);

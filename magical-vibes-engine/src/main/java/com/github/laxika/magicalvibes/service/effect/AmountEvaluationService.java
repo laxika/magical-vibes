@@ -390,7 +390,7 @@ public class AmountEvaluationService {
                     s.factor() * evaluate(gameData, s.amount(), ctx);
             case SacrificedPermanentManaValue ignored ->
                     ctx.stackEntry() == null || ctx.stackEntry().getSacrificedPermanentSnapshot() == null
-                            ? 0 : Math.max(0, ctx.stackEntry().getSacrificedPermanentSnapshot().getCard().getManaValue());
+                            ? 0 : Math.max(0, gameQueryService.getPermanentManaValue(ctx.stackEntry().getSacrificedPermanentSnapshot()));
             case SacrificedPermanentPower ignored ->
                     Math.max(0, ctx.sacrificedPower());
             case SacrificedPermanentColorCount ignored ->
@@ -608,11 +608,14 @@ public class AmountEvaluationService {
                     countDevouredCreaturesOfSubtype(ctx, d.subtype());
             case CountersOnLinkedPermanent c ->
                     countCountersOnLinkedPermanent(gameData, c);
-            case CountersOnGrantingPermanent c ->
-                    // Bound to a CountersOnLinkedPermanent at activation (Archery Training); an
-                    // unbound evaluation is 0 (estimation contexts that never saw an activation).
-                    c.grantingPermanentId() == null ? 0 : countCountersOnLinkedPermanent(gameData,
-                            new CountersOnLinkedPermanent(c.counterType(), c.grantingPermanentId()));
+            case CountersOnGrantingPermanent c -> {
+                Permanent granting = c.grantingPermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, c.grantingPermanentId());
+                yield granting != null ? granting.getCounterCount(c.counterType())
+                        : ctx.stackEntry() == null ? 0 : ctx.stackEntry().getLastKnownPermanentCounters()
+                        .getOrDefault(c.grantingPermanentId(), java.util.Map.of())
+                        .getOrDefault(c.counterType(), 0);
+            }
             case ControllerLifeTotal ignored ->
                     // Null controller happens transiently while the source is still entering the
                     // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
@@ -1138,7 +1141,11 @@ public class AmountEvaluationService {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         // No legal target at resolution -> 0, matching the fizzle behaviour of the handlers this replaces.
-        return target == null ? 0 : Math.max(0, gameQueryService.getEffectivePower(gameData, target));
+        if (target != null) return Math.max(0, gameQueryService.getEffectivePower(gameData, target));
+        return ctx.stackEntry() != null && ctx.stackEntry().isNonTargeting()
+                && ctx.targetPermanentId().equals(ctx.stackEntry().getTriggeringPermanentId())
+                && ctx.triggeringPermanentPowerAtTrigger() != null
+                ? Math.max(0, ctx.triggeringPermanentPowerAtTrigger()) : 0;
     }
 
     private int targetEffectivePowerPlusToughness(GameData gameData, AmountContext ctx) {
@@ -2924,12 +2931,14 @@ public class AmountEvaluationService {
     private int opponentsControllingReturnedPermanents(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null || ctx.stackEntry() == null) return 0;
         Set<UUID> returnedPermanentIds = ctx.stackEntry().getReturnedPermanentIds();
-        if (returnedPermanentIds.isEmpty()) return 0;
+        Map<UUID, UUID> removedPermanentControllers = ctx.stackEntry().getRemovedPermanentControllers();
+        if (returnedPermanentIds.isEmpty() && removedPermanentControllers.isEmpty()) return 0;
         int qualifyingOpponents = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(ctx.controllerId())
-                    && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                    .anyMatch(permanent -> returnedPermanentIds.contains(permanent.getId()))) {
+                    && (gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                            .anyMatch(permanent -> returnedPermanentIds.contains(permanent.getId()))
+                    || removedPermanentControllers.containsValue(playerId))) {
                 qualifyingOpponents++;
             }
         }

@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisTheAdversary;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExtractTheTruth.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, Pacifism.class})
+@CardUsed({ExtractTheTruth.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class,
+        ObNixilisTheAdversary.class, Pacifism.class})
 class ExtractTheTruthTest extends BaseCardTest {
 
     @Test
@@ -60,15 +63,10 @@ class ExtractTheTruthTest extends BaseCardTest {
     @Test
     @DisplayName("Mode two makes the targeted opponent choose an enchantment to sacrifice")
     void sacrificesChosenEnchantment() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        Permanent firstEnchantment = new Permanent(new GloriousAnthem());
-        Permanent secondEnchantment = new Permanent(new GloriousAnthem());
-        gd.playerBattlefields.get(player2.getId()).addAll(List.of(creature, firstEnchantment, secondEnchantment));
-        harness.setHand(player1, List.of(new ExtractTheTruth()));
-        addMana();
-
-        harness.castSorcery(player1, 0, 1, player2.getId());
-        harness.passBothPriorities();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstEnchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent secondEnchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        castMode(1);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -96,11 +94,107 @@ class ExtractTheTruthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Mode one allows declining to discard even when an eligible card is revealed")
+    void mayDeclineDiscard() {
+        Card creature = new GrizzlyBears();
+        harness.setHand(player2, List.of(creature));
+        castMode(0);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(creature.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mode one reveals the whole hand and discards a chosen creature")
+    void revealsHandAndDiscardsCreature() {
+        Card creature = new GrizzlyBears();
+        Card land = new Forest();
+        harness.setHand(player2, List.of(creature, land));
+        castMode(0);
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("reveals their hand")
+                        && log.contains("Grizzly Bears") && log.contains("Forest"));
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(creature.getId());
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(land.getId());
+    }
+
+    @Test
+    @DisplayName("Mode one allows choosing a planeswalker and rejects a land")
+    void discardsPlaneswalkerButNotLand() {
+        Card planeswalker = new ObNixilisTheAdversary();
+        Card land = new Forest();
+        harness.setHand(player2, List.of(planeswalker, land));
+        castMode(0);
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(planeswalker.getId());
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(land.getId());
+    }
+
+    @Test
+    @DisplayName("Mode one resolves without a choice when the opponent's hand is empty")
+    void resolvesAgainstEmptyHand() {
+        harness.setHand(player2, List.of());
+        castMode(0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Extract the Truth");
+    }
+
+    @Test
+    @DisplayName("Mode two resolves without sacrificing a nonenchantment or the controller's enchantment")
+    void resolvesWhenOpponentHasNoEnchantment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        castMode(1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(enchantment);
+        harness.assertInGraveyard(player1, "Extract the Truth");
+    }
+
+    @Test
+    @DisplayName("Mode two sacrifices the only enchantment without requiring a choice")
+    void sacrificesOnlyEnchantment() {
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        castMode(1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("Mode two cannot target the spell's controller")
+    void sacrificeModeCannotTargetController() {
+        harness.setHand(player1, List.of(new ExtractTheTruth()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castMode(int mode) {
         harness.setHand(player1, List.of(new ExtractTheTruth()));
         addMana();
-        harness.castSorcery(player1, 0, mode, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, mode, player2.getId());
     }
 
     private void addMana() {

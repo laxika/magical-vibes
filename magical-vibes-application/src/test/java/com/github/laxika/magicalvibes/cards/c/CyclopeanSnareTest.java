@@ -70,7 +70,7 @@ class CyclopeanSnareTest extends BaseCardTest {
     void returnsToHandWithAlreadyTappedTarget() {
         harness.addToBattlefield(player1, new CyclopeanSnare());
         Permanent creature = addCreatureReady(player2, new BorosRecruit());
-        creature.setTapped(true);
+        creature.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());

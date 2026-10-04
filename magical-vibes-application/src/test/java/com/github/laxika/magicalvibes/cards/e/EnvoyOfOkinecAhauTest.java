@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(EnvoyOfOkinecAhau.class)
 class EnvoyOfOkinecAhauTest extends BaseCardTest {
@@ -31,5 +32,40 @@ class EnvoyOfOkinecAhauTest extends BaseCardTest {
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GNOME);
         assertThat(envoy.isTapped()).isFalse();
+    }
+
+    @Test
+    void canActivateRepeatedlyWhileTapped() {
+        Permanent envoy = harness.addToBattlefieldAndReturn(player1, new EnvoyOfOkinecAhau());
+        envoy.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GNOME);
+                    assertThat(token.isTapped()).isFalse();
+                });
+        assertThat(envoy.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutWhiteMana() {
+        harness.addToBattlefield(player1, new EnvoyOfOkinecAhau());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 }

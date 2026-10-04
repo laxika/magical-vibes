@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardFo
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "26")
+@CardRegistration(set = "KHM", collectorNumber = "339")
 public class RuneforgeChampion extends Card {
 
     public RuneforgeChampion() {

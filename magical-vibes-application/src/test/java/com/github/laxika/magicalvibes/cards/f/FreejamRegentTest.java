@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WurmsTooth;
+import com.github.laxika.magicalvibes.cards.a.AegisAutomaton;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FreejamRegent.class, Ornithopter.class, AegisAutomaton.class})
 class FreejamRegentTest extends BaseCardTest {
 
     @Test
@@ -87,11 +89,11 @@ class FreejamRegentTest extends BaseCardTest {
     @Test
     @DisplayName("Improvise taps an artifact to pay generic mana")
     void improviseTapsArtifact() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WurmsTooth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(artifact.getId()));
+        harness.castCreatureTappingPermanents(player1, 0, List.of(artifact.getId()));
 
         assertThat(artifact.isTapped()).isTrue();
         harness.passBothPriorities();
@@ -102,21 +104,112 @@ class FreejamRegentTest extends BaseCardTest {
     @Test
     @DisplayName("Improvise cannot tap a nonartifact permanent")
     void improviseRejectsNonartifact() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreejamRegent());
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        assertThatThrownBy(() -> gs.playCard(
-                gd, player1, 0, 0, null, null, List.of(), List.of(creature.getId())))
+        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(
+                player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("is not an artifact");
         assertThat(creature.isTapped()).isFalse();
     }
 
+    @Test
+    void summoningSickRegentCanActivateAbility() {
+        Permanent regent = harness.addToBattlefieldAndReturn(player1, new FreejamRegent());
+        regent.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(regent.getPowerModifier()).isEqualTo(2);
+        assertThat(regent.isTapped()).isFalse();
+    }
+
+    @Test
+    void abilityRequiresRedMana() {
+        addReadyRegent(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void fourSummoningSickArtifactsPayAllGenericMana() {
+        List<Permanent> artifacts = java.util.stream.IntStream.range(0, 4)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new Ornithopter()))
+                .toList();
+        artifacts.forEach(artifact -> artifact.setSummoningSick(true));
+        harness.setHand(player1, List.of(new FreejamRegent()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreatureTappingPermanents(player1, 0,
+                artifacts.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(artifacts).allMatch(Permanent::isTapped);
+        harness.assertOnBattlefield(player1, "Freejam Regent");
+    }
+
+    @Test
+    void improviseCannotPayRedMana() {
+        List<Permanent> artifacts = java.util.stream.IntStream.range(0, 4)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new Ornithopter()))
+                .toList();
+        harness.setHand(player1, List.of(new FreejamRegent()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(player1, 0,
+                artifacts.stream().map(Permanent::getId).toList()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void improviseRejectsTappedArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        artifact.tap();
+        harness.setHand(player1, List.of(new FreejamRegent()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(
+                player1, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void improviseRejectsOpponentsArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new FreejamRegent()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(
+                player1, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    void flyingRequiresFlyingOrReachToBlock() {
+        Permanent regent = addReadyRegent(player1);
+        Permanent groundBlocker = harness.addToBattlefieldAndReturn(player2, new AegisAutomaton());
+        Permanent flyingBlocker = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(
+                gd, groundBlocker, regent, gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(
+                gd, flyingBlocker, regent, gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
     private Permanent addReadyRegent(Player player) {
-        Permanent permanent = new Permanent(new FreejamRegent());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new FreejamRegent());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

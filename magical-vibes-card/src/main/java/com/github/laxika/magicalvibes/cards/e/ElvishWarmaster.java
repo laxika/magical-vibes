@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "167")
+@CardRegistration(set = "KHM", collectorNumber = "363")
 @CardRegistration(set = "LTC", collectorNumber = "241")
 public class ElvishWarmaster extends Card {
 

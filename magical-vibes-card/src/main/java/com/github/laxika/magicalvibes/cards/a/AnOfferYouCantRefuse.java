@@ -30,8 +30,8 @@ public class AnOfferYouCantRefuse extends Card {
                 ),
                 "Target must be a noncreature spell."
         ))
+                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
                 .addEffect(EffectSlot.SPELL,
-                        new TargetSpellControllerCreatesTokensEffect(CreateTokenEffect.ofTreasureToken(2)))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                        new TargetSpellControllerCreatesTokensEffect(CreateTokenEffect.ofTreasureToken(2)));
     }
 }

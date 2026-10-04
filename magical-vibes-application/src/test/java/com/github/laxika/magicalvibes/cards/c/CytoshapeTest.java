@@ -95,7 +95,7 @@ class CytoshapeTest extends BaseCardTest {
     void copiesOpponentsCreatureWithoutCopyingStatus() {
         Permanent target = addCreatureReady(player1, new GnatAlleyCreeper());
         Permanent chosen = addCreatureReady(player2, new MistralCharger());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.setHand(player1, List.of(new Cytoshape()));

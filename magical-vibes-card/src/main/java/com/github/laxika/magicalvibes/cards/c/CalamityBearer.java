@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromSubtypeEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "125")
+@CardRegistration(set = "KHM", collectorNumber = "356")
 public class CalamityBearer extends Card {
 
     public CalamityBearer() {

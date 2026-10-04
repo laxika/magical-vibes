@@ -55,4 +55,33 @@ class ErodedCanyonTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Entry damage waits for resolution and untapping does not trigger it again")
+    void untappingAllowsManaWithoutRepeatingEntryDamage() {
+        harness.setHand(player1, List.of(new ErodedCanyon()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.playLand(player1, 0);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
 }

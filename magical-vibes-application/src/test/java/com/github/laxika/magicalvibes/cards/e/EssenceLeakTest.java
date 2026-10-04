@@ -69,11 +69,50 @@ class EssenceLeakTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Drake-Skull Cameo");
     }
 
+    @Test
+    @DisplayName("The Aura controller's upkeep does not trigger an opponent's enchanted permanent")
+    void auraControllersUpkeepDoesNotTrigger() {
+        enchantOpponent(new LlanowarElite());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Llanowar Elite");
+    }
+
+    @Test
+    @DisplayName("Removing the Aura after upkeep begins does not remove the sacrifice trigger")
+    void removingAuraDoesNotStopPendingTrigger() {
+        enchantOpponent(new LlanowarElite());
+
+        advanceToUpkeep(player2);
+        Permanent aura = findPermanent(player1, "Essence Leak");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Llanowar Elite");
+    }
+
+    @Test
+    @DisplayName("Paying the upkeep cost actually spends the enchanted permanent controller's mana")
+    void paymentSpendsMana() {
+        enchantOpponent(new LlanowarElite());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Llanowar Elite");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
     private Permanent enchantOpponent(Card card) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player2, card);
-        Permanent aura = new Permanent(new EssenceLeak());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceLeak());
         aura.setAttachedTo(permanent.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return permanent;
     }
 }

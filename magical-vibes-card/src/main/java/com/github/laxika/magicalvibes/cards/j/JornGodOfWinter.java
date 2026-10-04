@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "179")
+@CardRegistration(set = "KHM", collectorNumber = "317")
 public class JornGodOfWinter extends Card {
 
     public JornGodOfWinter() {

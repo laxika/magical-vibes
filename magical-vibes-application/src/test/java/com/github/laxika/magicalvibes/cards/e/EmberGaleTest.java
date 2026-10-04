@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.PyreCharger;
 import com.github.laxika.magicalvibes.cards.z.ZealousGuardian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -67,13 +68,13 @@ class EmberGaleTest extends BaseCardTest {
     @Test
     @DisplayName("Target player's creatures can't block this turn")
     void creaturesCantBlock() {
-        Permanent whiteAndBlue = addCreatureReady(player2, new ZealousGuardian());
         Permanent red = addCreatureReady(player2, new PyreCharger());
+        Permanent ownRed = addCreatureReady(player1, new PyreCharger());
 
         castEmberGale();
 
-        assertThat(whiteAndBlue.isCantBlockThisTurn()).isTrue();
         assertThat(red.isCantBlockThisTurn()).isTrue();
+        assertThat(ownRed.isCantBlockThisTurn()).isFalse();
     }
 
     @Test
@@ -89,16 +90,65 @@ class EmberGaleTest extends BaseCardTest {
     @Test
     @DisplayName("Can't-block prevents declaring blockers")
     void preventsDeclaringBlockers() {
-        Permanent attacker = addCreatureReady(player1, new PyreCharger());
-        addCreatureReady(player2, new DrownerInitiate());
+        addCreatureReady(player1, new PyreCharger());
+        addCreatureReady(player2, new PyreCharger());
 
         castEmberGale();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution cannot block but are not damaged")
+    void preventsLaterCreaturesFromBlocking() {
+        addCreatureReady(player1, new PyreCharger());
+
+        castEmberGale();
+
+        harness.setHand(player2, List.of(new ZealousGuardian()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Zealous Guardian");
+        assertThat(findPermanent(player2, "Zealous Guardian").getMarkedDamage()).isZero();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The blocking restriction expires at the end of the turn")
+    void blockingRestrictionExpires() {
+        Permanent red = addCreatureReady(player2, new PyreCharger());
+
+        castEmberGale();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(red.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target the caster without affecting the opponent's creatures")
+    void canTargetCaster() {
+        addCreatureReady(player1, new ZealousGuardian());
+        Permanent ownRed = addCreatureReady(player1, new PyreCharger());
+        Permanent opposingRed = addCreatureReady(player2, new PyreCharger());
+        Permanent opposingBlue = addCreatureReady(player2, new DrownerInitiate());
+        harness.setHand(player1, List.of(new EmberGale()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertInGraveyard(player1, "Zealous Guardian");
+        assertThat(ownRed.isCantBlockThisTurn()).isTrue();
+        assertThat(opposingRed.isCantBlockThisTurn()).isFalse();
+        assertThat(opposingBlue.isCantBlockThisTurn()).isFalse();
+        assertThat(opposingBlue.getMarkedDamage()).isZero();
     }
 
     private void castEmberGale() {

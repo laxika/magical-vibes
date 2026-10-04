@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "411")
 @CardRegistration(set = "DMU", collectorNumber = "258")
 @CardRegistration(set = "DSC", collectorNumber = "306")
+@CardRegistration(set = "FIC", collectorNumber = "434")
 public class TangledIslet extends Card {
 
     public TangledIslet() {

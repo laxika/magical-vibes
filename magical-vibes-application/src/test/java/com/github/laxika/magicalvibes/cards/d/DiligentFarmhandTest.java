@@ -138,7 +138,7 @@ class DiligentFarmhandTest extends BaseCardTest {
     @DisplayName("A tapped Farmhand can activate its search ability")
     void tappedFarmhandCanActivate() {
         var farmhand = harness.addToBattlefieldAndReturn(player1, new DiligentFarmhand());
-        farmhand.setTapped(true);
+        farmhand.tap();
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

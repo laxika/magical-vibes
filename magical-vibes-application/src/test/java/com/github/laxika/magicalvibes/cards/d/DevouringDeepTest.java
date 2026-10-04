@@ -21,7 +21,7 @@ class DevouringDeepTest extends BaseCardTest {
     @DisplayName("A tapped Island still prevents blocking, even by another islandwalker")
     void tappedIslandStillPreventsBlockingByIslandwalker() {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        island.setTapped(true);
+        island.tap();
         Permanent blocker = addCreatureReady(player2, new DevouringDeep());
         Permanent attacker = addCreatureReady(player1, new DevouringDeep());
         attacker.setAttacking(true);

@@ -86,7 +86,7 @@ class ChainwhipCyclopsTest extends BaseCardTest {
     void tappedSummoningSickCyclopsCanTargetItself() {
         Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new ChainwhipCyclops());
         cyclops.setSummoningSick(true);
-        cyclops.setTapped(true);
+        cyclops.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
 

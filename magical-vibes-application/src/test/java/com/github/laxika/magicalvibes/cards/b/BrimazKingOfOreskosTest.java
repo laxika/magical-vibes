@@ -47,7 +47,7 @@ class BrimazKingOfOreskosTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new NyxbornRollicker());
         addCreatureReady(player2, new BrimazKingOfOreskos());
 
-        declareAttackersAndPrepareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
             resolveAllTriggers();
@@ -69,7 +69,7 @@ class BrimazKingOfOreskosTest extends BaseCardTest {
     void createsTokenWhenBlockedAttackerLeaves() {
         Permanent attacker = addCreatureReady(player1, new NyxbornRollicker());
         addCreatureReady(player2, new BrimazKingOfOreskos());
-        declareAttackersAndPrepareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -89,7 +89,7 @@ class BrimazKingOfOreskosTest extends BaseCardTest {
     void createsBlockingTokenWhenBrimazLeaves() {
         Permanent attacker = addCreatureReady(player1, new NyxbornRollicker());
         Permanent brimaz = addCreatureReady(player2, new BrimazKingOfOreskos());
-        declareAttackersAndPrepareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

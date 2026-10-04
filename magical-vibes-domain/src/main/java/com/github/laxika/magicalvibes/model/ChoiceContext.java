@@ -17,6 +17,13 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
+    /** Chooses the result of conflicting tapped and untapped entry replacements. */
+    record TappedEntryStateChoice(BattlefieldEntryRequest request) implements ChoiceContext {
+        public TappedEntryStateChoice {
+            request = request.deepCopy();
+        }
+    }
+
     /** Chooses between the printed creature mana cost and its morph cost for a manifested or cloaked card. */
     record TurnFaceUpCostChoice(UUID permanentId) implements ChoiceContext {}
 
@@ -1872,7 +1879,8 @@ public sealed interface ChoiceContext {
     }
 
     record RemoveChosenCountersChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                      int remainingSelections, List<CounterType> counterTypes)
+                                      int remainingSelections, List<CounterType> counterTypes,
+                                      boolean exactAmount)
             implements ChoiceContext {
 
         public static final String DONE = "Done";

@@ -77,17 +77,73 @@ class EatToExtinctionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Exiles your own creature but surveils your library")
+    void exilesOwnCreatureAndSurveilsControllersLibrary() {
+        Permanent target = addCreature(player1);
+        Card ownTopCard = new GrizzlyBears();
+        Card opponentTopCard = new Plains();
+        harness.setLibrary(player1, java.util.List.of(ownTopCard));
+        harness.setLibrary(player2, java.util.List.of(opponentTopCard));
+
+        castEatToExtinction(target);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownTopCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTopCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(opponentTopCard);
+        harness.assertInGraveyard(player1, "Eat to Extinction");
+    }
+
+    @Test
+    @DisplayName("Exiles the target even when the caster's library is empty")
+    void resolvesWithEmptyLibrary() {
+        Permanent target = addCreature(player2);
+        harness.setLibrary(player1, java.util.List.of());
+
+        castEatToExtinction(target);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Eat to Extinction");
+    }
+
+    @Test
+    @DisplayName("Does not surveil when the only target has left the battlefield")
+    void doesNotSurveilWhenTargetIsGone() {
+        Permanent target = addCreature(player2);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, java.util.List.of(topCard));
+        harness.setHand(player1, java.util.List.of(new EatToExtinction()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Eat to Extinction");
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+        return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
 
     private Permanent addPlaneswalker(Player player) {
-        Permanent planeswalker = new Permanent(new GarrukWildspeaker());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player, new GarrukWildspeaker());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         planeswalker.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(planeswalker);
         return planeswalker;
     }
 

@@ -197,7 +197,7 @@ class DementiaSliverTest extends BaseCardTest {
         List<String> firstOptions = gd.interaction
                 .activeInteraction(PendingInteraction.ColorChoice.class).options();
         harness.handleListChoice(player1, "Dementia Sliver");
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).getFirst().untap();
         harness.setHand(player2, List.of(new SidewinderSliver()));
 
         harness.activateAbility(player1, 0, null, player2.getId());

@@ -33,9 +33,12 @@ import java.util.List;
 @CardRegistration(set = "LTC", collectorNumber = "332")
 @CardRegistration(set = "AFC", collectorNumber = "262")
 @CardRegistration(set = "C20", collectorNumber = "314")
+@CardRegistration(set = "FIC", collectorNumber = "425")
 @CardRegistration(set = "EOC", collectorNumber = "182")
 @CardRegistration(set = "VOC", collectorNumber = "183")
 @CardRegistration(set = "BRC", collectorNumber = "202")
+@CardRegistration(set = "SCD", collectorNumber = "319")
+@CardRegistration(set = "BFZ", collectorNumber = "247")
 public class SmolderingMarsh extends Card {
 
     public SmolderingMarsh() {

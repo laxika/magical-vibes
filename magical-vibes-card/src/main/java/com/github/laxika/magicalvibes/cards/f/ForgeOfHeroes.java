@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "C18", collectorNumber = "58")
+@CardRegistration(set = "FIC", collectorNumber = "395")
 public class ForgeOfHeroes extends Card {
 
     public ForgeOfHeroes() {

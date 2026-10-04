@@ -48,4 +48,54 @@ class EagleOfTheGreatShelfTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(5);
     }
+
+    @Test
+    @DisplayName("Attacking without other creatures gives no boost")
+    void attackingAloneDoesNotCountItselfOrOpposingCreatures() {
+        Permanent eagle = addCreatureReady(player1, new EagleOfTheGreatShelf());
+        addCreatureReady(player2, new EagleOfTheGreatShelf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Counts creatures that arrive before the attack trigger resolves")
+    void countsCreaturesAtResolutionAndDoesNotBoostNonattackers() {
+        Permanent eagle = addCreatureReady(player1, new EagleOfTheGreatShelf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        Permanent other = addCreatureReady(player1, new EagleOfTheGreatShelf());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(5);
+
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+        assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Does not count creatures that leave before the attack trigger resolves")
+    void excludesCreaturesThatLeftBeforeResolution() {
+        Permanent eagle = addCreatureReady(player1, new EagleOfTheGreatShelf());
+        Permanent other = addCreatureReady(player1, new EagleOfTheGreatShelf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(5);
+    }
 }

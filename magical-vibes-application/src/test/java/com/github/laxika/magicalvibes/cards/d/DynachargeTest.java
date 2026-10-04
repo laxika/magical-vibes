@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Dynacharge.class, DrudgeBeetle.class})
 class DynachargeTest extends BaseCardTest {
 
     @Test
@@ -90,10 +91,81 @@ class DynachargeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void overloadCanResolveWithoutAnyCreaturesYouControl() {
+        Permanent enemy = addCreature(player2);
+        harness.setHand(player1, List.of(new Dynacharge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Dynacharge);
+        assertThat(gqs.getEffectivePower(gd, enemy)).isEqualTo(2);
+    }
+
+    @Test
+    void overloadAffectsCreaturesPresentAtResolutionButNotLaterArrivals() {
+        Permanent first = addCreature(player1);
+        harness.setHand(player1, List.of(new Dynacharge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithOverload(player1, 0);
+        Permanent beforeResolution = addCreature(player1);
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreature(player1);
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
+    }
+
+    @Test
+    void overloadBoostsWearOffAtEndOfTurn() {
+        Permanent first = addCreature(player1);
+        Permanent second = addCreature(player1);
+        harness.setHand(player1, List.of(new Dynacharge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void normalCastDoesNotBoostTargetThatChangesControllerBeforeResolution() {
+        Permanent target = addCreature(player1);
+        harness.setHand(player1, List.of(new Dynacharge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Dynacharge);
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DrudgeBeetle());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

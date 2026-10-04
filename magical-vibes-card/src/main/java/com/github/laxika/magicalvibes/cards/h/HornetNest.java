@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "PIO", collectorNumber = "180")
 @CardRegistration(set = "C21", collectorNumber = "192")
 @CardRegistration(set = "TDC", collectorNumber = "259")
+@CardRegistration(set = "SCD", collectorNumber = "189")
 public class HornetNest extends Card {
 
     public HornetNest() {

@@ -31,6 +31,34 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DuskriderFalconTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Nonflying creature cannot block Duskrider Falcon")
+    void nonflyingCreatureCannotBlock() {
+        addCreatureReady(player1, new DuskriderFalcon());
+        addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent red spell damage")
+    void redSpellDamageIsNotPrevented() {
+        Permanent falcon = addCreatureReady(player1, new DuskriderFalcon());
+        harness.setHand(player1, List.of(new Thunderbolt()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, 1, falcon.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Duskrider Falcon");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(falcon);
+    }
+
+    @Test
     @DisplayName("Black creature cannot block Duskrider Falcon")
     void blackCreatureCannotBlock() {
         Permanent attacker = addCreatureReady(player1, new DuskriderFalcon());

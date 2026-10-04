@@ -145,7 +145,7 @@ class BraveKinDuoTest extends BaseCardTest {
     @DisplayName("A tapped Duo cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         Permanent duo = addCreatureReady(player1, new BraveKinDuo());
-        duo.setTapped(true);
+        duo.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, duo.getId()))

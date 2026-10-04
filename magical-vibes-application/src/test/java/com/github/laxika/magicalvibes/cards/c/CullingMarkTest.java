@@ -88,7 +88,7 @@ class CullingMarkTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         castCullingMark(target);
-        target.setTapped(true);
+        target.tap();
 
         beginCombat(attacker);
         gs.declareBlockers(gd, player2, List.of());

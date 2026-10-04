@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -27,8 +28,9 @@ public class TitaniaVoiceOfGaea extends Card {
     public TitaniaVoiceOfGaea() {
         setBackFaceCard(new TitaniaGaeaIncarnate());
 
-        // Whenever a land card is put into your graveyard from anywhere, you gain 2 life.
-        addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, new GainLifeEffect(2));
+        // Whenever one or more land cards are put into your graveyard from anywhere, you gain 2 life.
+        addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+                new GainLifeEffect(2), TriggerMode.ONCE_PER_BATCH);
 
         // At the beginning of your upkeep, if there are four or more land cards in your graveyard
         // and you both own and control Titania and Argoth, exile them, then meld them.

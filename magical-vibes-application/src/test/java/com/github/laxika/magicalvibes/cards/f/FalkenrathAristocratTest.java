@@ -1,120 +1,101 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.h.HeadlessSkaab;
+import com.github.laxika.magicalvibes.cards.t.ThrabenHeretic;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({FalkenrathAristocrat.class, HeadlessSkaab.class, ThrabenHeretic.class})
 class FalkenrathAristocratTest extends BaseCardTest {
-
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Falkenrath Aristocrat has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        FalkenrathAristocrat card = new FalkenrathAristocrat();
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-    }
-
-    
-
-    
-
-    // ===== Sacrifice a Human: indestructible + counter =====
 
     @Test
     @DisplayName("Sacrificing a Human grants indestructible and a +1/+1 counter")
     void sacrificeHumanGivesIndestructibleAndCounter() {
         Permanent aristocrat = addCreatureReady(player1, new FalkenrathAristocrat());
-        harness.addToBattlefield(player1, createHumanToken());
+        harness.addToBattlefield(player1, new ThrabenHeretic());
 
-        // Ability 0 = sacrifice a Human; only 1 Human → auto-sacrifice
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Human Soldier");
+        harness.assertInGraveyard(player1, "Thraben Heretic");
 
         assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
-    // ===== Sacrifice a non-Human creature: indestructible, no counter =====
-
     @Test
     @DisplayName("Sacrificing a non-Human creature grants indestructible but no counter")
     void sacrificeNonHumanGivesIndestructibleNoCounter() {
         Permanent aristocrat = addCreatureReady(player1, new FalkenrathAristocrat());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new HeadlessSkaab());
 
-        // Ability 1 = sacrifice a non-Human creature; only the Bears qualifies → auto-sacrifice
         harness.activateAbility(player1, 0, 1, null, null);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, fodder.getId());
+        }
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Headless Skaab");
 
         assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    // ===== A Human cannot be fed to the no-counter ability =====
-
     @Test
-    @DisplayName("The non-Human ability cannot sacrifice a Human")
-    void nonHumanAbilityCannotSacrificeHuman() {
+    @DisplayName("The non-Human ability sacrifices the source without sacrificing the Human")
+    void nonHumanAbilityLeavesHumanAlone() {
         addCreatureReady(player1, new FalkenrathAristocrat());
-        harness.addToBattlefield(player1, createHumanToken());
+        harness.addToBattlefield(player1, new ThrabenHeretic());
 
-        // Only creature available is a Human, which ability 1 may not sacrifice
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Falkenrath Aristocrat");
+        harness.assertOnBattlefield(player1, "Thraben Heretic");
     }
 
-    // ===== Cannot sacrifice itself to the non-Human ability =====
-
     @Test
-    @DisplayName("Cannot activate the non-Human ability with no other creature to sacrifice")
-    void cannotSacrificeSelfToNonHumanAbility() {
+    @DisplayName("Can sacrifice itself with no other creatures")
+    void canSacrificeSelfToNonHumanAbility() {
         addCreatureReady(player1, new FalkenrathAristocrat());
 
-        // No sacrifice fodder other than the source itself → ability cannot be paid
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
-                .isInstanceOf(IllegalStateException.class);
-    }
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertInGraveyard(player1, "Falkenrath Aristocrat");
+        harness.passBothPriorities();
 
-    // ===== No Human available =====
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Human-sacrifice ability cannot be activated without a Human")
     void humanAbilityRequiresHuman() {
         addCreatureReady(player1, new FalkenrathAristocrat());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HeadlessSkaab());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Indestructible wears off at end of turn =====
-
     @Test
     @DisplayName("Granted indestructible is removed at end of turn")
     void indestructibleResetsAtEndOfTurn() {
         Permanent aristocrat = addCreatureReady(player1, new FalkenrathAristocrat());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new HeadlessSkaab());
 
         harness.activateAbility(player1, 0, 1, null, null);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, fodder.getId());
+        }
         harness.passBothPriorities();
         assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
 
@@ -125,16 +106,58 @@ class FalkenrathAristocratTest extends BaseCardTest {
         assertThat(aristocrat.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("The Human is sacrificed as a cost before the ability resolves")
+    void humanSacrificeIsPaidBeforeResolution() {
+        Permanent aristocrat = addCreatureReady(player1, new FalkenrathAristocrat());
+        harness.addToBattlefield(player1, new ThrabenHeretic());
 
-    private Card createHumanToken() {
-        Card card = new Card();
-        card.setName("Human Soldier");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.WHITE);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER));
-        return card;
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Thraben Heretic");
+        assertThat(aristocrat.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Each Human sacrifice adds a counter, and counters survive cleanup")
+    void repeatedHumanSacrificesGivePermanentCounters() {
+        Permanent aristocrat = addCreatureReady(player1, new FalkenrathAristocrat());
+        harness.addToBattlefield(player1, new ThrabenHeretic());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new ThrabenHeretic());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(aristocrat.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Human to pay the ability cost")
+    void cannotSacrificeOpponentsHuman() {
+        addCreatureReady(player1, new FalkenrathAristocrat());
+        harness.addToBattlefield(player2, new ThrabenHeretic());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Thraben Heretic");
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

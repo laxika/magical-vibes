@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OneOrMoreArtifactOrCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
@@ -343,26 +344,25 @@ public class DeathTriggerCollectorService {
         if (dyingPermanent == null) {
             return false;
         }
-        // Intervening-if: only fires if it had one or more +1/+1 counters on it.
-        int counters = dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
-        if (counters < 1) {
+        if (dyingPermanent.getCounters().values().stream().noneMatch(count -> count > 0)) {
             return false;
         }
 
-        CreateTokenEffect t = effect.tokenTemplate();
-        CreateTokenEffect resolved = new CreateTokenEffect(
-                t.primaryType(), t.amount(), t.tokenName(), t.power(), t.toughness(),
-                t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
-                t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
-                t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), counters,
-                t.grantedKeywordsUntilEndOfTurn(), t.supertypes());
+        List<CardEffect> resolved = new ArrayList<>();
+        resolved.add(effect.tokenTemplate());
+        dyingPermanent.getCounters().forEach((type, count) -> {
+            if (count > 0) {
+                resolved.add(new com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect(
+                        type, new com.github.laxika.magicalvibes.model.amount.Fixed(count)));
+            }
+        });
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sd.dyingCard(),
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolved))
+                resolved
         ));
         return true;
     }
@@ -2336,7 +2336,8 @@ public class DeathTriggerCollectorService {
         ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect baked =
                 new ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect(effect.lifeCost(), apg.dyingCard().getId());
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked))));
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked)),
+                null, new Permanent(match.permanent()), match.permanent().getCard().getTargetFilter()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (owned creature put into graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -2407,6 +2408,25 @@ public class DeathTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent put into a graveyard from the battlefield)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = OneOrMoreArtifactOrCreatureDeathTriggerEffect.class,
+            slot = EffectSlot.ON_ALLY_ARTIFACT_OR_CREATURE_DIES)
+    boolean handleAllyArtifactOrCreatureDeath(TriggerMatchContext match,
+            OneOrMoreArtifactOrCreatureDeathTriggerEffect effect, TriggerContext ctx) {
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.wrapped())),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (controlled artifact or creature put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

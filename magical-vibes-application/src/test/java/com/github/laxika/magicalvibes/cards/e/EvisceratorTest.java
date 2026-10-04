@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.Cessation;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.cards.m.MotherOfRunes;
 import com.github.laxika.magicalvibes.cards.r.RadiantsJudgment;
+import com.github.laxika.magicalvibes.cards.s.Snap;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Eviscerator.class, GiantCockroach.class, MotherOfRunes.class, RadiantsJudgment.class})
+@CardUsed({Eviscerator.class, GiantCockroach.class, MotherOfRunes.class, RadiantsJudgment.class,
+        Cessation.class, Snap.class})
 class EvisceratorTest extends BaseCardTest {
 
     @Test
@@ -47,11 +50,10 @@ class EvisceratorTest extends BaseCardTest {
     @Test
     @DisplayName("A white creature cannot block Eviscerator")
     void cannotBeBlockedByWhiteCreature() {
-        Permanent eviscerator = addCreatureReady(player1, new Eviscerator());
-        eviscerator.setAttacking(true);
+        addCreatureReady(player1, new Eviscerator());
         Permanent blocker = addCreatureReady(player2, new MotherOfRunes());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(
                 gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -99,6 +101,75 @@ class EvisceratorTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
+    }
+
+    @Test
+    @DisplayName("A white Aura cannot enchant Eviscerator")
+    void cannotBeTargetedByWhiteAura() {
+        Permanent eviscerator = harness.addToBattlefieldAndReturn(player1, new Eviscerator());
+        harness.setHand(player1, List.of(new Cessation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, eviscerator.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("A white creature's ability cannot target its controller's Eviscerator")
+    void cannotBeTargetedByOwnWhiteCreatureAbility() {
+        addCreatureReady(player1, new MotherOfRunes());
+        Permanent eviscerator = harness.addToBattlefieldAndReturn(player1, new Eviscerator());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, eviscerator.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("A black creature can block and damage Eviscerator")
+    void blackCreatureCanBlockAndDealDamage() {
+        Permanent eviscerator = addCreatureReady(player1, new Eviscerator());
+        addCreatureReady(player2, new GiantCockroach());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(eviscerator.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Eviscerator");
+        harness.assertInGraveyard(player2, "Giant Cockroach");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast makes the entering controller lose life")
+    void enteringWithoutBeingCastMakesEnteringControllerLoseLife() {
+        harness.enterBattlefieldAndReturn(player2, new Eviscerator());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("The life-loss trigger still resolves after Eviscerator returns to hand")
+    void lifeLossStillResolvesAfterSourceLeaves() {
+        castEviscerator();
+        harness.passBothPriorities();
+        Permanent eviscerator = findPermanent(player1, "Eviscerator");
+        harness.setHand(player1, List.of(new Snap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, eviscerator.getId());
+        harness.assertInHand(player1, "Eviscerator");
+        harness.assertNotOnBattlefield(player1, "Eviscerator");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
     }
 
     private void castEviscerator() {

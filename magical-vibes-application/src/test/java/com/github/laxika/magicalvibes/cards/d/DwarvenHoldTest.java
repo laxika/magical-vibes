@@ -164,6 +164,40 @@ class DwarvenHoldTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+    @Test
+    @DisplayName("Keeping Dwarven Hold tapped accumulates storage over successive upkeeps")
+    void successiveUpkeepsAccumulateStorage() {
+        Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+        hold.tap();
+
+        for (int expected = 1; expected <= 2; expected++) {
+            beginPlayer1UntapChoice();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.passUntil(player1, TurnStep.UPKEEP);
+            resolveAllTriggers();
+
+            assertThat(hold.isTapped()).isTrue();
+            assertThat(hold.getCounterCount(CounterType.STORAGE)).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature Dwarven Hold produces mana without using the stack")
+    void newlyControlledLandProducesManaImmediately() {
+        Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+        hold.setCounterCount(CounterType.STORAGE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "2");
+
+        assertThat(redMana()).isEqualTo(2);
+        assertThat(hold.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(hold.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void beginPlayer1UntapChoice() {
         harness.forceActivePlayer(player2);
         harness.setHand(player1, List.of());

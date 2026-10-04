@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KavuChameleon;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExoticCurse.class, Forest.class, Island.class, KavuChameleon.class, Mountain.class})
+@CardUsed({ExoticCurse.class, Forest.class, Island.class, KavuChameleon.class, Mountain.class,
+        Plains.class, Swamp.class})
 class ExoticCurseTest extends BaseCardTest {
 
     @Test
@@ -74,6 +77,43 @@ class ExoticCurseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can enchant a creature controlled by the Aura controller")
+    void canEnchantOwnCreature() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KavuChameleon());
+
+        harness.setHand(player1, List.of(new ExoticCurse()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Exotic Curse");
+    }
+
+    @Test
+    @DisplayName("All five basic land types put the enchanted creature and its Aura in the graveyard")
+    void fullDomainKillsCreatureAndPutsAuraInGraveyard() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KavuChameleon());
+
+        harness.setHand(player1, List.of(new ExoticCurse()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Kavu Chameleon");
+        harness.assertInGraveyard(player2, "Kavu Chameleon");
+        harness.assertNotOnBattlefield(player1, "Exotic Curse");
+        harness.assertInGraveyard(player1, "Exotic Curse");
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -29,7 +30,7 @@ public class AprilONeilHumanElement extends Card {
                 List.of(CreateTokenEffect.ofArtifactToken(
                         1,
                         "Mutagen",
-                        List.of(),
+                        List.of(CardSubtype.MUTAGEN),
                         List.of(new ActivatedAbility(
                                 true,
                                 "{1}",

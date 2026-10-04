@@ -103,7 +103,7 @@ class DarksteelBruteTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Brute can animate repeatedly during an opponent's turn")
     void canAnimateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent brute = harness.addToBattlefieldAndReturn(player1, new DarksteelBrute());
-        brute.setTapped(true);
+        brute.tap();
         brute.setSummoningSick(true);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);

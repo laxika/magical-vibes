@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.l.LeonardoDaVinci;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
+import com.github.laxika.magicalvibes.cards.s.SoulSummons;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArnoDorian.class, AssassinInitiate.class, LeonardoDaVinci.class, RoyalAssassin.class})
+@CardUsed({ArnoDorian.class, AssassinInitiate.class, LeonardoDaVinci.class, RoyalAssassin.class, SoulSummons.class})
 class ArnoDorianTest extends BaseCardTest {
 
     @Test
@@ -107,6 +108,27 @@ class ArnoDorianTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(arno);
     }
 
+    @Test
+    @DisplayName("Manifesting Arno does not give it disguise ward")
+    void manifestedArnoDoesNotHaveWard() {
+        addCreatureReady(player2, new RoyalAssassin());
+        harness.setHand(player1, List.of(new SoulSummons()));
+        harness.setLibrary(player1, List.of(new ArnoDorian()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, 0);
+        resolveAllTriggers();
+        Permanent arno = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(arno.isManifested()).isTrue();
+        assertThat(gqs.hasKeyword(gd, arno, Keyword.WARD)).isFalse();
+        arno.tap();
+
+        harness.activateAbility(player2, 0, null, arno.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arno);
+        harness.assertInGraveyard(player1, "Arno Dorian");
+    }
     @Test
     @DisplayName("The Assassin boost ends when Arno leaves the battlefield")
     void boostEndsWhenArnoLeaves() {

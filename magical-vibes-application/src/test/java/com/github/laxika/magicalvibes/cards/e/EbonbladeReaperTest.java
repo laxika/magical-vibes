@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,6 +56,61 @@ class EbonbladeReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("A face-down attack does not cause its controller to lose life")
+    void faceDownAttackDoesNotLoseLife() {
+        harness.setLife(player1, 21);
+        Permanent reaper = addCreatureReady(player1, new EbonbladeReaper());
+        reaper.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    @Test
+    @DisplayName("Face-down combat damage does not cause additional life loss")
+    void faceDownCombatDamageDoesNotLoseHalfLife() {
+        harness.setLife(player2, 22);
+        Permanent reaper = addCreatureReady(player1, new EbonbladeReaper());
+        reaper.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        reaper.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Attack life loss uses the controller's life total at resolution")
+    void attackLifeLossUsesLifeAtResolution() {
+        harness.setLife(player1, 21);
+        addCreatureReady(player1, new EbonbladeReaper());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        harness.setLife(player1, 14);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Combat-damage life loss uses the damaged player's life at resolution")
+    void combatDamageLifeLossUsesLifeAtResolution() {
+        harness.setLife(player2, 22);
+        Permanent reaper = addCreatureReady(player1, new EbonbladeReaper());
+        reaper.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        harness.setLife(player2, 14);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(7);
     }
 
     @Test

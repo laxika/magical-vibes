@@ -121,7 +121,7 @@ class DimirKeyruneTest extends BaseCardTest {
     @DisplayName("Repeated animation works while tapped and does not stack power or toughness")
     void tappedKeyruneCanAnimateRepeatedly() {
         Permanent keyrune = addReadyKeyrune(player1);
-        keyrune.setTapped(true);
+        keyrune.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
 

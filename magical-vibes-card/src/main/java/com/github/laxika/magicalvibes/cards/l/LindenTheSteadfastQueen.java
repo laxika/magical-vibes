@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "20")
+@CardRegistration(set = "ELD", collectorNumber = "340")
 public class LindenTheSteadfastQueen extends Card {
 
     public LindenTheSteadfastQueen() {

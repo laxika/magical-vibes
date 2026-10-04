@@ -54,7 +54,7 @@ class BloodHostTest extends BaseCardTest {
     void tappedSummoningSickHostCanActivateAndSacrificeIsPaidBeforeResolution() {
         Permanent host = harness.addToBattlefieldAndReturn(player1, new BloodHost());
         host.setSummoningSick(true);
-        host.setTapped(true);
+        host.tap();
         harness.addToBattlefield(player1, new RuneclawBear());
         harness.addMana(player1, ManaColor.BLACK, 2);
         int lifeBefore = gd.getLife(player1.getId());

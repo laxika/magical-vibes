@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "21")
+@CardRegistration(set = "ELD", collectorNumber = "276")
 public class LonesomeUnicorn extends Card {
 
     public LonesomeUnicorn() {

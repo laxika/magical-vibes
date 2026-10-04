@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.s.SarcomiteMyr;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,5 +58,30 @@ class EvenTheOddsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromHand(player1, new EvenTheOdds(), "{2}{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Cannot be cast when neither player controls a creature")
+    void cannotBeCastWithNoCreatures() {
+        assertThatThrownBy(() -> harness.castFromHand(player1, new EvenTheOdds(), "{2}{W}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Still creates Soldiers if the opponent sacrifices their last creature in response")
+    void resolvesAfterCreatureCountsBecomeEqual() {
+        addCreatureReady(player2, new SarcomiteMyr());
+        harness.setLibrary(player2, List.of(new SarcomiteMyr()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castFromHand(player1, new EvenTheOdds(), "{2}{W}");
+        harness.activateAbility(player2, 0, 1, null, null);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(3);
+        harness.assertInGraveyard(player1, "Even the Odds");
     }
 }

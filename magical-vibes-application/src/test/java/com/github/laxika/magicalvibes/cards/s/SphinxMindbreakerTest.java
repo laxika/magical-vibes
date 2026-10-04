@@ -28,6 +28,7 @@ class SphinxMindbreakerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "89")
+@CardRegistration(set = "WOE", collectorNumber = "377")
 public class FaerieDreamthief extends Card {
 
     public FaerieDreamthief() {

@@ -174,11 +174,14 @@ class AkromaAngelOfWrathTest extends BaseCardTest {
     @DisplayName("Trample deals excess damage through a blue flying blocker")
     void trampleDealsOnlyExcessDamageToPlayer() {
         addCreatureReady(player1, new AkromaAngelOfWrath());
-        addCreatureReady(player2, new AvenEnvoy());
+        Permanent envoy = addCreatureReady(player2, new AvenEnvoy());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        if (gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.CombatDamageAssignment.class) != null) {
+            harness.handleCombatDamageAssigned(player1, 0, java.util.Map.of(envoy.getId(), 2, player2.getId(), 4));
+        }
 
         harness.assertInGraveyard(player2, "Aven Envoy");
         harness.assertLife(player2, 16);

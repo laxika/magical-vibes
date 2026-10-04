@@ -122,7 +122,7 @@ class CalderaKavuTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent kavu = addReadyKavu();
         kavu.setSummoningSick(true);
-        kavu.setTapped(true);
+        kavu.tap();
         Permanent otherKavu = addReadyKavu();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

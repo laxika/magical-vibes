@@ -150,7 +150,7 @@ class CrimsonAcolyteTest extends BaseCardTest {
     void tappedSummoningSickAcolyteCanActivateRepeatedly() {
         Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new CrimsonAcolyte());
         acolyte.setSummoningSick(true);
-        acolyte.setTapped(true);
+        acolyte.tap();
         Permanent secondAcolyte = harness.addToBattlefieldAndReturn(player1, new CrimsonAcolyte());
         harness.addMana(player1, ManaColor.WHITE, 2);
 

@@ -58,6 +58,53 @@ class EarthloreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot enchant a creature you control")
+    void rejectsNonLand() {
+        Permanent creature = addCreatureReady(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new Earthlore()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The enchanted land taps when activating, before the boost resolves")
+    void paysTapCostImmediately() {
+        setupEarthloreOnLand();
+
+        harness.activateAbility(player1, 1, null, blocker.getId());
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after Earthlore leaves the battlefield")
+    void resolvesAfterAuraLeaves() {
+        setupEarthloreOnLand();
+        Permanent aura = findPermanent(player1, "Earthlore");
+
+        harness.activateAbility(player1, 1, null, blocker.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Earthlore");
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Tapping the enchanted land gives target blocking creature +1/+2")
     void boostsBlockingCreature() {
         setupEarthloreOnLand();

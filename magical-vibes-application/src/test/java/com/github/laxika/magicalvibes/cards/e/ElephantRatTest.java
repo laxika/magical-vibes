@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,17 +12,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElephantRat.class, GrizzlyBears.class})
+@CardUsed({ElephantRat.class})
 class ElephantRatTest extends BaseCardTest {
 
     @Test
     @DisplayName("Menace cannot be blocked by only one creature")
     void menaceRequiresTwoBlockers() {
         Permanent attacker = addCreatureReady(player1, new ElephantRat());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers();
+        Permanent blocker = addCreatureReady(player2, new ElephantRat());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -38,11 +35,9 @@ class ElephantRatTest extends BaseCardTest {
     @DisplayName("Menace can be blocked by two creatures")
     void menaceCanBeBlockedByTwoBlockers() {
         Permanent attacker = addCreatureReady(player1, new ElephantRat());
-        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers();
+        Permanent firstBlocker = addCreatureReady(player2, new ElephantRat());
+        Permanent secondBlocker = addCreatureReady(player2, new ElephantRat());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int firstBlockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(firstBlocker);
@@ -54,5 +49,37 @@ class ElephantRatTest extends BaseCardTest {
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace allows the defender to choose no blockers")
+    void menaceCanRemainUnblocked() {
+        addCreatureReady(player1, new ElephantRat());
+        addCreatureReady(player2, new ElephantRat());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Menace can be blocked by more than two creatures")
+    void menaceCanBeBlockedByThreeBlockers() {
+        addCreatureReady(player1, new ElephantRat());
+        Permanent firstBlocker = addCreatureReady(player2, new ElephantRat());
+        Permanent secondBlocker = addCreatureReady(player2, new ElephantRat());
+        Permanent thirdBlocker = addCreatureReady(player2, new ElephantRat());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+        assertThat(thirdBlocker.isBlocking()).isTrue();
     }
 }

@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "FDN", collectorNumber = "134")
 @CardRegistration(set = "FDN", collectorNumber = "357")
 @CardRegistration(set = "FDN", collectorNumber = "417")
+@CardRegistration(set = "SCD", collectorNumber = "6")
 public class AjaniCallerOfThePride extends Card {
 
     public AjaniCallerOfThePride() {

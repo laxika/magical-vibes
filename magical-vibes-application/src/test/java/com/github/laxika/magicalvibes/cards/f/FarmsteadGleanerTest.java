@@ -20,10 +20,7 @@ class FarmsteadGleanerTest extends BaseCardTest {
     void doesNotUntapDuringUntapStep() {
         Permanent gleaner = addTappedGleaner();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.performUntapStep(player1);
 
         assertThat(gleaner.isTapped()).isTrue();
     }
@@ -59,6 +56,54 @@ class FarmsteadGleanerTest extends BaseCardTest {
                 .hasMessageContaining("not tapped");
     }
 
+    @Test
+    void untapsAsCostBeforeCounterResolves() {
+        Permanent gleaner = addTappedGleaner();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gleaner.isTapped()).isFalse();
+        assertThat(gleaner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gleaner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotPayUntapCostWhileSummoningSick() {
+        Permanent gleaner = addTappedGleaner();
+        gleaner.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gleaner.isTapped()).isTrue();
+        assertThat(gleaner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutTwoMana() {
+        Permanent gleaner = addTappedGleaner();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gleaner.isTapped()).isTrue();
+        assertThat(gleaner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addTappedGleaner() {
         Permanent gleaner = addCreatureReady(player1, new FarmsteadGleaner());
         gleaner.tap();

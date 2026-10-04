@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "181")
+@CardRegistration(set = "ELD", collectorNumber = "374")
 public class WickedWolf extends Card {
 
     public WickedWolf() {

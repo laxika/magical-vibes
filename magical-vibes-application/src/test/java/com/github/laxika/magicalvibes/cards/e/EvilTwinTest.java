@@ -6,32 +6,78 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EvilTwin.class, GrizzlyBears.class, AirElemental.class, AmbushViper.class})
 class EvilTwinTest extends BaseCardTest {
 
-    // ===== Copying a creature =====
+    @Test
+    @DisplayName("Evil Twin dies without a creature available to copy")
+    void diesWithoutCreatureToCopy() {
+        harness.castFromHand(player1, new EvilTwin(), "{2}{U}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Evil Twin");
+        harness.assertInGraveyard(player1, "Evil Twin");
+    }
+
+    @Test
+    @DisplayName("Evil Twin can copy its controller's creature and destroy itself")
+    void canCopyOwnCreatureAndDestroyItself() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
+        harness.castFromHand(player1, new EvilTwin(), "{2}{U}{B}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+
+        Permanent twin = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard() instanceof EvilTwin)
+                .findFirst().orElseThrow();
+        twin.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(twin),
+                0, null, twin.getId());
+        assertThat(twin.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original).doesNotContain(twin);
+        harness.assertInGraveyard(player1, "Evil Twin");
+        harness.assertNotInGraveyard(player1, "Ambush Viper");
+    }
+
+    @Test
+    @DisplayName("Evil Twin's gained tap ability cannot be used while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new AmbushViper());
+        harness.castFromHand(player1, new EvilTwin(), "{2}{U}{B}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, original.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Ambush Viper");
+    }
 
     @Test
     @DisplayName("Evil Twin copies a creature and gains the destroy ability")
     void copiesCreatureAndGainsDestroyAbility() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new EvilTwin()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.castFromHand(player1, new EvilTwin(), "{2}{U}{B}");
+        harness.passBothPriorities(); // Resolve the spell and request the copy choice.
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -53,19 +99,12 @@ class EvilTwinTest extends BaseCardTest {
                 a.getDescription().contains("Destroy target creature with the same name"));
     }
 
-    // ===== Activated ability — destroy same-name creature =====
-
     @Test
     @DisplayName("Evil Twin's activated ability destroys a creature with the same name")
     void activatedAbilityDestroysSameNameCreature() {
         // Put two Grizzly Bears on the field: one for player2, and Evil Twin copying it for player1
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new EvilTwin()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EvilTwin(), "{2}{U}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -118,19 +157,12 @@ class EvilTwinTest extends BaseCardTest {
                 .anyMatch(p -> p.getOriginalCard().getName().equals("Evil Twin"));
     }
 
-    // ===== Target restriction — cannot target different-name creature =====
-
     @Test
     @DisplayName("Evil Twin's ability cannot target a creature with a different name")
     void cannotTargetDifferentNameCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new AirElemental());
-        harness.setHand(player1, List.of(new EvilTwin()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EvilTwin(), "{2}{U}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -160,25 +192,18 @@ class EvilTwinTest extends BaseCardTest {
         }
         assertThat(destroyAbilityIndex).isGreaterThanOrEqualTo(0);
 
-        // Try to target Air Elemental (different name) — should fail
+        // A different-name creature is not a legal target.
         UUID airElementalId = harness.getPermanentId(player2, "Air Elemental");
         final int abilityIdx = destroyAbilityIndex;
         assertThatThrownBy(() -> harness.activateAbility(player1, evilTwinIndex, abilityIdx, null, airElementalId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Declining to copy =====
-
     @Test
     @DisplayName("Evil Twin enters as 0/0 and dies when player declines to copy")
     void diesWhenPlayerDeclines() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new EvilTwin()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EvilTwin(), "{2}{U}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 

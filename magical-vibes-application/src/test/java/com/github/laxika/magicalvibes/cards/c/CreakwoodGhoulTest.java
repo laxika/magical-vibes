@@ -35,7 +35,7 @@ class CreakwoodGhoulTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new CreakwoodGhoul());
         ghoul.setSummoningSick(true);
-        ghoul.setTapped(true);
+        ghoul.tap();
         Card target = new FlameJab();
         harness.setGraveyard(player2, List.of(target));
         harness.addMana(player1, ManaColor.GREEN, 2);

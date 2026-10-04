@@ -161,7 +161,7 @@ class ChromaticStarTest extends BaseCardTest {
     @DisplayName("Destroying a tapped Star draws for its controller without adding mana")
     void destructionDrawsForController() {
         var star = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
-        star.setTapped(true);
+        star.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Plains(), new Plains()));
         harness.setHand(player2, List.of(new Naturalize()));
@@ -206,7 +206,7 @@ class ChromaticStarTest extends BaseCardTest {
     @DisplayName("A tapped Star cannot pay its tap cost or be sacrificed for mana")
     void cannotActivateWhileTapped() {
         var star = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
-        star.setTapped(true);
+        star.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

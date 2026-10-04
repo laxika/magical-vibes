@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
+import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GalepowderMage.class, HillcomberGiant.class})
+@CardUsed({GalepowderMage.class, HillcomberGiant.class, NamelessInversion.class})
 class GalepowderMageTest extends BaseCardTest {
 
     @Test
@@ -34,8 +36,7 @@ class GalepowderMageTest extends BaseCardTest {
     @DisplayName("Resolving the attack trigger exiles the target creature")
     void attackTriggerExilesTarget() {
         addCreatureReady(player1, new GalepowderMage());
-        harness.addToBattlefield(player2, new HillcomberGiant());
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, giant.getId());
@@ -50,8 +51,7 @@ class GalepowderMageTest extends BaseCardTest {
     @DisplayName("Exiled creature returns at the next end step under its owner's control")
     void exiledCreatureReturnsAtEndStep() {
         addCreatureReady(player1, new GalepowderMage());
-        harness.addToBattlefield(player2, new HillcomberGiant());
-        Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, giant.getId());
@@ -70,8 +70,7 @@ class GalepowderMageTest extends BaseCardTest {
     @DisplayName("Can exile another creature its own controller controls")
     void canExileOwnOtherCreature() {
         addCreatureReady(player1, new GalepowderMage());
-        harness.addToBattlefield(player1, new HillcomberGiant());
-        Permanent giant = findPermanent(player1, "Hillcomber Giant");
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, giant.getId());
@@ -99,10 +98,85 @@ class GalepowderMageTest extends BaseCardTest {
         assertThat(targetChoice.validPermanentIds()).doesNotContain(mage.getId());
     }
 
-    private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Another Galepowder Mage is a legal target")
+    void canTargetAnotherMage() {
+        Permanent attacker = addCreatureReady(player1, new GalepowderMage());
+        Permanent otherMage = harness.addToBattlefieldAndReturn(player1, new GalepowderMage());
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(otherMage.getId());
+        harness.handlePermanentChosen(player1, otherMage.getId());
         harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker).doesNotContain(otherMage);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(otherMage.getCard());
+    }
+
+    @Test
+    @DisplayName("A stolen creature returns to its owner rather than its previous controller")
+    void stolenCreatureReturnsToOwner() {
+        addCreatureReady(player1, new GalepowderMage());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
+        gd.stolenCreatures.put(giant.getId(), player2.getId());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(giant.getCard());
+        advanceToEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Hillcomber Giant");
+        Permanent returned = findPermanent(player2, "Hillcomber Giant");
+        assertThat(returned.getId()).isNotEqualTo(giant.getId());
+        assertThat(returned.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attack trigger and delayed return still work after the Mage dies")
+    void sourceLeavingDoesNotStopExileOrReturn() {
+        Permanent mage = addCreatureReady(player1, new GalepowderMage());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.setHand(player1, List.of(new NamelessInversion()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, mage.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Galepowder Mage");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(giant.getCard());
+        advanceToEndStep();
+
+        harness.assertOnBattlefield(player2, "Hillcomber Giant");
+    }
+
+    @Test
+    @DisplayName("The return uses the stack and does not happen before the end step")
+    void returnIsDelayedTriggeredAbility() {
+        addCreatureReady(player1, new GalepowderMage());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player2, "Hillcomber Giant");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Hillcomber Giant");
+    }
+
+    private void advanceToEndStep() {
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

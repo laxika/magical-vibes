@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureShari
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "241")
+@CardRegistration(set = "KHM", collectorNumber = "370")
 public class PyreOfHeroes extends Card {
 
     public PyreOfHeroes() {

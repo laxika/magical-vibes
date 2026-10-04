@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "265")
+@CardRegistration(set = "MOM", collectorNumber = "375")
 public class SwordOfOnceAndFuture extends Card {
 
     private static final CardMaxManaValuePredicate MAX_MANA_VALUE_TWO = new CardMaxManaValuePredicate(2);

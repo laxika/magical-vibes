@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.a.AdaptiveGemguard;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EatenByPiranhas.class, FountainOfYouth.class, Ornithopter.class})
+@CardUsed({EatenByPiranhas.class, FountainOfYouth.class, Ornithopter.class, AdaptiveGemguard.class})
 class EatenByPiranhasTest extends BaseCardTest {
 
     @Test
@@ -64,6 +67,62 @@ class EatenByPiranhasTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Counters still modify the Skeleton's base power and toughness")
+    void countersRemainAfterTransformation() {
+        Permanent target = addCreatureReady(player2, new AdaptiveGemguard());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castAuraOn(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLACK);
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enchanted creature cannot activate its printed ability")
+    void removesActivatedAbility() {
+        Permanent target = addCreatureReady(player1, new AdaptiveGemguard());
+        addCreatureReady(player1, new AdaptiveGemguard());
+
+        castAuraOn(target);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Permanent has no activated ability");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        Permanent target = addCreatureReady(player2, new Ornithopter());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        castAuraOn(target);
+
+        harness.assertOnBattlefield(player1, "Eaten by Piranhas");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Aura does not enter when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new EatenByPiranhas()));
+        addMana();
+        harness.castEnchantment(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Eaten by Piranhas");
+        harness.assertInGraveyard(player1, "Eaten by Piranhas");
     }
 
     private void castAuraOn(Permanent target) {

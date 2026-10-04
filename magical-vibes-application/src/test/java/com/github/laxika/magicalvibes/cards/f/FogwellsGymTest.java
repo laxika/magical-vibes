@@ -70,4 +70,69 @@ class FogwellsGymTest extends BaseCardTest {
         assertThat(land.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Can discard a land, paying costs before the draw resolves")
+    void discardsLandBeforeDrawing() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new FogwellsGym());
+        FogwellsGym discarded = new FogwellsGym();
+        FogwellsGym drawn = new FogwellsGym();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 3);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Neither ability can be activated while the land is tapped")
+    void cannotActivateTappedLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new FogwellsGym());
+        FogwellsGym card = new FogwellsGym();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 3);
+        land.setTapped(true);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Three colorless mana cannot pay the draw ability's red requirement")
+    void cannotActivateWithoutRedMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new FogwellsGym());
+        FogwellsGym card = new FogwellsGym();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
 }

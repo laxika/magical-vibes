@@ -77,6 +77,26 @@ class VanilleCheerfulLCieTest extends BaseCardTest {
     }
 
     @Test
+    void ragnarokDeathAbilityUsesOneStackEntryForBothTargets() {
+        Forest returned = new Forest();
+        harness.setGraveyard(player1, List.of(returned));
+        Permanent ragnarok = harness.addToBattlefieldAndReturn(player1, new RagnarokDivineDeliverance());
+        Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new FangFearlessLCie());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ragnarok));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, destroyed.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Fang, Fearless l'Cie");
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
     @DisplayName("On death, destroys a permanent and returns a nonlegendary permanent card")
     void deathAbilityDestroysAndReturns() {
         Forest returned = new Forest();

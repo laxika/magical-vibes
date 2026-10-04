@@ -134,7 +134,7 @@ class CropRotationTest extends BaseCardTest {
     @DisplayName("Can sacrifice a tapped land and fetched lands retain their enters-tapped ability")
     void sacrificesTappedLandAndHonorsEntryAbility() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
-        land.setTapped(true);
+        land.tap();
         harness.setLibrary(player1, List.of(new TreetopVillage()));
         harness.setHand(player1, List.of(new CropRotation()));
         harness.addMana(player1, ManaColor.GREEN, 1);

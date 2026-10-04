@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "3")
 @CardRegistration(set = "OM1", collectorNumber = "24")
@@ -15,12 +18,10 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class AuntMay extends Card {
 
     public AuntMay() {
-        // Whenever another creature you control enters, you gain 1 life.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
-
-        // If it's a Spider, put a +1/+1 counter on it.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SPIDER),
-                        new PutCountersOnEnteringCreatureEffect(1, false)));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, SequenceEffect.of(
+                new GainLifeEffect(1),
+                new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1),
+                        new PermanentHasSubtypePredicate(CardSubtype.SPIDER))));
     }
 }

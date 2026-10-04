@@ -129,7 +129,74 @@ class DwarvenBlastminerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blastminer.isFaceDown()).isFalse();
-        assertThat(gqs.getEffectivePower(gd, blastminer)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, blastminer)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent blastminer = addCreatureReady(player1, new DwarvenBlastminer());
+        blastminer.setSummoningSick(true);
+        harness.addToBattlefield(player2, new BloodstainedMire());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Bloodstained Mire");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blastminer.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Bloodstained Mire");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent blastminer = addCreatureReady(player1, new DwarvenBlastminer());
+        blastminer.setTapped(true);
+        harness.addToBattlefield(player2, new BloodstainedMire());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Bloodstained Mire");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Bloodstained Mire");
+    }
+
+    @Test
+    void cannotActivateWithoutRedMana() {
+        Permanent blastminer = addCreatureReady(player1, new DwarvenBlastminer());
+        harness.addToBattlefield(player2, new BloodstainedMire());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        UUID targetId = harness.getPermanentId(player2, "Bloodstained Mire");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blastminer.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Bloodstained Mire");
+    }
+
+    @Test
+    void faceDownCreatureGainsLandDestructionAbilityImmediatelyWhenTurnedFaceUp() {
+        Permanent blastminer = addCreatureReady(player1, new DwarvenBlastminer());
+        blastminer.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addToBattlefield(player2, new BloodstainedMire());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Bloodstained Mire");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(blastminer.isFaceDown()).isFalse();
+        assertThat(blastminer.isSummoningSick()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bloodstained Mire");
+        assertThat(blastminer.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

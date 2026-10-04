@@ -98,4 +98,45 @@ class FaithHealerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Absolute Grace");
     }
+
+    @Test
+    @DisplayName("A tapped Faith Healer can activate and gains life only on resolution")
+    void tappedHealerCanActivate() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player1, new FaithHealer());
+        healer.setTapped(true);
+        harness.addToBattlefield(player1, new DarkestHour());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Darkest Hour");
+        harness.assertLife(player1, 10);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 10);
+        assertThat(healer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain each sacrificed enchantment's mana value")
+    void repeatedActivationsKeepSeparateManaValues() {
+        harness.addToBattlefield(player1, new FaithHealer());
+        Permanent grace = harness.addToBattlefieldAndReturn(player1, new AbsoluteGrace());
+        harness.addToBattlefield(player1, new DarkestHour());
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, grace.getId());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Absolute Grace");
+        harness.assertInGraveyard(player1, "Darkest Hour");
+        harness.assertLife(player1, 10);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 11);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 13);
+    }
 }

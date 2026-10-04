@@ -60,7 +60,7 @@ class CanopySpiderTest extends BaseCardTest {
     @DisplayName("Reach does not allow a tapped Canopy Spider to block")
     void tappedSpiderCannotBlockFlyingCreature() {
         Permanent spider = addCreatureReady(player2, new CanopySpider());
-        spider.setTapped(true);
+        spider.tap();
         addCreatureReady(player1, new WindDrake());
 
         declareAttackersAndPrepareBlockers(List.of(0));

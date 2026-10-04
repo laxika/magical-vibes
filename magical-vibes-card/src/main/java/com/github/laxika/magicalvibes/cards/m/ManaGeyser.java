@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "247")
 @CardRegistration(set = "C21", collectorNumber = "176")
 @CardRegistration(set = "TDC", collectorNumber = "223")
+@CardRegistration(set = "SCD", collectorNumber = "151")
 public class ManaGeyser extends Card {
 
     public ManaGeyser() {

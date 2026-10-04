@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link ShuffleSelfFromGraveyardIntoLibraryEffect}: shuffles the source card from its
- * owner's graveyard into their library (e.g. Purity). Does nothing if the card has already left
- * the graveyard by the time the trigger resolves.
+ * owner's graveyard into their library (e.g. Purity). The owner still shuffles when the card has
+ * already left the graveyard by the time the trigger resolves.
  */
 @Slf4j
 @Component
@@ -39,19 +39,20 @@ public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Card sourceCard = entry.getCard();
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCard.getId());
-        if (ownerId == null) return;
+        if (ownerId == null) ownerId = sourceCard.getOwnerId() != null
+                ? sourceCard.getOwnerId() : entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
         if (graveyard == null) return;
 
         boolean removed = graveyard.removeIf(c -> c.getId().equals(sourceCard.getId()));
-        if (!removed) return;
-
-        gameData.playerDecks.get(ownerId).add(sourceCard);
+        if (removed) gameData.playerDecks.get(ownerId).add(sourceCard);
         LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
-        graveyardService.notifyCardsLeftGraveyard(gameData, ownerId, sourceCard);
+        if (removed) graveyardService.notifyCardsLeftGraveyard(gameData, ownerId, sourceCard);
 
         String playerName = gameData.playerIdToName.get(ownerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " shuffles ", sourceCard, " into their library."));
+        gameLogService.append(gameData, removed
+                ? GameLog.textCardText(playerName + " shuffles ", sourceCard, " into their library.")
+                : GameLog.text(playerName + " shuffles their library."));
         log.info("Game {} - {} shuffled into {}'s library", gameData.id, sourceCard.getName(), playerName);
     }
 }

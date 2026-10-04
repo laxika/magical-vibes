@@ -236,7 +236,7 @@ class BloodthroneVampireTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent vamp = harness.addToBattlefieldAndReturn(player1, new BloodthroneVampire());
         vamp.setSummoningSick(true);
-        vamp.setTapped(true);
+        vamp.tap();
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, null);

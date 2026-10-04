@@ -86,7 +86,7 @@ class DireFleetDaredevilTest extends BaseCardTest {
     @Test
     void sorceryCannotBeCastOutsideMainPhase() {
         SecretsOfTheGoldenCity spell = exileSorcery();
-        harness.forceStep(TurnStep.BEGIN_COMBAT);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "254")
+@CardRegistration(set = "KHM", collectorNumber = "292")
 public class DarkborePathway extends Card {
 
     public DarkborePathway() {

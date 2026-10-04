@@ -784,6 +784,12 @@ public class GameData {
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public UUID combatDamageExemptControllerId;
+    /** Independent turn-long source exemptions, grouped by the controller evaluating each filter. */
+    public final Map<UUID, Set<PermanentPredicate>> combatDamageExemptPredicatesByController = new ConcurrentHashMap<>();
+    /** Opponents chosen for a simultaneous attacking-token-copy event, keyed by its choice batch. */
+    public final Map<UUID, List<UUID>> pendingAttackingCopyOpponents = new ConcurrentHashMap<>();
+    /** Remaining independent opponent choices for each attacking-token-copy event. */
+    public final Map<UUID, Integer> pendingAttackingCopyChoices = new ConcurrentHashMap<>();
     public boolean allPermanentsEnterTappedThisTurn;
     /** Per-player filters for permanents that enter tapped under that player's control this turn. */
     public final Map<UUID, Set<PermanentPredicate>> permanentEnterTappedFiltersThisTurn = new ConcurrentHashMap<>();
@@ -1078,6 +1084,8 @@ public class GameData {
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Players who have begun activating an exhaust ability this turn. */
     public final Set<UUID> playersWhoActivatedExhaustAbilityThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who activated an ability of a card in a graveyard this turn. */
+    public final Set<UUID> playersWhoActivatedAbilityOfGraveyardCardThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated an equip ability this turn. */
     public final Set<UUID> playersWhoActivatedEquipAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a Power-up ability this turn. */
@@ -1434,6 +1442,9 @@ public class GameData {
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Comeuppance: prevent opponent-source damage to a player and their planeswalkers this turn. */
     public final List<ComeuppanceDamagePreventionShield> comeuppanceDamagePreventionShields =
+            Collections.synchronizedList(new ArrayList<>());
+    /** Judgment of Alexander: prevent opponent-source damage to a player and retaliate against creature sources. */
+    public final List<JudgmentOfAlexanderDamagePreventionShield> judgmentOfAlexanderDamagePreventionShields =
             Collections.synchronizedList(new ArrayList<>());
     public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
@@ -4261,6 +4272,11 @@ public class GameData {
                 .merge(sourceZone, 1, Integer::sum);
     }
 
+    /** Records that a player activated an ability of a card in a graveyard this turn. */
+    public void recordActivatedAbilityOfGraveyardCard(UUID playerId) {
+        if (playerId != null) playersWhoActivatedAbilityOfGraveyardCardThisTurn.add(playerId);
+    }
+
     public int getSpellsCastThisTurnCount(UUID playerId, Zone sourceZone) {
         if (playerId == null || sourceZone == null) return 0;
         return spellCastCountsByZoneThisTurn.getOrDefault(playerId, Map.of())
@@ -6533,6 +6549,11 @@ public class GameData {
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.preventAllDamageFromNonHumanSources = this.preventAllDamageFromNonHumanSources;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
+        this.combatDamageExemptPredicatesByController.forEach((controllerId, predicates) ->
+                copy.combatDamageExemptPredicatesByController.put(controllerId, new HashSet<>(predicates)));
+        this.pendingAttackingCopyOpponents.forEach((batchId, opponents) ->
+                copy.pendingAttackingCopyOpponents.put(batchId, new ArrayList<>(opponents)));
+        copy.pendingAttackingCopyChoices.putAll(this.pendingAttackingCopyChoices);
         copy.combatDamageExemptControllerId = this.combatDamageExemptControllerId;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         this.permanentEnterTappedFiltersThisTurn.forEach((playerId, filters) -> {
@@ -6931,6 +6952,8 @@ public class GameData {
         copy.playersDealtCombatDamageSinceTheirLastTurn.addAll(this.playersDealtCombatDamageSinceTheirLastTurn);
         copy.playersDealtCombatDamageLastTurn.addAll(this.playersDealtCombatDamageLastTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
+        copy.playersWhoActivatedAbilityOfGraveyardCardThisTurn
+                .addAll(this.playersWhoActivatedAbilityOfGraveyardCardThisTurn);
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
         copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
@@ -6992,6 +7015,7 @@ public class GameData {
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.comeuppanceDamagePreventionShields.addAll(this.comeuppanceDamagePreventionShields);
+        copy.judgmentOfAlexanderDamagePreventionShields.addAll(this.judgmentOfAlexanderDamagePreventionShields);
         copy.channelHarmShields.addAll(this.channelHarmShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);

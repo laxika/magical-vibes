@@ -9,12 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,16 +24,14 @@ import java.util.List;
 public class AyulaQueenAmongBears extends Card {
 
     public AyulaQueenAmongBears() {
-        PermanentPredicate bearPredicate = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentHasSubtypePredicate(CardSubtype.BEAR)));
+        PermanentPredicate bearPredicate = new PermanentHasSubtypePredicate(CardSubtype.BEAR);
         var targetBear = new PermanentPredicateTargetFilter(bearPredicate, "Target must be a Bear");
         var targetBearYouControl = new ControlledPermanentPredicateTargetFilter(
                 bearPredicate, "Target must be a Bear you control");
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.BEAR),
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentHasSubtypePredicate(CardSubtype.BEAR),
                         new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Put two +1/+1 counters on target Bear.",

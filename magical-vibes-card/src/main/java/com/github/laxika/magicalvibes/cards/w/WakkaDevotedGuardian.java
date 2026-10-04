@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "97")
 @CardRegistration(set = "FIC", collectorNumber = "190")
+@CardRegistration(set = "FIC", collectorNumber = "477")
 public class WakkaDevotedGuardian extends Card {
 
     public WakkaDevotedGuardian() {

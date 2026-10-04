@@ -124,6 +124,74 @@ class FungalBehemothTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void characteristicPowerAndToughnessUpdateWhileInHandAndExile() {
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new HedgeTroll());
+        ally.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        FungalBehemoth card = new FungalBehemoth();
+        harness.setHand(player1, List.of(card));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null, 2);
+        ally.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(3);
+    }
+
+    @Test
+    void normallyCastBehemothDiesWhenNoCreaturesHavePlusOneCounters() {
+        harness.setHand(player1, List.of(new FungalBehemoth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Fungal Behemoth");
+        harness.assertInGraveyard(player1, "Fungal Behemoth");
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveTimeCounters() {
+        FungalBehemoth card = suspendCard(2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HedgeTroll());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void decliningLastCounterCastStillAllowsCounterOnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HedgeTroll());
+        FungalBehemoth card = suspendCard(1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotOnBattlefield(player1, "Fungal Behemoth");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private FungalBehemoth suspendCard(int xValue) {
         FungalBehemoth card = new FungalBehemoth();
         harness.setHand(player1, List.of(card));

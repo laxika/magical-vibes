@@ -22,8 +22,7 @@ class GaeasSkyfolkTest extends BaseCardTest {
         addCreatureReady(player1, new GaeasSkyfolk());
         addCreatureReady(player2, new MournfulZombie());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -35,8 +34,20 @@ class GaeasSkyfolkTest extends BaseCardTest {
         addCreatureReady(player1, new GaeasSkyfolk());
         Permanent blocker = addCreatureReady(player2, new GaeasSkyfolk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gaea's Skyfolk can block a creature without flying")
+    void canBlockCreatureWithoutFlying() {
+        addCreatureReady(player1, new MournfulZombie());
+        Permanent blocker = addCreatureReady(player2, new GaeasSkyfolk());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

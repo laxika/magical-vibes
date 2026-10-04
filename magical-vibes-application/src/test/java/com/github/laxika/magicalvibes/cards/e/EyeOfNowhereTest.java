@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.h.HondenOfSeeingWinds;
 import com.github.laxika.magicalvibes.cards.h.HundredTalonKami;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.n.NoDachi;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EyeOfNowhere.class, HundredTalonKami.class, HondenOfSeeingWinds.class, Island.class})
+@CardUsed({EyeOfNowhere.class, HundredTalonKami.class, HondenOfSeeingWinds.class, Island.class, NoDachi.class})
 class EyeOfNowhereTest extends BaseCardTest {
 
     @Test
@@ -23,8 +24,7 @@ class EyeOfNowhereTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EyeOfNowhere()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Hundred-Talon Kami"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Hundred-Talon Kami"));
 
         harness.assertNotOnBattlefield(player2, "Hundred-Talon Kami");
         harness.assertInHand(player2, "Hundred-Talon Kami");
@@ -38,8 +38,7 @@ class EyeOfNowhereTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EyeOfNowhere()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Honden of Seeing Winds"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Honden of Seeing Winds"));
 
         harness.assertNotOnBattlefield(player2, "Honden of Seeing Winds");
         harness.assertInHand(player2, "Honden of Seeing Winds");
@@ -52,8 +51,7 @@ class EyeOfNowhereTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EyeOfNowhere()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Island"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Island"));
 
         harness.assertNotOnBattlefield(player1, "Island");
         harness.assertInHand(player1, "Island");
@@ -68,12 +66,28 @@ class EyeOfNowhereTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EyeOfNowhere()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Island"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Island"));
 
         harness.assertNotOnBattlefield(player1, "Island");
         harness.assertInHand(player2, "Island");
         harness.assertNotInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Returns target noncreature artifact without disturbing other permanents")
+    void returnsArtifactToHand() {
+        harness.addToBattlefield(player2, new NoDachi());
+        harness.addToBattlefield(player2, new HundredTalonKami());
+        harness.setHand(player1, List.of(new EyeOfNowhere()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "No-Dachi"));
+
+        harness.assertNotOnBattlefield(player2, "No-Dachi");
+        harness.assertInHand(player2, "No-Dachi");
+        harness.assertOnBattlefield(player2, "Hundred-Talon Kami");
+        harness.assertNotInHand(player2, "Hundred-Talon Kami");
+        harness.assertInGraveyard(player1, "Eye of Nowhere");
     }
 
     @Test

@@ -101,4 +101,87 @@ class EternalWitnessTest extends BaseCardTest {
                 .noneMatch(handCard -> handCard.getId().equals(card.getId()));
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("An empty graveyard produces no target or optional-return prompt")
+    void emptyGraveyardDoesNotPrompt() {
+        harness.setGraveyard(player1, List.of());
+
+        castEternalWitness();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Eternal Witness");
+    }
+
+    @Test
+    @DisplayName("Only the selected card returns when several cards are eligible")
+    void returnsOnlySelectedCard() {
+        Card artifact = new WayfarersBauble();
+        Card creature = new AuriokChampion();
+        Card opponentsCard = new WayfarersBauble();
+        harness.setGraveyard(player1, List.of(artifact, creature));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+
+        castEternalWitness();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(artifact.getId(), creature.getId());
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Auriok Champion");
+        harness.assertNotInGraveyard(player1, "Auriok Champion");
+        harness.assertInGraveyard(player1, "Wayfarer's Bauble");
+        harness.assertNotInHand(player1, "Wayfarer's Bauble");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCard);
+    }
+
+    @Test
+    @DisplayName("The return uses the entering creature's controller's graveyard and hand")
+    void secondPlayerReturnsTheirOwnCard() {
+        Card ownCard = new WayfarersBauble();
+        Card opponentsCard = new AuriokChampion();
+        harness.setGraveyard(player2, List.of(ownCard));
+        harness.setGraveyard(player1, List.of(opponentsCard));
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new EternalWitness(), "{1}{G}{G}");
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownCard.getId());
+
+        harness.handleMultipleCardsChosen(player2, List.of(ownCard.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInHand(player2, "Wayfarer's Bauble");
+        harness.assertNotInGraveyard(player2, "Wayfarer's Bauble");
+        harness.assertNotInHand(player1, "Wayfarer's Bauble");
+        harness.assertInGraveyard(player1, "Auriok Champion");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still triggers the optional return")
+    void enteringWithoutCastingReturnsCard() {
+        Card card = new WayfarersBauble();
+        harness.setGraveyard(player1, List.of(card));
+
+        harness.enterBattlefieldAndReturn(player1, new EternalWitness());
+
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Eternal Witness");
+        harness.assertInHand(player1, "Wayfarer's Bauble");
+        harness.assertNotInGraveyard(player1, "Wayfarer's Bauble");
+    }
 }

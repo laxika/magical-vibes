@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GalionElvenkingsButler.class, GrizzlyBears.class, Forest.class})
+@CardUsed({GalionElvenkingsButler.class, GrizzlyBears.class, Forest.class, GloriousAnthem.class})
 class GalionElvenkingsButlerTest extends BaseCardTest {
 
     @Test
@@ -77,5 +77,47 @@ class GalionElvenkingsButlerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The trigger reads Galion's values at resolution and does not track later changes")
+    void readsSourceValuesAtResolutionOnly() {
+        Permanent galion = addCreatureReady(player1, new GalionElvenkingsButler());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        galion.setPowerModifier(2);
+        galion.setToughnessModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+
+        galion.setPowerModifier(3);
+        galion.setToughnessModifier(2);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A departed Galion uses its last known stats including a departed static bonus")
+    void usesLastKnownStatsWhenSourceAndAnthemLeaveBeforeResolution() {
+        Permanent galion = addCreatureReady(player1, new GalionElvenkingsButler());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+
+        assertThat(gqs.getEffectivePower(gd, galion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, galion)).isEqualTo(5);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, galion);
+        harness.getPermanentRemovalService().removePermanentToHand(gd, anthem);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 }

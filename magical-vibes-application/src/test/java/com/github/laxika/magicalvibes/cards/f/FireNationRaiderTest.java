@@ -45,10 +45,44 @@ class FireNationRaiderTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Clue")).isEmpty();
     }
 
+    @Test
+    @DisplayName("The raid Clue can be sacrificed for two mana to draw a card")
+    void clueCanBeSacrificedToDraw() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+        castRaider();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new FireNationRaider()));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        var clue = findPermanents(player1, "Clue").getFirst();
+        int clueIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, clueIndex, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Clue");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+        harness.assertInHand(player1, "Fire Nation Raider");
+    }
+
+    @Test
+    @DisplayName("Raid still creates a Clue after the Raider leaves the battlefield")
+    void raidResolvesWithoutSource() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+        castRaider();
+        harness.passBothPriorities();
+        var raider = findPermanent(player1, "Fire Nation Raider");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, raider));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Fire Nation Raider");
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+    }
     private void castRaider() {
-        harness.setHand(player1, List.of(new FireNationRaider()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FireNationRaider(), "{3}{R}");
     }
 }

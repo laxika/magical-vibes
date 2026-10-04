@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "61")
+@CardRegistration(set = "KHM", collectorNumber = "344")
 public class GravenLore extends Card {
 
     public GravenLore() {

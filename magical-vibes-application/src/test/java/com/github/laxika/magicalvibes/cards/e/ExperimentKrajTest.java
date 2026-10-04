@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.p.PlaxcasterFrogling;
 import com.github.laxika.magicalvibes.cards.s.SimicRagworm;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExperimentKraj.class, SimicRagworm.class})
+@CardUsed({ExperimentKraj.class, SimicRagworm.class, PlaxcasterFrogling.class})
 class ExperimentKrajTest extends BaseCardTest {
 
     @Test
@@ -86,6 +88,102 @@ class ExperimentKrajTest extends BaseCardTest {
         addCreatureReady(player1, new ExperimentKraj());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotGainAbilityFromCreatureWithoutCounter() {
+        addCreatureReady(player1, new ExperimentKraj());
+        addCreatureReady(player2, new SimicRagworm());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotGainAbilityFromCreatureWithDifferentCounter() {
+        addCreatureReady(player1, new ExperimentKraj());
+        addCreatureReady(player2, new SimicRagworm())
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canPutCounterOnItselfAndPaysTapCost() {
+        Permanent kraj = addCreatureReady(player1, new ExperimentKraj());
+
+        harness.activateAbility(player1, 0, 0, null, kraj.getId());
+
+        assertThat(kraj.isTapped()).isTrue();
+        assertThat(kraj.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(kraj.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void gainsAbilityImmediatelyAfterItsCounterAbilityResolves() {
+        Permanent kraj = addCreatureReady(player1, new ExperimentKraj());
+        Permanent ragworm = addCreatureReady(player1, new SimicRagworm());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, ragworm.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(kraj.isTapped()).isFalse();
+        assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void activatedCopiedAbilityStillResolvesAfterCounterIsRemoved() {
+        Permanent kraj = addCreatureReady(player1, new ExperimentKraj());
+        Permanent ragworm = addCreatureReady(player2, new SimicRagworm());
+        ragworm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        kraj.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        ragworm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(kraj.isTapped()).isFalse();
+    }
+
+    @Test
+    void gainsTargetedAbilityAlongsideAnotherCreaturesAbility() {
+        Permanent kraj = addCreatureReady(player1, new ExperimentKraj());
+        kraj.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent ragworm = addCreatureReady(player2, new SimicRagworm());
+        ragworm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent frogling = addCreatureReady(player2, new PlaxcasterFrogling());
+        frogling.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        kraj.tap();
+
+        harness.activateAbility(player1, 0, 2, null, kraj.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kraj, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, frogling, Keyword.SHROUD)).isFalse();
+        assertThat(kraj.isTapped()).isFalse();
+    }
+
+    @Test
+    void copiedTargetedAbilityKeepsItsTargetRestriction() {
+        Permanent kraj = addCreatureReady(player1, new ExperimentKraj());
+        Permanent frogling = addCreatureReady(player2, new PlaxcasterFrogling());
+        frogling.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, kraj.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

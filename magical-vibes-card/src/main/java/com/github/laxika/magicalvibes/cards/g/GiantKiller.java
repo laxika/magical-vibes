@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "14")
+@CardRegistration(set = "ELD", collectorNumber = "275")
 public class GiantKiller extends Card {
 
     public GiantKiller() {

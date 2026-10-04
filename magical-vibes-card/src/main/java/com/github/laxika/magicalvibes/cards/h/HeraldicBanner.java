@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "254")
 @CardRegistration(set = "ELD", collectorNumber = "222")
+@CardRegistration(set = "SCD", collectorNumber = "267")
 public class HeraldicBanner extends Card {
 
     public HeraldicBanner() {

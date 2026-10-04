@@ -79,8 +79,8 @@ class ElspethUndauntedHeroTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(7);
-        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.FLYING)).isFalse();

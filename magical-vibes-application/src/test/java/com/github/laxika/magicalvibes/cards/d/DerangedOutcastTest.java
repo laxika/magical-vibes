@@ -85,7 +85,7 @@ class DerangedOutcastTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Outcast can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent outcast = harness.addToBattlefieldAndReturn(player1, new DerangedOutcast());
-        outcast.setTapped(true);
+        outcast.tap();
         outcast.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new DawntreaderElk());
         prepareActivation();

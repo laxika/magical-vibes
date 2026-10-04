@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MKC", collectorNumber = "292")
 @CardRegistration(set = "C19", collectorNumber = "273")
+@CardRegistration(set = "BFZ", collectorNumber = "245")
 public class ShrineOfTheForsakenGods extends Card {
 
     public ShrineOfTheForsakenGods() {

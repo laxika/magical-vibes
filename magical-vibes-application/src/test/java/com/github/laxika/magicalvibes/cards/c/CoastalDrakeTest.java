@@ -86,7 +86,7 @@ class CoastalDrakeTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent drake = addReadyDrake(player1);
-        drake.setTapped(true);
+        drake.tap();
         Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuGlider());
         addAbilityMana(player1);
 

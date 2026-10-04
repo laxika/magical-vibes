@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "35")
+@CardRegistration(set = "SCD", collectorNumber = "218")
 public class BreathOfMalfegor extends Card {
 
     public BreathOfMalfegor() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "260")
+@CardRegistration(set = "KHM", collectorNumber = "293")
 public class HengegatePathway extends Card {
 
     public HengegatePathway() {

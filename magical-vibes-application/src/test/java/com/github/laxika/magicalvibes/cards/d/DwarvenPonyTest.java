@@ -39,7 +39,6 @@ class DwarvenPonyTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, dwarf, Keyword.MOUNTAINWALK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, dwarf, Keyword.MOUNTAINWALK)).isFalse();
@@ -67,5 +66,75 @@ class DwarvenPonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, opponentDwarf, Keyword.MOUNTAINWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent pony = addPony();
+        pony.setSummoningSick(true);
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
+        addManaForAbility();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, dwarf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent pony = addPony();
+        pony.setTapped(true);
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
+        addManaForAbility();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, dwarf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the activation cost without red mana")
+    void cannotActivateWithoutRedMana() {
+        Permanent pony = addPony();
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, dwarf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pony.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if the Pony leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent pony = addPony();
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 0, null, dwarf.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(pony);
+        gd.playerGraveyards.get(player1.getId()).add(pony.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dwarf, Keyword.MOUNTAINWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability does not affect a replacement permanent when its target leaves")
+    void doesNotGrantToReplacementTarget() {
+        addPony();
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 0, null, dwarf.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(dwarf);
+        Permanent returnedDwarf = addCreatureReady(player1, dwarf.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, returnedDwarf, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

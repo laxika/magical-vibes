@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,14 +23,12 @@ class EnervateTest extends BaseCardTest {
     @Test
     @DisplayName("Taps target creature and schedules a draw at the next upkeep")
     void tapsCreatureAndSchedulesDraw() {
-        harness.addToBattlefield(player2, new BalduvianBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new Enervate()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID bearsId = harness.getPermanentId(player2, "Balduvian Bears");
-        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        Permanent bears = findPermanent(player2, "Balduvian Bears");
         assertThat(bears.isTapped()).isTrue();
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
@@ -43,28 +40,24 @@ class EnervateTest extends BaseCardTest {
     @Test
     @DisplayName("Can tap a target land")
     void tapsLand() {
-        harness.addToBattlefield(player2, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new Enervate()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID forestId = harness.getPermanentId(player2, "Forest");
-        harness.castAndResolveInstant(player1, 0, forestId);
+        harness.castAndResolveInstant(player1, 0, forest.getId());
 
-        Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Can tap a noncreature artifact")
     void tapsArtifact() {
-        harness.addToBattlefield(player2, new IcyManipulator());
+        Permanent manipulator = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
         harness.setHand(player1, List.of(new Enervate()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID manipulatorId = harness.getPermanentId(player2, "Icy Manipulator");
-        harness.castAndResolveInstant(player1, 0, manipulatorId);
+        harness.castAndResolveInstant(player1, 0, manipulator.getId());
 
-        Permanent manipulator = findPermanent(player2, "Icy Manipulator");
         assertThat(manipulator.isTapped()).isTrue();
     }
 
@@ -73,12 +66,11 @@ class EnervateTest extends BaseCardTest {
     void drawsCardAtNextUpkeep() {
         BalduvianBears drawnCard = new BalduvianBears();
         harness.setLibrary(player1, List.of(drawnCard));
-        harness.addToBattlefield(player2, new BalduvianBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new Enervate()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID bearsId = harness.getPermanentId(player2, "Balduvian Bears");
-        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
@@ -92,14 +84,57 @@ class EnervateTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
-        harness.addToBattlefield(player2, new MysticRemora());
+        Permanent remora = harness.addToBattlefieldAndReturn(player2, new MysticRemora());
         harness.setHand(player1, List.of(new Enervate()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        UUID remoraId = harness.getPermanentId(player2, "Mystic Remora");
-
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, remoraId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, remora.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact, creature, or land");
+    }
+
+    @Test
+    @DisplayName("An already tapped target still allows the delayed draw")
+    void tappedTargetStillDraws() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        bears.setTapped(true);
+        BalduvianBears drawnCard = new BalduvianBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new Enervate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("No delayed draw is created when the sole target leaves before resolution")
+    void removedTargetPreventsDelayedDraw() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        BalduvianBears drawnCard = new BalduvianBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new Enervate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, bears.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.setGraveyard(player2, List.of(bears.getCard()));
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }

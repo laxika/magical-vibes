@@ -34,8 +34,7 @@ class ExplosiveShotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ExplosiveShot()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -51,10 +50,36 @@ class ExplosiveShotTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can target a creature its caster controls")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castExplosiveShot(target);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Explosive Shot");
+    }
+
+    @Test
+    @DisplayName("Damage accumulates with earlier damage to become lethal")
+    void damageAccumulatesToBecomeLethal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+
+        castExplosiveShot(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Avatar of Might");
+
+        castExplosiveShot(target);
+
+        harness.assertNotOnBattlefield(player2, "Avatar of Might");
+        harness.assertInGraveyard(player2, "Avatar of Might");
+    }
+
     private void castExplosiveShot(Permanent target) {
         harness.setHand(player1, List.of(new ExplosiveShot()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }

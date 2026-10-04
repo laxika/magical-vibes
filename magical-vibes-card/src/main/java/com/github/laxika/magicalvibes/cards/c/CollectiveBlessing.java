@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "150")
+@CardRegistration(set = "SCD", collectorNumber = "222")
 public class CollectiveBlessing extends Card {
 
     public CollectiveBlessing() {

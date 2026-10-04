@@ -137,4 +137,49 @@ class DustBowlTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped land can be sacrificed and all costs are paid before resolution")
+    void canSacrificeTappedLand() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DustBowl());
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DustBowl());
+        sacrificedLand.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.handlePermanentChosen(player1, sacrificedLand.getId());
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Dust Bowl");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dust Bowl");
+        harness.assertOnBattlefield(player1, "Dust Bowl");
+    }
+
+    @Test
+    @DisplayName("Dust Bowl may target and sacrifice itself, leaving an illegal target")
+    void canTargetAndSacrificeItself() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DustBowl());
+        harness.addToBattlefield(player2, new DustBowl());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, source.getId());
+
+        harness.assertNotOnBattlefield(player1, "Dust Bowl");
+        harness.assertInGraveyard(player1, "Dust Bowl");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Dust Bowl");
+        harness.assertNotInGraveyard(player2, "Dust Bowl");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
 }

@@ -70,7 +70,7 @@ class BouncingBeeblesTest extends BaseCardTest {
     @Test
     void cantBeBlockedWhenDefendersArtifactIsTapped() {
         harness.addToBattlefield(player2, new GrimMonolith());
-        findPermanent(player2, "Grim Monolith").setTapped(true);
+        findPermanent(player2, "Grim Monolith").tap();
         addCreatureReady(player2, new YavimayaWurm());
         Permanent beebles = addCreatureReady(player1, new BouncingBeebles());
         beebles.setAttacking(true);

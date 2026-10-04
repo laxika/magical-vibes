@@ -92,7 +92,7 @@ class BonecallerClericTest extends BaseCardTest {
 
     @Test
     void canActivateWhileTappedAndSummoningSickInPostcombatMain() {
-        harness.addToBattlefieldAndReturn(player1, new BonecallerCleric()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new BonecallerCleric()).tap();
         BonecallerCleric target = new BonecallerCleric();
         harness.setGraveyard(player1, List.of(target));
         addManaForAbility();

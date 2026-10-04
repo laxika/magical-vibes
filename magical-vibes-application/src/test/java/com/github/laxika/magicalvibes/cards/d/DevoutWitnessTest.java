@@ -148,7 +148,7 @@ class DevoutWitnessTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent witness = addReadyWitness(player1);
-        witness.setTapped(true);
+        witness.tap();
         Permanent target = addReadyArtifact(player2);
         prepareActivation();
 

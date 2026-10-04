@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.f.FarrelitePriest;
+import com.github.laxika.magicalvibes.cards.f.FirdochCore;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElvishFarmer.class, FarrelitePriest.class, AmoeboidChangeling.class})
+@CardUsed({ElvishFarmer.class, FarrelitePriest.class, AmoeboidChangeling.class, FirdochCore.class})
 class ElvishFarmerTest extends BaseCardTest {
 
     @Test
@@ -128,6 +129,66 @@ class ElvishFarmerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The life-gain ability can sacrifice a noncreature Saproling permanent")
+    void lifeGainAbilityCanSacrificeNoncreatureSaproling() {
+        addFarmer();
+        harness.addToBattlefield(player1, new FirdochCore());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanents(player1, "Firdoch Core")).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Spore counters are paid immediately even while the farmer is tapped and summoning sick")
+    void tokenAbilityPaysCountersImmediatelyWithoutTapOrSummoningRestrictions() {
+        Permanent farmer = harness.addToBattlefieldAndReturn(player1, new ElvishFarmer());
+        farmer.setSummoningSick(true);
+        farmer.tap();
+        farmer.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(farmer.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("The farmer cannot sacrifice an opponent's Saproling")
+    void lifeGainAbilityCannotSacrificeOpponentsSaproling() {
+        addFarmer();
+        Permanent opponentFarmer = addCreatureReady(player2, new ElvishFarmer());
+        opponentFarmer.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     private Permanent addFarmer() {

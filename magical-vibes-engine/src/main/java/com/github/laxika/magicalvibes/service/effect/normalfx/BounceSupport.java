@@ -47,7 +47,11 @@ public class BounceSupport {
             return;
         }
 
-        permanentRemovalService.removePermanentToHand(gameData, toReturn);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, toReturn.getId());
+        boolean returned = permanentRemovalService.removePermanentToHand(gameData, toReturn);
+        if (returned) {
+            entry.rememberRemovedPermanentController(toReturn.getId(), controllerId);
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
@@ -63,6 +67,9 @@ public class BounceSupport {
                 boolean controlledNontoken = entry.getControllerId().equals(controllerId)
                         && !permanent.getCard().isToken();
                 boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
+                if (returned) {
+                    entry.rememberRemovedPermanentController(permanent.getId(), controllerId);
+                }
                 if (returned && controlledNontoken) {
                     returnedControlledNontokens++;
                 }

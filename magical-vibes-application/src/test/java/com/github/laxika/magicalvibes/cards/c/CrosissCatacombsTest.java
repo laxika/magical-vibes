@@ -122,7 +122,7 @@ class CrosissCatacombsTest extends BaseCardTest {
     @DisplayName("A tapped non-Lair land can pay the ETB cost")
     void returnsTappedLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
-        land.setTapped(true);
+        land.tap();
         playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);

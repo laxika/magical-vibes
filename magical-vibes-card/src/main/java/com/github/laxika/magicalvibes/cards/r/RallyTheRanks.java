@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtype
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "20")
+@CardRegistration(set = "KHM", collectorNumber = "336")
 public class RallyTheRanks extends Card {
 
     public RallyTheRanks() {

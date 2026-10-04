@@ -80,14 +80,63 @@ class FlowstoneSalamanderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Repeated activations can kill the blocker before combat damage")
+    void lethalAbilityDamageKillsBlocker() {
+        addCreatureReady(player1, new FlowstoneSalamander());
+        Permanent blocker = addCreatureReady(player2, new TrainedArmodon());
+
+        blockSalamander();
+        harness.addMana(player1, ManaColor.RED, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, 0, null, blocker.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player2, "Trained Armodon");
+        harness.assertInGraveyard(player2, "Trained Armodon");
+        harness.assertOnBattlefield(player1, "Flowstone Salamander");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature blocking a different attacker")
+    void cannotTargetBlockerOfAnotherAttacker() {
+        addCreatureReady(player1, new FlowstoneSalamander());
+        addCreatureReady(player1, new TrainedArmodon());
+        addCreatureReady(player2, new TrainedArmodon());
+        Permanent otherBlocker = addCreatureReady(player2, new TrainedArmodon());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1)
+        ));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, otherBlocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature before it has been declared as a blocker")
+    void cannotTargetBeforeBlockersAreDeclared() {
+        addCreatureReady(player1, new FlowstoneSalamander());
+        Permanent potentialBlocker = addCreatureReady(player2, new TrainedArmodon());
+
+        declareAttackers(List.of(0));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, potentialBlocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     /** Attacks with the Salamander and blocks it with player2's first creature. */
     private void blockSalamander() {
         blockSalamander(List.of(new BlockerAssignment(0, 0)));
     }
 
     private void blockSalamander(List<BlockerAssignment> blockerAssignments) {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, blockerAssignments);
     }
 }

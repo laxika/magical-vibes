@@ -90,7 +90,7 @@ class CulvertAmbusherTest extends BaseCardTest {
     void tappedTargetIsNotRequiredToBlock() {
         Permanent attacker = addCreatureReady(player1, new TopiaryPanther());
         Permanent target = addCreatureReady(player2, new TopiaryPanther());
-        target.setTapped(true);
+        target.tap();
         castFaceUp();
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());

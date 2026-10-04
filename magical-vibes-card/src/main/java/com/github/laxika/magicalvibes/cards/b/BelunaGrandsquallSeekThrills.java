@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "220")
+@CardRegistration(set = "WOE", collectorNumber = "285")
 public class BelunaGrandsquallSeekThrills extends Card {
 
     public BelunaGrandsquallSeekThrills() {

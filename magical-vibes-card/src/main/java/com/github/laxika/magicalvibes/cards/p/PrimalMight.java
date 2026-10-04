@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "M21", collectorNumber = "377")
 @CardRegistration(set = "OTP", collectorNumber = "32")
 @CardRegistration(set = "SOC", collectorNumber = "283")
+@CardRegistration(set = "SCD", collectorNumber = "204")
 public class PrimalMight extends Card {
 
     public PrimalMight() {

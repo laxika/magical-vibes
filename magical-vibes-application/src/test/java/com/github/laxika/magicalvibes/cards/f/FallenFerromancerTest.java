@@ -1,57 +1,35 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.UUID;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({FallenFerromancer.class, GrizzlyBears.class, LlanowarElves.class})
 class FallenFerromancerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has activated ability with tap, mana cost {1}{R}, and DealDamageToAnyTargetEffect")
-    void hasCorrectAbility() {
-        FallenFerromancer card = new FallenFerromancer();
+    @DisplayName("Two generic mana cannot pay the red activation cost")
+    void cannotActivateWithoutRedMana() {
+        addReadyFerromancer(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -114,9 +92,7 @@ class FallenFerromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        FallenFerromancer card = new FallenFerromancer();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
+        harness.addToBattlefield(player1, new FallenFerromancer());
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -149,14 +125,52 @@ class FallenFerromancerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Fallen Ferromancer");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("One red mana cannot pay the complete activation cost")
+    void cannotActivateWithOnlyOneRedMana() {
+        addReadyFerromancer(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability can give its controller a poison counter")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        addReadyFerromancer(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(harness.getGameData().playerPoisonCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ability retains infect when its source leaves the battlefield")
+    void retainsInfectAfterSourceLeaves() {
+        harness.setLife(player2, 20);
+        Permanent source = addReadyFerromancer(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(source);
+        harness.getGameData().playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(harness.getGameData().playerPoisonCounters.get(player2.getId())).isEqualTo(1);
     }
 
     private Permanent addReadyFerromancer(Player player) {
-        FallenFerromancer card = new FallenFerromancer();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new FallenFerromancer());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

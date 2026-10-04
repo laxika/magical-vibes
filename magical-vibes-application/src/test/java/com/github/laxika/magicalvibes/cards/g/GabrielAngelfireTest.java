@@ -115,6 +115,64 @@ class GabrielAngelfireTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, gabriel)).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Rampage 3 counts every blocker beyond the first")
+    void rampageThreeWithThreeBlockers() {
+        Permanent gabriel = addGabriel();
+        addReadyApes(player2);
+        addReadyApes(player2);
+        addReadyApes(player2);
+
+        choose("Rampage 3");
+
+        gabriel.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, gabriel)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, gabriel)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Gabriel does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent gabriel = addGabriel();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, gabriel, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing a new ability replaces the expired ability")
+    void changesAbilityAtSuccessiveUpkeeps() {
+        Permanent gabriel = addGabriel();
+        choose("First strike");
+
+        advanceToUpkeep(player2);
+        assertThat(gqs.hasKeyword(gd, gabriel, Keyword.FIRST_STRIKE)).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(gqs.hasKeyword(gd, gabriel, Keyword.FIRST_STRIKE)).isFalse();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Trample");
+        assertThat(gqs.hasKeyword(gd, gabriel, Keyword.TRAMPLE)).isTrue();
+
+        advanceToUpkeep(player2);
+        assertThat(gqs.hasKeyword(gd, gabriel, Keyword.TRAMPLE)).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(gqs.hasKeyword(gd, gabriel, Keyword.TRAMPLE)).isFalse();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Flying");
+        assertThat(gqs.hasKeyword(gd, gabriel, Keyword.FLYING)).isTrue();
+    }
+
     private Permanent addGabriel() {
         return addCreatureReady(player1, new GabrielAngelfire());
     }

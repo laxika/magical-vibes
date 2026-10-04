@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.b.Bloodbriar;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FloodedWoodlands.class, BalduvianBears.class, BalduvianBarbarians.class, Forest.class, Island.class})
+@CardUsed({FloodedWoodlands.class, BalduvianBears.class, BalduvianBarbarians.class, Forest.class, Island.class, Bloodbriar.class, SongOfTheDryads.class})
 class FloodedWoodlandsTest extends BaseCardTest {
 
     @Test
@@ -168,7 +169,6 @@ class FloodedWoodlandsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Bloodbriar.class)
     @DisplayName("Sacrificing a land for the attack cost triggers sacrifice abilities")
     void attackCostSacrificeTriggersSacrificeAbilities() {
         harness.addToBattlefield(player2, new FloodedWoodlands());
@@ -180,5 +180,61 @@ class FloodedWoodlandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flooded Woodlands also taxes its controller's green creatures")
+    void controllerGreenCreaturePaysCost() {
+        harness.addToBattlefield(player1, new FloodedWoodlands());
+        addCreatureReady(player1, new BalduvianBears());
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(player1, List.of(1));
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A mixed declaration pays only for its green attacker")
+    void mixedAttackersPayOnlyForGreenCreature() {
+        harness.addToBattlefield(player2, new FloodedWoodlands());
+        addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new BalduvianBarbarians());
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Flooded Woodlands turned into a Forest does not restrict attacks")
+    void woodlandsWithoutPrintedAbilityAllowsAttackWithoutLand() {
+        Permanent woodlands = harness.addToBattlefieldAndReturn(player2, new FloodedWoodlands());
+        Permanent song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(woodlands.getId());
+        addCreatureReady(player1, new BalduvianBears());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Flooded Woodlands turned into a Forest does not charge a land sacrifice")
+    void woodlandsWithoutPrintedAbilityDoesNotSacrificeLand() {
+        Permanent woodlands = harness.addToBattlefieldAndReturn(player2, new FloodedWoodlands());
+        Permanent song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(woodlands.getId());
+        addCreatureReady(player1, new BalduvianBears());
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 }

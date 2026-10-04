@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "242")
+@CardRegistration(set = "ELD", collectorNumber = "390")
 @CardRegistration(set = "DSC", collectorNumber = "267")
 @CardRegistration(set = "M3C", collectorNumber = "327")
 public class CastleVantress extends Card {

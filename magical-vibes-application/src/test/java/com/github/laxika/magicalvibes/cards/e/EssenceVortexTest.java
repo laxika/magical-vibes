@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.j.JeweledAmulet;
 import com.github.laxika.magicalvibes.cards.o.OathOfLimDL;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +17,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EssenceVortex.class, BalduvianBears.class, JeweledAmulet.class, OathOfLimDL.class})
+@CardUsed({EssenceVortex.class, BalduvianBears.class, JeweledAmulet.class, OathOfLimDL.class,
+        CourageousResolve.class})
 class EssenceVortexTest extends BaseCardTest {
 
     @Test
@@ -144,6 +146,72 @@ class EssenceVortexTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The caster can target their own creature and pay to save it")
+    void canPayForOwnCreature() {
+        Permanent target = addCreatureReady(player1, new BalduvianBears());
+        harness.setLife(player1, 20);
+        castVortexOn(target);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Marked damage does not reduce the toughness used for the life payment")
+    void markedDamageDoesNotReduceLifeCost() {
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        target.setMarkedDamage(1);
+        harness.setLife(player2, 20);
+        castVortexOn(target);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Paying life leaves the creature's regeneration shield intact")
+    void payingLifePreservesRegenerationShield() {
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        target.setRegenerationShield(1);
+        harness.setLife(player2, 20);
+        castVortexOn(target);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(CourageousResolve.class)
+    @DisplayName("A controller who can't lose life can't pay to save the creature")
+    void cannotLoseLifePreventsPayment() {
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        harness.setLife(player2, 5);
+        harness.setLibrary(player2, List.of(new JeweledAmulet()));
+        harness.setHand(player2, List.of(new CourageousResolve()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0);
+
+        castVortexOn(target);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        harness.assertLife(player2, 5);
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+    }
+
     private void prepareCast() {
         harness.setHand(player1, List.of(new EssenceVortex()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -152,8 +220,8 @@ class EssenceVortexTest extends BaseCardTest {
     }
 
     private void castVortexOn(Permanent target) {
-        castVortexOnStack(target);
-        harness.passBothPriorities();
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void castVortexOnStack(Permanent target) {

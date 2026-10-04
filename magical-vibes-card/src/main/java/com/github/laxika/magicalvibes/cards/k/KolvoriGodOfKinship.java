@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "181")
+@CardRegistration(set = "KHM", collectorNumber = "318")
 public class KolvoriGodOfKinship extends Card {
 
     public KolvoriGodOfKinship() {

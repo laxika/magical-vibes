@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "212")
+@CardRegistration(set = "ELD", collectorNumber = "302")
 public class OakhameRangerBringBack extends Card {
 
     public OakhameRangerBringBack() {

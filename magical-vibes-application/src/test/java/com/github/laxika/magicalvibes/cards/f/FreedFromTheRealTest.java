@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.h.HandOfHonor;
+import com.github.laxika.magicalvibes.cards.r.RendingVines;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,8 +12,47 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FreedFromTheReal.class, HandOfHonor.class})
+@CardUsed({FreedFromTheReal.class, HandOfHonor.class, RendingVines.class})
 class FreedFromTheRealTest extends BaseCardTest {
+
+    @Test
+    void tapAbilityStillResolvesAfterAuraIsDestroyed() {
+        abilityStillResolvesAfterAuraIsDestroyed(0, false, true);
+    }
+
+    @Test
+    void untapAbilityStillResolvesAfterAuraIsDestroyed() {
+        abilityStillResolvesAfterAuraIsDestroyed(1, true, false);
+    }
+
+    private void abilityStillResolvesAfterAuraIsDestroyed(int abilityIndex, boolean initiallyTapped,
+                                                         boolean expectedTapped) {
+        Permanent creature = addCreatureReady(player1, new HandOfHonor());
+        if (initiallyTapped) {
+            creature.tap();
+        }
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FreedFromTheReal());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new RendingVines(), new HandOfHonor(),
+                new HandOfHonor(), new HandOfHonor()));
+        harness.setLibrary(player2, List.of(new HandOfHonor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura),
+                abilityIndex, null, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Freed from the Real");
+        assertThat(creature.isTapped()).isEqualTo(initiallyTapped);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isEqualTo(expectedTapped);
+    }
 
     @Test
     void castsAndAttachesToTargetCreature() {

@@ -96,6 +96,60 @@ class FrostwalkBastionTest extends BaseCardTest {
         assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Combat damage creates one ability that taps and locks the creature together")
+    void combatDamageCreatesOneAbility() {
+        Permanent bastion = addReady(player1, new FrostwalkBastion());
+        addAnimationMana(player1);
+        harness.activateAbility(player1, indexOf(player1, bastion), 0, null, null);
+        harness.passBothPriorities();
+        bastion.setAttacking(true);
+        Permanent blocker = addReady(player2, new GiantSpider());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(indexOf(player1, bastion));
+        blocker.addBlockingTargetId(bastion.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(blocker.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(blocker.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(blocker.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(blocker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An animated Bastion also locks creatures it damages while blocking")
+    void blockingLocksAttackerForOnlyItsNextUntap() {
+        Permanent bastion = addReady(player2, new FrostwalkBastion());
+        addAnimationMana(player2);
+        harness.activateAbility(player2, indexOf(player2, bastion), 0, null, null);
+        harness.passBothPriorities();
+        Permanent attacker = addReady(player1, new GiantSpider());
+        attacker.setAttacking(true);
+        attacker.setTapped(true);
+        bastion.setBlocking(true);
+        bastion.addBlockingTarget(indexOf(player1, attacker));
+        bastion.addBlockingTargetId(attacker.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        resolveStack();
+
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(attacker.isTapped()).isFalse();
+    }
     private void addAnimationMana(Player player) {
         ManaPool pool = gd.playerManaPools.get(player.getId());
         pool.add(ManaColor.COLORLESS, 1);
@@ -103,9 +157,8 @@ class FrostwalkBastionTest extends BaseCardTest {
     }
 
     private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

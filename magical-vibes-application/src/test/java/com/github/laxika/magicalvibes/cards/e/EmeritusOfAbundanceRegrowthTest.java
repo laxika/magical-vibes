@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.Regrowth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EmeritusOfAbundanceRegrowth.class, Forest.class})
 class EmeritusOfAbundanceRegrowthTest extends BaseCardTest {
 
     @Test
@@ -29,7 +29,7 @@ class EmeritusOfAbundanceRegrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Casting the prepared Regrowth copy returns a graveyard card and unprepares Emeritus")
     void castingPreparedRegrowthReturnsCard() {
-        Card target = new GrizzlyBears();
+        Card target = new EmeritusOfAbundanceRegrowth();
         harness.setGraveyard(player1, List.of(target));
         Permanent emeritus = castEmeritus();
         UUID copyId = emeritus.getPreparedSpellCardId();
@@ -68,16 +68,55 @@ class EmeritusOfAbundanceRegrowthTest extends BaseCardTest {
         assertThat(emeritus.isPrepared()).isFalse();
     }
 
+    @Test
+    void entersPreparedWithoutAnEtbTrigger() {
+        harness.setHand(player1, List.of(new EmeritusOfAbundanceRegrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent emeritus = findPermanent(player1, "Emeritus of Abundance");
+        assertThat(emeritus.isPrepared()).isTrue();
+        assertThat(gd.findExiledCard(emeritus.getPreparedSpellCardId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotBecomePreparedIfLandCountDropsBeforeAttackTriggerResolves() {
+        Permanent emeritus = addCreatureReady(player1, new EmeritusOfAbundanceRegrowth());
+        addLands(8);
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent land = gd.playerBattlefields.get(player1.getId()).remove(8);
+        gd.playerHands.get(player1.getId()).add(land.getCard());
+        resolveAllTriggers();
+
+        assertThat(emeritus.isPrepared()).isFalse();
+    }
+
+    @Test
+    void preparedRegrowthCanReturnALand() {
+        Card target = new Forest();
+        harness.setGraveyard(player1, List.of(target));
+        Permanent emeritus = castEmeritus();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, emeritus.getPreparedSpellCardId(), target.getId());
+        assertThat(emeritus.isPrepared()).isFalse();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+    }
+
     private Permanent castEmeritus() {
         harness.setHand(player1, List.of(new EmeritusOfAbundanceRegrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof EmeritusOfAbundanceRegrowth)
-                .findFirst()
-                .orElseThrow();
+        resolveAllTriggers();
+        return findPermanent(player1, "Emeritus of Abundance");
     }
 
     private void addLands(int count) {

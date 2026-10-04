@@ -56,4 +56,42 @@ class EnergizerTest extends BaseCardTest {
         assertThat(energizer.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("The tap cost is paid immediately but the counter waits for resolution")
+    void counterWaitsForResolution() {
+        Permanent energizer = addCreatureReady(player1, new Energizer());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(energizer.isTapped()).isTrue();
+        assertThat(energizer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.passBothPriorities();
+
+        assertThat(energizer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Further activations after untapping accumulate counters only on the source")
+    void repeatedActivationsAccumulateOnSource() {
+        Permanent energizer = addCreatureReady(player1, new Energizer());
+        Permanent other = addCreatureReady(player1, new Energizer());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        energizer.setTapped(false);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(energizer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(energizer.getEffectivePower()).isEqualTo(4);
+        assertThat(energizer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.isTapped()).isFalse();
+    }
 }

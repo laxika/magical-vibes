@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,9 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
 
-@CardUsed({ElvishBard.class, GrizzlyBears.class, Humility.class, AesthirGlider.class})
+@CardUsed({ElvishBard.class, GrizzlyBears.class, Humility.class, AesthirGlider.class, DuelingGrounds.class})
 class ElvishBardTest extends BaseCardTest {
 
     @Test
@@ -122,13 +123,52 @@ class ElvishBardTest extends BaseCardTest {
 
     @Test
     void noBlockRequiredWhenNoCreatureCanBlock() {
-        Permanent bard = addCreatureReady(player1, new ElvishBard());
-        bard.setAttacking(true);
+        addCreatureReady(player1, new ElvishBard());
         addCreatureReady(player2, new AesthirGlider());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void blockersMaySplitBetweenTwoAttackingBards() {
+        addCreatureReady(player1, new ElvishBard());
+        addCreatureReady(player1, new ElvishBard());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void oneBlockSatisfiesTwoBardsWhenOnlyOneCreatureMayBlock() {
+        addCreatureReady(player1, new ElvishBard());
+        addCreatureReady(player1, new ElvishBard());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        // The restriction enters after attackers are declared, so both Bards remain attacking.
+        harness.addToBattlefield(player1, new DuelingGrounds());
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
     }
 }

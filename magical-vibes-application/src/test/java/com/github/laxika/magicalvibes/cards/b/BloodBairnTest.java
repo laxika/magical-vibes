@@ -137,7 +137,7 @@ class BloodBairnTest extends BaseCardTest {
     @DisplayName("Repeated activations stack while Blood Bairn is tapped and summoning sick")
     void repeatedActivationsStackWithoutTapOrHasteRequirement() {
         Permanent bairn = harness.addToBattlefieldAndReturn(player1, new BloodBairn());
-        bairn.setTapped(true);
+        bairn.tap();
         bairn.setSummoningSick(true);
         harness.addToBattlefield(player1, new RumblingBaloth());
         harness.addToBattlefield(player1, new CanyonMinotaur());

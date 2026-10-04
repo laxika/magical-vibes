@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EntropicBattlecruiser.class, Distress.class, GrizzlyBears.class})
+@CardUsed({EntropicBattlecruiser.class, Distress.class, GrizzlyBears.class, EnsoulArtifact.class})
 class EntropicBattlecruiserTest extends BaseCardTest {
 
     @Test
@@ -108,13 +109,76 @@ class EntropicBattlecruiserTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(14);
     }
 
+    @Test
+    void losingChargeCountersRemovesCreatureTypeAndKeywords() {
+        Permanent battlecruiser = harness.addToBattlefieldAndReturn(player1, new EntropicBattlecruiser());
+        battlecruiser.setCounterCount(CounterType.CHARGE, 8);
+        assertThat(gqs.isCreature(gd, battlecruiser)).isTrue();
+
+        battlecruiser.setCounterCount(CounterType.CHARGE, 7);
+
+        assertThat(gqs.isCreature(gd, battlecruiser)).isFalse();
+        assertThat(gqs.hasKeyword(gd, battlecruiser, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, battlecruiser, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void stationCanTapSummoningSickCreature() {
+        Permanent battlecruiser = harness.addToBattlefieldAndReturn(player1, new EntropicBattlecruiser());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(battlecruiser.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void discardTriggerStillResolvesAfterLastChargeCounterIsRemoved() {
+        Permanent battlecruiser = harness.addToBattlefieldAndReturn(player1, new EntropicBattlecruiser());
+        battlecruiser.setCounterCount(CounterType.CHARGE, 1);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.handleCardChosen(player1, 0);
+            battlecruiser.setCounterCount(CounterType.CHARGE, 0);
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void externallyAnimatedBattlecruiserDoesNotHaveAttackAbilityBelowEightCounters() {
+        Permanent battlecruiser = addCreatureReady(player1, new EntropicBattlecruiser());
+        battlecruiser.setCounterCount(CounterType.CHARGE, 7);
+        harness.setHand(player1, List.of(new EnsoulArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, battlecruiser.getId());
+        harness.passBothPriorities();
+        Card heldCard = new GrizzlyBears();
+        harness.setHand(player2, List.of(heldCard));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(heldCard);
+    }
+
     private void discardWithDistress() {
         Card discarded = new GrizzlyBears();
         harness.setHand(player2, List.of(discarded));
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
     }

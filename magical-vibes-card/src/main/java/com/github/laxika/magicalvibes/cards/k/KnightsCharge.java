@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOC", collectorNumber = "333")
+@CardRegistration(set = "ELD", collectorNumber = "328")
 public class KnightsCharge extends Card {
 
     public KnightsCharge() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "50")
+@CardRegistration(set = "KHM", collectorNumber = "303")
 public class CosimaGodOfTheVoyage extends Card {
 
     public CosimaGodOfTheVoyage() {

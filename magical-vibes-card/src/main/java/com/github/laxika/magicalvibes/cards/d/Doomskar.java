@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "9")
+@CardRegistration(set = "KHM", collectorNumber = "334")
 public class Doomskar extends Card {
 
     public Doomskar() {

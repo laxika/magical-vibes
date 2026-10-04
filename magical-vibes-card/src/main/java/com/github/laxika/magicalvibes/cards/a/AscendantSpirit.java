@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
@@ -18,17 +19,23 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "43")
+@CardRegistration(set = "KHM", collectorNumber = "341")
 public class AscendantSpirit extends Card {
 
     public AscendantSpirit() {
         addActivatedAbility(new ActivatedAbility(false, "{S}{S}",
-                List.of(new BecomeCreatureTypeWithBasePowerToughnessEffect(2, 3, CardSubtype.WARRIOR)),
+                List.of(new BecomeCreatureTypeWithBasePowerToughnessEffect(2, 3, CardSubtype.WARRIOR),
+                        new GrantSubtypeEffect(CardSubtype.SPIRIT, GrantScope.SELF, true),
+                        new GrantSubtypeEffect(CardSubtype.WARRIOR, GrantScope.SELF)),
                 "{S}{S}: This creature becomes a Spirit Warrior with base power and toughness 2/3."));
 
         addActivatedAbility(new ActivatedAbility(false, "{S}{S}{S}", List.of(
                 new ConditionalEffect(new SourceHasSubtype(CardSubtype.WARRIOR), SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.FLYING),
-                        new BecomeCreatureTypeWithBasePowerToughnessEffect(4, 4, CardSubtype.ANGEL)
+                        new BecomeCreatureTypeWithBasePowerToughnessEffect(4, 4, CardSubtype.ANGEL),
+                        new GrantSubtypeEffect(CardSubtype.SPIRIT, GrantScope.SELF, true),
+                        new GrantSubtypeEffect(CardSubtype.WARRIOR, GrantScope.SELF),
+                        new GrantSubtypeEffect(CardSubtype.ANGEL, GrantScope.SELF)
                 ))),
                 "{S}{S}{S}: If this creature is a Warrior, put a flying counter on it and it becomes a Spirit Warrior Angel with base power and toughness 4/4."));
 

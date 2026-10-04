@@ -1923,11 +1923,19 @@ public class PlayerInputService {
     public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
                                                  String sourceCardName, int remainingSelections,
                                                  List<CounterType> counterTypes) {
+        beginRemoveChosenCountersChoice(gameData, playerId, targetId, sourceCardName,
+                remainingSelections, counterTypes, false);
+    }
+
+    public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                String sourceCardName, int remainingSelections,
+                                                List<CounterType> counterTypes, boolean exactAmount) {
         ChoiceContext.RemoveChosenCountersChoice context = new ChoiceContext.RemoveChosenCountersChoice(
-                targetId, playerId, sourceCardName, remainingSelections, counterTypes);
+                targetId, playerId, sourceCardName, remainingSelections, counterTypes, exactAmount);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, context.options(),
-                sourceCardName + " — Choose up to " + remainingSelections + " counters to remove."));
+                sourceCardName + (exactAmount ? " — Choose " : " — Choose up to ")
+                        + remainingSelections + " counters to remove."));
         log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
     }
 
@@ -2236,6 +2244,7 @@ public class PlayerInputService {
             CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.DESERT,
             CardSubtype.CAVE, CardSubtype.GATE, CardSubtype.LOCUS,
             CardSubtype.AURA, CardSubtype.EQUIPMENT, CardSubtype.TREASURE,
+            CardSubtype.INCUBATOR, CardSubtype.MUTAGEN,
             CardSubtype.CLUE, CardSubtype.BLOOD, CardSubtype.MAP,
             CardSubtype.LANDER, CardSubtype.FOOD, CardSubtype.POWERSTONE,
             CardSubtype.TOY, CardSubtype.SHARD, CardSubtype.VEHICLE,
@@ -2521,6 +2530,7 @@ public class PlayerInputService {
         String playerName = gameData.playerIdToName.get(controllerId);
         if (creatureNames.isEmpty()) {
             log.info("Game {} - {} has no creature card in hand for Assembly Hall", gameData.id, playerName);
+            com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 
@@ -3133,4 +3143,3 @@ public class PlayerInputService {
                 next.description(), next.manaCost()));
     }
 }
-

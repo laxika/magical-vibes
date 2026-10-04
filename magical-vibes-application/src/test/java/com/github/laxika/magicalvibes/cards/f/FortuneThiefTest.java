@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.h.HavenwoodWurm;
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.cards.r.RiftBolt;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,8 +15,42 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FortuneThief.class, HavenwoodWurm.class, RiftBolt.class})
+@CardUsed({FortuneThief.class, HavenwoodWurm.class, RiftBolt.class, PlatinumAngel.class})
 class FortuneThiefTest extends BaseCardTest {
+
+    @Test
+    void damageAboveTheFloorStillReducesLifeNormally() {
+        harness.addToBattlefield(player1, new FortuneThief());
+        harness.setLife(player1, 5);
+
+        dealNoncombatDamageToPlayer();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotProtectTheOpponent() {
+        harness.addToBattlefield(player2, new FortuneThief());
+        harness.setLife(player1, 2);
+
+        dealNoncombatDamageToPlayer();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(-1);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @CardUsed(PlatinumAngel.class)
+    void damageDoesNotRaiseLifeWhenAlreadyBelowOne() {
+        harness.addToBattlefield(player1, new FortuneThief());
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        harness.setLife(player1, -2);
+
+        dealNoncombatDamageToPlayer();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(-5);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
 
     @Test
     void noncombatDamageCannotReduceLifeBelowOne() {
@@ -75,6 +110,25 @@ class FortuneThiefTest extends BaseCardTest {
     void faceDownFortuneThiefDoesNotHaveItsLifeFloorAbility() {
         castFortuneThiefFaceDown();
         harness.setLife(player1, 2);
+
+        dealNoncombatDamageToPlayer();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(-1);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void protectionEndsWhenFortuneThiefDies() {
+        harness.addToBattlefield(player1, new FortuneThief());
+        harness.setLife(player1, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new RiftBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player2, 0, findPermanent(player1, "Fortune Thief").getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
 
         dealNoncombatDamageToPlayer();
 

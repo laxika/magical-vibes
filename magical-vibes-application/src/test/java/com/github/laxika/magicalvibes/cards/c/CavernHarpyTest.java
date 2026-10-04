@@ -129,7 +129,7 @@ class CavernHarpyTest extends BaseCardTest {
     @DisplayName("Life is paid on activation and a tapped Harpy stays until resolution")
     void lifeIsPaidBeforeBounceResolves() {
         Permanent harpy = harness.addToBattlefieldAndReturn(player1, new CavernHarpy());
-        harpy.setTapped(true);
+        harpy.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

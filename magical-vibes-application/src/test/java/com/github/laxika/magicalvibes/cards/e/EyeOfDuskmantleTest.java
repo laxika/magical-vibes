@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.f.FinaleOfRevelation;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NagaOracle;
@@ -18,10 +19,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EyeOfDuskmantle.class, NagaOracle.class, Shock.class, Forest.class, GrizzlyBears.class})
+@CardUsed({EyeOfDuskmantle.class, NagaOracle.class, Shock.class, Forest.class, GrizzlyBears.class, FinaleOfRevelation.class})
 class EyeOfDuskmantleTest extends BaseCardTest {
 
-    private Card[] surveilThree(Card cardToGraveyard) {
+    private void surveilThree(Card cardToGraveyard) {
         Card top1 = new GrizzlyBears();
         Card top2 = new GrizzlyBears();
         harness.setLibrary(player1, List.of(cardToGraveyard, top1, top2));
@@ -38,7 +39,6 @@ class EyeOfDuskmantleTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1, 2)));
         harness.clearPriorityPassed();
-        return new Card[]{cardToGraveyard, top1, top2};
     }
 
     @Test
@@ -77,7 +77,126 @@ class EyeOfDuskmantleTest extends BaseCardTest {
 
         harness.playGraveyardLand(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("an X spell cast for life must use X equal to zero")
+    void cannotChooseNonzeroXWhenPayingLife() {
+        harness.addToBattlefield(player1, new EyeOfDuskmantle());
+        surveilThree(new FinaleOfRevelation());
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, 5, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Finale of Revelation");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("an X spell can be cast with X zero for its fixed mana value in life")
+    void castsXSpellWithZeroX() {
+        harness.addToBattlefield(player1, new EyeOfDuskmantle());
+        surveilThree(new FinaleOfRevelation());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castFlashback(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Finale of Revelation");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof FinaleOfRevelation);
+    }
+
+    @Test
+    @DisplayName("a resolved spell cannot be cast again without being surveilled again")
+    void cannotRecastAfterSpellReturnsToGraveyard() {
+        var eye = harness.addToBattlefieldAndReturn(player1, new EyeOfDuskmantle());
+        Shock shock = new Shock();
+        surveilThree(shock);
+        harness.castFromGraveyardTargeting(player1, 0, eye.getId());
+        harness.passBothPriorities();
+
+        int index = gd.playerGraveyards.get(player1.getId()).indexOf(shock);
+        assertThat(index).isNotNegative();
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, index, eye.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("cards surveilled before Eye enters are eligible during the same turn")
+    void castsCardSurveilledBeforeEyeEntered() {
+        surveilThree(new Shock());
+        var eye = harness.addToBattlefieldAndReturn(player1, new EyeOfDuskmantle());
+
+        harness.castFromGraveyardTargeting(player1, 0, eye.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("normal mana cannot substitute for an unaffordable life payment")
+    void cannotPayNormalManaInsteadOfLife() {
+        harness.addToBattlefield(player1, new EyeOfDuskmantle());
+        surveilThree(new GrizzlyBears());
+        harness.setLife(player1, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("permission to play a surveilled land does not grant an extra land play")
+    void cannotPlaySecondLand() {
+        harness.addToBattlefield(player1, new EyeOfDuskmantle());
+        surveilThree(new Forest());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("creature spells still require sorcery timing")
+    void cannotCastCreatureDuringCombat() {
+        harness.addToBattlefield(player1, new EyeOfDuskmantle());
+        surveilThree(new GrizzlyBears());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("a surveilled creature resolves onto the battlefield and costs its mana value in life")
+    void castsSurveilledCreature() {
+        harness.addToBattlefield(player1, new EyeOfDuskmantle());
+        surveilThree(new GrizzlyBears());
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof GrizzlyBears).hasSize(2);
     }
 }

@@ -1620,14 +1620,15 @@ public class PermanentChoiceBattlefieldHandlerService {
                         .withSourceCardId(resolvingEntry.getCard().getId())
                         .withSourceControllerId(resolvingEntry.getControllerId())));
 
-        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+        boolean returned = permanentRemovalService.removePermanentToHand(gameData, target, true);
+        if (returned) {
             permanentRemovalService.removeOrphanedAuras(gameData);
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
         }
 
-        if (resolveFollowUp && resolvingEntry != null) {
+        if (returned && resolveFollowUp && resolvingEntry != null) {
             resolvingEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex, List.of(context.thenEffect()));
         }
@@ -2475,9 +2476,12 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen creature no longer exists");
         }
 
-        // Capture effective power before removing from battlefield (static bonuses still apply;
-        // CR 510.1a clamps negative power to 0).
+        // Capture effective power before removing from battlefield so static bonuses still apply.
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
+        if (ctx.doubleDamageIfGiant()
+                && gameQueryService.hasEffectiveSubtype(gameData, toSacrifice, CardSubtype.GIANT)) {
+            power *= 2;
+        }
 
         UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
                 .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))

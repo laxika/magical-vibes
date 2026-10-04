@@ -73,7 +73,7 @@ class DonatelloGadgetMasterTest extends BaseCardTest {
         Permanent donatello = addCreatureReady(player1, new DonatelloGadgetMaster());
         donatello.setAttacking(true);
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
-        mine.setTapped(true);
+        mine.tap();
         mine.setCounterCount(CounterType.CHARGE, 2);
 
         resolveCombat();

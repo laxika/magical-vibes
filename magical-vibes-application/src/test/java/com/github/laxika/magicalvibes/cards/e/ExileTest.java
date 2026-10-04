@@ -22,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Exile.class, GrizzlyBears.class, HowlingMine.class, TundraWolves.class})
+@CardUsed({Exile.class, GrizzlyBears.class, HowlingMine.class, TundraWolves.class, VitoThornOfTheDuskRose.class})
 class ExileTest extends BaseCardTest {
 
     private void castExile(UUID targetId) {
@@ -36,10 +36,9 @@ class ExileTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, Card card) {
-        Permanent attacker = new Permanent(card);
+        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(owner.getId()).add(attacker);
         return attacker;
     }
 
@@ -141,5 +140,33 @@ class ExileTest extends BaseCardTest {
         // No life gain when the spell fizzles
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    void doesNotExileOrGainLifeIfTargetStopsAttacking() {
+        harness.setLife(player2, 10);
+        Permanent attacker = addAttacker(player1, new GrizzlyBears());
+
+        castExile(attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(harness.getGameData().exiledCards).isEmpty();
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    void usesToughnessAtResolutionRatherThanWhenCast() {
+        harness.setLife(player2, 10);
+        Permanent attacker = addAttacker(player1, new GrizzlyBears());
+
+        castExile(attacker.getId());
+        attacker.setToughnessModifier(3);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().exiledCards)
+                .anyMatch(e -> e.card().getId().equals(attacker.getCard().getId()));
+        harness.assertLife(player2, 15);
     }
 }

@@ -81,10 +81,58 @@ class FeedTheSwarmTest extends BaseCardTest {
                 .hasMessageContaining("creature or enchantment");
     }
 
-    private void cast(Permanent target) {
+    @Test
+    @DisplayName("The caster still loses life when the target regenerates")
+    void casterLosesLifeWhenTargetRegenerates() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setRegenerationShield(1);
+
+        cast(target);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("No life is lost when the target gains hexproof before resolution")
+    void noLifeLostWhenTargetGainsHexproof() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         prepareSpell();
         harness.castSorcery(player1, 0, target.getId());
+        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Feed the Swarm");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("No life is lost when the target leaves the battlefield before resolution")
+    void noLifeLostWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareSpell();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Feed the Swarm");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    private void cast(Permanent target) {
+        prepareSpell();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void prepareSpell() {

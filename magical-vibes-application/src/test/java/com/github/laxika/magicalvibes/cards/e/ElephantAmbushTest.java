@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -71,6 +72,45 @@ class ElephantAmbushTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same Elephant Ambush creates a token from hand and another via flashback")
+    void castsFromHandThenFlashesBackSameCard() {
+        ElephantAmbush ambush = new ElephantAmbush();
+        harness.castFromHand(player1, ambush, "{2}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(elephantTokens()).hasSize(1);
+        harness.assertInGraveyard(player1, "Elephant Ambush");
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(elephantTokens()).hasSize(2);
+        harness.assertNotInGraveyard(player1, "Elephant Ambush");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ambush);
+        harness.assertNotOnBattlefield(player2, "Elephant");
+    }
+
+    @Test
+    @DisplayName("Elephant Ambush can be flashed back during the opponent's end step")
+    void flashesBackAtInstantSpeed() {
+        ElephantAmbush ambush = new ElephantAmbush();
+        harness.setGraveyard(player1, List.of(ambush));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passPriority(player2);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(elephantTokens()).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Elephant");
+        harness.assertNotInGraveyard(player1, "Elephant Ambush");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ambush);
     }
 
     private List<Permanent> elephantTokens() {

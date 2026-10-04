@@ -47,6 +47,51 @@ class EzekielSimsSpiderTotemTest extends BaseCardTest {
                 .doesNotContain(ownNonSpider.getId(), opponentCreature.getId());
     }
 
+    @Test
+    @DisplayName("An opponent's Spider is not a legal target")
+    void cannotTargetOpponentSpider() {
+        Permanent ezekiel = harness.addToBattlefieldAndReturn(player1, new EzekielSimsSpiderTotem());
+        Permanent opposingSpider = harness.addToBattlefieldAndReturn(player2, new EzekielSimsSpiderTotem());
+
+        advanceToCombat(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(ezekiel.getId())
+                .doesNotContain(opposingSpider.getId());
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        Permanent ezekiel = harness.addToBattlefieldAndReturn(player1, new EzekielSimsSpiderTotem());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, ezekiel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ezekiel)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The boost lasts beyond combat and expires at end of turn")
+    void boostExpiresAtEndOfTurn() {
+        Permanent ezekiel = harness.addToBattlefieldAndReturn(player1, new EzekielSimsSpiderTotem());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, ezekiel.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, ezekiel)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ezekiel)).isEqualTo(7);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, ezekiel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ezekiel)).isEqualTo(5);
+    }
     private void advanceToCombat(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

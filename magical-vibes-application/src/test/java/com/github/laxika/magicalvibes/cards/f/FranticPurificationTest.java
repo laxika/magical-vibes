@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.u.Unhinge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -83,6 +82,56 @@ class FranticPurificationTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(purification.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(purification.getId()));
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's enchantment")
+    void destroysOwnEnchantment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Hypochondria());
+        harness.setHand(player1, List.of(new FranticPurification()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hypochondria");
+        harness.assertInGraveyard(player1, "Hypochondria");
+        harness.assertInGraveyard(player1, "Frantic Purification");
+    }
+
+    @Test
+    @DisplayName("Madness cannot be paid with colorless mana")
+    void madnessRequiresWhiteMana() {
+        harness.addToBattlefield(player2, new Hypochondria());
+        FranticPurification purification = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Hypochondria");
+        harness.assertInGraveyard(player1, "Frantic Purification");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(purification.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Madness without a legal enchantment target puts the card in the graveyard")
+    void madnessWithoutLegalTarget() {
+        harness.addToBattlefield(player2, new BaskingRootwalla());
+        FranticPurification purification = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Basking Rootwalla");
+        harness.assertInGraveyard(player1, "Frantic Purification");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(purification.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     private FranticPurification discardViaUnhinge() {

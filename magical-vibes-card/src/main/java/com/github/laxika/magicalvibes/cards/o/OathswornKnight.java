@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "98")
+@CardRegistration(set = "ELD", collectorNumber = "354")
 public class OathswornKnight extends Card {
 
     public OathswornKnight() {

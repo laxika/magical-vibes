@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -73,6 +74,54 @@ class ForceOfNatureTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("The controller may decline even with enough green mana")
+    void canDeclineWithEnoughMana() {
+        harness.addToBattlefield(player1, new ForceOfNature());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
+
+        harness.assertLife(player1, 12);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Force of Nature");
+    }
+
+    @Test
+    @DisplayName("Other colors cannot replace the fourth green mana and failed payment spends nothing")
+    void wrongColorCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new ForceOfNature());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        harness.assertLife(player1, 12);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Force of Nature controlled by the second player damages only that player")
+    void secondPlayerControlsUpkeepTrigger() {
+        harness.addToBattlefield(player2, new ForceOfNature());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 12);
     }
 
     @Test

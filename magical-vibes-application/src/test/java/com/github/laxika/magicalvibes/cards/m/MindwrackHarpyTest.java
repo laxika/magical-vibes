@@ -42,7 +42,9 @@ class MindwrackHarpyTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
     }
 }

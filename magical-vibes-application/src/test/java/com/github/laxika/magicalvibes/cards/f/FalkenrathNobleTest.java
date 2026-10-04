@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FalkenrathNoble.class, GrizzlyBears.class, Shock.class})
 class FalkenrathNobleTest extends BaseCardTest {
 
-    // ===== ON_DEATH: Falkenrath Noble itself dies =====
 
     @Test
     @DisplayName("When Falkenrath Noble dies, target player loses 1 life and controller gains 1 life")
@@ -31,8 +33,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID nobleId = harness.getPermanentId(player1, "Falkenrath Noble");
-        harness.castInstant(player2, 0, nobleId);
-        harness.passBothPriorities(); // Resolve Shock → Noble dies → death trigger
+        harness.castAndResolveInstant(player2, 0, nobleId);
 
         // Player1 is prompted to choose a target player
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -46,7 +47,6 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.assertLife(player1, 21);
     }
 
-    // ===== ON_ANY_CREATURE_DIES: another creature dies =====
 
     @Test
     @DisplayName("When an ally creature dies, target player loses 1 life and controller gains 1 life")
@@ -62,8 +62,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
+        harness.castAndResolveInstant(player2, 0, bearsId);
 
         // Player1 is prompted to choose a target player
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -90,8 +89,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         // Player1 is prompted to choose a target player
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -118,8 +116,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         // Choose self as target
         harness.handlePermanentChosen(player1, player1.getId());
@@ -131,7 +128,49 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @CardUsed({BlasphemousAct.class})
+    @DisplayName("Each Noble sees both deaths when two Nobles die simultaneously")
+    void simultaneousDeathsTriggerEachNobleForEachCreature() {
+        harness.addToBattlefield(player1, new FalkenrathNoble());
+        harness.addToBattlefield(player1, new FalkenrathNoble());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new BlasphemousAct(), "{8}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Falkenrath Noble");
+        for (int i = 0; i < 4; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        assertThat(gd.stack).hasSize(4);
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent-controlled Noble gains life for its own controller")
+    void opponentControlledNobleDrainsForOpponent() {
+        harness.addToBattlefield(player2, new FalkenrathNoble());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Falkenrath Noble"));
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 21);
+    }
 
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);

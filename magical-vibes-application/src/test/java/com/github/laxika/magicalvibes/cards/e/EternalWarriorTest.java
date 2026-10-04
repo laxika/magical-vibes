@@ -91,6 +91,39 @@ class EternalWarriorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enchanted attacker stays untapped while an unenchanted attacker taps")
+    void vigilancePreventsTappingDuringAttack() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EternalWarrior()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThat(enchanted.isAttacking()).isTrue();
+        assertThat(enchanted.isTapped()).isFalse();
+        assertThat(other.isAttacking()).isTrue();
+        assertThat(other.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granting vigilance does not untap an already tapped creature")
+    void grantingVigilanceDoesNotUntapCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of(new EternalWarrior()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Eternal Warrior")
     void cannotTargetNonCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());

@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EnvironmentalScientist.class, Forest.class, Island.class, Plains.class, GrizzlyBears.class})
 class EnvironmentalScientistTest extends BaseCardTest {
 
     @Test
@@ -38,10 +40,78 @@ class EnvironmentalScientistTest extends BaseCardTest {
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
         assertThat(search.params().canFailToFind()).isTrue();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card ->
                 card.getName().equals("Forest") || card.getName().equals("Island"));
+    }
+
+    @Test
+    @DisplayName("A restricted search may find no card even when a basic land is available")
+    void canFailToFindAvailableBasicLand() {
+        setLibrary(new Forest(), new EnvironmentalScientist());
+        castEnvironmentalScientist();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
+    }
+
+    @Test
+    @DisplayName("Accepting a search with no basic lands still shuffles")
+    void noBasicLandsStillShuffles() {
+        setLibrary(new EnvironmentalScientist());
+        castEnvironmentalScientist();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
+    }
+
+    @Test
+    @DisplayName("Accepting a search of an empty library completes normally")
+    void emptyLibrarySearchCompletes() {
+        setLibrary();
+        castEnvironmentalScientist();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The found land is revealed and only the controller's library is searched")
+    void revealsFoundLandAndLeavesOpponentLibraryAlone() {
+        Forest forest = new Forest();
+        Island island = new Island();
+        setLibrary(forest, new EnvironmentalScientist());
+        harness.setLibrary(player2, List.of(island));
+        castEnvironmentalScientist();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1).doesNotContain(forest);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(island);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals Forest"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
     }
 
     @Test
@@ -67,8 +137,6 @@ class EnvironmentalScientistTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }

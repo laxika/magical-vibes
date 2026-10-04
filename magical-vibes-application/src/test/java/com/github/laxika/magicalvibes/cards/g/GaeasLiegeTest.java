@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,10 +14,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GaeasLiege.class, Forest.class, Plains.class, GrizzlyBears.class})
+@CardUsed({GaeasLiege.class, Forest.class, Plains.class, GrizzlyBears.class,
+        EvilPresence.class, SwordsToPlowshares.class})
 class GaeasLiegeTest extends BaseCardTest {
 
     @Test
@@ -111,6 +116,108 @@ class GaeasLiegeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("A resolved conversion overrides an earlier Evil Presence even if Liege entered first")
+    void conversionUsesResolutionTimestamp() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent liege = harness.enterBattlefieldAndReturn(player1, new GaeasLiege());
+        liege.setSummoningSick(false);
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new EvilPresence()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, plains.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.SWAMP);
+
+        harness.activateAbility(player1, 1, null, plains.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.FOREST);
+        assertThat(gqs.getEffectivePower(gd, liege)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, liege)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Liege's characteristic-defining ability counts its owner's Forests in the graveyard")
+    void forestCountAppliesInGraveyard() {
+        GaeasLiege liege = new GaeasLiege();
+        harness.setGraveyard(player1, List.of(liege));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, liege)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, liege)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing Liege in response prevents the conversion from starting")
+    void sourceLeavesBeforeAbilityResolves() {
+        Permanent liege = addCreatureReady(player1, new GaeasLiege());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, plains.getId());
+        harness.setHand(player2, List.of(new SwordsToPlowshares()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, liege.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Gaea's Liege");
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.PLAINS);
+    }
+
+    @Test
+    @DisplayName("Multiple conversions persist together and all end when Liege is exiled")
+    void multipleConversionsEndWhenSourceLeaves() {
+        Permanent liege = addCreatureReady(player1, new GaeasLiege());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, first)).containsExactly(CardSubtype.FOREST);
+        assertThat(gqs.effectiveBasicLandTypes(gd, second)).containsExactly(CardSubtype.FOREST);
+
+        harness.setHand(player2, List.of(new SwordsToPlowshares()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, liege.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gaea's Liege");
+        assertThat(gqs.effectiveBasicLandTypes(gd, first)).containsExactly(CardSubtype.PLAINS);
+        assertThat(gqs.effectiveBasicLandTypes(gd, second)).containsExactly(CardSubtype.PLAINS);
+    }
+
+    @Test
+    @DisplayName("A converted Plains produces green mana instead of white mana")
+    void convertedLandProducesForestMana() {
+        forestTargetPlains(player1);
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Liege dies to state-based actions when its controller has no Forests")
+    void noForestsMeansZeroToughness() {
+        addCreatureReady(player1, new GaeasLiege());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Gaea's Liege");
+        harness.assertInGraveyard(player1, "Gaea's Liege");
     }
 
     /**

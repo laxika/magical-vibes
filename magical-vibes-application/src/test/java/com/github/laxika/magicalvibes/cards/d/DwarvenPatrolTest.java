@@ -84,6 +84,55 @@ class DwarvenPatrolTest extends BaseCardTest {
         assertThat(patrol.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Untap trigger resolves before the nonred spell")
+    void untapTriggerResolvesBeforeSpell() {
+        Permanent patrol = addTappedPatrol();
+
+        harness.castFromHand(player1, new AnaDisciple(), "{G}");
+
+        assertThat(patrol.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(patrol.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(patrol);
+    }
+
+    @Test
+    @DisplayName("Each controlled Patrol untaps without untapping an opponent's Patrol")
+    void untapsEachControlledPatrolOnly() {
+        Permanent first = addTappedPatrol();
+        Permanent second = addTappedPatrol();
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new DwarvenPatrol());
+        opposing.tap();
+
+        harness.castFromHand(player1, new AnaDisciple(), "{G}");
+        resolveAllTriggers();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(opposing.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later nonred spell untaps the Patrol again after it becomes tapped")
+    void untapsAgainForAnotherNonredSpell() {
+        Permanent patrol = addTappedPatrol();
+
+        harness.castFromHand(player1, new AnaDisciple(), "{G}");
+        resolveAllTriggers();
+        assertThat(patrol.isTapped()).isFalse();
+
+        patrol.tap();
+        harness.castFromHand(player1, new Dodecapod(), "{4}");
+        harness.passBothPriorities();
+
+        assertThat(patrol.isTapped()).isFalse();
+    }
+
     private Permanent addTappedPatrol() {
         Permanent patrol = harness.addToBattlefieldAndReturn(player1, new DwarvenPatrol());
         patrol.tap();

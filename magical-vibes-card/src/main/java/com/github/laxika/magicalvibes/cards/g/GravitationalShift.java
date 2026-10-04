@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "69")
+@CardRegistration(set = "SCD", collectorNumber = "54")
 public class GravitationalShift extends Card {
 
     public GravitationalShift() {

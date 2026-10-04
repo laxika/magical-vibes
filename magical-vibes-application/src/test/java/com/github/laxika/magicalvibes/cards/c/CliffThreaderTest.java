@@ -88,7 +88,7 @@ class CliffThreaderTest extends BaseCardTest {
     @DisplayName("A tapped Mountain still prevents Cliff Threader from being blocked")
     void tappedMountainStillPreventsBlocking() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         harness.addToBattlefield(player2, new StoneworkPuma());
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CliffThreader());
         attacker.setSummoningSick(false);
