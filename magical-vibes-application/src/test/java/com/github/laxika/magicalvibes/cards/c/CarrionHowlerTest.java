@@ -72,7 +72,7 @@ class CarrionHowlerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent howler = harness.addToBattlefieldAndReturn(player1, new CarrionHowler());
         howler.setSummoningSick(true);
-        howler.setTapped(true);
+        howler.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

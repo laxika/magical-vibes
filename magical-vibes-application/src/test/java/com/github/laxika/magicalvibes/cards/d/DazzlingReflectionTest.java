@@ -131,7 +131,7 @@ class DazzlingReflectionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 21);
 
-        pyromancer.setTapped(false);
+        pyromancer.untap();
         harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
         harness.passBothPriorities();
 

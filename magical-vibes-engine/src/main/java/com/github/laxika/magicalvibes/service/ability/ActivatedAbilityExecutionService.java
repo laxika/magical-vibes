@@ -1088,12 +1088,12 @@ public class ActivatedAbilityExecutionService {
                 // arrow counters on Archery Training" — the counters live on the granting Aura, not
                 // on the creature activating the ability, so bind the granting permanent at activation.
                 snapshotEffects.add(new DealDamageToAnyTargetEffect(
-                        new CountersOnLinkedPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
+                        new CountersOnGrantingPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
                         dd.cantRegenerate(), dd.exileInsteadOfDie(), dd.targetGroup(), dd.unpreventableWhen()));
             } else if (effect instanceof DealDamageToTargetCreatureEffect dc
                     && dc.damage() instanceof CountersOnGrantingPermanent counters) {
                 snapshotEffects.add(new DealDamageToTargetCreatureEffect(
-                        new CountersOnLinkedPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
+                        new CountersOnGrantingPermanent(counters.counterType(), ability.getGrantSourcePermanentId()),
                         dc.unpreventable()));
             } else {
                 snapshotEffects.add(effect);

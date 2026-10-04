@@ -37,7 +37,7 @@ class ArrogantOutlawTest extends BaseCardTest {
     @Test
     @DisplayName("Controller losing life alone does not trigger the ability")
     void controllerLifeLossDoesNotTrigger() {
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 1, "test setup");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 1, "test setup"));
 
         castOutlaw();
 
@@ -49,8 +49,10 @@ class ArrogantOutlawTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent gaining back more life than they lost still satisfies the condition")
     void lifeGainDoesNotUndoLifeLoss() {
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "test setup");
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "test setup");
+            harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        });
 
         castOutlaw();
 
@@ -69,7 +71,7 @@ class ArrogantOutlawTest extends BaseCardTest {
     @DisplayName("Life loss after entry cannot retroactively create the trigger")
     void lifeLossAfterEntryDoesNotTrigger() {
         castOutlaw();
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "test setup");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "test setup"));
 
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);

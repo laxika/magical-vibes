@@ -96,7 +96,7 @@ class DeflectingPalmTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.activateAbility(player2, indexOf(player2, source), null, player1.getId());
         harness.passBothPriorities();
-        source.setTapped(false);
+        source.untap();
         harness.clearPriorityPassed();
         harness.activateAbility(player2, indexOf(player2, source), null, player1.getId());
         harness.passBothPriorities();

@@ -121,7 +121,7 @@ class ChamberOfManipulationTest extends BaseCardTest {
     @DisplayName("A tapped enchanted land cannot pay the tap cost")
     void cannotActivateTappedLand() {
         Permanent land = addChamberToLand();
-        land.setTapped(true);
+        land.tap();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
         harness.setHand(player1, List.of(new Forest()));
 
@@ -139,7 +139,7 @@ class ChamberOfManipulationTest extends BaseCardTest {
     void gainingControlDoesNotUntapCreature() {
         addChamberToLand();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, 0, null, creature.getId());

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -87,7 +87,7 @@ class DemonWallTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new DemonWall());
         wall.setSummoningSick(true);
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

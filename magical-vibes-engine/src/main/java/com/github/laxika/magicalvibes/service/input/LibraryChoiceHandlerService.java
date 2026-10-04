@@ -139,6 +139,10 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService manifestService;
 
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService battlefieldPlacementService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService asEntersInteractionService;
+    @Autowired @Lazy
     private SpellCastingService spellCastingService;
     @Autowired @Lazy
     private TargetLegalityService targetLegalityService;
@@ -263,6 +267,7 @@ public class LibraryChoiceHandlerService {
 
         if (cardIndex >= 0
                 && followUp.basicLandSearchQueue() != null
+                && followUp.basicLandSearchQueue().optionalSearch()
                 && accumulatedCards.isEmpty()) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
         }
@@ -442,6 +447,7 @@ public class LibraryChoiceHandlerService {
                     if (grantHaste) {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
                     }
+                    if (toBattlefieldTapped) perm.tap();
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
                     initializeBattleDefenseCounters(perm);
@@ -463,9 +469,7 @@ public class LibraryChoiceHandlerService {
                     } else if (exileAtEndStep) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
                     }
-                    if (toBattlefieldTapped) {
-                        perm.tap();
-                    }
+
                     if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER && librarySearch.attachToPlayerId() != null) {
                         perm.setAttachedTo(librarySearch.attachToPlayerId());
                     }
@@ -824,7 +828,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-            if (startNextToHandPick(gameData, playerId, followUp)) return;
+            if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
             if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
             if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
             finishSearchAndResume(gameData);
@@ -1825,7 +1829,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-        if (startNextToHandPick(gameData, playerId, followUp)) return;
+        if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         if (followUp.grimReminderSearch() != null && gameData.pendingEffectResolutionEntry != null) {
@@ -1837,10 +1841,10 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
-    private boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
+    private boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp, boolean alreadyShuffled) {
         // Basic-land queues have their own end-of-queue shuffle; the generic descriptor helper
         // treats an absent empty descriptor queue as an exhausted queue and would shuffle here.
-        return followUp.basicLandSearchQueue() == null
+        return !alreadyShuffled && followUp.basicLandSearchQueue() == null
                 && followUp.eachPlayerToHandCount() == 0
                 && librarySearchSupport.startNextToHandPick(gameData, playerId, followUp);
     }
@@ -1898,7 +1902,7 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-        if (startNextToHandPick(gameData, playerId, followUp)) return;
+        if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
@@ -2369,6 +2373,21 @@ public class LibraryChoiceHandlerService {
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, false);
     }
 
+    public void completeTappedEntryStateChoice(GameData gameData,
+            com.github.laxika.magicalvibes.model.BattlefieldEntryRequest request) {
+        battlefieldPlacementService.place(gameData, request);
+        StackEntry sourceEntry = request.sourceStackEntry();
+        int etbMode = sourceEntry != null && sourceEntry.getEtbMode() != null
+                ? sourceEntry.getEtbMode() : request.xValue();
+        asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),
+                request.permanent().getCard(), sourceEntry == null ? null : sourceEntry.getTargetId(),
+                request.permanent().getCastFromZone() == Zone.HAND,
+                etbMode, request.xValue(), request.kicked(),
+                sourceEntry == null ? List.of() : sourceEntry.getTargetIds(), request.repeatedAdditionalCosts(),
+                sourceEntry == null ? List.of() : sourceEntry.getConvokeCreatureIds());
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private List<Permanent> placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
                                                         UUID ownerId, boolean tapped,
                                                         boolean grantHaste, boolean exileAtEndStep,
@@ -2422,15 +2441,13 @@ public class LibraryChoiceHandlerService {
             if (grantHaste) {
                 perm.getGrantedKeywords().add(Keyword.HASTE);
             }
+            if (tapped) perm.tap();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch,
                     enterWithCounters);
             initializeBattleDefenseCounters(perm);
             landEquilibriumSupport.applyPlan(gameData, puttingPlayerId, perm, landEquilibriumPlan, null);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
-            if (tapped) {
-                perm.tap();
-            }
             if (returnToHandAtEndStep) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
             } else if (exileAtEndStep) {
@@ -3856,8 +3873,13 @@ public class LibraryChoiceHandlerService {
         Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
         for (Card card : allRevealedCards) {
             if (selectedIds.contains(card.getId())) {
+                UUID destinationId = pending != null && pending.toOwnersHand()
+                        ? gameData.exiledCards.stream().filter(exiled -> exiled.card().getId().equals(card.getId()))
+                                .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::ownerId)
+                                .findFirst().orElse(controllerId)
+                        : controllerId;
                 gameData.removeFromExile(card.getId());
-                gameData.addCardToHand(controllerId, card);
+                gameData.addCardToHand(destinationId, card);
                 gameLogService.append(gameData, GameLog.textCardText(
                         controllerName + " puts ", card, " from exile into their hand."));
                 log.info("Game {} - {} returns {} from exile to hand",

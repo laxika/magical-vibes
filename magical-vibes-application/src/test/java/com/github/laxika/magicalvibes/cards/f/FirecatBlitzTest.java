@@ -30,8 +30,7 @@ class FirecatBlitzTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FirecatBlitz()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         List<Permanent> cats = findPermanents(player1, "Elemental Cat");
         assertThat(cats).hasSize(2);
@@ -40,7 +39,7 @@ class FirecatBlitzTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
     }
@@ -51,8 +50,7 @@ class FirecatBlitzTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FirecatBlitz()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
     }
@@ -63,8 +61,7 @@ class FirecatBlitzTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FirecatBlitz()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         Permanent cat = findPermanents(player1, "Elemental Cat").getFirst();
         assertThat(cat.getCard().isToken()).isTrue();
@@ -144,8 +141,7 @@ class FirecatBlitzTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new FirecatBlitz()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.playFlashbackSpell(gd, player1, 0, 0, null, List.of(), null, null, List.of(), null, null,
-                List.of(), Map.of());
+        harness.castFlashback(player1, 0, 0, null);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
@@ -165,5 +161,80 @@ class FirecatBlitzTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, 2, null, List.of(), null, null,
                 List.of(), null, null, List.of(mountain), noDamageAssignments))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("One delayed ability exiles all Cats from a single resolution together")
+    void oneDelayedAbilityExilesAllCatsTogether() {
+        harness.setHand(player1, List.of(new FirecatBlitz()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(findPermanents(player1, "Elemental Cat")).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback rejects selecting the same Mountain twice")
+    void flashbackRejectsDuplicateMountains() {
+        UUID mountain = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
+        harness.setGraveyard(player1, List.of(new FirecatBlitz()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, 2, null, List.of(), null, null,
+                List.of(), null, null, List.of(mountain, mountain), Map.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).containsExactly(mountain);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Firecat Blitz");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot sacrifice an opponent's Mountain")
+    void flashbackRejectsOpponentsMountain() {
+        UUID mountain = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
+        harness.setGraveyard(player1, List.of(new FirecatBlitz()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, 1, null, List.of(), null, null,
+                List.of(), null, null, List.of(mountain), Map.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId).containsExactly(mountain);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Firecat Blitz");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cats created by flashback are exiled at the next end step")
+    void flashbackCatsAreExiledAtNextEndStep() {
+        UUID mountain = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
+        harness.setGraveyard(player1, List.of(new FirecatBlitz()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        gs.playFlashbackSpell(gd, player1, 0, 1, null, List.of(), null, null, List.of(), null, null,
+                List.of(mountain), Map.of());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Elemental Cat")).hasSize(1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(findPermanents(player1, "Elemental Cat")).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Elemental Cat")).isEmpty();
     }
 }

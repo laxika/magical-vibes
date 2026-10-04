@@ -142,7 +142,7 @@ class BloodlineShamanTest extends BaseCardTest {
     @DisplayName("A tapped Shaman cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         var shaman = addCreatureReady(player1, new BloodlineShaman());
-        shaman.setTapped(true);
+        shaman.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

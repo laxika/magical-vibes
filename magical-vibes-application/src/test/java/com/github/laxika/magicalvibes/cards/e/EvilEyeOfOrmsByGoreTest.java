@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvilEyeOfOrmsByGore.class, GlacialWall.class, GrizzlyBears.class})
+@CardUsed({EvilEyeOfOrmsByGore.class, GlacialWall.class, GrizzlyBears.class, Unsummon.class})
 class EvilEyeOfOrmsByGoreTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Eye creature you control cannot attack while Evil Eye is on the battlefield")
@@ -86,5 +88,62 @@ class EvilEyeOfOrmsByGoreTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Non-Eye creatures can attack after the last Evil Eye leaves the battlefield")
+    void nonEyeCanAttackAfterEyeLeaves() {
+        Permanent eye = harness.addToBattlefieldAndReturn(player1, new EvilEyeOfOrmsByGore());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, eye.getId());
+
+        harness.assertNotOnBattlefield(player1, "Evil Eye of Orms-by-Gore");
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Removing one Evil Eye does not remove another Evil Eye's attack restriction")
+    void anotherEyeKeepsAttackRestriction() {
+        Permanent eye = harness.addToBattlefieldAndReturn(player1, new EvilEyeOfOrmsByGore());
+        harness.addToBattlefield(player1, new EvilEyeOfOrmsByGore());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, eye.getId());
+
+        assertThat(countPermanents(player1, "Evil Eye of Orms-by-Gore")).isEqualTo(1);
+        int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
+        assertThatThrownBy(() -> declareAttackers(List.of(bearsIndex)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Non-Eye creatures can still block while their controller controls Evil Eye")
+    void nonEyeCanStillBlock() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new EvilEyeOfOrmsByGore());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Evil Eye can block a non-Wall attacker")
+    void eyeCanBlockNonWall() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent eye = addCreatureReady(player2, new EvilEyeOfOrmsByGore());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(eye.isBlocking()).isTrue();
     }
 }

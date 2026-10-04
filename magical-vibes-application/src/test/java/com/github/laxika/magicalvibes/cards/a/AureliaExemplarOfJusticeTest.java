@@ -113,6 +113,9 @@ class AureliaExemplarOfJusticeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, aurelia, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, aurelia, Keyword.VIGILANCE)).isTrue();
 
+        if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.AttackerDeclaration) {
+            gs.declareAttackers(gd, player1, List.of());
+        }
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);

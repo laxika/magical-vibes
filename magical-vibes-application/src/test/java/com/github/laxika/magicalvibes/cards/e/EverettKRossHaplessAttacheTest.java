@@ -54,4 +54,73 @@ class EverettKRossHaplessAttacheTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
+
+    @Test
+    void doesNotBoostOpponentsCommander() {
+        harness.addToBattlefield(player1, new EverettKRossHaplessAttache());
+        EverettKRossHaplessAttache opponentCard = new EverettKRossHaplessAttache();
+        gd.makeCommander(player2.getId(), opponentCard);
+        Permanent opponentCommander = addCreatureReady(player2, opponentCard);
+
+        assertThat(gqs.getEffectivePower(gd, opponentCommander)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCommander)).isEqualTo(4);
+    }
+
+    @Test
+    void commanderGainsLifeFromCombatDamage() {
+        EverettKRossHaplessAttache card = new EverettKRossHaplessAttache();
+        gd.makeCommander(player1.getId(), card);
+        addCreatureReady(player1, card);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void doesNotDrawWhenOpponentAttacksWithOnlyOneCreature() {
+        harness.addToBattlefield(player1, new EverettKRossHaplessAttache());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawWhenControllerAttacksWithTwoCreatures() {
+        harness.addToBattlefield(player1, new EverettKRossHaplessAttache());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(player1, List.of(1, 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void drawsOnlyOneCardWhenOpponentAttacksWithThreeCreatures() {
+        harness.addToBattlefield(player1, new EverettKRossHaplessAttache());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        declareAttackers(player2, List.of(0, 1, 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2);
+    }
 }

@@ -152,7 +152,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsCommanderPredicate` | `()` | permanents whose original card is designated as a commander in `GameData`; unlike a legendary filter, this tracks the Commander designation and does not make copies commanders | `gameData` |
 | `PermanentHasKeywordPredicate` | `(Keyword)` | permanents with specific keyword |
 | `PermanentHasProtectionFromColorPredicate` | `(CardColor)` | permanents with protection from that color (Escaped Shapeshifter). One color per instance — "protection from any color" is five predicates. Inside static-bonus assembly it answers from printed protection + the in-flight layer-6 state instead of re-entering `computeStaticBonus` |
-| `PermanentHasCountersPredicate` | `(CounterType)` | permanents with one or more counters of the specified type (supports ANY for any counter) |
+| `PermanentHasCountersPredicate` | `(CounterType, Long expectedLastRemovalVersion)` | permanents with one or more counters of the specified type (supports ANY); optional version prevents a duration from restarting after its last counter was removed |
 | `PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate` | `()` | permanents that received one or more +1/+1 counters this turn, even if those counters were later removed |
 | `PermanentHasAtLeastCountersPredicate` | `(CounterType, int minimum)` | permanents with at least `minimum` counters of the specified type; evaluated through the layer-aware predicate service when combined with other permanent filters |
 | `PermanentCounterCountAtLeastPredicate` | `(CounterType, int threshold)` | permanents with at least the specified number of counters of the given type |

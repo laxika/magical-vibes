@@ -55,7 +55,7 @@ class ChillbringerTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillSkipsItsNextUntap() {
         Permanent target = addCreatureReady(player2, new SauroformHybrid());
-        target.setTapped(true);
+        target.tap();
         castChillbringer(target.getId());
         harness.passBothPriorities();
 
@@ -100,7 +100,7 @@ class ChillbringerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(other.isTapped()).isFalse();
-        other.setTapped(true);
+        other.tap();
         harness.performUntapStep(player2);
         assertThat(other.isTapped()).isFalse();
         harness.assertOnBattlefield(player1, "Chillbringer");
@@ -115,7 +115,7 @@ class ChillbringerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isFalse();
     }

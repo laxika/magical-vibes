@@ -191,7 +191,7 @@ class BloodtitheHarvesterTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent harvester = addReadyHarvester();
-        harvester.setTapped(true);
+        harvester.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         forceMainPhase(player1);
 

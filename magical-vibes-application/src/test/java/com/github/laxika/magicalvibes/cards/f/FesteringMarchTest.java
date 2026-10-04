@@ -96,6 +96,52 @@ class FesteringMarchTest extends BaseCardTest {
         assertThat(gd.suspendedSpellExiles).isEmpty();
     }
 
+    @Test
+    @DisplayName("Creatures entering after resolution are not weakened")
+    void doesNotWeakenLaterCreatures() {
+        Permanent existing = addCreatureReady(player2, new BlindPhantasm());
+        harness.castFromHand(player1, new FesteringMarch(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        Permanent later = addCreatureReady(player2, new BlindPhantasm());
+
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Resolves and exiles itself even without opposing creatures")
+    void resolvesWithoutOpposingCreatures() {
+        FesteringMarch march = new FesteringMarch();
+        harness.castFromHand(player1, march, "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(march);
+        assertThat(gd.suspendedSpellExiles)
+                .containsExactly(new GameData.SuspendedSpellExile(march.getId(), player1.getId(), 3));
+    }
+
+    @Test
+    @DisplayName("Removing the last recurring suspend counter puts a separate casting trigger on the stack")
+    void recurringSuspendCastUsesSeparateTrigger() {
+        FesteringMarch march = new FesteringMarch();
+        harness.castFromHand(player1, march, "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(march);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
     private FesteringMarch suspendMarch() {
         FesteringMarch march = new FesteringMarch();
         harness.setHand(player1, List.of(march));

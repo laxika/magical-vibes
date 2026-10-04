@@ -103,7 +103,7 @@ class BogGliderTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent glider = addCreatureReady(player1, new BogGlider());
-        glider.setTapped(true);
+        glider.tap();
         harness.addToBattlefield(player1, new RhysticCave());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

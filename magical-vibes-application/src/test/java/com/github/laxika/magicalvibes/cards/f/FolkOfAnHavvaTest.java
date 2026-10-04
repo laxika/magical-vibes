@@ -71,6 +71,48 @@ class FolkOfAnHavvaTest extends BaseCardTest {
         assertThat(folk.getPowerModifier()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Each blocking copy gets its own boost only after its trigger resolves")
+    void eachBlockingCopyTriggersIndependently() {
+        addCreatureReady(player1, new FolkOfAnHavva());
+        addCreatureReady(player1, new FolkOfAnHavva());
+        Permanent firstBlocker = addCreatureReady(player2, new FolkOfAnHavva());
+        Permanent secondBlocker = addCreatureReady(player2, new FolkOfAnHavva());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(
+                    new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(1);
+
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(1);
+        });
+    }
+
+    @Test
+    @DisplayName("Attacking and becoming blocked do not boost the attacking copy")
+    void attackingCopyDoesNotGetBlockBoost() {
+        Permanent attacker = addCreatureReady(player1, new FolkOfAnHavva());
+        Permanent blocker = addCreatureReady(player2, new FolkOfAnHavva());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        });
+    }
+
     private Permanent block() {
         Permanent folk = addCreatureReady(player2, new FolkOfAnHavva());
 

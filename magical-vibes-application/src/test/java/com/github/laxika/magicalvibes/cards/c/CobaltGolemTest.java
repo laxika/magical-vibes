@@ -88,7 +88,7 @@ class CobaltGolemTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent golem = addCreatureReady(player1, new CobaltGolem());
         golem.setSummoningSick(true);
-        golem.setTapped(true);
+        golem.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

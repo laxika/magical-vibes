@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(FlailingOgre.class)
 class FlailingOgreTest extends BaseCardTest {
@@ -52,7 +53,6 @@ class FlailingOgreTest extends BaseCardTest {
         assertThat(ogre.getToughnessModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ogre.getPowerModifier()).isZero();
@@ -72,5 +72,55 @@ class FlailingOgreTest extends BaseCardTest {
 
         assertThat(ogre.getPowerModifier()).isEqualTo(2);
         assertThat(ogre.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent can shrink the Ogre to zero toughness")
+    void opponentCanShrinkOgreToDeath() {
+        addCreatureReady(player1, new FlailingOgre());
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player2, 0, 1, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Flailing Ogre");
+        harness.assertInGraveyard(player1, "Flailing Ogre");
+    }
+
+    @Test
+    @DisplayName("A controller can respond to an opponent's shrink with a boost")
+    void controllerCanRespondToOpponentsShrink() {
+        Permanent ogre = addCreatureReady(player1, new FlailingOgre());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ogre.getPowerModifier()).isEqualTo(1);
+        assertThat(ogre.getToughnessModifier()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(ogre.getPowerModifier()).isZero();
+        assertThat(ogre.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player1, "Flailing Ogre");
+    }
+
+    @Test
+    @DisplayName("An opponent must pay using their own mana")
+    void opponentCannotUseControllersMana() {
+        Permanent ogre = addCreatureReady(player1, new FlailingOgre());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(ogre.getPowerModifier()).isZero();
+        assertThat(ogre.getToughnessModifier()).isZero();
     }
 }

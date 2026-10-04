@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -74,7 +74,7 @@ class DragonHatchlingTest extends BaseCardTest {
     void canPumpWhileTappedAndSummoningSick() {
         Permanent hatchling = harness.addToBattlefieldAndReturn(player1, new DragonHatchling());
         hatchling.setSummoningSick(true);
-        hatchling.setTapped(true);
+        hatchling.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -41,7 +41,7 @@ class BogSmugglersTest extends BaseCardTest {
     @DisplayName("Bog Smugglers cannot be blocked when the defending player's Swamp is tapped")
     void cannotBeBlockedWhenDefenderControlsTappedSwamp() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
 
         Permanent blockerPerm = addCreatureReady(player2, new FreshVolunteers());
         Permanent atkPerm = addCreatureReady(player1, new BogSmugglers());

@@ -47,12 +47,45 @@ class EyelessWatcherTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
     }
 
-    private void castEyelessWatcher() {
-        harness.setHand(player1, List.of(new EyelessWatcher()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    @DisplayName("Scions are created by the entry trigger, not by casting or resolving the creature spell")
+    void tokensWaitForEntryTriggerToResolve() {
+        harness.castFromHand(player1, new EyelessWatcher(), "{3}{G}");
 
-        harness.castCreature(player1, 0);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Eyeless Watcher")).hasSize(1);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(2);
+        assertThat(findPermanents(player2, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both newly created Scions can be sacrificed while tapped, adding mana immediately")
+    void bothTappedScionsCanProduceManaImmediately() {
+        castEyelessWatcher();
+
+        for (Permanent scion : findPermanents(player1, "Eldrazi Scion")) {
+            scion.setTapped(true);
+            int scionIndex = gd.playerBattlefields.get(player1.getId()).indexOf(scion);
+            harness.activateAbility(player1, scionIndex, 0, null, null);
+            assertThat(gd.stack).isEmpty();
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(findPermanents(player1, "Eyeless Watcher")).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    private void castEyelessWatcher() {
+        harness.castFromHand(player1, new EyelessWatcher(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

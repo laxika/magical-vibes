@@ -18,6 +18,51 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FeveredConvulsionsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Ability can target your own creature on an opponent's turn with exactly two black and two generic mana")
+    void canTargetOwnCreatureOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new FeveredConvulsions());
+        Permanent armodon = harness.addToBattlefieldAndReturn(player1, new TrumpetingArmodon());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, armodon.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(armodon.getEffectivePower()).isEqualTo(2);
+        assertThat(armodon.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple activations can be stacked without tapping the enchantment")
+    void canActivateAgainBeforeFirstActivationResolves() {
+        Permanent convulsions = harness.addToBattlefieldAndReturn(player1, new FeveredConvulsions());
+        Permanent armodon = harness.addToBattlefieldAndReturn(player2, new TrumpetingArmodon());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.activateAbility(player1, 0, null, armodon.getId());
+        harness.activateAbility(player1, 0, null, armodon.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(convulsions.isTapped()).isFalse();
+        assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(armodon.getEffectivePower()).isEqualTo(1);
+        assertThat(armodon.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Ability puts a -1/-1 counter on target creature")
     void abilityPutsCounterOnTargetCreature() {
         harness.addToBattlefield(player1, new FeveredConvulsions());

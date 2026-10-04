@@ -33,12 +33,71 @@ class FaerieGuidemotherTest extends BaseCardTest {
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
         assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
         assertThat(bear.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void creatureCanBeCastFromExileAfterAdventureResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FaerieGuidemother());
+        FaerieGuidemother card = new FaerieGuidemother();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void adventureWithMissingTargetGoesToGraveyardWithoutExilePermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FaerieGuidemother());
+        FaerieGuidemother card = new FaerieGuidemother();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void creatureCanBeCastDirectlyWithoutGoingOnAdventure() {
+        FaerieGuidemother card = new FaerieGuidemother();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
     }
 }

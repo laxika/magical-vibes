@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -27,8 +29,7 @@ class ExecuteTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Glory Seeker");
         harness.assertInGraveyard(player2, "Glory Seeker");
@@ -60,8 +61,7 @@ class ExecuteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Execute()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Glory Seeker");
         harness.assertInGraveyard(player2, "Glory Seeker");
@@ -116,5 +116,55 @@ class ExecuteTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player1, "Execute");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Execute still draws when an indestructible white creature survives")
+    void drawsEvenWhenTargetIsIndestructible() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        target.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new Execute()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        harness.assertInHand(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Execute");
+    }
+
+    @Test
+    @DisplayName("Execute can destroy a multicolored creature that is white")
+    void destroysMulticoloredWhiteCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        target.getGrantedColors().add(CardColor.BLUE);
+        harness.setHand(player1, List.of(new Execute()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Glory Seeker");
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        harness.assertInHand(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Execute does not draw when its target gains protection from black")
+    void fizzlesIfTargetGainsProtection() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new Execute()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        target.getProtectionFromColorsUntilEndOfTurn().add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Execute");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

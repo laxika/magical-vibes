@@ -2,9 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.t.TezzeretBetrayerOfFlesh;
 import com.github.laxika.magicalvibes.cards.w.WebspinnerCuff;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +18,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ForgebornPhoenix.class, GrizzlyBears.class, LightningBolt.class, WebspinnerCuff.class})
+@CardUsed({ForgebornPhoenix.class, GrizzlyBears.class, LightningBolt.class, WebspinnerCuff.class,
+        TezzeretBetrayerOfFlesh.class})
 class ForgebornPhoenixTest extends BaseCardTest {
 
     @Test
@@ -72,7 +72,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
     }
 
     @Test
-    void phoenixReturnsWhenAnEquippedCreatureDies() {
+    void dyingEquippedCreatureGainsTheReturnAbilityInsteadOfPhoenix() {
         Permanent phoenix = addReadyPhoenix();
         Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
         phoenix.setAttachedTo(dyingCreature.getId());
@@ -82,13 +82,18 @@ class ForgebornPhoenixTest extends BaseCardTest {
         dyingCreature.setMarkedDamage(2);
         harness.runStateBasedActions();
         resolveAllTriggers();
-        destroyPhoenix(phoenix);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Forgeborn Phoenix").isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(dyingCreature.getCard().getId());
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(dyingCreature.getCard());
+        assertThat(findPermanent(player1, "Forgeborn Phoenix")).isSameAs(phoenix);
     }
 
     @Test
@@ -98,7 +103,7 @@ class ForgebornPhoenixTest extends BaseCardTest {
         attachEquipment(attacker);
         destroyPhoenix(phoenix);
 
-        Permanent planeswalker = addTestPlaneswalker();
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player2, new TezzeretBetrayerOfFlesh());
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -114,12 +119,107 @@ class ForgebornPhoenixTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Forgeborn Phoenix").isTapped()).isTrue();
     }
 
+    @Test
+    void eachDeathAddsAnotherIndependentReturnAbility() {
+        Permanent phoenix = addReadyPhoenix();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attachEquipment(attacker);
+        destroyPhoenix(phoenix);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+        resolveAllTriggers();
+        Permanent returned = findPermanent(player1, "Forgeborn Phoenix");
+        destroyPhoenix(returned);
+
+        attacker.untap();
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(phoenix.getCard().getId())))
+                .hasSize(2);
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Forgeborn Phoenix").isTapped()).isTrue();
+    }
+
+    @Test
+    void oldReturnTriggerCannotReturnPhoenixAfterItReturnsAndDiesAgain() {
+        Permanent phoenix = addReadyPhoenix();
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        attachEquipment(firstAttacker);
+        attachEquipment(secondAttacker);
+        destroyPhoenix(phoenix);
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(firstAttacker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker)));
+        resolveCombat();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        Permanent returned = findPermanent(player1, "Forgeborn Phoenix");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, returned.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Forgeborn Phoenix");
+        harness.assertNotOnBattlefield(player1, "Forgeborn Phoenix");
+    }
+
+    @Test
+    void unequippedCreatureCombatDamageDoesNotReturnPhoenix() {
+        Permanent phoenix = addReadyPhoenix();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        destroyPhoenix(phoenix);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Forgeborn Phoenix");
+        harness.assertNotOnBattlefield(player1, "Forgeborn Phoenix");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void opponentsEquippedCreatureCombatDamageDoesNotReturnPhoenix() {
+        Permanent phoenix = addReadyPhoenix();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new WebspinnerCuff());
+        equipment.setAttachedTo(attacker.getId());
+        destroyPhoenix(phoenix);
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Forgeborn Phoenix");
+        harness.assertNotOnBattlefield(player1, "Forgeborn Phoenix");
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void reconfigureCannotBeActivatedDuringCombat() {
+        Permanent phoenix = addReadyPhoenix();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(phoenix.getAttachedTo()).isNull();
+    }
+
     private Permanent addReadyPhoenix() {
         return addCreatureReady(player1, new ForgebornPhoenix());
     }
 
     private void attachEquipment(Permanent creature) {
-        Permanent equipment = addCreatureReady(player1, new WebspinnerCuff());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new WebspinnerCuff());
         equipment.setAttachedTo(creature.getId());
     }
 
@@ -128,15 +228,5 @@ class ForgebornPhoenixTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, phoenix.getId());
         resolveAllTriggers();
-    }
-
-    private Permanent addTestPlaneswalker() {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        Permanent planeswalker = new Permanent(card);
-        planeswalker.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
-        return planeswalker;
     }
 }

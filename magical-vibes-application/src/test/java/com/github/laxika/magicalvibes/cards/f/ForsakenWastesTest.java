@@ -135,4 +135,43 @@ class ForsakenWastesTest extends BaseCardTest {
         harness.assertLife(player2, 15);
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Life gain resumes after Forsaken Wastes leaves the battlefield")
+    void lifeGainResumesAfterRemoval() {
+        Permanent wastes = harness.addToBattlefieldAndReturn(player1, new ForsakenWastes());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, wastes.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forsaken Wastes");
+        harness.assertLife(player1, 15);
+        harness.castFromHand(player1, new MangarasBlessing(), "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Upkeep life loss still resolves after Forsaken Wastes is destroyed")
+    void upkeepLifeLossSurvivesRemoval() {
+        Permanent wastes = harness.addToBattlefieldAndReturn(player1, new ForsakenWastes());
+        advanceToUpkeep(player1);
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, wastes.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 15);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Forsaken Wastes");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+    }
 }

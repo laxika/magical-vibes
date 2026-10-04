@@ -105,7 +105,7 @@ class DivinersLockboxTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Diviner's Lockbox");
 
-        lockbox.setTapped(false);
+        lockbox.untap();
         assertThatThrownBy(this::activate).isInstanceOf(IllegalStateException.class);
     }
 
@@ -135,7 +135,7 @@ class DivinersLockboxTest extends BaseCardTest {
         Permanent lockbox = addReadyLockbox();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         activate();
-        lockbox.setTapped(false);
+        lockbox.untap();
 
         assertThatThrownBy(this::activate).isInstanceOf(IllegalStateException.class);
     }
@@ -178,7 +178,7 @@ class DivinersLockboxTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new DivinersLockbox()));
         harness.setLibrary(player2, List.of(new DivinersLockbox()));
-        lockbox.setTapped(false);
+        lockbox.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         activate();
         harness.passBothPriorities();

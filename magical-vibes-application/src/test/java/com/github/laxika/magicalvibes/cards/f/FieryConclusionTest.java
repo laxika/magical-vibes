@@ -106,4 +106,84 @@ class FieryConclusionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fiery Conclusion");
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("The targeted creature can also pay Fiery Conclusion's sacrifice cost")
+    void canSacrificeTheTargetedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GreaterMossdog());
+        harness.setHand(player1, List.of(new FieryConclusion()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, creature.getId(), creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Greater Mossdog");
+        harness.assertInGraveyard(player1, "Greater Mossdog");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Fiery Conclusion");
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fiery Conclusion can target a different creature its caster controls")
+    void canDamageAnotherControlledCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GreaterMossdog());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GreaterMossdog());
+        harness.setHand(player1, List.of(new FieryConclusion()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target).doesNotContain(sacrifice);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof GreaterMossdog).hasSize(2);
+        harness.assertInGraveyard(player1, "Fiery Conclusion");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to cast Fiery Conclusion")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GreaterMossdog());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GreaterMossdog());
+        harness.setHand(player1, List.of(new FieryConclusion()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(
+                player1, 0, opponentCreature.getId(), opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("control");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        harness.assertInHand(player1, "Fiery Conclusion");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a noncreature artifact to cast Fiery Conclusion")
+    void cannotSacrificeNonCreature() {
+        harness.addToBattlefield(player1, new GreaterMossdog());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BorosSignet());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GreaterMossdog());
+        harness.setHand(player1, List.of(new FieryConclusion()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(
+                player1, 0, target.getId(), artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertInHand(player1, "Fiery Conclusion");
+        assertThat(gd.stack).isEmpty();
+    }
 }

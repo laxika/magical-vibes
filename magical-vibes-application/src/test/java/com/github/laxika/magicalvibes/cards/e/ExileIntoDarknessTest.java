@@ -30,8 +30,7 @@ class ExileIntoDarknessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertNotOnBattlefield(player2, "Akki Drillmaster");
         harness.assertOnBattlefield(player2, "Fiddlehead Kami");
@@ -48,8 +47,7 @@ class ExileIntoDarknessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -74,8 +72,7 @@ class ExileIntoDarknessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertOnBattlefield(player2, "Fiddlehead Kami");
         harness.assertInGraveyard(player1, "Exile into Darkness");
@@ -144,6 +141,56 @@ class ExileIntoDarknessTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Exile into Darkness");
+        harness.assertNotInHand(player1, "Exile into Darkness");
+    }
+
+    @Test
+    @DisplayName("The caster may target themselves to sacrifice an eligible creature")
+    void canTargetSelf() {
+        harness.addToBattlefield(player1, new AkkiDrillmaster());
+        harness.addToBattlefield(player2, new ArabaMothrider());
+        harness.setHand(player1, List.of(new ExileIntoDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertInGraveyard(player1, "Akki Drillmaster");
+        harness.assertNotOnBattlefield(player1, "Akki Drillmaster");
+        harness.assertOnBattlefield(player2, "Araba Mothrider");
+    }
+
+    @Test
+    @DisplayName("The graveyard ability does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        harness.setGraveyard(player1, List.of(new ExileIntoDarkness()));
+        harness.setHand(player1, List.of(new AkkiDrillmaster()));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.assertInGraveyard(player1, "Exile into Darkness");
+        harness.assertNotInHand(player1, "Exile into Darkness");
+    }
+
+    @Test
+    @DisplayName("A return trigger cannot return a different copy added after upkeep begins")
+    void doesNotReturnAnotherCopyWhenSourceLeavesGraveyard() {
+        ExileIntoDarkness source = new ExileIntoDarkness();
+        ExileIntoDarkness otherCopy = new ExileIntoDarkness();
+        harness.setGraveyard(player1, List.of(source));
+        harness.setHand(player1, List.of(new AkkiDrillmaster()));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of(otherCopy));
+        harness.setExile(player1, List.of(source));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCopy);
         harness.assertNotInHand(player1, "Exile into Darkness");
     }
 }

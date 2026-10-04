@@ -19,7 +19,7 @@ class FireSagesTest extends BaseCardTest {
     @Test
     @DisplayName("Firebending adds one red mana until end of combat")
     void firebendingAddsManaUntilEndOfCombat() {
-        Permanent fireSages = addReadyFireSages();
+        Permanent fireSages = addCreatureReady(player1, new FireSages());
 
         declareAttackers(List.of(0));
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -35,7 +35,7 @@ class FireSagesTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability puts a +1/+1 counter on Fire Sages")
     void activatedAbilityAddsCounter() {
-        Permanent fireSages = addReadyFireSages();
+        Permanent fireSages = addCreatureReady(player1, new FireSages());
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -45,10 +45,41 @@ class FireSagesTest extends BaseCardTest {
         assertThat(fireSages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
-    private Permanent addReadyFireSages() {
-        Permanent fireSages = new Permanent(new FireSages());
-        fireSages.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(fireSages);
-        return fireSages;
+    @Test
+    @DisplayName("Firebending mana can pay for the counter ability during combat")
+    void firebendingManaPaysForCounterAbility() {
+        Permanent fireSages = addCreatureReady(player1, new FireSages());
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fireSages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Fire Sages can activate repeatedly without tapping")
+    void summoningSickCreatureCanActivateRepeatedly() {
+        Permanent fireSages = harness.addToBattlefieldAndReturn(player1, new FireSages());
+        Permanent otherSages = harness.addToBattlefieldAndReturn(player1, new FireSages());
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(fireSages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(otherSages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(fireSages.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

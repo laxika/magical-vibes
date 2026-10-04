@@ -105,4 +105,51 @@ class FleshgrafterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Fleshgrafter can activate on an opponent's turn")
+    void canActivateWhileTappedOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent fleshgrafter = harness.addToBattlefieldAndReturn(player1, new Fleshgrafter());
+        fleshgrafter.setTapped(true);
+        fleshgrafter.setSummoningSick(true);
+        int basePower = gqs.getEffectivePower(gd, fleshgrafter);
+        int baseToughness = gqs.getEffectiveToughness(gd, fleshgrafter);
+        harness.setHand(player1, List.of(new MyrServitor()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Myr Servitor");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, fleshgrafter)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, fleshgrafter)).isEqualTo(baseToughness);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, fleshgrafter)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, fleshgrafter)).isEqualTo(baseToughness + 2);
+        assertThat(fleshgrafter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact on the battlefield cannot pay the discard cost with an empty hand")
+    void cannotDiscardBattlefieldArtifact() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefieldAndReturn(player1, new Fleshgrafter());
+        harness.addToBattlefieldAndReturn(player1, new MyrServitor());
+        harness.setHand(player1, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Myr Servitor");
+        harness.assertNotInGraveyard(player1, "Myr Servitor");
+        assertThat(gd.stack).isEmpty();
+    }
 }

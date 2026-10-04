@@ -57,6 +57,35 @@ class ElvenCacheTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Elven Cache returns only the targeted spell card among multiple graveyard cards")
+    void returnsOnlyTargetedSpellCard() {
+        Card target = new ElvenCache();
+        Card otherCard = new Forest();
+        Card spell = new ElvenCache();
+        harness.setGraveyard(player1, List.of(otherCard, target));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCard, spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Elven Cache requires a target even when your graveyard contains a card")
+    void cannotCastWithoutChoosingTarget() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new ElvenCache()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Elven Cache cannot target card in opponent graveyard")
     void cannotTargetCardInOpponentGraveyard() {
         Card opponentsCard = new Forest();

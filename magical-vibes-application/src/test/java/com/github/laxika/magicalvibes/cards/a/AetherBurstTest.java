@@ -138,6 +138,7 @@ class AetherBurstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AetherBurst()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
+        harness.setHand(player2, List.of());
         harness.castInstant(player1, 0, List.of(departed.getId(), remaining.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(departed);
         harness.setGraveyard(player2, List.of(departed.getCard()));

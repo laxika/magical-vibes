@@ -55,7 +55,7 @@ class BogInitiateTest extends BaseCardTest {
     @DisplayName("Bog Initiate can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         var initiate = harness.addToBattlefieldAndReturn(player1, new BogInitiate());
-        initiate.setTapped(true);
+        initiate.tap();
         initiate.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

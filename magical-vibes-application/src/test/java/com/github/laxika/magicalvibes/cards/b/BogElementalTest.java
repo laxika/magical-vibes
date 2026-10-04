@@ -135,7 +135,7 @@ class BogElementalTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         Permanent land = findPermanent(player1, "Rhystic Cave");
-        land.setTapped(true);
+        land.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, land.getId());

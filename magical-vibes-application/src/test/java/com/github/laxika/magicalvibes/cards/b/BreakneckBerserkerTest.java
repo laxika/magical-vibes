@@ -37,7 +37,7 @@ class BreakneckBerserkerTest extends BaseCardTest {
     @DisplayName("Haste does not allow attacking while tapped")
     void cannotAttackWhileTapped() {
         var berserker = harness.enterBattlefieldAndReturn(player1, new BreakneckBerserker());
-        berserker.setTapped(true);
+        berserker.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

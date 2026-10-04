@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -18,8 +19,8 @@ public class AzoriusHerald extends Card {
 
     public AzoriusHerald() {
         addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(4));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(4), TriggerMode.INDEPENDENT);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
-                new NotCondition(new ColorSpentToCast(ManaColor.BLUE)), new SacrificeSelfEffect()));
+                new NotCondition(new ColorSpentToCast(ManaColor.BLUE)), new SacrificeSelfEffect()), TriggerMode.INDEPENDENT);
     }
 }

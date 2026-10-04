@@ -83,4 +83,63 @@ class FlowstoneWallTest extends BaseCardTest {
         assertThat(wall.getPowerModifier()).isEqualTo(0);
         assertThat(wall.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Ability can be activated while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new FlowstoneWall());
+        wall.setSummoningSick(true);
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getPowerModifier()).isEqualTo(1);
+        assertThat(wall.getToughnessModifier()).isEqualTo(-1);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Six activations put the wall into the graveyard at zero toughness")
+    void diesAtZeroToughness() {
+        addCreatureReady(player1, new FlowstoneWall());
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        for (int i = 0; i < 5; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+        harness.assertOnBattlefield(player1, "Flowstone Wall");
+        harness.assertNotInGraveyard(player1, "Flowstone Wall");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Flowstone Wall");
+        harness.assertInGraveyard(player1, "Flowstone Wall");
+    }
+
+    @Test
+    @DisplayName("Ability changes only its source and waits for resolution")
+    void boostsOnlyItsSourceOnResolution() {
+        Permanent otherWall = addCreatureReady(player1, new FlowstoneWall());
+        Permanent source = addCreatureReady(player1, new FlowstoneWall());
+        Permanent opposingWall = addCreatureReady(player2, new FlowstoneWall());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(-1);
+        assertThat(otherWall.getPowerModifier()).isZero();
+        assertThat(otherWall.getToughnessModifier()).isZero();
+        assertThat(opposingWall.getPowerModifier()).isZero();
+        assertThat(opposingWall.getToughnessModifier()).isZero();
+    }
 }

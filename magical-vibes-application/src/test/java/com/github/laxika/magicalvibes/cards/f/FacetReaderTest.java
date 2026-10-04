@@ -47,6 +47,72 @@ class FacetReaderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Can discard the card just drawn")
+    void canDiscardDrawnCard() {
+        addReadyReader(player1);
+        Forest kept = new Forest();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(kept));
+        harness.setLibrary(player1, List.of(drawn));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    @DisplayName("Can activate with an empty hand and must discard the drawn card")
+    void canActivateWithEmptyHand() {
+        addReadyReader(player1);
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent reader = addReadyReader(player1);
+        reader.setTapped(true);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent reader = addReadyReader(player1);
+        reader.setSummoningSick(true);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(reader.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyReader(Player player) {
         return addCreatureReady(player, new FacetReader());
     }

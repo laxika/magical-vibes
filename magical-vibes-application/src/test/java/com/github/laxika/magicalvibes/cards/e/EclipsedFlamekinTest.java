@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EclipsedFlamekin.class, FlamekinHarbinger.class, GrizzlyBears.class,
+        Island.class, Mountain.class, Plains.class})
 class EclipsedFlamekinTest extends BaseCardTest {
 
     @Test
@@ -73,10 +76,92 @@ class EclipsedFlamekinTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 
-    private void setupTopCards(List<Card> cards) {
+    @Test
+    @DisplayName("An Elemental can be selected and the remaining cards stay below the untouched library")
+    void choosingElementalPreservesUntouchedLibrary() {
+        EclipsedFlamekin elemental = new EclipsedFlamekin();
+        Plains first = new Plains();
+        Plains second = new Plains();
+        Plains third = new Plains();
+        Island untouchedIsland = new Island();
+        Mountain untouchedMountain = new Mountain();
+        setupTopCards(List.of(elemental, first, second, third, untouchedIsland, untouchedMountain));
+        castAndResolveEtb();
+
+        harness.handleMultipleCardsChosen(player1, List.of(elemental.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elemental);
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        assertThat(deck).hasSize(5);
+        assertThat(deck.subList(0, 2)).containsExactly(untouchedIsland, untouchedMountain);
+        assertThat(deck.subList(2, 5)).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A Mountain can be chosen from a library with fewer than four cards")
+    void choosingMountainFromShortLibrary() {
+        Mountain mountain = new Mountain();
+        Plains plains = new Plains();
+        setupTopCards(List.of(mountain, plains));
+        castAndResolveEtb();
+
+        harness.handleMultipleCardsChosen(player1, List.of(mountain.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(mountain);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only card in the library can still be declined")
+    void decliningOnlyMatchingCard() {
+        Island island = new Island();
+        setupTopCards(List.of(island));
+        castAndResolveEtb();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("No matching card among the top four leaves the deeper cards on top")
+    void noMatchDoesNotOfferDeeperCards() {
+        Plains first = new Plains();
+        Plains second = new Plains();
+        Plains third = new Plains();
+        Plains fourth = new Plains();
+        Island island = new Island();
+        Mountain mountain = new Mountain();
+        setupTopCards(List.of(first, second, third, fourth, island, mountain));
+        castAndResolveEtb();
+
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        assertThat(deck).hasSize(6);
+        assertThat(deck.subList(0, 2)).containsExactly(island, mountain);
+        assertThat(deck.subList(2, 6)).containsExactlyInAnyOrder(first, second, third, fourth);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a draw")
+    void emptyLibraryNeedsNoChoice() {
+        setupTopCards(List.of());
+        castAndResolveEtb();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Eclipsed Flamekin");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void setupTopCards(List<Card> cards) {
+        harness.setLibrary(player1, cards);
     }
 
     private void castAndResolveEtb() {
@@ -84,7 +169,6 @@ class EclipsedFlamekinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

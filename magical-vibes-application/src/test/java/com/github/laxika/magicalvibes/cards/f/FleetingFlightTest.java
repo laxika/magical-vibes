@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FleetingFlight.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Shock.class})
 class FleetingFlightTest extends BaseCardTest {
 
     @Test
@@ -46,14 +49,49 @@ class FleetingFlightTest extends BaseCardTest {
 
     @Test
     void preventsCombatDamageToTargetCreature() {
-        Permanent attacker = addAttacker(player1, player2, 2, 2);
-        addBlocker(player2, 3, 3, 0);
+        Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
+        addBlocker(player2, new HillGiant(), 0);
 
         castFleetingFlight(attacker);
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(attacker.getId()));
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    void canProtectOpponentsBlockerWithoutPreventingItsDamage() {
+        addAttacker(player1, player2, new HillGiant());
+        Permanent blocker = addBlocker(player2, new GrizzlyBears(), 0);
+
+        castFleetingFlight(blocker);
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FLYING)).isTrue();
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    void doesNotResolveWhenTargetDiesInResponse() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FleetingFlight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fleeting Flight");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(target.getId());
     }
 
     @Test
@@ -86,27 +124,17 @@ class FleetingFlightTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent permanent = new Permanent(bears);
-        permanent.setSummoningSick(false);
+    private Permanent addAttacker(Player owner, Player defender, Card card) {
+        Permanent permanent = addCreatureReady(owner, card);
         permanent.setAttacking(true);
         permanent.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(permanent);
         return permanent;
     }
 
-    private Permanent addBlocker(Player owner, int power, int toughness, int blockedAttackerIndex) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent permanent = new Permanent(bears);
-        permanent.setSummoningSick(false);
+    private Permanent addBlocker(Player owner, Card card, int blockedAttackerIndex) {
+        Permanent permanent = addCreatureReady(owner, card);
         permanent.setBlocking(true);
         permanent.addBlockingTarget(blockedAttackerIndex);
-        gd.playerBattlefields.get(owner.getId()).add(permanent);
         return permanent;
     }
 }

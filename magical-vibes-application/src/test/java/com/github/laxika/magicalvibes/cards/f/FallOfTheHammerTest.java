@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FallOfTheHammer.class, GrizzlyBears.class, LlanowarElves.class, AirElemental.class})
 class FallOfTheHammerTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,7 @@ class FallOfTheHammerTest extends BaseCardTest {
 
         UUID sourceId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(sourceId, targetId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(sourceId, targetId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -42,11 +43,9 @@ class FallOfTheHammerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FallOfTheHammer()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        List<Permanent> battlefield = harness.getGameData().playerBattlefields.get(player1.getId());
-        UUID sourceId = battlefield.get(0).getId();
-        UUID targetId = battlefield.get(1).getId();
-        harness.castInstant(player1, 0, List.of(sourceId, targetId));
-        harness.passBothPriorities();
+        UUID sourceId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
+        harness.castAndResolveInstant(player1, 0, List.of(sourceId, targetId));
 
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
@@ -96,5 +95,74 @@ class FallOfTheHammerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Damage uses the source creature's power at resolution")
+    void usesPowerAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new FallOfTheHammer()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        source.setPowerModifier(2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The recipient does not deal damage back to the source")
+    void doesNotFight() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new FallOfTheHammer()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), target.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(source.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("No damage is dealt if another player controls the source at resolution")
+    void dealsNoDamageWhenSourceChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new FallOfTheHammer()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Fall of the Hammer");
+    }
+
+    @Test
+    @DisplayName("No damage is dealt if the recipient leaves before resolution")
+    void dealsNoDamageWhenRecipientLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new FallOfTheHammer()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fall of the Hammer");
     }
 }

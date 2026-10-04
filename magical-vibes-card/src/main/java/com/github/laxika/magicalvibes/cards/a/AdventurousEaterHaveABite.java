@@ -20,7 +20,7 @@ public class AdventurousEaterHaveABite extends Card {
         setBackFaceCard(new HaveABite());
 
         // This creature enters prepared.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addEffect(EffectSlot.STATIC, new BecomePreparedEffect());
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.v.Vertigo;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FemerefArchers.class, FemerefScouts.class, GrizzlyBears.class, PearlDragon.class, Vertigo.class})
+@CardUsed({FemerefArchers.class, GrizzlyBears.class, PearlDragon.class, Unsummon.class, Vertigo.class})
 class FemerefArchersTest extends BaseCardTest {
 
     @Test
@@ -145,11 +146,30 @@ class FemerefArchersTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Vertigo()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after Femeref Archers leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, archers.getId());
+        harness.assertNotOnBattlefield(player1, "Femeref Archers");
+        harness.assertInHand(player1, "Femeref Archers");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
     }
 }

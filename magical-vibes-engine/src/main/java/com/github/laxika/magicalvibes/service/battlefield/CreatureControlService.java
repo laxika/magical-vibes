@@ -75,6 +75,10 @@ public class CreatureControlService {
     private AuraCopyService auraCopyService;
 
     @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler ascendEffectHandler;
+
+    @Autowired
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
                                   UnattachTriggerSupport unattachTriggerSupport,
                                   @Lazy TriggerCollectionService triggerCollectionService) {
@@ -225,6 +229,9 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
+        if (ascendEffectHandler != null) {
+            ascendEffectHandler.checkPermanentAscend(gameData, derived);
+        }
         if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
                 && gameData.getDelayedActions(EchoAtNextUpkeep.class).stream()
                 .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {

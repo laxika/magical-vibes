@@ -99,7 +99,7 @@ class CutthroatContenderTest extends BaseCardTest {
     void tappedSummoningSickContenderCanActivate() {
         Permanent contender = harness.addToBattlefieldAndReturn(player1, new CutthroatContender());
         contender.setSummoningSick(true);
-        contender.setTapped(true);
+        contender.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

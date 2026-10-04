@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -132,7 +133,7 @@ class CuboidColonyTest extends BaseCardTest {
         @Test
         void equalManaSpentDoesNotIncrementAnAlreadyGrownColony() {
             Permanent colony = addColony(player1);
-            colony.setPlusOnePlusOneCounters(1);
+            colony.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
             setUpMainPhase(player1);
 
             harness.castFromHand(player1, new CuboidColony(), "{G}{U}");
@@ -194,7 +195,7 @@ class CuboidColonyTest extends BaseCardTest {
     @Test
     void grownColonyTramplesOverFlyingBlocker() {
         Permanent attacker = addColony(player1);
-        attacker.setPlusOnePlusOneCounters(2);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent blocker = addColony(player2);
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

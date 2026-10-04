@@ -108,7 +108,7 @@ class DisruptiveStudentTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent student = addCreatureReady(player1, new DisruptiveStudent());
-        student.setTapped(true);
+        student.tap();
         harness.forceActivePlayer(player2);
         CoralMerfolk merfolk = new CoralMerfolk();
         harness.castFromHand(player2, merfolk, "{1}{U}");

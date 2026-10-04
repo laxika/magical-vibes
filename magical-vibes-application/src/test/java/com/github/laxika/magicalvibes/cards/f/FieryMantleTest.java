@@ -39,9 +39,8 @@ class FieryMantleTest extends BaseCardTest {
     @DisplayName("Activating Fiery Mantle boosts the enchanted creature")
     void activatingAbilityBoostsEnchantedCreature() {
         Permanent creature = addCreatureReady(player1, new HorseshoeCrab());
-        Permanent aura = new Permanent(new FieryMantle());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieryMantle());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 1, null, null);
@@ -55,9 +54,8 @@ class FieryMantleTest extends BaseCardTest {
     @DisplayName("Fiery Mantle's activated boost expires at end of turn")
     void activatedBoostExpiresAtEndOfTurn() {
         Permanent creature = addCreatureReady(player1, new HorseshoeCrab());
-        Permanent aura = new Permanent(new FieryMantle());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieryMantle());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 1, null, null);
@@ -78,9 +76,8 @@ class FieryMantleTest extends BaseCardTest {
     @DisplayName("Fiery Mantle returns to its owner's hand when put into a graveyard from the battlefield")
     void returnsToHandAfterLeavingBattlefieldForGraveyard() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new HorseshoeCrab());
-        Permanent aura = new Permanent(new FieryMantle());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieryMantle());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         harness.passBothPriorities();
@@ -96,9 +93,8 @@ class FieryMantleTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HorseshoeCrab());
         FieryMantle mantleCard = new FieryMantle();
         mantleCard.setOwnerId(player1.getId());
-        Permanent aura = new Permanent(mantleCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, mantleCard);
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         harness.passBothPriorities();
@@ -106,6 +102,62 @@ class FieryMantleTest extends BaseCardTest {
         harness.assertInHand(player1, "Fiery Mantle");
         harness.assertNotInHand(player2, "Fiery Mantle");
         harness.assertNotInGraveyard(player1, "Fiery Mantle");
+    }
+
+    @Test
+    @DisplayName("An activated boost still resolves after Fiery Mantle leaves the battlefield")
+    void activatedBoostResolvesAfterAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HorseshoeCrab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieryMantle());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Fiery Mantle");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Fiery Mantle returns after its enchanted creature dies")
+    void returnsAfterEnchantedCreatureDies() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HorseshoeCrab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieryMantle());
+        aura.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Horseshoe Crab");
+        harness.assertInHand(player1, "Fiery Mantle");
+        harness.assertNotInGraveyard(player1, "Fiery Mantle");
+        harness.assertNotOnBattlefield(player1, "Fiery Mantle");
+    }
+
+    @Test
+    @DisplayName("A stolen Mantle's controller controls its trigger and only that Mantle returns")
+    void lastControllerControlsTriggerReturningOnlySourceCard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HorseshoeCrab());
+        FieryMantle otherMantle = new FieryMantle();
+        harness.setGraveyard(player1, List.of(otherMantle));
+        FieryMantle mantle = new FieryMantle();
+        mantle.setOwnerId(player1.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, mantle);
+        aura.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(mantle).doesNotContain(otherMantle);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherMantle).doesNotContain(mantle);
+        harness.assertNotInHand(player2, "Fiery Mantle");
     }
 
     @Test

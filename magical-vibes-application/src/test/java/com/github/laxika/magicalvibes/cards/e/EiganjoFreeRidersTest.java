@@ -55,10 +55,8 @@ class EiganjoFreeRidersTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, whiteCreature.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(whiteCreature.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof ArabaMothrider);
+        harness.assertNotOnBattlefield(player1, "Araba Mothrider");
+        harness.assertInHand(player1, "Araba Mothrider");
     }
 
     @Test
@@ -75,5 +73,61 @@ class EiganjoFreeRidersTest extends BaseCardTest {
 
         harness.assertNotInHand(player1, "Araba Mothrider");
         harness.assertInHand(player2, "Araba Mothrider");
+    }
+
+    @Test
+    @DisplayName("Must return Free-Riders itself when it is the only white creature")
+    void returnsItselfWhenOnlyWhiteCreature() {
+        Permanent freeRiders = addCreatureReady(player1, new EiganjoFreeRiders());
+        addCreatureReady(player1, new AkkiUnderling());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(freeRiders.getId());
+        harness.handlePermanentChosen(player1, freeRiders.getId());
+
+        harness.assertNotOnBattlefield(player1, "Eiganjo Free-Riders");
+        harness.assertInHand(player1, "Eiganjo Free-Riders");
+        harness.assertOnBattlefield(player1, "Akki Underling");
+    }
+
+    @Test
+    @DisplayName("Upkeep ability still returns another white creature after Free-Riders leaves")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent freeRiders = addCreatureReady(player1, new EiganjoFreeRiders());
+        Permanent whiteCreature = addCreatureReady(player1, new ArabaMothrider());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, freeRiders));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(whiteCreature.getId());
+        harness.handlePermanentChosen(player1, whiteCreature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Araba Mothrider");
+        harness.assertInHand(player1, "Araba Mothrider");
+    }
+
+    @Test
+    @DisplayName("Does nothing when no controlled white creature remains at resolution")
+    void doesNothingWithoutEligibleCreature() {
+        Permanent freeRiders = addCreatureReady(player1, new EiganjoFreeRiders());
+        addCreatureReady(player1, new AkkiUnderling());
+        addCreatureReady(player2, new ArabaMothrider());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, freeRiders));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Akki Underling");
+        harness.assertOnBattlefield(player2, "Araba Mothrider");
+        harness.assertNotInHand(player1, "Akki Underling");
     }
 }

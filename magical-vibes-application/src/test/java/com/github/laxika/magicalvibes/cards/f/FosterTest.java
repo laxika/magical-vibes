@@ -109,6 +109,51 @@ class FosterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(deadCreature);
     }
 
+    @Test
+    @DisplayName("Revealing stops at the first creature and leaves later cards in library order")
+    void stopsAtFirstCreature() {
+        Card revealedSpell = new SnuffOut();
+        Card firstCreature = new FreshVolunteers();
+        Card remainingLand = new Island();
+        Card remainingCreature = new FreshVolunteers();
+        Card deadCreature = prepareDeathTrigger(
+                List.of(revealedSpell, firstCreature, remainingLand, remainingCreature), true);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingLand, remainingCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(deadCreature, revealedSpell)
+                .doesNotContain(firstCreature, remainingLand, remainingCreature);
+    }
+
+    @Test
+    @DisplayName("A creature on top goes straight to hand without milling later cards")
+    void creatureOnTopLeavesRestUntouched() {
+        Card creature = new FreshVolunteers();
+        Card island = new Island();
+        prepareDeathTrigger(List.of(creature, island), true);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature, island);
+    }
+
+    @Test
+    @DisplayName("Accepting Foster spends the one mana remaining after the removal spell")
+    void acceptingSpendsPaymentMana() {
+        Card creature = new FreshVolunteers();
+        prepareDeathTrigger(List.of(creature), true);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+    }
+
     private Card prepareDeathTrigger(List<Card> library, boolean addPaymentMana) {
         harness.addToBattlefield(player1, new Foster());
         Card deadCreature = new FreshVolunteers();

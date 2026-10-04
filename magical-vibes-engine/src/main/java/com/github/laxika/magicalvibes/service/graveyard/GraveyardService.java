@@ -183,11 +183,15 @@ public class GraveyardService {
         deck.subList(0, cardsToMill).clear();
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
         for (Card card : milledCards) {
-            boolean entered = addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY, true);
+            boolean entered = addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY,
+                    true, null, null, null, false, false, false, null, true);
             if (entered) {
                 cardsEnteredGraveyard.add(card);
             }
         }
+        cardsEnteredGraveyard.stream().filter(card -> card.hasType(CardType.LAND)).findFirst()
+                .ifPresent(card -> triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(
+                        gameData, targetPlayerId, card, true));
         if (!cardsEnteredGraveyard.isEmpty()) {
             ManaCost manaCost = cardsEnteredGraveyard.getLast().getParsedManaCost();
             if (manaCost != null) {
@@ -470,6 +474,19 @@ public class GraveyardService {
                                        boolean suppressLibraryMillTriggers,
                                        boolean creatureDeathTriggersSuppressed,
                                        UUID cardControllerId) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryBatchTriggers,
+                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot,
+                selfGraveyardTriggerSuppressed, suppressLibraryMillTriggers,
+                creatureDeathTriggersSuppressed, cardControllerId, false);
+    }
+
+    private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                       boolean suppressLibraryBatchTriggers,
+                                       UUID battlefieldControllerId, UUID battlefieldPermanentId,
+                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
+                                       boolean suppressLibraryMillTriggers,
+                                       boolean creatureDeathTriggersSuppressed,
+                                       UUID cardControllerId, boolean suppressOncePerBatchLandTriggers) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         gameData.spellsWithPlotOnResolution.remove(card.getId());
         // CR 614.7 â€” self-replacement effects apply first
@@ -708,7 +725,8 @@ public class GraveyardService {
             }
         }
         if (!isToken(gameData, card) && card.hasType(CardType.LAND)) {
-            triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card,
+                    suppressOncePerBatchLandTriggers ? Boolean.FALSE : null);
             triggerCollectionService.checkAnyLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
             if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);

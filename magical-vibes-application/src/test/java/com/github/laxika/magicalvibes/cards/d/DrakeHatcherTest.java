@@ -94,7 +94,7 @@ class DrakeHatcherTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hatcher = harness.addToBattlefieldAndReturn(player1, new DrakeHatcher());
         hatcher.setSummoningSick(true);
-        hatcher.setTapped(true);
+        hatcher.tap();
         hatcher.setCounterCount(CounterType.INCUBATION, 3);
 
         harness.activateAbility(player1, 0, null, null);

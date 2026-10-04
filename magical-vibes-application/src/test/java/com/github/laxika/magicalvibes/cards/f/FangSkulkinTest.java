@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BlackKnight;
+import com.github.laxika.magicalvibes.cards.c.CreakwoodGhoul;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FangSkulkin.class, BlackKnight.class, GiantSpider.class, GrizzlyBears.class, CreakwoodGhoul.class})
 class FangSkulkinTest extends BaseCardTest {
 
     private Permanent addSkulkin() {
@@ -39,7 +42,6 @@ class FangSkulkinTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, blackCreature, Keyword.WITHER)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, blackCreature, Keyword.WITHER)).isFalse();
@@ -65,7 +67,6 @@ class FangSkulkinTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
@@ -84,5 +85,62 @@ class FangSkulkinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick and tapped, targeting an opposing black creature")
+    void activatesWhileSummoningSickAndTapped() {
+        Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new FangSkulkin());
+        skulkin.setSummoningSick(true);
+        skulkin.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CreakwoodGhoul());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.WITHER)).isTrue();
+        assertThat(skulkin.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate twice in one turn without tapping")
+    void canActivateRepeatedly() {
+        Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new FangSkulkin());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CreakwoodGhoul());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new CreakwoodGhoul());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.WITHER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.WITHER)).isTrue();
+        assertThat(skulkin.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target Fang Skulkin itself while it is colorless")
+    void cannotTargetColorlessCreature() {
+        Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new FangSkulkin());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, skulkin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only one mana")
+    void requiresTwoMana() {
+        harness.addToBattlefield(player1, new FangSkulkin());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CreakwoodGhoul());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.WITHER)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

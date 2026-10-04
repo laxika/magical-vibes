@@ -85,6 +85,123 @@ class ElspethsNightmareTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
 
+    @Test
+    @DisplayName("Entering the battlefield triggers chapter I immediately")
+    void enteringTriggersChapterI() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new ElspethsNightmare());
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Chapter I does not destroy a target whose power becomes greater than two")
+    void chapterIRechecksPowerOnResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(0);
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter II discards nothing when the hand contains only creatures and lands")
+    void chapterIIWithNoEligibleCards() {
+        Card land = new Forest();
+        Card creature = new GrizzlyBears();
+        harness.setHand(player2, List.of(land, creature));
+        addSagaWithLore(1);
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land, creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Chapter II chooses exactly one card when multiple noncreature, nonland cards are available")
+    void chapterIIChoosesOneOfMultipleEligibleCards() {
+        Card first = new ElspethsNightmare();
+        Card second = new ElspethsNightmare();
+        harness.setHand(player2, List.of(first, second));
+        addSagaWithLore(1);
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
+                .containsExactly(0, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Chapter III can target an empty graveyard and still sacrifices the Saga")
+    void chapterIIIWithEmptyGraveyard() {
+        Permanent saga = addSagaWithLore(2);
+        harness.setGraveyard(player2, List.of());
+        Card ownGraveyardCard = new ElspethsNightmare();
+        harness.setGraveyard(player1, List.of(ownGraveyardCard));
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownGraveyardCard, saga.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter III exiles every card type while leaving the controller's graveyard alone")
+    void chapterIIIExilesEntireOpponentGraveyard() {
+        Card land = new Forest();
+        Card enchantment = new ElspethsNightmare();
+        Card ownCard = new ElspethsNightmare();
+        harness.setGraveyard(player2, List.of(land, enchantment));
+        harness.setGraveyard(player1, List.of(ownCard));
+        Permanent saga = addSagaWithLore(2);
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(land, enchantment);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCard, saga.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter I requires a target when an eligible opponent creature exists")
+    void chapterICannotBeSkippedWithEligibleTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(0);
+
+        triggerNextChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(creature.getId());
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new ElspethsNightmare());
         saga.setCounterCount(CounterType.LORE, loreCounters);

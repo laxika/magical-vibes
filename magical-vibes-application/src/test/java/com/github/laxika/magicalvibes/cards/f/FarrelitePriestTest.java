@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(FarrelitePriest.class)
+@CardUsed({FarrelitePriest.class})
 class FarrelitePriestTest extends BaseCardTest {
 
     @Test
@@ -36,8 +36,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
@@ -55,8 +54,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         harness.passBothPriorities();
@@ -76,8 +74,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(2);
@@ -109,6 +106,63 @@ class FarrelitePriestTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Farrelite Priest");
     }
 
+    @Test
+    @DisplayName("Activation count resets on the next player's turn")
+    void activationCountResetsEachTurn() {
+        addReadyFarrelitePriest(player1);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Farrelite Priest");
+    }
+
+    @Test
+    @DisplayName("Two Priests count their activations independently")
+    void activationCountsAreIndependentForEachPriest() {
+        Permanent first = addReadyFarrelitePriest(player1);
+        Permanent second = addReadyFarrelitePriest(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.activateAbility(player1, 1, null, null);
+        }
+        harness.activateAbility(player1, 0, null, null);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(second).doesNotContain(first);
+        harness.assertInGraveyard(player1, "Farrelite Priest");
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Priest can filter mana immediately")
+    void tappedSummoningSickPriestCanActivateManaAbility() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player1, new FarrelitePriest());
+        priest.setSummoningSick(true);
+        priest.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(priest.isTapped()).isTrue();
+    }
     private Permanent addReadyFarrelitePriest(Player player) {
         return addCreatureReady(player, new FarrelitePriest());
     }

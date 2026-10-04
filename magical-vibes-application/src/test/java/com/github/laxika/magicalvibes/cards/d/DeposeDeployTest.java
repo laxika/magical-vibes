@@ -95,7 +95,7 @@ class DeposeDeployTest extends BaseCardTest {
     @DisplayName("Depose accepts blue mana and draws even when its own target is already tapped")
     void deposeWithBlueManaCanTargetOwnTappedCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
-        target.setTapped(true);
+        target.tap();
         harness.setLibrary(player1, List.of(new SauroformHybrid()));
         harness.setHand(player1, List.of(new DeposeDeploy()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -123,7 +123,7 @@ class DeposeDeployTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Sauroform Hybrid");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Depose // Deploy");
     }
 

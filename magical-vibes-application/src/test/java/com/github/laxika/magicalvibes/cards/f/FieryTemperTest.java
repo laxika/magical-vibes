@@ -49,8 +49,7 @@ class FieryTemperTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 3 damage to target creature, destroying a 1/1")
     void deals3DamageToCreature() {
-        harness.addToBattlefield(player2, new AvenTrooper());
-        UUID targetId = harness.getPermanentId(player2, "Aven Trooper");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new AvenTrooper()).getId();
         harness.setHand(player1, List.of(new FieryTemper()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -104,5 +103,55 @@ class FieryTemperTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Fiery Temper");
+    }
+
+    @Test
+    @DisplayName("Can target its own controller")
+    void canDamageController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Fiery Temper");
+    }
+
+    @Test
+    @DisplayName("Madness can target a creature during the opponent's turn")
+    void madnessCanDamageCreature() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new AvenTrooper()).getId();
+        FieryTemper temper = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Aven Trooper");
+        harness.assertInGraveyard(player2, "Aven Trooper");
+        harness.assertInGraveyard(player1, "Fiery Temper");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(temper.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unpayable madness puts the card into the graveyard without dealing damage")
+    void unpayableMadnessGoesToGraveyard() {
+        harness.setLife(player2, 20);
+        FieryTemper temper = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Fiery Temper");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(temper.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }

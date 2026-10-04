@@ -76,6 +76,93 @@ class ExperimentalSynthesizerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void enteringWithEmptyLibraryDoesNotExileAnything() {
+        harness.setHand(player1, List.of(new ExperimentalSynthesizer()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Experimental Synthesizer");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).isEmpty();
+    }
+
+    @Test
+    void sacrificeStillCreatesSamuraiWithEmptyLibrary() {
+        harness.addToBattlefieldAndReturn(player1, new ExperimentalSynthesizer());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Samurai")).hasSize(1);
+        Permanent samurai = findPermanent(player1, "Samurai");
+        assertThat(samurai.getCard().getPower()).isEqualTo(2);
+        assertThat(samurai.getCard().getToughness()).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Experimental Synthesizer");
+    }
+
+    @Test
+    void canPlayLandExiledByLeavingTrigger() {
+        Card forest = new Forest();
+        harness.addToBattlefieldAndReturn(player1, new ExperimentalSynthesizer());
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+        forceMainPhase(player1);
+        harness.castFromExile(player1, forest.getId());
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    void exiledSpellRequiresManaAndCanBeCastAfterPayment() {
+        Card exiledSpell = new ExperimentalSynthesizer();
+        harness.setHand(player1, List.of(new ExperimentalSynthesizer()));
+        harness.setLibrary(player1, List.of(exiledSpell));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledSpell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledSpell);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, exiledSpell.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Experimental Synthesizer")).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(exiledSpell);
+    }
+
+    @Test
+    void cannotActivateWithSpellOnStack() {
+        Permanent synthesizer = harness.addToBattlefieldAndReturn(player1, new ExperimentalSynthesizer());
+        harness.setHand(player1, List.of(new ExperimentalSynthesizer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        forceMainPhase(player1);
+        harness.castArtifact(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(synthesizer);
+    }
     private void forceMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

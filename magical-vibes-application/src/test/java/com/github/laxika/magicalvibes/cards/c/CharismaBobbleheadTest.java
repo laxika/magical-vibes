@@ -52,7 +52,7 @@ class CharismaBobbleheadTest extends BaseCardTest {
     @Test
     void tappedBobbleheadCannotCreateSoldiers() {
         Permanent bobblehead = harness.addToBattlefieldAndReturn(player1, new CharismaBobblehead());
-        bobblehead.setTapped(true);
+        bobblehead.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

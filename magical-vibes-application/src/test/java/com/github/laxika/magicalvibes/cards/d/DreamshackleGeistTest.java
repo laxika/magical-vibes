@@ -111,7 +111,7 @@ class DreamshackleGeistTest extends BaseCardTest {
     void lockExpiresAfterTargetsNextUntap() {
         addCreatureReady(player1, new DreamshackleGeist());
         Permanent target = addCreatureReady(player2, new DreamshackleGeist());
-        target.setTapped(true);
+        target.tap();
 
         advanceToCombat(player1);
         harness.handleListChoice(player1, LOCK_MODE);
@@ -138,7 +138,7 @@ class DreamshackleGeistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.performUntapStep(player2);
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player2);
 
         assertThat(target.isTapped()).isFalse();
@@ -149,7 +149,7 @@ class DreamshackleGeistTest extends BaseCardTest {
     void repeatedLocksExpireTogether() {
         addCreatureReady(player1, new DreamshackleGeist());
         Permanent target = addCreatureReady(player2, new DreamshackleGeist());
-        target.setTapped(true);
+        target.tap();
 
         for (int combat = 0; combat < 2; combat++) {
             advanceToCombat(player1);

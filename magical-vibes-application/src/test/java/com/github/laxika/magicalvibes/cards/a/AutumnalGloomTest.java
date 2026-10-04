@@ -110,11 +110,12 @@ class AutumnalGloomTest extends BaseCardTest {
     void gainingDeliriumAfterEndStepBeginsDoesNotTriggerTransformation() {
         harness.setGraveyard(player1, List.of(new DevilthornFox(), new Forest(), new DualShot()));
         harness.setLibrary(player1, List.of(new MagnifyingGlass()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+
         Permanent gloom = harness.addToBattlefieldAndReturn(player1, new AutumnalGloom());
 
         advanceToEndStep();
         assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
@@ -203,9 +204,14 @@ class AutumnalGloomTest extends BaseCardTest {
     @Test
     void transformedFaceDoesNotTransformBackAtNextEndStep() {
         Permanent ancient = transformGloom();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> harness.passUntil(player1, TurnStep.END_STEP));
 
         assertThat(gd.stack).isEmpty();
         assertThat(ancient.isTransformed()).isTrue();
@@ -217,10 +223,11 @@ class AutumnalGloomTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DevilthornFox(), new Forest(), new DualShot(), new MagnifyingGlass()));
         Permanent gloom = harness.addToBattlefieldAndReturn(player1, new AutumnalGloom());
         harness.addToBattlefield(player1, new StrionicResonator());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
 
         advanceToEndStep();
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 1, null, gd.stack.getLast().getTargetableId());
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(2);

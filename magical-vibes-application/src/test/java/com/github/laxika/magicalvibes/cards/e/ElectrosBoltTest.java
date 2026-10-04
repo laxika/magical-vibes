@@ -29,8 +29,7 @@ class ElectrosBoltTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
         harness.assertInGraveyard(player1, "Electro's Bolt");
@@ -47,8 +46,7 @@ class ElectrosBoltTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFromGraveyardTargeting(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Lurking Lizards");
         harness.assertInGraveyard(player1, "Electro's Bolt");
@@ -68,14 +66,88 @@ class ElectrosBoltTest extends BaseCardTest {
     @Test
     @DisplayName("Mayhem cannot cast it from the graveyard before it was discarded")
     void mayhemRequiresDiscardThisTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LurkingLizards());
         ElectrosBolt bolt = new ElectrosBolt();
         harness.setGraveyard(player1, List.of(bolt));
         prepareMainPhase();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Mayhem cannot cast the same card again after it resolves without another discard")
+    void mayhemCannotRecastAfterResolving() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new LurkingLizards());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new LurkingLizards());
+        ElectrosBolt bolt = new ElectrosBolt();
+        harness.setGraveyard(player1, List.of(bolt));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(bolt.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveFlashback(player1, 0, firstTarget.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(firstTarget);
+        harness.assertInGraveyard(player1, "Electro's Bolt");
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, secondTarget.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(secondTarget.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Mayhem does not allow casting during an opponent's main phase")
+    void mayhemRespectsActivePlayer() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LurkingLizards());
+        ElectrosBolt bolt = new ElectrosBolt();
+        harness.setGraveyard(player1, List.of(bolt));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(bolt.getId())));
+        prepareMainPhase();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Electro's Bolt");
+    }
+
+    @Test
+    @DisplayName("Mayhem does not allow casting while another spell is on the stack")
+    void mayhemRequiresEmptyStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RhinoBarrelingBrute());
+        ElectrosBolt discardedBolt = new ElectrosBolt();
+        harness.setGraveyard(player1, List.of(discardedBolt));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(discardedBolt.getId())));
+        harness.setHand(player1, List.of(new ElectrosBolt()));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Electro's Bolt");
+    }
+
+    @Test
+    @DisplayName("Discarding another card does not enable this card's mayhem")
+    void mayhemRequiresThisSpecificCardToBeDiscarded() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LurkingLizards());
+        ElectrosBolt bolt = new ElectrosBolt();
+        Forest discardedCard = new Forest();
+        harness.setGraveyard(player1, List.of(bolt, discardedCard));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(discardedCard.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Electro's Bolt");
     }
 
     private void prepareMainPhase() {

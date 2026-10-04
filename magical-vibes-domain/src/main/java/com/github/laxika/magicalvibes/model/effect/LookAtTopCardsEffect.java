@@ -77,7 +77,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param effectIfSelectedCardMatches optional effect inserted when a selected card matches
  * @param exactChooseCount when true, the choice must contain exactly {@code chooseCount} cards
  * @param grantHaste when true, a chosen permanent entering the battlefield gains haste
- * @param returnToHandAtEndStep when true, a chosen permanent returns to its owner's hand at the next end step
+ * @param returnToHandAtEndStep when true, grants a chosen permanent a recurring ability to return itself
+ *                              to its owner's hand at the beginning of its controller's end step
  * @param cloakChosenPermanents when true, chosen permanents enter the battlefield cloaked
  * @param payLifePerSelectedCard life paid for each selected card, when non-zero
  * @param battlefieldSelectionFollowUp optional follow-up after battlefield selections

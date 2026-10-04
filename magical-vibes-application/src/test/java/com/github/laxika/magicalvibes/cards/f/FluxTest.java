@@ -34,8 +34,7 @@ class FluxTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Flux resolves, active player chooses first (APNAP)
+        harness.castAndResolveSorcery(player1, 0, 0); // Flux resolves, active player chooses first (APNAP)
 
         // Player 1 (active) discards 2 and draws 2.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
@@ -79,8 +78,7 @@ class FluxTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new HillGiant()));
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleXValueChosen(player1, 0); // player 1 keeps its hand
         harness.handleXValueChosen(player2, 0); // player 2 keeps its hand
@@ -113,8 +111,7 @@ class FluxTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HillGiant()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleXValueChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
@@ -143,8 +140,7 @@ class FluxTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HillGiant()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleXValueChosen(player1, 0);
         harness.handleXValueChosen(player2, 1);
@@ -154,8 +150,7 @@ class FluxTest extends BaseCardTest {
                 .extracting(c -> c.getName())
                 .containsExactly("Hill Giant");
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.XValueChoice nextChoice =
                 gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
@@ -174,8 +169,7 @@ class FluxTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // player 1 has no cards, so player 2 chooses immediately
+        harness.castAndResolveSorcery(player1, 0, 0); // player 1 has no cards, so player 2 chooses immediately
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player2, 1);
@@ -208,8 +202,7 @@ class FluxTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HillGiant()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleXValueChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
@@ -222,5 +215,48 @@ class FluxTest extends BaseCardTest {
                 .singleElement()
                 .isInstanceOf(Plains.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+    }
+    @Test
+    @DisplayName("Both empty hands skip discard choices and only the controller draws")
+    void bothEmptyHandsStillDrawForController() {
+        harness.setHand(player1, List.of(new Flux()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Plains(), new Island()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Plains.class);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).singleElement().isInstanceOf(Island.class);
+        assertThat(gd.playerDecks.get(player2.getId())).singleElement().isInstanceOf(Forest.class);
+        harness.assertInGraveyard(player1, "Flux");
+    }
+
+    @Test
+    @DisplayName("A player can discard a selected subset and retain the other cards")
+    void discardSelectedSubsetOfHand() {
+        harness.setHand(player1, List.of(new Flux(), new GrizzlyBears(), new HillGiant(), new Mountain()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Island(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Grizzly Bears", "Mountain", "Plains", "Island");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().isInstanceOf(GrizzlyBears.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }

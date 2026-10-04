@@ -115,4 +115,63 @@ class ForethoughtAmuletTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(amulet);
     }
+
+    @Test
+    @DisplayName("Replaces damage above three from an instant")
+    void replacesLargerInstantDamage() {
+        harness.addToBattlefield(player1, new ForethoughtAmulet());
+        harness.setHand(player1, List.of(new ForethoughtAmulet(), new ForethoughtAmulet(),
+                new ForethoughtAmulet(), new ForethoughtAmulet()));
+        harness.setHand(player2, List.of(new StormSeeker()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Multiple amulets do not reduce the replacement damage below two")
+    void multipleAmuletsReplaceDamageOnlyOnce() {
+        harness.addToBattlefield(player1, new ForethoughtAmulet());
+        harness.addToBattlefield(player1, new ForethoughtAmulet());
+        harness.setHand(player2, List.of(new Pyrotechnics()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.forceActivePlayer(player2);
+
+        harness.castSorcery(player2, 0, Map.of(player1.getId(), 4));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Protects its controller from their own spell without protecting the opponent")
+    void replacesOwnSpellDamageOnlyToController() {
+        harness.addToBattlefield(player1, new ForethoughtAmulet());
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, Map.of(player1.getId(), 3, player2.getId(), 1));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Does not protect an opponent from qualifying spell damage")
+    void doesNotReplaceDamageToOpponent() {
+        harness.addToBattlefield(player1, new ForethoughtAmulet());
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
 }

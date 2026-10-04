@@ -61,6 +61,62 @@ class ElephantResurgenceTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Elephant")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Elephants use the graveyards at resolution rather than at casting")
+    void elephantsUseGraveyardsAtResolution() {
+        harness.castFromHand(player1, new ElephantResurgence(), "{1}{G}");
+        harness.setGraveyard(player1, List.of(new DivingGriffin()));
+        harness.setGraveyard(player2, List.of(new DivingGriffin(), new DivingGriffin()));
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Elephant")).hasSize(1);
+        assertThat(findPermanents(player2, "Elephant")).hasSize(1);
+        Permanent first = findPermanent(player1, "Elephant");
+        Permanent second = findPermanent(player2, "Elephant");
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing creature cards shrinks only that player's Elephant and kills it at zero toughness")
+    void elephantShrinksAndDiesWhenItsGraveyardEmpties() {
+        harness.setGraveyard(player1, List.of(new DivingGriffin(), new DivingGriffin()));
+        harness.setGraveyard(player2, List.of(new DivingGriffin()));
+        castElephantResurgence();
+
+        Permanent elephant = findPermanent(player1, "Elephant");
+        Permanent opponentElephant = findPermanent(player2, "Elephant");
+        harness.setGraveyard(player1, List.of(new DivingGriffin()));
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(1);
+
+        harness.setGraveyard(player1, List.of(new Abolish()));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Elephant");
+        assertThat(findPermanents(player2, "Elephant")).containsExactly(opponentElephant);
+        assertThat(gqs.getEffectivePower(gd, opponentElephant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentElephant)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An empty graveyard kills only its owner's Elephant")
+    void emptyGraveyardDoesNotKillOpponentsElephant() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new DivingGriffin()));
+
+        castElephantResurgence();
+
+        harness.assertNotOnBattlefield(player1, "Elephant");
+        assertThat(findPermanents(player2, "Elephant")).hasSize(1);
+        Permanent elephant = findPermanent(player2, "Elephant");
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(1);
+    }
+
     private void castElephantResurgence() {
         harness.castFromHand(player1, new ElephantResurgence(), "{1}{G}");
         harness.passBothPriorities();

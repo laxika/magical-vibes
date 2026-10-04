@@ -1785,12 +1785,24 @@ public class MultiPermanentChoiceHandlerService {
                         GameLog.cardThen(creature.getCard(), " is put on top of its owner's library."));
             }
         }
+        Map<UUID, List<Card>> bottomCardsByOwner = new java.util.LinkedHashMap<>();
         for (UUID creatureId : bottomIds) {
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            UUID ownerId = creature == null ? null : ownerId(gameData, creature);
             if (creature != null && permanentRemovalService.removePermanentToLibraryBottom(gameData, creature)) {
+                bottomCardsByOwner.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).add(creature.getCard());
                 gameLogService.append(gameData,
                         GameLog.cardThen(creature.getCard(), " is put on the bottom of its owner's library."));
             }
+        }
+        for (var ownerEntry : bottomCardsByOwner.entrySet()) {
+            if (ownerEntry.getValue().size() < 2) continue;
+            Set<UUID> cardIds = ownerEntry.getValue().stream().map(Card::getId)
+                    .collect(java.util.stream.Collectors.toSet());
+            gameData.playerDecks.get(ownerEntry.getKey()).removeIf(card -> cardIds.contains(card.getId()));
+            gameData.pendingLibraryBottomReorders.add(
+                    new com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest(
+                            ownerEntry.getKey(), List.copyOf(ownerEntry.getValue())));
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2739,6 +2751,11 @@ public class MultiPermanentChoiceHandlerService {
                     }
                     proliferatedCards.add(perm.getCard());
                 } else if (gameData.playerIds.contains(permId)) {
+                    if (gameData.playerExperienceCounters.getOrDefault(permId, 0) > 0) {
+                        gameData.playerExperienceCounters.merge(permId, 1, Integer::sum);
+                        triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, 1);
+                        proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+                    }
                     if (gameData.playerEnergyCounters.getOrDefault(permId, 0) > 0) {
                         int added = gameQueryService.replaceEnergyCounters(gameData, permId, 1);
                         if (added > 0) {

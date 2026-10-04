@@ -120,7 +120,7 @@ class CoralHelmTest extends BaseCardTest {
     @DisplayName("A tapped Helm can activate repeatedly and its boosts add together")
     void tappedHelmCanActivateRepeatedly() {
         Permanent helm = harness.addToBattlefieldAndReturn(player1, new CoralHelm());
-        helm.setTapped(true);
+        helm.tap();
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);

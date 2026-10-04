@@ -118,6 +118,63 @@ class EscapedShapeshifterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Loses only the protection whose opponent creature leaves")
+    void losesProtectionFromBlackWhileKeepingProtectionFromRed() {
+        harness.addToBattlefield(player1, new EscapedShapeshifter());
+        Permanent monk = harness.addToBattlefieldAndReturn(player2, new SoltariMonk());
+        harness.addToBattlefield(player2, new SoltariPriest());
+
+        assertThat(gqs.hasProtectionFrom(gd, shapeshifter(), CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, shapeshifter(), CardColor.RED)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, monk));
+
+        assertThat(gqs.hasProtectionFrom(gd, shapeshifter(), CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, shapeshifter(), CardColor.RED)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Own protected creatures do not grant protection or shadow")
+    void ownProtectedCreaturesDoNotGrantAbilities() {
+        harness.addToBattlefield(player1, new EscapedShapeshifter());
+        harness.addToBattlefield(player1, new SoltariMonk());
+        harness.addToBattlefield(player1, new SoltariPriest());
+
+        assertThat(gqs.hasProtectionFrom(gd, shapeshifter(), CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, shapeshifter(), CardColor.RED)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shapeshifter(), Keyword.SHADOW)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opposing Escaped Shapeshifter cannot supply protection")
+    void opponentCopyDoesNotGrantProtection() {
+        harness.addToBattlefield(player1, new EscapedShapeshifter());
+        Permanent opponentCopy = harness.addToBattlefieldAndReturn(player2, new EscapedShapeshifter());
+        harness.addToBattlefield(player2, new SoltariMonk());
+
+        assertThat(gqs.hasProtectionFrom(gd, shapeshifter(), CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opponentCopy, CardColor.BLACK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("First strike is lost independently while trample remains")
+    void losesFirstStrikeWhileKeepingTrample() {
+        harness.addToBattlefield(player1, new EscapedShapeshifter());
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new SandstoneWarrior());
+        harness.addToBattlefield(player2, new HornedSliver());
+
+        assertThat(gqs.hasKeyword(gd, shapeshifter(), Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shapeshifter(), Keyword.TRAMPLE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, warrior));
+
+        assertThat(gqs.hasKeyword(gd, shapeshifter(), Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shapeshifter(), Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Alone on the battlefield it has none of the four abilities")
     void grantsNothingAlone() {
         harness.addToBattlefield(player1, new EscapedShapeshifter());

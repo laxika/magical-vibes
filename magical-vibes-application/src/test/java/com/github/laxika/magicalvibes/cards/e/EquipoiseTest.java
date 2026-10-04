@@ -18,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Equipoise.class, Forest.class, GrizzlyBears.class, HillGiant.class, IronStar.class,
         Island.class, Juggernaut.class, Millstone.class, Plains.class})
@@ -27,6 +28,43 @@ class EquipoiseTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The controller cannot decline mandatory excess phasing")
+    void cannotChooseNoExcessLands() {
+        harness.addToBattlefield(player1, new Equipoise());
+        harness.addToBattlefield(player1, new Plains());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveUpkeepTargetingOpponent();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(island);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+    }
+
+    @Test
+    @DisplayName("The controller must choose the full excess count")
+    void cannotChooseFewerThanExcessLands() {
+        harness.addToBattlefield(player1, new Equipoise());
+        harness.addToBattlefield(player1, new Plains());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent keptLand = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        resolveUpkeepTargetingOpponent();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId(), forest.getId()));
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(island, forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(keptLand);
     }
 
     @Test

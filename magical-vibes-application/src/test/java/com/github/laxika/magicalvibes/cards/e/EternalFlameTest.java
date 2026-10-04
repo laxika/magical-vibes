@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +27,7 @@ class EternalFlameTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EternalFlame()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 17);
@@ -42,8 +42,7 @@ class EternalFlameTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EternalFlame()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
@@ -60,8 +59,7 @@ class EternalFlameTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EternalFlame()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
         harness.assertLife(player1, 18);
@@ -109,6 +107,63 @@ class EternalFlameTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Deals no damage with no Mountains")
+    void zeroMountainsDealsNoDamage() {
+        harness.setHand(player1, List.of(new EternalFlame()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Eternal Flame");
+    }
+
+    @Test
+    @DisplayName("An even Mountain count deals exactly half that much damage to you")
+    void evenMountainCountHalvesExactly() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new EternalFlame()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Lethal damage to both players results in a draw")
+    void lethalDamageToBothPlayersDraws() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setLife(player1, 2);
+        harness.setLife(player2, 3);
+        harness.setHand(player1, List.of(new EternalFlame()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new EternalFlame()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -142,7 +142,7 @@ class BurrogBanemakerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent banemaker = harness.addToBattlefieldAndReturn(player1, new BurrogBanemaker());
         banemaker.setSummoningSick(true);
-        banemaker.setTapped(true);
+        banemaker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FireAmbush.class, AlertShuInfantry.class})
+@CardUsed({FireAmbush.class, AlertShuInfantry.class, ChandraNalaar.class,
+        InvasionOfZendikar.class, AwakenedSkyclave.class})
 class FireAmbushTest extends BaseCardTest {
 
     @Test
@@ -29,7 +32,7 @@ class FireAmbushTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -73,6 +76,58 @@ class FireAmbushTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Fire Ambush");
+    }
+
+    @Test
+    @CardUsed({InvasionOfZendikar.class, AwakenedSkyclave.class})
+    @DisplayName("Fire Ambush removes three defense counters from a battle")
+    void deals3DamageToBattle() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
+        harness.setHand(player1, List.of(new FireAmbush()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, battle.getId());
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Invasion of Zendikar");
+    }
+
+    @Test
+    @DisplayName("Fire Ambush can target its controller")
+    void canDamageItsController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new FireAmbush()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Fire Ambush does not deal damage when its only target leaves")
+    void doesNotDealDamageWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlertShuInfantry());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new AlertShuInfantry());
+        harness.setHand(player1, List.of(new FireAmbush()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, target.getId());
+        GameData gd = harness.getGameData();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(other.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
         harness.assertInGraveyard(player1, "Fire Ambush");
     }
 }

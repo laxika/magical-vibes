@@ -117,7 +117,7 @@ class CapashenTemplarTest extends BaseCardTest {
     @DisplayName("A tapped Capashen Templar can activate its ability")
     void canActivateWhileTapped() {
         Permanent templar = addCreatureReady(player1, new CapashenTemplar());
-        templar.setTapped(true);
+        templar.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -36,7 +36,7 @@ class DragonMooseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        findPermanent(player1, "Dragon Moose").setTapped(true);
+        findPermanent(player1, "Dragon Moose").tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

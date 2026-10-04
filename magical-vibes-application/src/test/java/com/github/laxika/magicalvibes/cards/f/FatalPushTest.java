@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrayOgre;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FatalPush.class, AirElemental.class, Forest.class, GrayOgre.class,
-        GrizzlyBears.class, HillGiant.class, ZuranOrb.class})
+        GrizzlyBears.class, HillGiant.class, WalkingBallista.class, ZuranOrb.class})
 class FatalPushTest extends BaseCardTest {
 
     @Test
@@ -97,10 +98,98 @@ class FatalPushTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castFatalPush(UUID targetId) {
+    @Test
+    @DisplayName("Revolt can become active after Fatal Push is cast")
+    void revoltChecksDeparturesAtResolution() {
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.addToBattlefield(player1, new Forest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId();
         harness.setHand(player1, List.of(new FatalPush()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castInstant(player1, 0, targetId);
+
+        harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature dying does not enable your revolt")
+    void opposingPermanentLeavingDoesNotEnableRevolt() {
+        UUID smallId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        UUID largeId = harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId();
+
+        castFatalPush(smallId);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        castFatalPush(largeId);
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature you control")
+    void destroysOwnCreature() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+
+        castFatalPush(targetId);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Revolt still destroys creatures with mana value 2")
+    void revoltDestroysSmallCreature() {
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.addToBattlefield(player1, new Forest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        castFatalPush(targetId);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can target a creature with mana value 5 without revolt but does not destroy it")
+    void canTargetLargeCreatureWithoutRevolt() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new AirElemental()).getId();
+
+        castFatalPush(targetId);
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Fatal Push");
+    }
+
+    @Test
+    @DisplayName("X in a creature's mana cost counts as zero on the battlefield")
+    void destroysXCreatureRegardlessOfManaSpent() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new WalkingBallista()));
+        harness.addMana(player2, ManaColor.COLORLESS, 10);
+        harness.castArtifact(player2, 0, 5);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Walking Ballista");
+        UUID targetId = harness.getPermanentId(player2, "Walking Ballista");
+
+        castFatalPush(targetId);
+
+        harness.assertNotOnBattlefield(player2, "Walking Ballista");
+        harness.assertInGraveyard(player2, "Walking Ballista");
+    }
+
+    private void castFatalPush(UUID targetId) {
+        harness.setHand(player1, List.of(new FatalPush()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

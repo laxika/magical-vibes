@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -38,7 +39,6 @@ class FearlessFledglingTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(fledgling.getEffectivePower()).isEqualTo(2);
@@ -59,5 +59,46 @@ class FearlessFledglingTest extends BaseCardTest {
         assertThat(fledgling.getEffectivePower()).isEqualTo(1);
         assertThat(fledgling.getEffectiveToughness()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lands entering without being played each trigger one complete landfall ability")
+    void multipleLandEntriesEachAddACounter() {
+        Permanent fledgling = harness.addToBattlefieldAndReturn(player1, new FearlessFledgling());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(fledgling.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isZero();
+        assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(fledgling.getCounters().get(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(fledgling.getCounters().get(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(fledgling.getEffectivePower()).isEqualTo(3);
+        assertThat(fledgling.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature entering does not trigger landfall")
+    void nonlandEntryDoesNotTrigger() {
+        Permanent fledgling = harness.addToBattlefieldAndReturn(player1, new FearlessFledgling());
+
+        Permanent other = harness.enterBattlefieldAndReturn(player1, new FearlessFledgling());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(fledgling.getCounters()).isEmpty();
+        assertThat(other.getCounters()).isEmpty();
+        assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 }

@@ -120,7 +120,7 @@ class DeathpactAngelTest extends BaseCardTest {
     void tappedClericCannotActivate() {
         killAngel();
         Permanent cleric = readyCleric();
-        cleric.setTapped(true);
+        cleric.tap();
         payForCleric();
 
         assertThatThrownBy(() -> harness.activateAbility(player1,

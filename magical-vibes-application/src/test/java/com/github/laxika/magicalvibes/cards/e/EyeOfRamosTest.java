@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(EyeOfRamos.class)
 class EyeOfRamosTest extends BaseCardTest {
@@ -51,6 +52,37 @@ class EyeOfRamosTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Eye of Ramos cannot activate its tap ability again")
+    void tappedArtifactCannotProduceManaByTappingAgain() {
+        harness.addToBattlefield(player1, new EyeOfRamos());
+        GameData gd = harness.getGameData();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both mana abilities add mana to their controller's pool")
+    void abilitiesProduceManaForSecondPlayer() {
+        harness.addToBattlefield(player2, new EyeOfRamos());
+        GameData gd = harness.getGameData();
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.assertNotOnBattlefield(player2, "Eye of Ramos");
+        harness.assertInGraveyard(player2, "Eye of Ramos");
         assertThat(gd.stack).isEmpty();
     }
 }

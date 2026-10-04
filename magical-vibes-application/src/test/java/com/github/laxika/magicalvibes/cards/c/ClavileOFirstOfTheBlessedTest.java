@@ -99,7 +99,7 @@ class ClavileOFirstOfTheBlessedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         resolveAllTriggers();
 
-        attacker.setTapped(false);
+        attacker.untap();
         declareAttackers(List.of(0, 1));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(clavile.getId());
@@ -120,7 +120,7 @@ class ClavileOFirstOfTheBlessedTest extends BaseCardTest {
         harness.handleListChoice(player1, CardSubtype.VAMPIRE.name());
         resolveAllTriggers();
 
-        vampire.setTapped(false);
+        vampire.untap();
         declareAttackers(List.of(1));
         harness.handlePermanentChosen(player1, vampire.getId());
         resolveAllTriggers();

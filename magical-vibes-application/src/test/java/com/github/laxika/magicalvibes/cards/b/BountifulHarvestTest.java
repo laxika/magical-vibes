@@ -117,7 +117,7 @@ class BountifulHarvestTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.addToBattlefield(player1, new Island());
-        findPermanent(player1, "Island").setTapped(true);
+        findPermanent(player1, "Island").tap();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 22);

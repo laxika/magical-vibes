@@ -175,7 +175,7 @@ class DiaryOfDreamsTest extends BaseCardTest {
     void cannotActivateTappedDiaryEvenWhenFree() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
         diary.setCounterCount(CounterType.PAGE, 5);
-        diary.setTapped(true);
+        diary.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

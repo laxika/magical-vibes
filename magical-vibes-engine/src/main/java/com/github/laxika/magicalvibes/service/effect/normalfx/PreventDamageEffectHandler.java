@@ -239,8 +239,9 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                         && entry.getSourcePermanentId() != null) {
                     exemptPredicate = new PermanentIsSpecificPermanentPredicate(entry.getSourcePermanentId());
                 }
-                gameData.combatDamageExemptPredicate = exemptPredicate;
-                gameData.combatDamageExemptControllerId = entry.getControllerId();
+                gameData.combatDamageExemptPredicatesByController
+                        .computeIfAbsent(entry.getControllerId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                        .add(exemptPredicate);
                 gameLogService.append(gameData, GameLog.text(
                         "Combat damage from creatures that don't match the exemption will be prevented this turn."));
             }
@@ -491,7 +492,9 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) return;
 
-        gameData.combatDamageExemptPredicate = new PermanentIsSpecificPermanentPredicate(targetId);
+        gameData.combatDamageExemptPredicatesByController
+                .computeIfAbsent(entry.getControllerId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                .add(new PermanentIsSpecificPermanentPredicate(targetId));
         gameLogService.append(gameData, GameLog.textCardText(
                 "All combat damage that would be dealt by creatures other than ", target.getCard(),
                 " this turn is prevented."));

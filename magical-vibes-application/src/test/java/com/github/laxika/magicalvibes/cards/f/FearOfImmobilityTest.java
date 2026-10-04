@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WaryWatchdog;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,12 +12,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FearOfImmobility.class, GrizzlyBears.class})
+@CardUsed({FearOfImmobility.class, WaryWatchdog.class})
 class FearOfImmobilityTest extends BaseCardTest {
 
     @Test
     void tapsAndStunsOpponentCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WaryWatchdog());
 
         castFearOfImmobility(target);
 
@@ -27,7 +27,7 @@ class FearOfImmobilityTest extends BaseCardTest {
 
     @Test
     void tapsOwnCreatureWithoutPuttingOnStunCounter() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WaryWatchdog());
 
         castFearOfImmobility(target);
 
@@ -37,13 +37,12 @@ class FearOfImmobilityTest extends BaseCardTest {
 
     @Test
     void mayChooseNoTarget() {
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new WaryWatchdog());
         harness.setHand(player1, List.of(new FearOfImmobility()));
         addManaForFearOfImmobility();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -51,12 +50,54 @@ class FearOfImmobilityTest extends BaseCardTest {
         assertThat(opponentCreature.getCounterCount(CounterType.STUN)).isZero();
     }
 
+    @Test
+    void putsStunCounterOnAlreadyTappedOpponentCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WaryWatchdog());
+        target.setTapped(true);
+
+        castFearOfImmobility(target);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    void repeatedTriggersAccumulateStunCountersAndPreventSuccessiveUntaps() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WaryWatchdog());
+
+        castFearOfImmobility(target);
+        castFearOfImmobility(target);
+
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(2);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetItselfOnEnteringAnOtherwiseEmptyBattlefield() {
+        harness.setHand(player1, List.of(new FearOfImmobility()));
+        addManaForFearOfImmobility();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent fear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handlePermanentChosen(player1, fear.getId());
+        resolveAllTriggers();
+
+        assertThat(fear.isTapped()).isTrue();
+        assertThat(fear.getCounterCount(CounterType.STUN)).isZero();
+    }
+
     private void castFearOfImmobility(Permanent target) {
         harness.setHand(player1, List.of(new FearOfImmobility()));
         addManaForFearOfImmobility();
         harness.castCreature(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addManaForFearOfImmobility() {

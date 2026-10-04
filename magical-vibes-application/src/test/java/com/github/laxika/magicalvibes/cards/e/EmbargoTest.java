@@ -64,4 +64,53 @@ class EmbargoTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Tapped Embargo stays tapped and still locks nonland permanents and triggers")
+    void tappedEmbargoStillFunctions() {
+        Permanent embargo = harness.addToBattlefieldAndReturn(player1, new Embargo());
+        Permanent creature = addCreatureReady(player1, new DeadlyInsect());
+        embargo.tap();
+        creature.tap();
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(embargo.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Each Embargo independently causes its controller to lose 2 life")
+    void multipleCopiesEachCauseLifeLoss() {
+        harness.addToBattlefield(player1, new Embargo());
+        harness.addToBattlefield(player1, new Embargo());
+        harness.addToBattlefield(player2, new Embargo());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Nonland permanents untap normally once Embargo leaves the battlefield")
+    void untapLockEndsWhenEmbargoLeaves() {
+        Permanent embargo = harness.addToBattlefieldAndReturn(player1, new Embargo());
+        Permanent creature = addCreatureReady(player2, new DeadlyInsect());
+        creature.tap();
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(embargo);
+        gd.playerGraveyards.get(player1.getId()).add(embargo.getCard());
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
 }

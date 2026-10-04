@@ -98,4 +98,44 @@ class ElvenLyreTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, phalanx.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Elven Lyre is sacrificed as a cost before its boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new ElvenLyre());
+        Permanent phalanx = addCreatureReady(player1, new IcatianPhalanx());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, phalanx.getId());
+
+        harness.assertNotOnBattlefield(player1, "Elven Lyre");
+        harness.assertInGraveyard(player1, "Elven Lyre");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, phalanx)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, phalanx)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, phalanx)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, phalanx)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("An absent target prevents the boost without refunding Elven Lyre's sacrifice")
+    void removedTargetDoesNotBoostAnotherCreatureOrRefundSacrifice() {
+        harness.addToBattlefield(player1, new ElvenLyre());
+        Permanent target = addCreatureReady(player1, new IcatianPhalanx());
+        Permanent other = addCreatureReady(player1, new IcatianPhalanx());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Elven Lyre");
+        harness.assertInGraveyard(player1, "Elven Lyre");
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+    }
 }

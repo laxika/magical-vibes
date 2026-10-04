@@ -123,7 +123,7 @@ class CallerOfGalesTest extends BaseCardTest {
     @DisplayName("A tapped Caller of Gales cannot activate its ability")
     void tappedCallerCannotActivate() {
         Permanent source = addReadyCallerOfGales(player1);
-        source.setTapped(true);
+        source.tap();
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))

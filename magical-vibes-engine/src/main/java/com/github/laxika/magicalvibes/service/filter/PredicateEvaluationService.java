@@ -2733,7 +2733,10 @@ public class PredicateEvaluationService {
                     }
                     yield any;
                 }
-                yield permanent.getCounterCount(hasCountersPredicate.counterType()) > 0;
+                yield permanent.getCounterCount(hasCountersPredicate.counterType()) > 0
+                        && (hasCountersPredicate.expectedLastRemovalVersion() == null
+                        || hasCountersPredicate.expectedLastRemovalVersion().equals(permanent.getLastCounterRemovalVersions()
+                        .getOrDefault(hasCountersPredicate.counterType(), 0L)));
             }
             case PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate ignored ->
                     gameData != null
@@ -2749,18 +2752,8 @@ public class PredicateEvaluationService {
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
             case PermanentDealtNoncombatDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtNoncombatDamageThisTurn.contains(permanent.getId());
-            case PermanentDealtDamageToAnythingThisTurnPredicate ignored -> {
-                if (gameData == null) {
-                    yield false;
-                }
-                Set<UUID> combatVictims = gameData.combatDamageToPlayersThisTurn.get(permanent.getId());
-                Set<UUID> noncombatVictims = gameData.noncombatDamageToPlayersThisTurn.get(permanent.getId());
-                Set<UUID> damagedCreatures =
-                        gameData.creatureCardsDamagedThisTurnBySourcePermanent.get(permanent.getId());
-                yield (combatVictims != null && !combatVictims.isEmpty())
-                        || (noncombatVictims != null && !noncombatVictims.isEmpty())
-                        || (damagedCreatures != null && !damagedCreatures.isEmpty());
-            }
+            case PermanentDealtDamageToAnythingThisTurnPredicate ignored ->
+                    gameData != null && gameData.damageDealtThisTurnBySource.getOrDefault(permanent.getId(), 0) > 0;
             case PermanentDealtCombatDamageToPlayerThisCombatPredicate ignored ->
                     gameData != null
                             && gameData.combatDamageToPlayersThisCombat
@@ -4430,30 +4423,8 @@ public class PredicateEvaluationService {
         GameData gameData = filterContext != null ? filterContext.gameData() : null;
 
         return switch (predicate) {
-            case PermanentHasSubtypePredicate p -> {
-                boolean creatureSubtype = gameQueryService.isCreatureSubtype(p.subtype());
-                // Legacy guard kept: "loses all creature types" is absolute and also nullifies
-                // the Changeling grant (the state already had its creature types stripped).
-                if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
-                    yield false;
-                }
-                yield state.hasSubtype(p.subtype())
-                        || (creatureSubtype && (state.hasKeyword(Keyword.CHANGELING) || (gameData == null
-                        ? permanent.hasKeyword(Keyword.CHANGELING)
-                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING))));
-            }
-            case PermanentHasAnySubtypePredicate p -> {
-                Set<CardSubtype> wanted = permanent.isLosesAllCreatureTypesUntilEndOfTurn()
-                        ? p.subtypes().stream()
-                                .filter(st -> !gameQueryService.isCreatureSubtype(st))
-                                .collect(java.util.stream.Collectors.toSet())
-                        : p.subtypes();
-                boolean hasSubtype = wanted.stream().anyMatch(state::hasSubtype);
-                boolean canUseChangeling = wanted.stream().anyMatch(gameQueryService::isCreatureSubtype);
-                yield hasSubtype || (canUseChangeling && (state.hasKeyword(Keyword.CHANGELING) || (gameData == null
-                        ? permanent.hasKeyword(Keyword.CHANGELING)
-                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING))));
-            }
+            case PermanentHasSubtypePredicate p -> state.hasSubtype(p.subtype());
+            case PermanentHasAnySubtypePredicate p -> p.subtypes().stream().anyMatch(state::hasSubtype);
             case PermanentHasAdventurePredicate ignored ->
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentIsCreaturePredicate ignored ->

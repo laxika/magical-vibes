@@ -111,4 +111,52 @@ class FemerefKnightTest extends BaseCardTest {
         assertThat(knight.isTapped()).isFalse();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
     }
+
+    @Test
+    @DisplayName("Each non-flanking blocker gets its own flanking penalty")
+    void flankingShrinksEachBlocker() {
+        Permanent knight = addCreatureReady(player1, new FemerefKnight());
+        knight.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new IronTuskElephant());
+        Permanent secondBlocker = addCreatureReady(player2, new IronTuskElephant());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(secondBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick knight can activate its vigilance ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent knight = addCreatureReady(player1, new FemerefKnight());
+        knight.setSummoningSick(true);
+        knight.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
+        assertThat(knight.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted vigilance lets the knight attack without tapping")
+    void attacksWithoutTappingAfterGainingVigilance() {
+        Permanent knight = addCreatureReady(player1, new FemerefKnight());
+        addCreatureReady(player2, new IronTuskElephant());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(knight.isAttacking()).isTrue();
+        assertThat(knight.isTapped()).isFalse();
+    }
 }

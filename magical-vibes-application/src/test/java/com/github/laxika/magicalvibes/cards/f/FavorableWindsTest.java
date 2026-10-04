@@ -2,16 +2,22 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.CloudElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OneWithTheWind;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FavorableWinds.class, CloudElemental.class, GrizzlyBears.class,
+        OneWithTheWind.class, Opalescence.class})
 class FavorableWindsTest extends BaseCardTest {
-
-    // ===== Static boost: creatures with flying get +1/+1 =====
 
     @Test
     @DisplayName("Own creature with flying gets +1/+1")
@@ -82,5 +88,46 @@ class FavorableWindsTest extends BaseCardTest {
         // Cloud Elemental is 2/3; with two +1/+1 boosts = 4/5
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A creature gaining flying receives the boost and loses it when flying is lost")
+    void boostTracksGrantedFlying() {
+        harness.addToBattlefield(player1, new FavorableWinds());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new OneWithTheWind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "One With the Wind"));
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Favorable Winds boosts itself when it becomes a creature with flying")
+    void animatedWindsWithFlyingBoostsItself() {
+        harness.addToBattlefield(player1, new FavorableWinds());
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent winds = findPermanent(player1, "Favorable Winds");
+        assertThat(gqs.getEffectivePower(gd, winds)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, winds)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new OneWithTheWind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, winds.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, winds)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, winds)).isEqualTo(5);
     }
 }

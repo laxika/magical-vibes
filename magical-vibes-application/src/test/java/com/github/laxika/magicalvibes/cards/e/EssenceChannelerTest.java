@@ -43,9 +43,7 @@ class EssenceChannelerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(channeler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -65,8 +63,7 @@ class EssenceChannelerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, channeler.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, channeler.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -78,5 +75,67 @@ class EssenceChannelerTest extends BaseCardTest {
 
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(ally.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Death still triggers and requires a target when there are no counters")
+    void deathWithoutCountersStillRequiresTarget() {
+        Permanent channeler = addCreatureReady(player1, new EssenceChanneler());
+        Permanent ally = addCreatureReady(player1, new EssenceChanneler());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player2, 0, channeler.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(ally.getId());
+        harness.handlePermanentChosen(player1, ally.getId());
+        resolveAllTriggers();
+
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each separate life gain gives one counter regardless of the amount gained")
+    void separateLifeGainsGiveSeparateCounters() {
+        Permanent channeler = addCreatureReady(player1, new EssenceChanneler());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        resolveAllTriggers();
+
+        assertThat(channeler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent life gain and gaining zero life do not give counters")
+    void otherPlayersLifeGainAndZeroLifeDoNotTrigger() {
+        Permanent channeler = addCreatureReady(player1, new EssenceChanneler());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+        resolveAllTriggers();
+
+        assertThat(channeler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Only its controller's life loss grants keywords, even after that life is regained")
+    void keywordsDependOnControllerLifeLossRatherThanNetLifeChange() {
+        Permanent channeler = addCreatureReady(player1, new EssenceChanneler());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "test"));
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.VIGILANCE)).isFalse();
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 1, "test"));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.VIGILANCE)).isTrue();
     }
 }

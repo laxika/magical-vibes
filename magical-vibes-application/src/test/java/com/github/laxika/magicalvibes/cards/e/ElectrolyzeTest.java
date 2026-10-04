@@ -124,4 +124,60 @@ class ElectrolyzeTest extends BaseCardTest {
                 third.getId(), 1
         ))).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void drawsAndDoesNotRedistributeDamageWhenOneTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.setLibrary(player1, List.of(new BatteringWurm()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, Map.of(first.getId(), 1, second.getId(), 1));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+        harness.assertInHand(player1, "Battering Wurm");
+        harness.assertInGraveyard(player1, "Electrolyze");
+    }
+
+    @Test
+    void doesNotDrawWhenItsOnlyTargetLeaves() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.setLibrary(player1, List.of(new BatteringWurm()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, Map.of(wurm.getId(), 2));
+        gd.playerBattlefields.get(player2.getId()).remove(wurm);
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Battering Wurm");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Electrolyze");
+    }
+
+    @Test
+    void doesNotDrawWhenBothTargetsLeave() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BatteringWurm());
+        harness.setHand(player1, List.of(new Electrolyze()));
+        harness.setLibrary(player1, List.of(new BatteringWurm()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, Map.of(first.getId(), 1, second.getId(), 1));
+        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(first, second));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Battering Wurm");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Electrolyze");
+    }
 }

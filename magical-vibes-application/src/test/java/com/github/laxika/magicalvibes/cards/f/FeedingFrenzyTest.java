@@ -27,8 +27,7 @@ class FeedingFrenzyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FeedingFrenzy()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isZero();
         assertThat(target.getEffectiveToughness()).isZero();
@@ -43,8 +42,7 @@ class FeedingFrenzyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FeedingFrenzy()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
@@ -79,11 +77,48 @@ class FeedingFrenzyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FeedingFrenzy()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The resolved debuff does not change when more Zombies enter")
+    void zombieCountIsFixedAfterResolution() {
+        harness.addToBattlefield(player1, new FesteringGoblin());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Avarax());
+        harness.setHand(player1, List.of(new FeedingFrenzy()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player2, new FesteringGoblin());
+        harness.addToBattlefield(player2, new FesteringGoblin());
+        harness.runStateBasedActions();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Zombies in hands, graveyards, exile, and libraries are not counted")
+    void ignoresZombiesOutsideTheBattlefield() {
+        harness.addToBattlefield(player2, new FesteringGoblin());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Avarax());
+        harness.setHand(player1, List.of(new FeedingFrenzy(), new FesteringGoblin()));
+        harness.setHand(player2, List.of(new FesteringGoblin()));
+        harness.setGraveyard(player1, List.of(new FesteringGoblin()));
+        harness.setGraveyard(player2, List.of(new FesteringGoblin()));
+        harness.setExile(player1, List.of(new FesteringGoblin()));
+        harness.setLibrary(player2, List.of(new FesteringGoblin()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 
     @Test

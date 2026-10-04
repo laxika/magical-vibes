@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.CarrionWall;
+import com.github.laxika.magicalvibes.cards.s.SealOfFire;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FanaticalDevotion.class, CarrionWall.class})
+@CardUsed({FanaticalDevotion.class, CarrionWall.class, SealOfFire.class})
 class FanaticalDevotionTest extends BaseCardTest {
 
     @Test
@@ -67,5 +68,59 @@ class FanaticalDevotionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Regeneration replaces lethal damage, taps the creature, and clears its damage")
+    void regeneratesFromLethalDamage() {
+        harness.addToBattlefield(player1, new FanaticalDevotion());
+        harness.addToBattlefield(player1, new CarrionWall());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CarrionWall());
+        harness.addToBattlefield(player2, new SealOfFire());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        harness.activateAbility(player2, 1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Carrion Wall");
+        harness.assertNotInGraveyard(player2, "Carrion Wall");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("The targeted creature can be sacrificed as the cost and cannot regenerate from sacrifice")
+    void canSacrificeTargetWithRegenerationShield() {
+        harness.addToBattlefield(player1, new FanaticalDevotion());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new CarrionWall());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CarrionWall());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Carrion Wall");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Fanatical Devotion");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new FanaticalDevotion());
+        harness.addToBattlefield(player1, new CarrionWall());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Carrion Wall");
     }
 }

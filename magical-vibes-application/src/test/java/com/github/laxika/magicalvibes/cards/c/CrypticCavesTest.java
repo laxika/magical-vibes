@@ -68,7 +68,7 @@ class CrypticCavesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CrypticCaves());
         addFourLands();
         for (int i = 1; i <= 4; i++) {
-            gd.playerBattlefields.get(player1.getId()).get(i).setTapped(true);
+            gd.playerBattlefields.get(player1.getId()).get(i).tap();
         }
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of());

@@ -60,17 +60,53 @@ class EmpyrialArmorTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new RedwoodTreefolk());
-        harness.addToBattlefield(player1, new Touchstone());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Touchstone());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new EmpyrialArmor()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Touchstone");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Boost decreases immediately as the Aura controller's hand empties")
+    void boostDecreasesWithHandSize() {
+        Permanent treefolk = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EmpyrialArmor());
+        aura.setAttachedTo(treefolk.getId());
+        harness.setHand(player1, List.of(new Touchstone(), new RedwoodTreefolk()));
+
+        assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(8);
+
+        harness.setHand(player1, List.of(new Touchstone()));
+        assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(7);
+
+        harness.setHand(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Multiple Auras add their own controllers' hand counts only to the enchanted creature")
+    void multipleAurasUseIndependentControllerHands() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new EmpyrialArmor());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player2, new EmpyrialArmor());
+        firstAura.setAttachedTo(enchanted.getId());
+        secondAura.setAttachedTo(enchanted.getId());
+        harness.setHand(player1, List.of(new Touchstone()));
+        harness.setHand(player2, List.of(new Touchstone(), new RedwoodTreefolk()));
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(6);
     }
 }

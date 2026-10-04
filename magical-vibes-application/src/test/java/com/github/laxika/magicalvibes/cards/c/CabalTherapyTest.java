@@ -235,7 +235,7 @@ class CabalTherapyTest extends BaseCardTest {
     @DisplayName("Flashback can sacrifice a tapped creature with summoning sickness without paying mana")
     void flashbackCanSacrificeTappedNewCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
-        creature.setTapped(true);
+        creature.tap();
         CabalTherapy therapy = new CabalTherapy();
         Card discarded = new BreakingPoint();
         harness.setGraveyard(player1, List.of(therapy));

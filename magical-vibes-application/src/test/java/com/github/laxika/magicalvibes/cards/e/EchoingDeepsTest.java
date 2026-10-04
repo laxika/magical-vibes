@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.c.CosmiumConfluence;
+import com.github.laxika.magicalvibes.cards.s.SunkenCitadel;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EchoingDeeps.class, Forest.class})
+@CardUsed({EchoingDeeps.class, Forest.class, SunkenCitadel.class, CosmiumConfluence.class})
 class EchoingDeepsTest extends BaseCardTest {
 
     @Test
@@ -62,5 +67,98 @@ class EchoingDeepsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void uncopiedLandProducesColorlessMana() {
+        harness.setHand(player1, List.of(new EchoingDeeps()));
+        harness.setGraveyard(player1, List.of(new CosmiumConfluence()));
+        harness.setGraveyard(player2, List.of());
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void decliningCopyRetainsColorlessManaAbility() {
+        harness.setHand(player1, List.of(new EchoingDeeps()));
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void copyingOwnLandAddsCaveAndLeavesOriginalInGraveyard() {
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new EchoingDeeps()));
+        harness.setGraveyard(player1, List.of(new CosmiumConfluence(), forest));
+
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        Permanent entered = findPermanent(player1, "Forest");
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(gqs.effectiveLandTypes(gd, entered)).contains(CardSubtype.FOREST, CardSubtype.CAVE);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void copiedLandMakesItsAsEntersChoiceAndUsesItsManaAbility() {
+        harness.setHand(player1, List.of(new EchoingDeeps()));
+        harness.setGraveyard(player2, List.of(new SunkenCitadel()));
+
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "BLUE");
+
+        Permanent entered = findPermanent(player1, "Sunken Citadel");
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(entered.getChosenColor()).isEqualTo(CardColor.BLUE);
+        assertThat(gqs.effectiveLandTypes(gd, entered)).containsOnly(CardSubtype.CAVE);
+        entered.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void landPutOntoBattlefieldByAnEffectStillOffersCopyChoice() {
+        harness.setLibrary(player1, List.of(new EchoingDeeps()));
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new CosmiumConfluence()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 0, 0));
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        Permanent entered = findPermanent(player1, "Forest");
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(gqs.effectiveLandTypes(gd, entered)).contains(CardSubtype.FOREST, CardSubtype.CAVE);
+        assertThat(gd.landsPlayedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

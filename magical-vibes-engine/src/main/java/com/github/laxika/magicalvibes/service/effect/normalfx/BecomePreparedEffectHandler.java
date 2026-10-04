@@ -16,7 +16,8 @@ import java.util.UUID;
  */
 @Component
 @RequiredArgsConstructor
-public class BecomePreparedEffectHandler implements NormalEffectHandlerBean {
+public class BecomePreparedEffectHandler implements NormalEffectHandlerBean,
+        com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PreparedSupport preparedSupport;
@@ -24,6 +25,11 @@ public class BecomePreparedEffectHandler implements NormalEffectHandlerBean {
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return BecomePreparedEffect.class;
+    }
+
+    @Override
+    public void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent, CardEffect effect) {
+        preparedSupport.preparePermanent(gameData, enteringPermanent, controllerId);
     }
 
     @Override

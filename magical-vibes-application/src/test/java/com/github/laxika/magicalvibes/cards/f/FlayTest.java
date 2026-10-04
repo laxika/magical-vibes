@@ -24,8 +24,7 @@ class FlayTest extends BaseCardTest {
         harness.setHand(player2, List.of(new PlagueFiend(), new ZerapaMinotaur()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -46,8 +45,7 @@ class FlayTest extends BaseCardTest {
         harness.setHand(player2, List.of(new PlagueFiend(), new ZerapaMinotaur()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -62,8 +60,7 @@ class FlayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.setHand(player2, List.of(new PlagueFiend(), new ZerapaMinotaur()));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -77,8 +74,7 @@ class FlayTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Flay(), new PlagueFiend(), new ZerapaMinotaur()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -86,5 +82,58 @@ class FlayTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Flay resolves against an empty hand without discarding anything")
+    void emptyHand() {
+        harness.setHand(player1, List.of(new Flay()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setHand(player2, List.of());
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Flay");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A one-card hand loses its only card before the payment decision")
+    void singleCardHand() {
+        harness.setHand(player1, List.of(new Flay()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setHand(player2, List.of(new PlagueFiend()));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Plague Fiend");
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Flay");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The caster can pay the generic cost with colored mana when targeting themselves")
+    void casterPaysWithColoredMana() {
+        harness.setHand(player1, List.of(new Flay(), new PlagueFiend(), new ZerapaMinotaur()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Flay");
+        assertThat(gd.stack).isEmpty();
     }
 }

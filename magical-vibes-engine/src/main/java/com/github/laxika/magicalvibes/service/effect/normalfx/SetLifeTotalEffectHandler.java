@@ -83,7 +83,7 @@ public class SetLifeTotalEffectHandler implements NormalEffectHandlerBean {
     }
 
     private int evaluate(GameData gameData, SetLifeTotalEffect e, AmountContext context) {
-        return Math.max(0, amountEvaluationService.evaluate(gameData, e.amount(), context));
+        return amountEvaluationService.evaluate(gameData, e.amount(), context);
     }
 
     private void applyAndLog(GameData gameData, UUID playerId, int newLife) {

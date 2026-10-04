@@ -72,4 +72,62 @@ class FlowstoneThopterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("The boost and flying apply only when the ability resolves and only to its source")
+    void affectsOnlyItsSourceOnResolution() {
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new FlowstoneThopter());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new FlowstoneThopter());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new FlowstoneThopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
+        for (Permanent unaffected : new Permanent[]{other, opposing}) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.FLYING)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Thopter can activate using colored mana")
+    void canActivateWhileTappedAndSummoningSickWithColoredMana() {
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new FlowstoneThopter());
+        thopter.setTapped(true);
+        thopter.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
+        assertThat(thopter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Four activations put the Thopter into its owner's graveyard at zero toughness")
+    void diesWhenRepeatedActivationsReduceToughnessToZero() {
+        harness.addToBattlefield(player1, new FlowstoneThopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int activation = 0; activation < 4; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Flowstone Thopter");
+        harness.assertInGraveyard(player1, "Flowstone Thopter");
+    }
 }

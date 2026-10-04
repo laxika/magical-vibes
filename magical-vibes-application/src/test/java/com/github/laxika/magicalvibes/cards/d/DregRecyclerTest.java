@@ -102,7 +102,7 @@ class DregRecyclerTest extends BaseCardTest {
     @DisplayName("A tapped Recycler cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent recycler = addReadyRecycler(player1);
-        recycler.setTapped(true);
+        recycler.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

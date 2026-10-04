@@ -378,7 +378,11 @@ public class StackResolutionService {
         Permanent perm = new Permanent(entry.getBestowOriginalCard() != null
                 ? entry.getBestowOriginalCard() : entry.getPhysicalCard());
         if (entry.isCastFaceDown()) {
-            perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            if (entry.isCastWithDisguise()) {
+                perm.setFaceDownAsDisguised();
+            } else {
+                perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            }
             if (entry.isFaceDownTurnsFaceUpOnDamageOrTap()) {
                 perm.addTemporaryTriggeredEffect(EffectSlot.STATIC, new TurnFaceUpOnDamageOrTapEffect());
             }
@@ -446,6 +450,15 @@ public class StackResolutionService {
             permanent.tap();
         }
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
+        if (permanent.isSacrificeAtNextCleanup()) {
+            permanent.setSacrificeAtNextCleanup(false);
+            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger(
+                    entry.getControllerId(), entry.getCard(),
+                    new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
+                            new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(
+                                    permanent.getId()),
+                            com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.EACH_PLAYER)));
+        }
         gameData.transferCardsExiledByPermanent(entry.getCard().getId(), permanent.getId());
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(

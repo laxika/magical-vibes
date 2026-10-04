@@ -120,7 +120,7 @@ class DeviantGleeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
 
-        creature.setTapped(true);
+        creature.tap();
         harness.addMana(player2, ManaColor.RED, 1);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();

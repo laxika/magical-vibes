@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Ferrovore.class, Spellbook.class, LeoninScimitar.class, Memnite.class})
 class FerrovoreTest extends BaseCardTest {
 
     @Test
@@ -53,7 +57,7 @@ class FerrovoreTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID spellbookId = findPermanent(player1, "Spellbook").getId();
+        UUID spellbookId = harness.getPermanentId(player1, "Spellbook");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, spellbookId);
@@ -87,7 +91,7 @@ class FerrovoreTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID spellbookId = findPermanent(player1, "Spellbook").getId();
+        UUID spellbookId = harness.getPermanentId(player1, "Spellbook");
 
         // First activation: 2 artifacts, must choose
         harness.activateAbility(player1, 0, null, null);
@@ -143,4 +147,56 @@ class FerrovoreTest extends BaseCardTest {
         assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("The power boost expires after the turn ends")
+    void boostExpiresAtEndOfTurn() {
+        Permanent ferrovore = harness.addToBattlefieldAndReturn(player1, new Ferrovore());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(ferrovore.getEffectivePower()).isEqualTo(2);
+        assertThat(ferrovore.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped artifact creature can be sacrificed and the boost waits for resolution")
+    void sacrificesTappedArtifactCreatureAsCost() {
+        Permanent ferrovore = harness.addToBattlefieldAndReturn(player1, new Ferrovore());
+        Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
+        memnite.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        harness.assertInGraveyard(player1, "Memnite");
+        assertThat(ferrovore.getEffectivePower()).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
+        assertThat(ferrovore.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsArtifact() {
+        harness.addToBattlefield(player1, new Ferrovore());
+        harness.addToBattlefield(player2, new Memnite());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
+
+        harness.assertOnBattlefield(player2, "Memnite");
+        assertThat(gd.stack).isEmpty();
+    }
 }

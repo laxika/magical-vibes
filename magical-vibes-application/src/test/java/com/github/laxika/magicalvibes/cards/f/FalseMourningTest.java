@@ -65,4 +65,41 @@ class FalseMourningTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).noneMatch(c -> c.getId().equals(target.getId()));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
+
+    @Test
+    @DisplayName("Returns only the targeted creature and preserves library order")
+    void returnsOnlyTargetedCreatureAndPreservesLibraryOrder() {
+        Card target = new ForestBear();
+        Card other = new ShuFootSoldiers();
+        Card libraryTop = new ShuFootSoldiers();
+        Card libraryBottom = new ForestBear();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setLibrary(player1, List.of(libraryTop, libraryBottom));
+        harness.setHand(player1, List.of(new FalseMourning()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(target, libraryTop, libraryBottom);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other)
+                .doesNotContain(target);
+        harness.assertInGraveyard(player1, "False Mourning");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a graveyard target")
+    void cannotCastWithoutGraveyardTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new FalseMourning()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInHand(player1, "False Mourning");
+    }
 }

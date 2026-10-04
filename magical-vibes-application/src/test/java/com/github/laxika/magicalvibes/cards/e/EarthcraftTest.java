@@ -148,6 +148,63 @@ class EarthcraftTest extends BaseCardTest {
         assertThat(land.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Tapping the creature pays the cost before the land untaps on resolution")
+    void paysCostBeforeResolution() {
+        addEarthcraft(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+
+        harness.activateAbility(player1, 0, null, land.getId());
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Earthcraft leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent earthcraft = addEarthcraft(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, earthcraft));
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(land.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Earthcraft");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing the target does not refund the tapped creature cost")
+    void missingTargetDoesNotRefundCost() {
+        addEarthcraft(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, land));
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addEarthcraft(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Earthcraft());
     }

@@ -218,7 +218,7 @@ class CytospawnShamblerTest extends BaseCardTest {
     @DisplayName("The activated ability can target the tapped, summoning-sick Shambler itself")
     void canGrantTrampleToItselfWhileTappedAndSummoningSick() {
         Permanent shambler = castShambler();
-        shambler.setTapped(true);
+        shambler.tap();
         assertThat(shambler.isSummoningSick()).isTrue();
 
         harness.addMana(player1, ManaColor.GREEN, 1);

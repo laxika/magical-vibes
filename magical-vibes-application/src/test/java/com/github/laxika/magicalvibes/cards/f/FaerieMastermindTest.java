@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +33,7 @@ class FaerieMastermindTest extends BaseCardTest {
         draw(player2);
         assertThat(gd.stack).hasSize(1);
 
-        resolveTopOfStack();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
@@ -68,11 +69,94 @@ class FaerieMastermindTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
-    private void draw(Player player) {
-        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
+    @Test
+    @DisplayName("Activated ability triggers an extra draw when it gives the opponent their second card")
+    void activatedAbilityTriggersOnOpponentsSecondDraw() {
+        harness.addToBattlefield(player1, new FaerieMastermind());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new FaerieMastermind(), new FaerieMastermind()));
+        harness.setLibrary(player2, List.of(new FaerieMastermind(), new FaerieMastermind()));
+        draw(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 
-    private void resolveTopOfStack() {
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+    @Test
+    @DisplayName("Counts the opponent's first draw even when it happened before entering")
+    void countsDrawBeforeEnteringBattlefield() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new FaerieMastermind()));
+        harness.setLibrary(player2, List.of(new FaerieMastermind(), new FaerieMastermind()));
+        draw(player2);
+        harness.addToBattlefield(player1, new FaerieMastermind());
+
+        draw(player2);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger on the third draw after entering following the second draw")
+    void enteringAfterSecondDrawDoesNotTriggerOnThirdDraw() {
+        harness.setLibrary(player2, List.of(new FaerieMastermind(), new FaerieMastermind(),
+                new FaerieMastermind()));
+        draw(player2);
+        draw(player2);
+        harness.addToBattlefield(player1, new FaerieMastermind());
+
+        draw(player2);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when its controller draws their second card")
+    void controllersSecondDrawDoesNotTrigger() {
+        harness.addToBattlefield(player1, new FaerieMastermind());
+        harness.setLibrary(player1, List.of(new FaerieMastermind(), new FaerieMastermind()));
+
+        draw(player1);
+        draw(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can trigger again on the opponent's second draw in a new turn")
+    void drawCountResetsEachTurn() {
+        harness.addToBattlefield(player1, new FaerieMastermind());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new FaerieMastermind(), new FaerieMastermind(),
+                new FaerieMastermind()));
+        harness.setLibrary(player2, List.of(new FaerieMastermind(), new FaerieMastermind(),
+                new FaerieMastermind(), new FaerieMastermind()));
+        harness.forceActivePlayer(player1);
+        draw(player2);
+        draw(player2);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        draw(player2);
+        assertThat(gd.stack).isEmpty();
+        draw(player2);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    private void draw(Player player) {
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
     }
 }

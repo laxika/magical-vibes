@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
@@ -19,9 +21,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FangrenMarauder.class, CruelEdict.class, GrizzlyBears.class, Memnite.class,
+        MindStone.class, Naturalize.class, WrathOfGod.class})
 class FangrenMarauderTest extends BaseCardTest {
-
-    // ===== Triggering =====
 
     @Test
     @DisplayName("Triggers when an opponent's artifact creature is destroyed")
@@ -31,8 +33,7 @@ class FangrenMarauderTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Memnite");
@@ -52,8 +53,7 @@ class FangrenMarauderTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player1, 0, mindStoneId);
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Mind Stone");
@@ -77,8 +77,7 @@ class FangrenMarauderTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player2, 0, mindStoneId);
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Mind Stone");
@@ -96,8 +95,7 @@ class FangrenMarauderTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -107,8 +105,6 @@ class FangrenMarauderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Accepting the may ability gains 5 life")
     void acceptingMayAbilityGains5Life() {
@@ -117,8 +113,7 @@ class FangrenMarauderTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
@@ -143,8 +138,7 @@ class FangrenMarauderTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Cruel Edict
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // May ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
@@ -161,8 +155,6 @@ class FangrenMarauderTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Multiple triggers =====
-
     @Test
     @DisplayName("Triggers separately for each artifact destroyed")
     void triggersForEachArtifactSeparately() {
@@ -178,8 +170,7 @@ class FangrenMarauderTest extends BaseCardTest {
         // Destroy first artifact
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, memniteId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player1, 0, memniteId);
 
         // May ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
@@ -192,8 +183,7 @@ class FangrenMarauderTest extends BaseCardTest {
         // Destroy second artifact
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, mindStoneId);
-        harness.passBothPriorities(); // Resolve Naturalize
+        harness.castAndResolveInstant(player1, 0, mindStoneId);
 
         // May ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
@@ -203,5 +193,52 @@ class FangrenMarauderTest extends BaseCardTest {
 
         // Should have gained 5 life twice = 10 total
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 10);
+    }
+
+    @Test
+    @DisplayName("Artifact sacrificed as an activation cost triggers before the activated ability resolves")
+    void triggersForArtifactSacrificedAsCost() {
+        harness.addToBattlefield(player1, new FangrenMarauder());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.assertInGraveyard(player1, "Mind Stone");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 5);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Sees every artifact creature dying simultaneously with Marauder")
+    void triggersWhenMarauderAndArtifactsDieTogether() {
+        harness.addToBattlefield(player1, new FangrenMarauder());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.addToBattlefield(player2, new Memnite());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fangren Marauder");
+        harness.assertInGraveyard(player1, "Memnite");
+        harness.assertInGraveyard(player2, "Memnite");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, lifeBefore + 10);
+        harness.assertLife(player2, opponentLifeBefore);
+        assertThat(gd.stack).isEmpty();
     }
 }

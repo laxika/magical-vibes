@@ -124,7 +124,7 @@ class CliffsideRescuerTest extends BaseCardTest {
     void tappedRescuerCannotActivate() {
         Permanent rescuer = addCreatureReady(player1, new CliffsideRescuer());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        rescuer.setTapped(true);
+        rescuer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EdificeOfAuthority.class, GrizzlyBears.class, LlanowarElves.class, Forest.class})
 class EdificeOfAuthorityTest extends BaseCardTest {
 
-    // ===== First ability: can't attack this turn + brick counter =====
 
     @Test
     @DisplayName("First ability adds a brick counter and stops the target from attacking this turn")
@@ -54,7 +54,6 @@ class EdificeOfAuthorityTest extends BaseCardTest {
         assertThatCode(() -> declareBearsAttack(bears)).doesNotThrowAnyException();
     }
 
-    // ===== Second ability: activation gate on brick counters =====
 
     @Test
     @DisplayName("Second ability can't be activated with fewer than three brick counters")
@@ -83,7 +82,6 @@ class EdificeOfAuthorityTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
     }
 
-    // ===== Second ability: detain (can't attack / block / activate) =====
 
     @Test
     @DisplayName("Detained creature can't attack")
@@ -108,10 +106,7 @@ class EdificeOfAuthorityTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
@@ -144,14 +139,12 @@ class EdificeOfAuthorityTest extends BaseCardTest {
         assertThatCode(() -> declareBearsAttack(bears)).doesNotThrowAnyException();
     }
 
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         addReadyEdifice(player1);
-        Permanent land = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, land.getId()))
@@ -159,13 +152,85 @@ class EdificeOfAuthorityTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("An illegal target prevents the first ability from adding a brick counter")
+    void removedTargetPreventsBrickCounter() {
+        Permanent edifice = addReadyEdifice(player1);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerGraveyards.get(player2.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        assertThat(edifice.getCounterCount(CounterType.BRICK)).isZero();
+        assertThat(edifice.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("First ability does not prevent activating the target's mana ability")
+    void firstAbilityAllowsManaAbility() {
+        addReadyEdifice(player1);
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 0, null, elves.getId());
+        harness.passBothPriorities();
+
+        assertThatCode(() -> harness.tapPermanent(player1, 1)).doesNotThrowAnyException();
+        assertThat(elves.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Second ability still resolves after its source leaves the battlefield")
+    void secondAbilityResolvesWithoutSource() {
+        Permanent edifice = addReadyEdifice(player1);
+        edifice.setCounterCount(CounterType.BRICK, 3);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(edifice);
+        gd.playerGraveyards.get(player1.getId()).add(edifice.getCard());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Brick counters are neither spent nor checked again during resolution")
+    void secondAbilityDoesNotSpendOrRecheckCounters() {
+        Permanent edifice = addReadyEdifice(player1);
+        edifice.setCounterCount(CounterType.BRICK, 3);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        assertThat(edifice.getCounterCount(CounterType.BRICK)).isEqualTo(3);
+        edifice.setCounterCount(CounterType.BRICK, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareBearsAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Second ability persists through cleanup and the opponent's turn start")
+    void secondAbilityPersistsUntilControllersTurn() {
+        Permanent bears = detainOwnCreature(new GrizzlyBears());
+        gd.expireEndOfTurnFloatingEffects();
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+
+        assertThatThrownBy(() -> declareBearsAttack(bears))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
 
     private Permanent addReadyEdifice(Player player) {
-        Permanent perm = new Permanent(new EdificeOfAuthority());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new EdificeOfAuthority());
     }
 
     /** Detains a creature player1 controls via the second ability (three brick counters). */
@@ -181,11 +246,7 @@ class EdificeOfAuthorityTest extends BaseCardTest {
 
     /** Attempts to declare the given player1 creature (battlefield index 1) as an attacker. */
     private void declareBearsAttack(Permanent creature) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(creature);
-        gs.declareAttackers(gd, player1, List.of(index));
+        declareAttackers(player1, List.of(index));
     }
 }

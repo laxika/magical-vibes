@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({EssenceSliver.class, FireWhip.class, MoorishCavalry.class, SpinedSliver.class, Squire.class})
 class EssenceSliverTest extends BaseCardTest {
 
@@ -115,5 +117,43 @@ class EssenceSliverTest extends BaseCardTest {
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Essence Sliver controls and is the source of the trigger for an opposing Sliver")
+    void essenceControlsTriggerForOpposingSliverDamage() {
+        Permanent essence = addCreatureReady(player1, new EssenceSliver());
+        Permanent spined = addCreatureReady(player2, new SpinedSliver());
+        Permanent fireWhip = harness.addToBattlefieldAndReturn(player2, new FireWhip());
+        fireWhip.setAttachedTo(spined.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(essence.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    @DisplayName("Multiple Essence Slivers each trigger for the same damage")
+    void multipleEssenceSliversGainLifeSeparately() {
+        addCreatureReady(player1, new EssenceSliver());
+        addCreatureReady(player1, new EssenceSliver());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 26);
+        harness.assertLife(player2, 17);
     }
 }

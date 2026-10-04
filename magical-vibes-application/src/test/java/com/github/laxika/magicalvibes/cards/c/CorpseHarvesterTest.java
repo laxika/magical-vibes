@@ -98,7 +98,7 @@ class CorpseHarvesterTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         var harvester = addCreatureReady(player1, new CorpseHarvester());
-        harvester.setTapped(true);
+        harvester.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

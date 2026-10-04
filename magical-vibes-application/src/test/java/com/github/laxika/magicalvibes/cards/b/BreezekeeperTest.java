@@ -74,7 +74,7 @@ class BreezekeeperTest extends BaseCardTest {
     @DisplayName("Phasing happens before untapping and preserves counters")
     void phasingPreservesTappedStateAndCounters() {
         Permanent keeper = addCreatureReady(player1, new Breezekeeper());
-        keeper.setTapped(true);
+        keeper.tap();
         keeper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.performUntapStep(player1);

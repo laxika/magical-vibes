@@ -18,12 +18,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AdderStaffBoggartTest extends BaseCardTest {
 
     private Permanent castAdderStaffBoggart() {
+        return castAdderStaffBoggart(true);
+    }
+
+    private Permanent castAdderStaffBoggart(boolean completeChoices) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new AdderStaffBoggart(), "{1}{R}");
         harness.passBothPriorities(); // resolve creature spell (ETB clash trigger placed)
         harness.passBothPriorities(); // resolve ETB clash effect
 
+        if (completeChoices) {
+            while (gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.Scry.class) != null) {
+                var choice = gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.Scry.class);
+                gs.handleInteractionAnswer(gd, choice.playerId().equals(player1.getId()) ? player1 : player2,
+                        new com.github.laxika.magicalvibes.service.interaction.InteractionAnswer.ScryOrder(List.of(0), List.of()));
+            }
+        }
         return findPermanent(player1, "Adder-Staff Boggart");
     }
 
@@ -73,7 +84,7 @@ class AdderStaffBoggartTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AdderStaffBoggart(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new AdderStaffBoggart()));
 
-        castAdderStaffBoggart();
+        castAdderStaffBoggart(false);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }

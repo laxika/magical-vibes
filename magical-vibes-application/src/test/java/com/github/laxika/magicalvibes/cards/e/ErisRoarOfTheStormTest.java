@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +31,7 @@ class ErisRoarOfTheStormTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Eris, Roar of the Storm");
     }
@@ -56,10 +56,11 @@ class ErisRoarOfTheStormTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Dragon Elemental")).isEmpty();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Dragon Elemental");
         assertThat(tokens).hasSize(1);
@@ -67,10 +68,129 @@ class ErisRoarOfTheStormTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.DRAGON, CardSubtype.ELEMENTAL);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING, Keyword.PROWESS);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
+    }
+
+    @Test
+    void duplicateManaValuesDoNotProvideAdditionalReduction() {
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock(), new Divination()));
+        harness.setHand(player1, List.of(new ErisRoarOfTheStorm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentGraveyardDoesNotReduceCost() {
+        harness.setGraveyard(player2, List.of(new Shock(), new Divination()));
+        harness.setHand(player1, List.of(new ErisRoarOfTheStorm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void erisCastAsFirstSpellCountsTowardSecondSpellTrigger() {
+        harness.setHand(player1, List.of(new ErisRoarOfTheStorm(), new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(1);
+        Permanent eris = findPermanent(player1, "Eris, Roar of the Storm");
+        assertThat(gqs.getEffectivePower(gd, eris)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, eris)).isEqualTo(5);
+    }
+
+    @Test
+    void secondCreatureSpellCreatesTokenWithoutTriggeringProwess() {
+        harness.addToBattlefield(player1, new ErisRoarOfTheStorm());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Dragon Elemental")).isEmpty();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(1);
+        Permanent eris = findPermanent(player1, "Eris, Roar of the Storm");
+        assertThat(gqs.getEffectivePower(gd, eris)).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotTriggerWhenEnteringAfterSecondSpellWasAlreadyCast() {
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new ErisRoarOfTheStorm());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dragon Elemental")).isEmpty();
+    }
+
+    @Test
+    void triggersAgainOnSecondSpellDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new ErisRoarOfTheStorm());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(1);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(2);
+    }
+
+    @Test
+    void opponentsSpellsNeitherCountNorTriggerProwess() {
+        Permanent eris = harness.addToBattlefieldAndReturn(player1, new ErisRoarOfTheStorm());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dragon Elemental")).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, eris)).isEqualTo(4);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Dragon Elemental")).isEmpty();
     }
 }
