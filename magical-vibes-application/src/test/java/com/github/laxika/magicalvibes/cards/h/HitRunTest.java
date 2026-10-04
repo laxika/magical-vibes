@@ -74,7 +74,7 @@ class HitRunTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Run boosts each attacking creature by the number of other attacking creatures you control")
+    @DisplayName("Run boosts only your attackers but counts all other attacking creatures")
     void runBoostsOwnAttackersOnly() {
         Permanent ownAttacker = addCreatureReady(player1, new AssaultZeppelid());
         ownAttacker.setAttacking(true);
@@ -92,10 +92,43 @@ class HitRunTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, RUN, List.of());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, ownAttacker)).isEqualTo(4);
-        assertThat(gqs.getEffectivePower(gd, secondOwnAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownAttacker)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondOwnAttacker)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, ownNonAttacker)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Hit deals no damage when the target has no artifact or creature")
+    void hitDoesNothingWithoutSacrificablePermanent() {
+        harness.setHand(player1, List.of(new HitRun()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalInstant(player1, 0, HIT, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Hit // Run");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Run gives a lone attacker no power boost")
+    void runDoesNotCountAttackerItself() {
+        Permanent attacker = addCreatureReady(player1, new AssaultZeppelid());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of(new HitRun()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalInstant(player1, 0, RUN, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
     }
 
     @Test
