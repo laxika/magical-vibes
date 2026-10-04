@@ -141,4 +141,30 @@ class GuidedStrikeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Guided Strike");
     }
+
+    @Test
+    @DisplayName("Two copies stack their boosts and each draws, without affecting another creature")
+    void repeatedCastsStackBoostsAndEachDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
+        int powerBefore = gqs.getEffectivePower(gd, target);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, target);
+        int otherPowerBefore = gqs.getEffectivePower(gd, other);
+        Card firstDraw = new BenalishInfantry();
+        Card secondDraw = new BenalishInfantry();
+        harness.setHand(player1, List.of(new GuidedStrike(), new GuidedStrike()));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(toughnessBefore);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(otherPowerBefore);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
