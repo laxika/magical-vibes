@@ -58,4 +58,42 @@ class GaelicatTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, gaelicat)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, gaelicat)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Gains the boost as the second artifact enters")
+    void gainsBoostAsSecondArtifactEnters() {
+        Permanent gaelicat = harness.addToBattlefieldAndReturn(player1, new Gaelicat());
+
+        assertThat(gqs.getEffectivePower(gd, gaelicat)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Spellbook());
+        assertThat(gqs.getEffectivePower(gd, gaelicat)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Spellbook());
+        assertThat(gqs.getEffectivePower(gd, gaelicat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gaelicat)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("More than two artifacts still grant only +2/+0")
+    void moreThanTwoArtifactsGrantOnlyOneBoost() {
+        Permanent gaelicat = harness.addToBattlefieldAndReturn(player1, new Gaelicat());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+
+        assertThat(gqs.getEffectivePower(gd, gaelicat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gaelicat)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("One artifact controlled by each player does not meet the threshold")
+    void artifactsAreNotCombinedAcrossControllers() {
+        Permanent gaelicat = harness.addToBattlefieldAndReturn(player1, new Gaelicat());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new Spellbook());
+
+        assertThat(gqs.getEffectivePower(gd, gaelicat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, gaelicat)).isEqualTo(3);
+    }
 }
