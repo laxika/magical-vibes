@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.k.KazanduStomper;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,19 +15,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GuulDrazMucklord.class, GrizzlyBears.class})
+@CardUsed({GuulDrazMucklord.class, GnarlidColony.class, KazanduStomper.class})
 class GuulDrazMucklordTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Guul Draz Mucklord dies, controller is prompted to choose a creature they control")
     void deathTriggerPromptsForTarget() {
         harness.addToBattlefield(player1, new GuulDrazMucklord());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GnarlidColony());
         setupCombatWhereMucklordDies();
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Guul Draz Mucklord");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -38,24 +37,22 @@ class GuulDrazMucklordTest extends BaseCardTest {
     @DisplayName("When Guul Draz Mucklord dies, it puts a +1/+1 counter on the chosen creature")
     void putsCounterOnTargetCreature() {
         harness.addToBattlefield(player1, new GuulDrazMucklord());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new GnarlidColony());
+        UUID colonyId = harness.getPermanentId(player1, "Gnarlid Colony");
 
         setupCombatWhereMucklordDies();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bearId);
+        harness.handlePermanentChosen(player1, colonyId);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
 
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(bearId))
-                .findFirst().orElseThrow();
-        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        Permanent colony = findPermanent(player1, "Gnarlid Colony");
+        assertThat(colony.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(colony.getEffectivePower()).isEqualTo(3);
+        assertThat(colony.getEffectiveToughness()).isEqualTo(3);
     }
 
     @Test
@@ -66,10 +63,42 @@ class GuulDrazMucklordTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
                 .anyMatch(log -> log.contains("no valid targets"));
+    }
+
+    @Test
+    @DisplayName("The death trigger offers only surviving creatures its controller controls")
+    void deathTriggerExcludesOpposingCreatures() {
+        harness.addToBattlefield(player1, new GuulDrazMucklord());
+        Permanent colony = harness.addToBattlefieldAndReturn(player1, new GnarlidColony());
+        harness.addToBattlefield(player2, new GnarlidColony());
+        setupCombatWhereMucklordDies();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validPermanentIds()).containsExactly(colony.getId());
+    }
+
+    @Test
+    @DisplayName("The death trigger does not give a counter to another creature when its target leaves")
+    void targetLeavingBeforeResolutionDoesNotRedirectCounter() {
+        harness.addToBattlefield(player1, new GuulDrazMucklord());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GnarlidColony());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GnarlidColony());
+        setupCombatWhereMucklordDies();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void setupCombatWhereMucklordDies() {
@@ -77,14 +106,10 @@ class GuulDrazMucklordTest extends BaseCardTest {
         mucklord.setSummoningSick(false);
         mucklord.setAttacking(true);
 
-        GrizzlyBears blocker = new GrizzlyBears();
-        blocker.setPower(3);
-        blocker.setToughness(3);
-        Permanent blockerPermanent = new Permanent(blocker);
+        Permanent blockerPermanent = harness.addToBattlefieldAndReturn(player2, new KazanduStomper());
         blockerPermanent.setSummoningSick(false);
         blockerPermanent.setBlocking(true);
         blockerPermanent.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPermanent);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
