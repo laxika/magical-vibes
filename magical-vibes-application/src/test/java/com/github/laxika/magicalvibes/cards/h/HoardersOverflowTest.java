@@ -33,13 +33,88 @@ class HoardersOverflowTest extends BaseCardTest {
         Permanent overflow = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(overflow.getCounterCount(CounterType.STASH)).isEqualTo(1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(overflow.getCounterCount(CounterType.STASH)).isEqualTo(1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(overflow.getCounterCount(CounterType.STASH)).isEqualTo(2);
+    }
+
+    @Test
+    void expendingMoreThanFourTriggersOnlyOnce() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent overflow = harness.addToBattlefieldAndReturn(player1, new HoardersOverflow());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(),
+                new GrizzlyBears(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+        }
+        assertThat(overflow.getCounterCount(CounterType.STASH)).isZero();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
         assertThat(overflow.getCounterCount(CounterType.STASH)).isEqualTo(1);
 
         harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        assertThat(overflow.getCounterCount(CounterType.STASH)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsManaSpendingDoesNotAddStashCounters() {
+        Permanent overflow = harness.addToBattlefieldAndReturn(player1, new HoardersOverflow());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.castInstant(player2, 0, player1.getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(overflow.getCounterCount(CounterType.STASH)).isZero();
+    }
+
+    @Test
+    void zeroStashCountersStillDiscardsTheHand() {
+        Permanent overflow = harness.addToBattlefieldAndReturn(player1, new HoardersOverflow());
+        harness.setHand(player1, List.of(new HoardersOverflow()));
+        harness.setLibrary(player1, List.of(new HoardersOverflow()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(overflow);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.passBothPriorities();
-        assertThat(overflow.getCounterCount(CounterType.STASH)).isEqualTo(2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void emptyHandDoesNotPreventDrawing() {
+        Permanent overflow = harness.addToBattlefieldAndReturn(player1, new HoardersOverflow());
+        overflow.setCounterCount(CounterType.STASH, 1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HoardersOverflow(), new HoardersOverflow()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(overflow.getCard());
     }
 
     @Test
