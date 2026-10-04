@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.h;
+﻿package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.cards.c.ChillToTheBone;
@@ -102,5 +102,44 @@ class HaakonStromgaldScourgeTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         harness.assertInGraveyard(player1, "Haakon, Stromgald Scourge");
+    }
+
+    @Test
+    @DisplayName("Knight casting permission ends when Haakon dies")
+    void knightCastingPermissionEndsWhenHaakonDies() {
+        Permanent haakon = harness.addToBattlefieldAndReturn(player1, new HaakonStromgaldScourge());
+        harness.setGraveyard(player1, List.of(new WhiteShieldCrusader()));
+        harness.setHand(player2, List.of(new ChillToTheBone()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player2, 0, haakon.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Card cannot be cast from graveyard");
+        harness.assertInGraveyard(player1, "White Shield Crusader");
+    }
+
+    @Test
+    @DisplayName("Haakon can be cast again after dying without another Haakon on the battlefield")
+    void canBeCastAgainAfterDying() {
+        Permanent haakon = harness.addToBattlefieldAndReturn(player1, new HaakonStromgaldScourge());
+        harness.setHand(player2, List.of(new ChillToTheBone()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player2, 0, haakon.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Haakon, Stromgald Scourge");
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Haakon, Stromgald Scourge");
+        harness.assertNotInGraveyard(player1, "Haakon, Stromgald Scourge");
+        harness.assertLife(player1, 18);
     }
 }
