@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.f.FlickerOfFate;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowDodger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,10 +21,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HoofprintsOfTheStag.class, GoldmeadowDodger.class})
+@CardUsed({HoofprintsOfTheStag.class, GoldmeadowDodger.class, FlickerOfFate.class})
 class HoofprintsOfTheStagTest extends BaseCardTest {
 
-    // ===== Draw trigger: "you may put a hoofprint counter on this enchantment" =====
 
     @Test
     @DisplayName("Accepting the draw trigger puts a hoofprint counter on the enchantment")
@@ -71,7 +71,6 @@ class HoofprintsOfTheStagTest extends BaseCardTest {
         assertThat(hoofprints.getCounterCount(CounterType.HOOFPRINT)).isZero();
     }
 
-    // ===== Activated ability: create a 4/4 white Elemental with flying =====
 
     @Test
     @DisplayName("Removing four hoofprint counters creates a 4/4 white Elemental with flying")
@@ -148,11 +147,67 @@ class HoofprintsOfTheStagTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
-    // The controller draws a card — ON_CONTROLLER_DRAWS puts the "you may" trigger on the stack
-    // (CR 603.5); resolving it surfaces the MayAbilityChoice so a choice can be made.
+    @Test
+    @DisplayName("A draw trigger cannot put a counter on the enchantment after it leaves and returns")
+    void oldDrawTriggerDoesNotAffectReturnedEnchantment() {
+        Permanent hoofprints = harness.addToBattlefieldAndReturn(player1, new HoofprintsOfTheStag());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLibrary(player1, List.of(new GoldmeadowDodger()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        harness.setHand(player1, List.of(new FlickerOfFate()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, hoofprints.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Hoofprints of the Stag");
+        assertThat(returned.getId()).isNotEqualTo(hoofprints.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(returned.getCounterCount(CounterType.HOOFPRINT)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each copy receives only the counter from its own draw trigger")
+    void twoCopiesReceiveIndependentCounters() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HoofprintsOfTheStag());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HoofprintsOfTheStag());
+
+        drawAndSurfaceMay(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(first.getCounterCount(CounterType.HOOFPRINT)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.HOOFPRINT)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activation during upkeep pays counters immediately and resolves even if the source leaves")
+    void upkeepActivationPaysCountersBeforeResolvingAndSurvivesSourceRemoval() {
+        Permanent hoofprints = harness.addToBattlefieldAndReturn(player1, new HoofprintsOfTheStag());
+        hoofprints.setCounterCount(CounterType.HOOFPRINT, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(hoofprints.getCounterCount(CounterType.HOOFPRINT)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, hoofprints));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Elemental")).isZero();
+    }
+
     private void drawAndSurfaceMay(Player player) {
         harness.setLibrary(player, List.of(new GoldmeadowDodger())); // ensure a card to draw
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
     }
 }
