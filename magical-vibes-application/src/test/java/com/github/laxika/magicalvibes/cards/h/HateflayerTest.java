@@ -64,6 +64,66 @@ class HateflayerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Untapping is paid immediately, before the damage resolves")
+    void untapsAsActivationCost() {
+        Permanent source = addTapped(player1, new Hateflayer());
+        harness.addMana(player1, ManaColor.RED, 3);
+        enterMainWithPriority(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(source.isTapped()).isFalse();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("A tapped creature with summoning sickness cannot pay the untap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Hateflayer());
+        source.tap();
+        harness.addMana(player1, ManaColor.RED, 3);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Damage uses the source's power at resolution")
+    void usesCurrentPowerAtResolution() {
+        Permanent source = addTapped(player1, new Hateflayer());
+        harness.addMana(player1, ManaColor.RED, 3);
+        enterMainWithPriority(player1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("An unpaid mana cost does not untap the source")
+    void insufficientManaPreventsActivation() {
+        Permanent source = addTapped(player1, new Hateflayer());
+        harness.addMana(player1, ManaColor.RED, 2);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent addTapped(Player player, Card card) {
         Permanent perm = addCreatureReady(player, card);
         perm.tap();
