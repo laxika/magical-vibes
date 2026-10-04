@@ -36,8 +36,7 @@ class HavocSowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(sower.getEffectivePower()).isEqualTo(3);
         assertThat(sower.getEffectiveToughness()).isEqualTo(3);
@@ -48,6 +47,68 @@ class HavocSowerTest extends BaseCardTest {
     void requiresColorlessMana() {
         Permanent sower = addCreatureReady(player1, new HavocSower());
         harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        assertThat(sower.getEffectivePower()).isEqualTo(3);
+        assertThat(sower.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic part of the activation cost")
+    void acceptsMixedMana() {
+        Permanent sower = addCreatureReady(player1, new HavocSower());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sower.getEffectivePower()).isEqualTo(5);
+        assertThat(sower.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and boost only their source")
+    void repeatedActivationsBoostOnlySource() {
+        Permanent sower = addCreatureReady(player1, new HavocSower());
+        Permanent other = addCreatureReady(player1, new HavocSower());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(sower.getEffectivePower()).isEqualTo(7);
+        assertThat(sower.getEffectiveToughness()).isEqualTo(5);
+        assertThat(other.getEffectivePower()).isEqualTo(3);
+        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability works while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent sower = harness.addToBattlefieldAndReturn(player1, new HavocSower());
+        sower.setSummoningSick(true);
+        sower.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sower.getEffectivePower()).isEqualTo(5);
+        assertThat(sower.getEffectiveToughness()).isEqualTo(4);
+        assertThat(sower.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One colorless mana cannot pay the entire activation cost")
+    void requiresGenericManaAsWell() {
+        Permanent sower = addCreatureReady(player1, new HavocSower());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
