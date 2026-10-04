@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FogOfWar.class, GrizzlyBears.class, HillGiant.class, AirElemental.class})
 class FogOfWarTest extends BaseCardTest {
 
     @Test
@@ -53,10 +55,55 @@ class FogOfWarTest extends BaseCardTest {
         assertThat(gqs.isPreventedFromDealingDamage(gd, bears, true)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isPreventedFromDealingDamage(gd, bears, true)).isFalse();
+    }
+
+    @Test
+    void preventsOnlySmallCreaturesFromDealingCombatDamageToPlayer() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castFogOfWar();
+
+        harness.forceActivePlayer(player2);
+        bears.setAttacking(true);
+        giant.setAttacking(true);
+        elemental.setAttacking(true);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void preventionUsesCurrentPowerAfterResolution() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castFogOfWar();
+
+        giant.setPowerModifier(1);
+        elemental.setPowerModifier(-1);
+        harness.forceActivePlayer(player2);
+        giant.setAttacking(true);
+        elemental.setAttacking(true);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void protectsAgainstCreaturesEnteringAfterResolutionWithoutGainingMoreLife() {
+        harness.setLife(player1, 20);
+        castFogOfWar();
+        harness.assertLife(player1, 20);
+
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        bears.setAttacking(true);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 20);
     }
 
     private void castFogOfWar() {
