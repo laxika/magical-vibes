@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.f.FaeOfWishes;
+import com.github.laxika.magicalvibes.cards.g.Granted;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MesmericGlare;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HypnoticSprite.class, MesmericGlare.class, CentaurCourser.class, CrawWurm.class, GiantGrowth.class, GrizzlyBears.class})
+@CardUsed({HypnoticSprite.class, MesmericGlare.class, CentaurCourser.class, CrawWurm.class,
+        GiantGrowth.class, GrizzlyBears.class, FaeOfWishes.class, Granted.class})
 class HypnoticSpriteTest extends BaseCardTest {
 
     @Test
@@ -26,14 +29,12 @@ class HypnoticSpriteTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         CentaurCourser target = new CentaurCourser();
-        harness.setHand(player1, List.of(target));
-        harness.addMana(player1, ManaColor.GREEN, 3);
         HypnoticSprite card = new HypnoticSprite();
         harness.setHand(player2, List.of(card));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, target, "{2}{G}");
         harness.passPriority(player1);
         harness.castAdventure(player2, 0, target.getId());
         harness.passBothPriorities();
@@ -49,14 +50,12 @@ class HypnoticSpriteTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         CrawWurm target = new CrawWurm();
-        harness.setHand(player1, List.of(target));
-        harness.addMana(player1, ManaColor.GREEN, 6);
         HypnoticSprite card = new HypnoticSprite();
         harness.setHand(player2, List.of(card));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, target, "{4}{G}{G}");
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castAdventure(player2, 0, target.getId()))
@@ -88,5 +87,93 @@ class HypnoticSpriteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Hypnotic Sprite");
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void adventureCannotTargetAnAdventureWithManaValueFourDespiteItsCheapCreatureFace() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        FaeOfWishes target = new FaeOfWishes();
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new HypnoticSprite()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, (java.util.UUID) null);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castAdventure(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void creatureCanBeCastDirectlyWithoutGoingOnAnAdventure() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        HypnoticSprite card = new HypnoticSprite();
+        harness.castFromHand(player1, card, "{U}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hypnotic Sprite");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        harness.assertNotInGraveyard(player1, "Hypnotic Sprite");
+    }
+
+    @Test
+    void counteredAdventureGoesToGraveyardWithoutExilePermission() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        HypnoticSprite creature = new HypnoticSprite();
+        HypnoticSprite counter = new HypnoticSprite();
+        HypnoticSprite response = new HypnoticSprite();
+        harness.setHand(player2, List.of(counter));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, creature, "{U}{U}");
+        harness.passPriority(player1);
+        harness.castAdventure(player2, 0, creature.getId());
+        harness.setHand(player1, List.of(response));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, counter.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(counter);
+        assertThat(gd.findExiledCard(counter.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(counter.getId());
+        assertThat(gd.findExiledCard(response.getId())).isNotNull();
+        harness.assertOnBattlefield(player1, "Hypnotic Sprite");
+    }
+
+    @Test
+    void adventureWhoseTargetLeavesTheStackGoesToGraveyard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        HypnoticSprite creature = new HypnoticSprite();
+        HypnoticSprite counter = new HypnoticSprite();
+        HypnoticSprite response = new HypnoticSprite();
+        harness.setHand(player2, List.of(counter));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, creature, "{U}{U}");
+        harness.passPriority(player1);
+        harness.castAdventure(player2, 0, creature.getId());
+        harness.setHand(player1, List.of(response));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(counter);
+        assertThat(gd.findExiledCard(counter.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(counter.getId());
+        assertThat(gd.findExiledCard(response.getId())).isNotNull();
     }
 }
