@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.j.JabarisBanner;
+import com.github.laxika.magicalvibes.cards.w.WeldingJar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinVandal.class, JabarisBanner.class, BenalishInfantry.class})
+@CardUsed({GoblinVandal.class, JabarisBanner.class, BenalishInfantry.class, WeldingJar.class})
 class GoblinVandalTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -149,6 +150,50 @@ class GoblinVandalTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(replacementArtifact);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Paying still stops combat damage when the artifact regenerates")
+    void regeneratedArtifactStillStopsCombatDamage() {
+        Permanent artifact = addDefenderArtifact();
+        harness.addToBattlefield(player2, new WeldingJar());
+        addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.activateAbility(player2, 1, null, artifact.getId());
+        harness.passBothPriorities();
+        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Without red mana the artifact survives and the Vandal deals combat damage")
+    void unableToPayDealsCombatDamage() {
+        Permanent artifact = addDefenderArtifact();
+        addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToMayPayPrompt(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore - 1);
     }
 
     @Test
