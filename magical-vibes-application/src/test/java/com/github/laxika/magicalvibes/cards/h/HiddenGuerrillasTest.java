@@ -92,6 +92,56 @@ class HiddenGuerrillasTest extends BaseCardTest {
         harness.assertInHand(player1, "Hidden Guerrillas");
     }
 
+    @Test
+    @DisplayName("The transformation resolves before the artifact spell enters the battlefield")
+    void transformsBeforeArtifactResolves() {
+        Permanent hiddenGuerrillas = harness.addToBattlefieldAndReturn(player1, new HiddenGuerrillas());
+        prepareOpponentCast();
+        harness.castFromHand(player2, new VoltaicKey(), "{1}");
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Voltaic Key");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, hiddenGuerrillas)).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Voltaic Key");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Voltaic Key");
+    }
+
+    @Test
+    @DisplayName("Returning and recasting the animated card restores its enchantment form")
+    void recastingRestoresEnchantmentAndCanTriggerAgain() {
+        Permanent hiddenGuerrillas = harness.addToBattlefieldAndReturn(player1, new HiddenGuerrillas());
+        prepareOpponentCast();
+        harness.castFromHand(player2, new VoltaicKey(), "{1}");
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new Rescind()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, hiddenGuerrillas.getId());
+        harness.assertInHand(player1, "Hidden Guerrillas");
+
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        Permanent recast = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Hidden Guerrillas"))
+                .findFirst().orElseThrow();
+        assertThat(gqs.isEnchantment(gd, recast)).isTrue();
+        assertThat(gqs.isCreature(gd, recast)).isFalse();
+
+        prepareOpponentCast();
+        harness.castFromHand(player2, new VoltaicKey(), "{1}");
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, recast)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recast, Keyword.TRAMPLE)).isTrue();
+    }
+
     private void prepareOpponentCast() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
