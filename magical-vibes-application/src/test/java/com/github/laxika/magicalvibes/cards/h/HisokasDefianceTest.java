@@ -29,8 +29,7 @@ class HisokasDefianceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, kami.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, kami.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Kami of Old Stone");
@@ -52,8 +51,7 @@ class HisokasDefianceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, retainer.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, breath.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, breath.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Blessed Breath");
@@ -73,5 +71,21 @@ class HisokasDefianceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, retainer.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own Spirit spell")
+    void countersOwnSpiritSpell() {
+        KamiOfOldStone kami = new KamiOfOldStone();
+        harness.castFromHand(player1, kami, "{3}{W}");
+
+        harness.setHand(player1, List.of(new HisokasDefiance()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, kami.getId());
+
+        harness.assertInGraveyard(player1, "Kami of Old Stone");
+        harness.assertInGraveyard(player1, "Hisoka's Defiance");
+        harness.assertNotOnBattlefield(player1, "Kami of Old Stone");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }
