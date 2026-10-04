@@ -104,4 +104,39 @@ class IchneumonDruidTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBeforeNewTurn - 4);
     }
+
+    @Test
+    @DisplayName("Counts instants cast before the Druid entered the battlefield")
+    void countsInstantsCastBeforeEntering() {
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.addToBattlefield(player1, new IchneumonDruid());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Triggers for an opponent's second instant during the controller's turn")
+    void triggersDuringControllerTurn() {
+        harness.addToBattlefield(player1, new IchneumonDruid());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player1);
+
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+
+        harness.castInstant(player2, 0, player1.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
 }
