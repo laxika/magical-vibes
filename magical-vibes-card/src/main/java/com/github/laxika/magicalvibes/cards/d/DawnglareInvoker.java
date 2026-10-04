@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "16")
 @CardRegistration(set = "C15", collectorNumber = "67")
+@CardRegistration(set = "CM2", collectorNumber = "25")
 public class DawnglareInvoker extends Card {
 
     public DawnglareInvoker() {

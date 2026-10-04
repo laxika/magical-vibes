@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "C15", collectorNumber = "41")
 @CardRegistration(set = "MKC", collectorNumber = "199")
+@CardRegistration(set = "CM2", collectorNumber = "8")
 public class AnyaMercilessAngel extends Card {
 
     public AnyaMercilessAngel() {

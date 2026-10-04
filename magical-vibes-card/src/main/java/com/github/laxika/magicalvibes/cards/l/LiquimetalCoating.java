@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "171")
 @CardRegistration(set = "BRR", collectorNumber = "28")
 @CardRegistration(set = "C14", collectorNumber = "246")
+@CardRegistration(set = "CM2", collectorNumber = "197")
 public class LiquimetalCoating extends Card {
 
     public LiquimetalCoating() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "CMD", collectorNumber = "145")
 @CardRegistration(set = "M3C", collectorNumber = "224")
 @CardRegistration(set = "MOC", collectorNumber = "292")
+@CardRegistration(set = "CM2", collectorNumber = "133")
 public class Brawn extends Card {
 
     public Brawn() {

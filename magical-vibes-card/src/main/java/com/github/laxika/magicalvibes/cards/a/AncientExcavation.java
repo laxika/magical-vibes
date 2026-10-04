@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "C16", collectorNumber = "27")
+@CardRegistration(set = "CM2", collectorNumber = "150")
 public class AncientExcavation extends Card {
 
     public AncientExcavation() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 
 @CardRegistration(set = "C16", collectorNumber = "40")
+@CardRegistration(set = "CM2", collectorNumber = "13")
 public class ReyhanLastOfTheAbzan extends Card {
 
     public ReyhanLastOfTheAbzan() {

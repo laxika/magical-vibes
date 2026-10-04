@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "2X2", collectorNumber = "26")
 @CardRegistration(set = "C20", collectorNumber = "97")
 @CardRegistration(set = "C16", collectorNumber = "74")
+@CardRegistration(set = "CM2", collectorNumber = "35")
 public class Reveillark extends Card {
 
     public Reveillark() {

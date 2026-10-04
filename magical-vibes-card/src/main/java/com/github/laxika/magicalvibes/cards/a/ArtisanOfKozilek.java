@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "2")
+@CardRegistration(set = "CM2", collectorNumber = "14")
 @CardRegistration(set = "MM2", collectorNumber = "2")
 @CardRegistration(set = "DDP", collectorNumber = "42")
 @CardRegistration(set = "UMA", collectorNumber = "2")

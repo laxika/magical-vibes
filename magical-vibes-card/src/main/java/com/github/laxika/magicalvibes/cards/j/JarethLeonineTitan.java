@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "VMA", collectorNumber = "31")
 @CardRegistration(set = "C15", collectorNumber = "71")
 @CardRegistration(set = "C17", collectorNumber = "61")
+@CardRegistration(set = "CM2", collectorNumber = "30")
 public class JarethLeonineTitan extends Card {
 
     public JarethLeonineTitan() {

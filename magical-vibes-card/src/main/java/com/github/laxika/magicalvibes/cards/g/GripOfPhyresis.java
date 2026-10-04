@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "C16", collectorNumber = "9")
+@CardRegistration(set = "CM2", collectorNumber = "43")
 public class GripOfPhyresis extends Card {
 
     public GripOfPhyresis() {

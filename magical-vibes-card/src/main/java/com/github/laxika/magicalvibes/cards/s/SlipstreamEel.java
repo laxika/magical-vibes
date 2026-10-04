@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "114")
 @CardRegistration(set = "CMD", collectorNumber = "62")
+@CardRegistration(set = "CM2", collectorNumber = "49")
 public class SlipstreamEel extends Card {
 
     public SlipstreamEel() {

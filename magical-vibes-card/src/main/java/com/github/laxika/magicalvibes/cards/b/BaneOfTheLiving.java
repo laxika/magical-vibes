@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 @CardRegistration(set = "LGN", collectorNumber = "60")
 @CardRegistration(set = "C19", collectorNumber = "104")
 @CardRegistration(set = "C16", collectorNumber = "106")
+@CardRegistration(set = "CM2", collectorNumber = "58")
 public class BaneOfTheLiving extends Card {
 
     public BaneOfTheLiving() {

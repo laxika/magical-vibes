@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 
 @CardRegistration(set = "CMD", collectorNumber = "191")
+@CardRegistration(set = "CM2", collectorNumber = "2")
 public class DamiaSageOfStone extends Card {
 
     public DamiaSageOfStone() {

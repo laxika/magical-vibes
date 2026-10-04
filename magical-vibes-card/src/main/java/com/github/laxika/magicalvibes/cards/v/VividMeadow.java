@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "CMD", collectorNumber = "297")
 @CardRegistration(set = "C15", collectorNumber = "320")
 @CardRegistration(set = "C17", collectorNumber = "293")
+@CardRegistration(set = "CM2", collectorNumber = "277")
 public class VividMeadow extends Card {
 
     public VividMeadow() {

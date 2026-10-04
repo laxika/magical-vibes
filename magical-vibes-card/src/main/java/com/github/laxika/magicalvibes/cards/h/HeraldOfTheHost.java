@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCre
 
 @CardRegistration(set = "CMM", collectorNumber = "30")
 @CardRegistration(set = "C15", collectorNumber = "4")
+@CardRegistration(set = "CM2", collectorNumber = "29")
 public class HeraldOfTheHost extends Card {
 
     public HeraldOfTheHost() {

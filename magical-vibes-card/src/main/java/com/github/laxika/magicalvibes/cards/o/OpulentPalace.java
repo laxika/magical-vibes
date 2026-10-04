@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "PIP", collectorNumber = "806")
 @CardRegistration(set = "C16", collectorNumber = "313")
 @CardRegistration(set = "C17", collectorNumber = "267")
+@CardRegistration(set = "CM2", collectorNumber = "260")
 public class OpulentPalace extends Card {
 
     public OpulentPalace() {

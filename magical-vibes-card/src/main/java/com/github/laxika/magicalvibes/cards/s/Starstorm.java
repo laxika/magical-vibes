@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 @CardRegistration(set = "C20", collectorNumber = "160")
 @CardRegistration(set = "BLC", collectorNumber = "203")
 @CardRegistration(set = "NEC", collectorNumber = "110")
+@CardRegistration(set = "CM2", collectorNumber = "118")
 public class Starstorm extends Card {
 
     public Starstorm() {

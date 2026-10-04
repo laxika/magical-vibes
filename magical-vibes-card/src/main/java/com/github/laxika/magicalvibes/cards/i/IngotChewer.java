@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "UMA", collectorNumber = "135")
 @CardRegistration(set = "C14", collectorNumber = "179")
 @CardRegistration(set = "ECC", collectorNumber = "95")
+@CardRegistration(set = "CM2", collectorNumber = "110")
 public class IngotChewer extends Card {
 
     public IngotChewer() {

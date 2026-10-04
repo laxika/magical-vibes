@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "82")
 @CardRegistration(set = "LGN", collectorNumber = "36")
 @CardRegistration(set = "CMD", collectorNumber = "44")
+@CardRegistration(set = "CM2", collectorNumber = "41")
 public class DreambornMuse extends Card {
 
     public DreambornMuse() {

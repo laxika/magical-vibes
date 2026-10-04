@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "2X2", collectorNumber = "277")
 @CardRegistration(set = "CMD", collectorNumber = "227")
+@CardRegistration(set = "CM2", collectorNumber = "165")
 public class SkullbriarTheWalkingGrave extends Card {
 
     public SkullbriarTheWalkingGrave() {

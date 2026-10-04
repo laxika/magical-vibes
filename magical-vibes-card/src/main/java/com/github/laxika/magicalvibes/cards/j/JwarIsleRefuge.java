@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "C18", collectorNumber = "260")
 @CardRegistration(set = "C17", collectorNumber = "258")
 @CardRegistration(set = "SCD", collectorNumber = "306")
+@CardRegistration(set = "CM2", collectorNumber = "256")
 public class JwarIsleRefuge extends Card {
 
     public JwarIsleRefuge() {

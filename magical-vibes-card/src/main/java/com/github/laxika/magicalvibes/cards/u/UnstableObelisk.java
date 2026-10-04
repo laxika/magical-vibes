@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "C17", collectorNumber = "229")
 @CardRegistration(set = "VOC", collectorNumber = "170")
 @CardRegistration(set = "SCD", collectorNumber = "286")
+@CardRegistration(set = "CM2", collectorNumber = "227")
 public class UnstableObelisk extends Card {
 
     public UnstableObelisk() {

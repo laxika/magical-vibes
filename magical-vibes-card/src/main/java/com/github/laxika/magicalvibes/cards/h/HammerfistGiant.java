@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "130")
 @CardRegistration(set = "C15", collectorNumber = "157")
+@CardRegistration(set = "CM2", collectorNumber = "103")
 public class HammerfistGiant extends Card {
 
     public HammerfistGiant() {

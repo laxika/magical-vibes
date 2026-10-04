@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "C15", collectorNumber = "45")
+@CardRegistration(set = "CM2", collectorNumber = "7")
 public class KalemneDiscipleOfIroas extends Card {
 
     public KalemneDiscipleOfIroas() {

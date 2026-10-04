@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 @CardRegistration(set = "MOC", collectorNumber = "305")
 @CardRegistration(set = "BLC", collectorNumber = "226")
 @CardRegistration(set = "C16", collectorNumber = "154")
+@CardRegistration(set = "CM2", collectorNumber = "140")
 public class KalonianHydra extends Card {
 
     public KalonianHydra() {

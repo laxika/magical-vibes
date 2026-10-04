@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCountEffect;
 
 @CardRegistration(set = "C14", collectorNumber = "37")
+@CardRegistration(set = "CM2", collectorNumber = "108")
 public class InciteRebellion extends Card {
 
     public InciteRebellion() {

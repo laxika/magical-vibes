@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1346")
 @CardRegistration(set = "C15", collectorNumber = "2")
+@CardRegistration(set = "CM2", collectorNumber = "24")
 public class DawnbreakReclaimer extends Card {
 
     public DawnbreakReclaimer() {

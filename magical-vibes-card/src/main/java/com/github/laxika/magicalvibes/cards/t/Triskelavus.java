@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "266")
 @CardRegistration(set = "CMD", collectorNumber = "263")
+@CardRegistration(set = "CM2", collectorNumber = "226")
 public class Triskelavus extends Card {
 
     public Triskelavus() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "EVE", collectorNumber = "119")
 @CardRegistration(set = "CMD", collectorNumber = "193")
+@CardRegistration(set = "CM2", collectorNumber = "153")
 public class DesecratorHag extends Card {
 
     public DesecratorHag() {

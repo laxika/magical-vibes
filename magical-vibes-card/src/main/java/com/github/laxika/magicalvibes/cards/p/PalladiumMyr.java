@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "M21", collectorNumber = "234")
 @CardRegistration(set = "IMA", collectorNumber = "224")
 @CardRegistration(set = "C14", collectorNumber = "258")
+@CardRegistration(set = "CM2", collectorNumber = "207")
 public class PalladiumMyr extends Card {
 
     public PalladiumMyr() {

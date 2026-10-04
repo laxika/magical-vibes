@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 @CardRegistration(set = "MOC", collectorNumber = "383")
 @CardRegistration(set = "BLC", collectorNumber = "285")
 @CardRegistration(set = "BRC", collectorNumber = "162")
+@CardRegistration(set = "CM2", collectorNumber = "220")
 public class SpineOfIshSah extends Card {
 
     public SpineOfIshSah() {
