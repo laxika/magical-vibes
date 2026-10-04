@@ -16,6 +16,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HesitationTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Casting Hesitation does not trigger its own ability")
+    void doesNotCounterItself() {
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new Hesitation(), "{1}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hesitation");
+        harness.assertNotInGraveyard(player1, "Hesitation");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both Hesitations are sacrificed even after the first trigger counters the spell")
+    void sacrificesEvenWhenTriggeringSpellHasAlreadyBeenCountered() {
+        harness.addToBattlefield(player1, new Hesitation());
+        harness.addToBattlefield(player2, new Hesitation());
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new IntruderAlarm(), "{2}{U}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hesitation");
+        harness.assertNotOnBattlefield(player2, "Hesitation");
+        harness.assertInGraveyard(player1, "Hesitation");
+        harness.assertInGraveyard(player2, "Hesitation");
+        harness.assertInGraveyard(player1, "Intruder Alarm");
+        harness.assertNotOnBattlefield(player1, "Intruder Alarm");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("When any player casts a spell, Hesitation sacrifices itself and counters that spell")
     void sacrificesAndCountersAnyPlayersSpell() {
         harness.addToBattlefield(player1, new Hesitation());
