@@ -53,8 +53,6 @@ class HondenOfNightsReachTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        // Honden of Seeing Winds' own upkeep draw trigger may resolve first; drain both triggers.
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
@@ -122,5 +120,61 @@ class HondenOfNightsReachTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponent discards their entire hand when it contains fewer cards than the Shrine count")
+    void discardsOnlyAvailableCards() {
+        harness.addToBattlefield(player1, new HondenOfNightsReach());
+        harness.setHand(player2, List.of(new HondenOfSeeingWinds()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player1, new HondenOfSeeingWinds());
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Honden of Seeing Winds");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Removing the only Shrine before resolution causes no discard")
+    void noDiscardWhenNoShrinesRemain() {
+        var source = harness.addToBattlefieldAndReturn(player1, new HondenOfNightsReach());
+        harness.setHand(player2, List.of(new HondenOfSeeingWinds()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger still counts remaining Shrines after its source leaves")
+    void sourceLeavingDoesNotStopDiscard() {
+        var source = harness.addToBattlefieldAndReturn(player1, new HondenOfNightsReach());
+        harness.setHand(player2, List.of(new HondenOfSeeingWinds(), new HondenOfNightsReach()));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player1, new HondenOfSeeingWinds());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Honden of Seeing Winds");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
