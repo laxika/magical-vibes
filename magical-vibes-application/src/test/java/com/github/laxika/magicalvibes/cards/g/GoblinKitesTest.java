@@ -47,7 +47,7 @@ class GoblinKitesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, merfolk.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         boolean lostFlip = gameLogContains("loses the coin flip for Goblin Kites");
@@ -98,5 +98,67 @@ class GoblinKitesTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, lieutenant, Keyword.FLYING)).isFalse();
         assertThat(gameLogContains("coin flip for Goblin Kites")).isFalse();
+    }
+
+    @Test
+    @DisplayName("An end-step activation loses flying at cleanup but waits until the following end step to flip")
+    void endStepActivationWaitsUntilNextEndStep() {
+        harness.addToBattlefieldAndReturn(player1, new GoblinKites());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RiverMerfolk());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, merfolk.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.FLYING)).isTrue();
+        assertThat(gameLogContains("coin flip for Goblin Kites")).isFalse();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.assertOnBattlefield(player1, "River Merfolk");
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.FLYING)).isFalse();
+        assertThat(gameLogContains("coin flip for Goblin Kites")).isFalse();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(gameLogContains("coin flip for Goblin Kites")).isTrue();
+        if (gameLogContains("loses the coin flip for Goblin Kites")) {
+            harness.assertNotOnBattlefield(player1, "River Merfolk");
+            harness.assertInGraveyard(player1, "River Merfolk");
+        } else {
+            harness.assertOnBattlefield(player1, "River Merfolk");
+        }
+    }
+
+    @Test
+    @DisplayName("Increasing toughness after resolution does not prevent the delayed coin flip")
+    void toughnessIncreaseAfterResolutionDoesNotCancelDelayedTrigger() {
+        harness.addToBattlefieldAndReturn(player1, new GoblinKites());
+        harness.addToBattlefieldAndReturn(player1, new IcatianPriest());
+        Permanent lieutenant = harness.addToBattlefieldAndReturn(player1, new IcatianLieutenant());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, lieutenant.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, lieutenant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, lieutenant)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, lieutenant, Keyword.FLYING)).isTrue();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("coin flip for Goblin Kites")).isTrue();
+        if (gameLogContains("loses the coin flip for Goblin Kites")) {
+            harness.assertNotOnBattlefield(player1, "Icatian Lieutenant");
+            harness.assertInGraveyard(player1, "Icatian Lieutenant");
+        } else {
+            harness.assertOnBattlefield(player1, "Icatian Lieutenant");
+        }
     }
 }
