@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoldveinHydra.class, WrathOfGod.class})
+@CardUsed({GoldveinHydra.class, WrathOfGod.class, GiantGrowth.class})
 class GoldveinHydraTest extends BaseCardTest {
 
     @Test
@@ -46,10 +46,53 @@ class GoldveinHydraTest extends BaseCardTest {
         assertThat(treasures).allMatch(Permanent::isTapped);
     }
 
+    @Test
+    @DisplayName("Casting with zero X dies and creates no Treasures")
+    void zeroXDiesWithoutCreatingTreasures() {
+        harness.setHand(player1, List.of(new GoldveinHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Goldvein Hydra");
+        harness.assertInGraveyard(player1, "Goldvein Hydra");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death counts boosted power rather than just counters")
+    void deathUsesBoostedLastKnownPower() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new GoldveinHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, hydra.getId());
+
+        destroyAllCreatures();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(5).allMatch(Permanent::isTapped);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing Hydra creates Treasures for its own controller")
+    void opposingHydraCreatesTreasuresForItsController() {
+        harness.addToBattlefieldAndReturn(player2, new GoldveinHydra())
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyAllCreatures();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).hasSize(2).allMatch(Permanent::isTapped);
+    }
+
     private void destroyAllCreatures() {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

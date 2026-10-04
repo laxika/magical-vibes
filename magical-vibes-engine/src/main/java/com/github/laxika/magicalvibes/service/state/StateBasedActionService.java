@@ -266,11 +266,13 @@ public class StateBasedActionService {
             gameData.exiledCardsWithBrainCounters.remove(cardId);
             gameData.exiledCardsWithCageCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exileLookPermissions.remove(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
+            gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.remove(cardId);
             gameData.exilePlayAnyManaType.remove(cardId);
             gameData.exilePlayAnyManaTypeWhileExiled.remove(cardId);
             gameData.stashCounterCardIds.remove(cardId);

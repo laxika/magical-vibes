@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.ArchangelElspeth;
-import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AwakenedSkyclave.class, GoblinBombardment.class, InvasionOfZendikar.class,
+@CardUsed({GoblinBombardment.class, InvasionOfZendikar.class,
         ArchangelElspeth.class, MoggFanatic.class})
 class GoblinBombardmentTest extends BaseCardTest {
 
@@ -39,11 +38,10 @@ class GoblinBombardmentTest extends BaseCardTest {
     void dealsOneDamageToCreature() {
         harness.addToBattlefield(player1, new GoblinBombardment());
         harness.addToBattlefield(player1, new MoggFanatic());
-        harness.addToBattlefield(player2, new MoggFanatic());
-        var fanatic = harness.getPermanentId(player2, "Mogg Fanatic");
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player2, new MoggFanatic());
         harness.forceActivePlayer(player1);
 
-        harness.activateAbility(player1, 0, null, fanatic);
+        harness.activateAbility(player1, 0, null, fanatic.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Mogg Fanatic");
@@ -89,5 +87,93 @@ class GoblinBombardmentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the damage ability resolves")
+    void sacrificesBeforeResolution() {
+        harness.addToBattlefield(player1, new GoblinBombardment());
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        fanatic.setTapped(true);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Mogg Fanatic");
+        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Goblin Bombardment");
+    }
+
+    @Test
+    @DisplayName("Can target the creature sacrificed to pay the cost, but the ability then has no legal target")
+    void canTargetSacrificedCreature() {
+        harness.addToBattlefield(player1, new GoblinBombardment());
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+
+        harness.activateAbility(player1, 0, null, fanatic.getId());
+
+        harness.assertInGraveyard(player1, "Mogg Fanatic");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature")
+    void cannotPayWithOpponentsCreature() {
+        harness.addToBattlefield(player1, new GoblinBombardment());
+        harness.addToBattlefield(player2, new MoggFanatic());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mogg Fanatic");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chooses one creature to sacrifice and can activate again without tapping")
+    void choosesCreatureAndActivatesRepeatedly() {
+        harness.addToBattlefield(player1, new GoblinBombardment());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertOnBattlefield(player1, "Goblin Bombardment");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature enchantment")
+    void cannotTargetNoncreatureEnchantment() {
+        Permanent bombardment = harness.addToBattlefieldAndReturn(player1, new GoblinBombardment());
+        harness.addToBattlefield(player1, new MoggFanatic());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bombardment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mogg Fanatic");
+        assertThat(gd.stack).isEmpty();
     }
 }

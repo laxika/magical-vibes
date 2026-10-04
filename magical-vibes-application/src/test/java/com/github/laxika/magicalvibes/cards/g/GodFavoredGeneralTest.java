@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GodFavoredGeneral.class})
 class GodFavoredGeneralTest extends BaseCardTest {
 
     @Test
@@ -52,6 +54,49 @@ class GodFavoredGeneralTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
     }
 
+    @Test
+    void colorlessManaCannotPayTheWhitePartOfInspiredCost() {
+        addTappedGeneral();
+
+        advanceToUntapStep();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
+    }
+
+    @Test
+    void alreadyUntappedGeneralDoesNotTriggerDuringUntapStep() {
+        harness.addToBattlefield(player1, new GodFavoredGeneral());
+
+        advanceToUntapStep();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
+    }
+
+    @Test
+    void untappingOneGeneralDoesNotTriggerAnotherGeneral() {
+        addTappedGeneral();
+        harness.addToBattlefield(player1, new GodFavoredGeneral());
+
+        advanceToUntapStep();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Soldier"))
+                .hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addTappedGeneral() {
         Permanent general = harness.addToBattlefieldAndReturn(player1, new GodFavoredGeneral());
         general.setSummoningSick(false);
@@ -62,9 +107,6 @@ class GodFavoredGeneralTest extends BaseCardTest {
     private void advanceToUntapStep() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 }

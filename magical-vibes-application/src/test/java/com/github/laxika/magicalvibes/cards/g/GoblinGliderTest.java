@@ -39,4 +39,32 @@ class GoblinGliderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
     }
+
+    @Test
+    @DisplayName("Goblin Glider cannot block even an attacking flyer")
+    void cannotBlockFlyingAttacker() {
+        addCreatureReady(player1, new GoblinGlider());
+        addCreatureReady(player2, new GoblinGlider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Goblin Glider can attack and deal unblocked combat damage")
+    void dealsUnblockedCombatDamage() {
+        addCreatureReady(player1, new GoblinGlider());
+        addCreatureReady(player2, new RagingGoblin());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Goblin Glider");
+    }
 }

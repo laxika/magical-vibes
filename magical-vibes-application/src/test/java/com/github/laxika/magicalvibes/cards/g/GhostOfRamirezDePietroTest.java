@@ -66,16 +66,12 @@ class GhostOfRamirezDePietroTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new HorrifyingRevelation()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
 
         Permanent ghost = addCreatureReady(player1, new GhostOfRamirezDePietro());
         ghost.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -90,5 +86,85 @@ class GhostOfRamirezDePietroTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).contains(milled);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(fromBeforeThisTurn);
+    }
+
+    @Test
+    void mayChooseNoTargetEvenWhenEligibleCardsExist() {
+        Card discarded = new GrizzlyBears();
+        harness.setHand(player2, List.of(discarded));
+        harness.setLibrary(player2, List.of(new HillGiant()));
+        harness.setHand(player1, List.of(new HorrifyingRevelation()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        addCreatureReady(player1, new GhostOfRamirezDePietro()).setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(discarded);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void combatDamageNeedsNoEligibleGraveyardCard() {
+        Card oldCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(oldCard));
+        addCreatureReady(player1, new GhostOfRamirezDePietro()).setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(oldCard);
+    }
+
+    @Test
+    void returnedDiscardedSpellIsNotEligibleAfterBeingCast() {
+        Card discardedSpell = new HorrifyingRevelation();
+        Card milled = new HillGiant();
+        harness.setHand(player1, List.of(new HorrifyingRevelation(), discardedSpell));
+        harness.setLibrary(player1, List.of(milled));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        Permanent ghost = addCreatureReady(player1, new GhostOfRamirezDePietro());
+        ghost.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(discardedSpell.getId()));
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).contains(discardedSpell);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedSpell);
+
+        ghost.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).contains(milled.getId()).doesNotContain(discardedSpell.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
     }
 }

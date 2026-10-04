@@ -93,7 +93,7 @@ class FleshmadSteedTest extends BaseCardTest {
     @DisplayName("An already-tapped Steed still triggers and taps if untapped before resolution")
     void tappedSteedStillTriggers() {
         Permanent steed = harness.addToBattlefieldAndReturn(player1, new FleshmadSteed());
-        steed.setTapped(true);
+        steed.tap();
         Permanent dyingSteed = harness.addToBattlefieldAndReturn(player2, new FleshmadSteed());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -105,7 +105,7 @@ class FleshmadSteedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        steed.setTapped(false);
+        steed.untap();
         harness.passBothPriorities();
 
         assertThat(steed.isTapped()).isTrue();

@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
+import com.github.laxika.magicalvibes.cards.t.Tarfire;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,32 +18,21 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Goatnapper.class, AvianChangeling.class, Tarfire.class})
 class GoatnapperTest extends BaseCardTest {
-
-    private static Card goat(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.WHITE);
-        card.setPower(0);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.GOAT));
-        return card;
-    }
 
     private void castGoatnapper(UUID targetId) {
         harness.setHand(player1, List.of(new Goatnapper()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
     }
 
     @Test
     @DisplayName("ETB trigger goes on the stack targeting the Goat")
     void etbTriggersOnStack() {
-        harness.addToBattlefield(player2, goat("Mtenda Goat"));
-        UUID targetId = harness.getPermanentId(player2, "Mtenda Goat");
+        harness.addToBattlefield(player2, new AvianChangeling());
+        UUID targetId = harness.getPermanentId(player2, "Avian Changeling");
         castGoatnapper(targetId);
 
         harness.passBothPriorities(); // resolve creature spell
@@ -58,7 +46,7 @@ class GoatnapperTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps, steals until end of turn and grants haste to the Goat")
     void stealsUntapsAndGrantsHaste() {
-        Permanent goat = harness.addToBattlefieldAndReturn(player2, goat("Mtenda Goat"));
+        Permanent goat = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
         goat.tap();
         castGoatnapper(goat.getId());
 
@@ -67,17 +55,15 @@ class GoatnapperTest extends BaseCardTest {
 
         assertThat(goat.isTapped()).isFalse();
         assertThat(goat.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(goat.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(goat.getId()));
+        harness.assertOnBattlefield(player1, "Avian Changeling");
+        harness.assertNotOnBattlefield(player2, "Avian Changeling");
         assertThat(gd.isStolenUntilEndOfTurn(goat.getId())).isTrue();
     }
 
     @Test
     @DisplayName("Control and haste expire at cleanup")
     void controlAndHasteExpireAtCleanup() {
-        Permanent goat = harness.addToBattlefieldAndReturn(player2, goat("Mtenda Goat"));
+        Permanent goat = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
         castGoatnapper(goat.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -88,23 +74,21 @@ class GoatnapperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(goat.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getId().equals(goat.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(goat.getId()));
+        harness.assertOnBattlefield(player2, "Avian Changeling");
+        harness.assertNotOnBattlefield(player1, "Avian Changeling");
         assertThat(gd.isStolenUntilEndOfTurn(goat.getId())).isFalse();
     }
 
     @Test
     @DisplayName("Cannot target a non-Goat creature")
     void cannotTargetNonGoat() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new Goatnapper());
+        UUID targetId = harness.getPermanentId(player2, "Goatnapper");
         harness.setHand(player1, List.of(new Goatnapper()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -116,5 +100,68 @@ class GoatnapperTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Goatnapper");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can untap and grant haste to a Goat already under your control")
+    void canTargetOwnGoat() {
+        Permanent goat = harness.addToBattlefieldAndReturn(player1, new AvianChangeling());
+        goat.tap();
+        castGoatnapper(goat.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(goat.isTapped()).isFalse();
+        assertThat(goat.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertOnBattlefield(player1, "Avian Changeling");
+        harness.assertNotOnBattlefield(player2, "Avian Changeling");
+    }
+
+    @Test
+    @DisplayName("Ability has no effect when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent goat = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
+        castGoatnapper(goat.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Tarfire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, goat.getId());
+        harness.assertInGraveyard(player2, "Avian Changeling");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Avian Changeling");
+        harness.assertNotOnBattlefield(player2, "Avian Changeling");
+        assertThat(gd.isStolenUntilEndOfTurn(goat.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after Goatnapper leaves the battlefield")
+    void sourceLeavesBeforeResolution() {
+        Permanent goat = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
+        goat.tap();
+        castGoatnapper(goat.getId());
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Goatnapper");
+        harness.setHand(player1, List.of(new Tarfire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, sourceId);
+        harness.assertInGraveyard(player1, "Goatnapper");
+        harness.passBothPriorities();
+
+        assertThat(goat.isTapped()).isFalse();
+        assertThat(goat.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertOnBattlefield(player1, "Avian Changeling");
+        harness.assertNotOnBattlefield(player2, "Avian Changeling");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(goat.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.assertOnBattlefield(player2, "Avian Changeling");
+        harness.assertNotOnBattlefield(player1, "Avian Changeling");
     }
 }

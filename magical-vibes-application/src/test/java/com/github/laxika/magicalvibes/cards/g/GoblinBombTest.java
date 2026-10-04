@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinBomb.class})
+@CardUsed({GoblinBomb.class, ChandraNalaar.class})
 class GoblinBombTest extends BaseCardTest {
 
     @Test
@@ -78,8 +78,7 @@ class GoblinBombTest extends BaseCardTest {
         harness.assertLife(player2, 10);
         assertThat(bomb.getCounterCount(CounterType.FUSE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin Bomb"));
+        harness.assertInGraveyard(player1, "Goblin Bomb");
     }
 
     @CardUsed({ChandraNalaar.class})
@@ -133,6 +132,46 @@ class GoblinBombTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(bomb.getCounterCount(CounterType.FUSE)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bomb);
+    }
+
+    @Test
+    @DisplayName("Activation pays exactly five fuse counters and sacrifices before damage resolves")
+    void activationPaysCostsBeforeResolutionWithExtraCounters() {
+        Permanent bomb = addBomb(player1);
+        bomb.setCounterCount(CounterType.FUSE, 7);
+        harness.setLife(player2, 30);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(bomb.getCounterCount(CounterType.FUSE)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Goblin Bomb");
+        harness.assertInGraveyard(player1, "Goblin Bomb");
+        harness.assertLife(player2, 30);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    @DisplayName("The ability can target its controller during an opponent's turn")
+    void abilityCanTargetControllerDuringOpponentsTurn() {
+        Permanent bomb = addBomb(player1);
+        bomb.setCounterCount(CounterType.FUSE, 5);
+        harness.setLife(player1, 30);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player1, "Goblin Bomb");
+        harness.assertNotOnBattlefield(player1, "Goblin Bomb");
     }
 
     private void flipAtUpkeep(boolean accept) {

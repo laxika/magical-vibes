@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -92,7 +94,9 @@ class AvizoaTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
         harness.passBothPriorities();
 
+        declareAttackers(player1, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
+        declareAttackers(player2, List.of());
         harness.passUntil(player1, TurnStep.UPKEEP);
 
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
@@ -156,18 +160,24 @@ class AvizoaTest extends BaseCardTest {
         assertThat(first.getEffectivePower()).isEqualTo(4);
         assertThat(second.getEffectivePower()).isEqualTo(4);
 
+        declareAttackers(player1, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(opponent.isTapped()).isFalse();
+        declareAttackers(player2, List.of());
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
 
+        declareAttackers(player1, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
+        declareAttackers(player2, List.of());
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
 
+        declareAttackers(player1, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
+        declareAttackers(player2, List.of());
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(first.isTapped()).isFalse();
         assertThat(second.isTapped()).isFalse();

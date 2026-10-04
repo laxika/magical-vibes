@@ -1,21 +1,18 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoliathSphinx.class, GnarlidPack.class, GrapplerSpider.class})
 class GoliathSphinxTest extends BaseCardTest {
 
     @Test
@@ -23,7 +20,7 @@ class GoliathSphinxTest extends BaseCardTest {
     void cannotBeBlockedByCreatureWithoutFlying() {
         Permanent attacker = addCreatureReady(player1, new GoliathSphinx());
         attacker.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GnarlidPack());
 
         prepareDeclareBlockers(player1);
 
@@ -41,7 +38,7 @@ class GoliathSphinxTest extends BaseCardTest {
     void canBeBlockedByCreatureWithFlying() {
         Permanent attacker = addCreatureReady(player1, new GoliathSphinx());
         attacker.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, createFlyingCreature());
+        Permanent blocker = addCreatureReady(player2, new GoliathSphinx());
 
         prepareDeclareBlockers(player1);
 
@@ -54,15 +51,35 @@ class GoliathSphinxTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private static Card createFlyingCreature() {
-        Card card = new Card();
-        card.setName("Wind Drake");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{3}");
-        card.setColor(CardColor.BLUE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.FLYING));
-        return card;
+    @Test
+    @DisplayName("Goliath Sphinx can be blocked by a creature with reach")
+    void canBeBlockedByCreatureWithReach() {
+        Permanent attacker = addCreatureReady(player1, new GoliathSphinx());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrapplerSpider());
+
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Goliath Sphinx can block a creature without flying")
+    void canBlockCreatureWithoutFlying() {
+        Permanent attacker = addCreatureReady(player1, new GnarlidPack());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GoliathSphinx());
+
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

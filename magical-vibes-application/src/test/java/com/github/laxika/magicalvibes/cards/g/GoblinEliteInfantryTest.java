@@ -288,8 +288,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     // ===== Trigger fizzles if source removed =====
 
     @Test
-    @DisplayName("Block trigger fizzles if Goblin Elite Infantry is removed before resolution")
-    void blockTriggerFizzlesIfRemoved() {
+    @DisplayName("Block trigger resolves without effect if its source has left the battlefield")
+    void blockTriggerHasNoEffectIfSourceRemoved() {
         addCreatureReady(player2, new GoblinEliteInfantry());
 
         Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
@@ -353,5 +353,48 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(goblinPerm.getPowerModifier()).isZero();
         assertThat(goblinPerm.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The penalty applies only when the combat trigger resolves")
+    void penaltyWaitsForResolution() {
+        Permanent attacker = addCreatureReady(player1, new GoblinEliteInfantry());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("A pending trigger does not penalize a new permanent represented by the same card")
+    void pendingTriggerDoesNotAffectReturnedSource() {
+        GoblinEliteInfantry card = new GoblinEliteInfantry();
+        Permanent original = addCreatureReady(player1, card);
+        original.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = addCreatureReady(player1, card);
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(returned);
     }
 }

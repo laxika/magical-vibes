@@ -152,10 +152,11 @@ class AyarasOathswornTest extends BaseCardTest {
 
     private void dealCombatDamage(Permanent oathsworn) {
         oathsworn.setAttacking(true);
+        oathsworn.setAttackTarget(player2.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.resolveCombatDamage();
     }
 
     private Permanent addReadyOathsworn() {

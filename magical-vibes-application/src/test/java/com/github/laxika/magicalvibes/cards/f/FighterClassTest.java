@@ -213,7 +213,7 @@ class FighterClassTest extends BaseCardTest {
         Permanent fighterClass = harness.addToBattlefieldAndReturn(player1, new FighterClass());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         levelUpToThree(fighterClass);
         declareAttackers(List.of(battlefieldIndex(attacker)));
         harness.handlePermanentChosen(player1, blocker.getId());

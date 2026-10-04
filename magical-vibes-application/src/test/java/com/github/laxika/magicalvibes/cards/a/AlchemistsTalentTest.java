@@ -56,11 +56,11 @@ class AlchemistsTalentTest extends BaseCardTest {
         addTreasureToken(player1);
         levelUpToThree(talent);
 
+        harness.setHand(player1, List.of(new Shock()));
         harness.activateAbility(player1, 1, 1, null, null);
         harness.handleListChoice(player1, "RED");
-        assertThat(talent.getCounterCount(CounterType.LEVEL)).isEqualTo(2);
+        assertThat(talent.getClassLevel()).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTreasureManaTotal()).isEqualTo(2);
-        harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
@@ -72,11 +72,11 @@ class AlchemistsTalentTest extends BaseCardTest {
         Permanent talent = harness.addToBattlefieldAndReturn(player1, new AlchemistsTalent());
         addTreasureToken(player1);
         levelUpToThree(talent);
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
         harness.activateAbility(player1, 1, 1, null, null);
         harness.handleListChoice(player1, "RED");
 
-        Shock shock = new Shock();
-        harness.setHand(player1, List.of(shock));
         harness.castInstant(player1, 0, player2.getId());
         harness.setHand(player2, List.of(new Counterspell()));
         harness.addMana(player2, ManaColor.BLUE, 2);

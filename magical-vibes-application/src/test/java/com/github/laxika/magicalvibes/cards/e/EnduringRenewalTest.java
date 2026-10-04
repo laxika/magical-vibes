@@ -215,7 +215,7 @@ class EnduringRenewalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EnduringRenewal());
         harness.addToBattlefield(player1, new BalduvianBears());
         Permanent disk = harness.addToBattlefieldAndReturn(player1, new NevinyrralsDisk());
-        disk.setTapped(false);
+        disk.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 2, 0, null, null);

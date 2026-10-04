@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GideonAllyOfZendikar.class, GrizzlyBears.class, Shock.class})
+@CardUsed({GideonAllyOfZendikar.class, GrizzlyBears.class, Shock.class, Skullcrack.class})
 class GideonAllyOfZendikarTest extends BaseCardTest {
 
     @Test
@@ -92,11 +93,65 @@ class GideonAllyOfZendikarTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opposingBear)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Unpreventable damage both marks animated Gideon and removes loyalty")
+    void unpreventableDamageHasCreatureAndPlaneswalkerResults() {
+        Permanent gideon = addReadyGideon(player1, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Skullcrack(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, gideon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gideon.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Gideon, Ally of Zendikar");
+    }
+
+    @Test
+    @DisplayName("Animation, indestructible, and damage prevention expire at cleanup")
+    void plusOneExpiresAtCleanup() {
+        Permanent gideon = addReadyGideon(player1, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, gideon)).isFalse();
+        assertThat(gqs.isPlaneswalker(gd, gideon)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gideon, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, gideon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The emblem resolves after Gideon dies and boosts future creatures")
+    void emblemBoostsFutureCreaturesAfterGideonDies() {
+        addReadyGideon(player1, 4);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.assertNotOnBattlefield(player1, "Gideon, Ally of Zendikar");
+        harness.assertInGraveyard(player1, "Gideon, Ally of Zendikar");
+        harness.passBothPriorities();
+
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+    }
     private Permanent addReadyGideon(Player player, int loyalty) {
-        Permanent perm = new Permanent(new GideonAllyOfZendikar());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GideonAllyOfZendikar());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

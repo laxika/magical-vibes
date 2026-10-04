@@ -101,4 +101,50 @@ class GlimmeringAngelTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
+
+    @Test
+    @DisplayName("Shroud gained in response makes an opposing removal spell fail")
+    void shroudInResponseStopsOpposingRemoval() {
+        Permanent angel = addCreatureReady(player1, new GlimmeringAngel());
+        harness.setHand(player2, List.of(new AgonizingDemise()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, angel.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(angel.hasKeyword(Keyword.SHROUD)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(angel);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof AgonizingDemise);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Angel can activate again while already shrouded")
+    void canActivateWhileTappedSummoningSickAndShrouded() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new GlimmeringAngel());
+        angel.setSummoningSick(true);
+        angel.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(angel.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -11,8 +12,42 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinSpelunkers.class, Mountain.class})
+@CardUsed({GoblinSpelunkers.class, Mountain.class, Forest.class})
 class GoblinSpelunkersTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A tapped Mountain still prevents blocking a creature with mountainwalk")
+    void cannotBeBlockedWhenDefendersMountainIsTapped() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setTapped(true);
+        Permanent attacker = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent blocker = addCreatureReady(player2, new GoblinSpelunkers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A Forest does not prevent blocking a creature with mountainwalk")
+    void canBeBlockedWhenDefenderControlsOnlyForest() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent attacker = addCreatureReady(player1, new GoblinSpelunkers());
+        Permanent blocker = addCreatureReady(player2, new GoblinSpelunkers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("Mountainwalk prevents blocking when the defending player controls a Mountain")

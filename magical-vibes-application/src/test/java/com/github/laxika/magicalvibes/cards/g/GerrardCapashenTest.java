@@ -100,4 +100,53 @@ class GerrardCapashenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking");
     }
+
+    @Test
+    @DisplayName("Does not gain life during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new GerrardCapashen());
+        harness.setHand(player2, List.of(new GaeasSkyfolk(), new GaeasSkyfolk()));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Can tap a friendly creature while attacking")
+    void canTapFriendlyCreatureWhileAttacking() {
+        addCreatureReady(player1, new GerrardCapashen());
+        Permanent target = addCreatureReady(player1, new GaeasSkyfolk());
+        addCreatureReady(player2, new GaeasSkyfolk());
+        declareAttackers(List.of(0));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate more than once while Gerrard is tapped and attacking")
+    void canActivateMultipleTimesWhileTappedAndAttacking() {
+        Permanent gerrard = addCreatureReady(player1, new GerrardCapashen());
+        Permanent firstTarget = addCreatureReady(player2, new GaeasSkyfolk());
+        Permanent secondTarget = addCreatureReady(player2, new GaeasSkyfolk());
+        declareAttackers(List.of(0));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        assertThat(gerrard.isTapped()).isTrue();
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        harness.activateAbility(player1, 0, null, secondTarget.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.isTapped()).isTrue();
+        assertThat(secondTarget.isTapped()).isTrue();
+    }
 }

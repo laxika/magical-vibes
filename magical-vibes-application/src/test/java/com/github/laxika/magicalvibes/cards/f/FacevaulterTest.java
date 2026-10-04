@@ -103,7 +103,7 @@ class FacevaulterTest extends BaseCardTest {
     void tappedSummoningSickSourceCanActivateRepeatedly() {
         Permanent facevaulter = harness.addToBattlefieldAndReturn(player1, new Facevaulter());
         facevaulter.setSummoningSick(true);
-        facevaulter.setTapped(true);
+        facevaulter.tap();
         Permanent first = harness.addToBattlefieldAndReturn(player1, new Facevaulter());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new Facevaulter());
         harness.addMana(player1, ManaColor.BLACK, 2);

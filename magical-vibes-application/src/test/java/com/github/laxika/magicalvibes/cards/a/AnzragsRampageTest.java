@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,9 +45,7 @@ class AnzragsRampageTest extends BaseCardTest {
         Permanent entered = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(noncreature);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(entered.getId())
-                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+
 
         advanceToNextEndStep();
 
@@ -166,6 +162,7 @@ class AnzragsRampageTest extends BaseCardTest {
     private void advanceToNextEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passUntil(
+                gd.activePlayerId.equals(player1.getId()) ? player1 : player2, TurnStep.END_STEP));
     }
 }

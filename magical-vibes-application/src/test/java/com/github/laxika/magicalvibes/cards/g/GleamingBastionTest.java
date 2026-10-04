@@ -47,9 +47,70 @@ class GleamingBastionTest extends BaseCardTest {
     }
 
     private Permanent addReadyBastion() {
-        Permanent bastion = new Permanent(new GleamingBastion());
+        Permanent bastion = harness.addToBattlefieldAndReturn(player1, new GleamingBastion());
         bastion.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bastion);
         return bastion;
+    }
+
+    @Test
+    void producesColorlessManaWithoutBasicLandOrHavingEnteredThisTurn() {
+        Permanent bastion = addReadyBastion();
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(bastion.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void producesBlueManaWhenItEnteredThisTurn() {
+        Permanent bastion = harness.enterBattlefieldAndReturn(player1, new GleamingBastion());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(bastion.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void producesWhiteManaWithATappedBasicLand() {
+        Permanent bastion = addReadyBastion();
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        plains.setTapped(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(bastion.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsBasicLandDoesNotEnableEitherColor() {
+        Permanent bastion = addReadyBastion();
+        harness.addToBattlefield(player2, new Plains());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bastion.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void anotherNonbasicLandDoesNotEnableBlueMana() {
+        Permanent bastion = addReadyBastion();
+        harness.addToBattlefield(player1, new GleamingBastion());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bastion.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }

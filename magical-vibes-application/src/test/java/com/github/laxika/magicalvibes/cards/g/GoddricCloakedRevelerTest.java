@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DragonEgg;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,8 +18,73 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoddricCloakedReveler.class, DragonEgg.class, Forest.class, GrizzlyBears.class})
+@CardUsed({GoddricCloakedReveler.class, DragonEgg.class, DressDown.class, Forest.class, GrizzlyBears.class})
 class GoddricCloakedRevelerTest extends BaseCardTest {
+
+    @Test
+    void celebrationGrantsFlyingAndReplacesCreatureTypes() {
+        Permanent goddric = castGoddric();
+        assertThat(gqs.hasKeyword(gd, goddric, Keyword.FLYING)).isFalse();
+
+        castGrizzlyBears();
+
+        assertThat(gqs.hasKeyword(gd, goddric, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, goddric, CardSubtype.DRAGON)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, goddric, CardSubtype.HUMAN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, goddric, CardSubtype.NOBLE)).isFalse();
+    }
+
+    @Test
+    void remainsFourFourDragonAfterLosingAbilities() {
+        Permanent goddric = castGoddric();
+        castGrizzlyBears();
+        assertThat(gqs.getEffectivePower(gd, goddric)).isEqualTo(4);
+
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new DressDown()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, goddric, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, goddric, CardSubtype.DRAGON)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, goddric)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goddric)).isEqualTo(4);
+    }
+
+    @Test
+    void laterDragonsDoNotReceiveAnAlreadyResolvedBoost() {
+        Permanent goddric = castGoddric();
+        castGrizzlyBears();
+        Permanent existingDragon = harness.addToBattlefieldAndReturn(player1, new DragonEgg());
+        int unboostedDragonPower = gqs.getEffectivePower(gd, existingDragon);
+        harness.addMana(player1, ManaColor.RED, 1);
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(goddric);
+        harness.activateAbility(player1, sourceIndex, null, null);
+        harness.passBothPriorities();
+
+        Permanent laterDragon = harness.addToBattlefieldAndReturn(player1, new DragonEgg());
+
+        assertThat(gqs.getEffectivePower(gd, goddric)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, laterDragon)).isEqualTo(unboostedDragonPower);
+    }
+
+    @Test
+    void opponentEntriesDoNotEnableCelebration() {
+        Permanent goddric = castGoddric();
+        int initialPower = gqs.getEffectivePower(gd, goddric);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, goddric)).isEqualTo(initialPower);
+        assertThat(gqs.hasKeyword(gd, goddric, Keyword.FLYING)).isFalse();
+    }
 
     @Test
     @DisplayName("Becomes a 4/4 after two nonland permanents enter under your control this turn")

@@ -91,6 +91,55 @@ class GoblinBurrowsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Colorless mana cannot pay the red part of the boost cost")
+    void boostRequiresRedMana() {
+        Permanent burrows = addReadyBurrows(player1);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(burrows.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Goblin Burrows cannot activate its boost")
+    void tappedBurrowsCannotBoost() {
+        Permanent burrows = addReadyBurrows(player1);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(burrows.isTapped()).isTrue();
+        assertThat(goblin.getEffectivePower()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost resolves after Goblin Burrows leaves the battlefield")
+    void boostResolvesAfterSourceLeavesBattlefield() {
+        Permanent burrows = addReadyBurrows(player1);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinPiker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, goblin.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(burrows);
+        gd.playerGraveyards.get(player1.getId()).add(burrows.getCard());
+        harness.passBothPriorities();
+
+        assertThat(goblin.getEffectivePower()).isEqualTo(4);
+        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyBurrows(Player player) {
         Permanent perm = addCreatureReady(player, new GoblinBurrows());
         harness.forceActivePlayer(player);

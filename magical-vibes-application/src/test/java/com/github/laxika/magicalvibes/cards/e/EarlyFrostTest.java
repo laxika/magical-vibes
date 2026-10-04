@@ -122,7 +122,7 @@ class EarlyFrostTest extends BaseCardTest {
     void canTargetAlreadyTappedLand() {
         Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent untappedLand = harness.addToBattlefieldAndReturn(player2, new Island());
-        tappedLand.setTapped(true);
+        tappedLand.tap();
         harness.setHand(player1, List.of(new EarlyFrost()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

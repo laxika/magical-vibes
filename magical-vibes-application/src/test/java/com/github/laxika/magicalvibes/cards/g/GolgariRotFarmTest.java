@@ -86,4 +86,44 @@ class GolgariRotFarmTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Entering without being played still enters tapped and triggers the return")
+    void enteringWithoutBeingPlayedTriggersReturn() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        Permanent rotFarm = harness.enterBattlefieldAndReturn(player1, new GolgariRotFarm());
+
+        assertThat(rotFarm.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Golgari Rot Farm");
+    }
+
+    @Test
+    @DisplayName("Can choose itself with another land available, but cannot choose an opponent's land")
+    void canChooseItselfWithOtherLandsAvailable() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new GolgariRotFarm()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent rotFarm = findPermanent(player1, "Golgari Rot Farm");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrder(forest.getId(), rotFarm.getId())
+                .doesNotContain(opposingForest.getId());
+        harness.handlePermanentChosen(player1, rotFarm.getId());
+
+        harness.assertInHand(player1, "Golgari Rot Farm");
+        harness.assertNotOnBattlefield(player1, "Golgari Rot Farm");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.cards.c.CoralEel;
 
@@ -174,5 +177,27 @@ class GloriousAnthemTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({GloriousAnthem.class, GrizzlyBears.class, Naturalize.class})
+    @DisplayName("Destroying one Anthem leaves only the other Anthem's bonus")
+    void destroyingOneAnthemLeavesOtherBonus() {
+        Permanent firstAnthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent secondAnthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, firstAnthem.getId());
+
+        harness.assertInGraveyard(player1, "Glorious Anthem");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondAnthem).doesNotContain(firstAnthem);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }

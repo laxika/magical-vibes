@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GluttonousZombie.class, GlorySeeker.class, DrudgeSkeletons.class, DancingScimitar.class})
@@ -50,6 +49,18 @@ class GluttonousZombieTest extends BaseCardTest {
         addCreatureReady(player1, new GluttonousZombie());
 
         Permanent blocker = addCreatureReady(player2, new DancingScimitar());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fear does not restrict Gluttonous Zombie from blocking")
+    void fearDoesNotRestrictBlocking() {
+        addCreatureReady(player1, new GlorySeeker());
+        Permanent blocker = addCreatureReady(player2, new GluttonousZombie());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

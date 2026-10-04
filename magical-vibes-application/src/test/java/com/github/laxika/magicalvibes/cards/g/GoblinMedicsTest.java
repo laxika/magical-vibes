@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.r.RingOfGix;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinMedics.class, GoblinWelder.class})
+@CardUsed({GoblinMedics.class, GoblinWelder.class, RingOfGix.class})
 class GoblinMedicsTest extends BaseCardTest {
 
     @Test
@@ -64,6 +66,67 @@ class GoblinMedicsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Only the tapped copy triggers when two Medics are controlled")
+    void onlyTappedCopyTriggers() {
+        Permanent medics = addCreatureReady(player1, new GoblinMedics());
+        addCreatureReady(player1, new GoblinMedics());
+
+        tap(medics);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's tap effect triggers Medics even while summoning sick")
+    void opponentsTapEffectTriggers() {
+        Permanent medics = harness.addToBattlefieldAndReturn(player1, new GoblinMedics());
+        harness.addToBattlefield(player2, new RingOfGix());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, medics.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(medics.isTapped()).isTrue();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A tap effect on already tapped Medics does not trigger")
+    void alreadyTappedDoesNotTrigger() {
+        Permanent medics = harness.addToBattlefieldAndReturn(player1, new GoblinMedics());
+        medics.tap();
+        harness.addToBattlefield(player2, new RingOfGix());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, medics.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Medics can target itself with its triggered damage")
+    void canTargetItself() {
+        Permanent medics = addCreatureReady(player1, new GoblinMedics());
+
+        tap(medics);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, medics.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblin Medics");
     }
 
     private void tap(Permanent permanent) {

@@ -84,6 +84,50 @@ class GlarecasterTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 4);
     }
 
+    @Test
+    void damageIsNotRedirectedWhenTheDestinationHasLeftTheBattlefield() {
+        Permanent glarecaster = addCreatureReady(player1, new Glarecaster());
+        Permanent destination = addCreatureReady(player1, new GlorySeeker());
+        Permanent firstShooter = addCreatureReady(player1, new GoblinSharpshooter());
+        Permanent secondShooter = addCreatureReady(player1, new GoblinSharpshooter());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        activateGlarecaster(glarecaster, destination.getId());
+        harness.activateAbility(player1, indexOf(player1, firstShooter), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, secondShooter), null, destination.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(destination);
+
+        harness.activateAbility(player1, indexOf(player1, firstShooter), null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    void redirectedDamageIsAffectedByTheNewRecipientsRedirectShield() {
+        Permanent firstGlarecaster = addCreatureReady(player1, new Glarecaster());
+        Permanent secondGlarecaster = addCreatureReady(player2, new Glarecaster());
+        Permanent destination = addCreatureReady(player2, new GlorySeeker());
+        Permanent shooter = addCreatureReady(player1, new GoblinSharpshooter());
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        activateGlarecaster(firstGlarecaster, player2.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.activateAbility(player2, indexOf(player2, secondGlarecaster), null, destination.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, shooter), null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore);
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
     private void activateGlarecaster(Permanent glarecaster, java.util.UUID destinationId) {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.WHITE, 1);

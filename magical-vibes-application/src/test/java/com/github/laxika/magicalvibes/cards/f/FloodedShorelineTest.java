@@ -130,8 +130,8 @@ class FloodedShorelineTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FloodedShoreline());
         Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
-        firstIsland.setTapped(true);
-        secondIsland.setTapped(true);
+        firstIsland.tap();
+        secondIsland.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 

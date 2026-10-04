@@ -110,7 +110,7 @@ class FodderTosserTest extends BaseCardTest {
     @Test
     void cannotActivateTappedArtifact() {
         Permanent tosser = harness.addToBattlefieldAndReturn(player1, new FodderTosser());
-        tosser.setTapped(true);
+        tosser.tap();
         harness.setHand(player1, List.of(new OrnithopterOfParadise()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

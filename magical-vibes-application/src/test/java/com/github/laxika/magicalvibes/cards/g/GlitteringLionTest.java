@@ -37,8 +37,7 @@ class GlitteringLionTest extends BaseCardTest {
         Permanent lion = addCreatureReady(player1, new GlitteringLion());
         addCreatureReady(player2, new VintaraSnapper());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -95,5 +94,48 @@ class GlitteringLionTest extends BaseCardTest {
 
         assertThat(lion.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(lion);
+    }
+
+    @Test
+    @DisplayName("Damage is still prevented in response to the activation")
+    void preventionRemainsUntilAbilityResolves() {
+        Permanent lion = addCreatureReady(player1, new GlitteringLion());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, null);
+
+        harness.setHand(player1, List.of(new SearingWind()));
+        harness.addMana(player1, ManaColor.RED, 9);
+        harness.castAndResolveInstant(player1, 0, lion.getId());
+
+        assertThat(lion.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(lion);
+
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new SearingWind()));
+        harness.addMana(player2, ManaColor.RED, 9);
+        harness.castAndResolveInstant(player2, 0, lion.getId());
+
+        harness.assertInGraveyard(player1, "Glittering Lion");
+    }
+
+    @Test
+    @DisplayName("Turning off one Lion's prevention does not affect another Lion")
+    void suppressionOnlyAffectsItsSource() {
+        Permanent firstLion = addCreatureReady(player1, new GlitteringLion());
+        Permanent secondLion = addCreatureReady(player1, new GlitteringLion());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new SearingWind(), new SearingWind()));
+        harness.addMana(player2, ManaColor.RED, 18);
+        harness.castAndResolveInstant(player2, 0, secondLion.getId());
+
+        assertThat(secondLion.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondLion);
+
+        harness.castAndResolveInstant(player2, 0, firstLion.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstLion).contains(secondLion);
     }
 }

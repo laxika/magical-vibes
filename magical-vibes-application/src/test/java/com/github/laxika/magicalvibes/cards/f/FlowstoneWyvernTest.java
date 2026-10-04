@@ -95,7 +95,7 @@ class FlowstoneWyvernTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent wyvern = harness.addToBattlefieldAndReturn(player1, new FlowstoneWyvern());
         wyvern.setSummoningSick(true);
-        wyvern.setTapped(true);
+        wyvern.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

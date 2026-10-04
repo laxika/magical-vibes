@@ -206,7 +206,7 @@ class ExplodingBarrelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        barrel.setTapped(false);
+        barrel.untap();
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 

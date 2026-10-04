@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GiadaFontOfHope.class, SerraAngel.class, WitnessProtection.class})
 class GiadaFontOfHopeTest extends BaseCardTest {
 
     @Test
@@ -79,6 +83,56 @@ class GiadaFontOfHopeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Angel Spell")).isNotNull();
+    }
+
+    @Test
+    void giadaDoesNotGiveHerselfCountersWhenSheEnters() {
+        harness.addToBattlefield(player1, new SerraAngel());
+
+        Permanent giada = harness.enterBattlefieldAndReturn(player1, new GiadaFontOfHope());
+
+        assertThat(giada.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentsAngelsAreNeitherCountedNorGivenCounters() {
+        harness.addToBattlefield(player1, new GiadaFontOfHope());
+        harness.addToBattlefield(player2, new SerraAngel());
+
+        Permanent ownAngel = harness.enterBattlefieldAndReturn(player1, new SerraAngel());
+        Permanent opposingAngel = harness.enterBattlefieldAndReturn(player2, new SerraAngel());
+
+        assertThat(ownAngel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingAngel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void giadaCannotGiveEntryCountersAfterLosingHerAbilities() {
+        Permanent giada = addCreatureReady(player1, new GiadaFontOfHope());
+        harness.addToBattlefield(player1, new SerraAngel());
+        harness.setHand(player1, List.of(new WitnessProtection()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, giada.getId());
+        harness.passBothPriorities();
+
+        Permanent enteringAngel = harness.enterBattlefieldAndReturn(player1, new SerraAngel());
+
+        assertThat(enteringAngel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void restrictedManaPaysForARealAngelSpell() {
+        addCreatureReady(player1, new GiadaFontOfHope());
+        harness.setHand(player1, List.of(new SerraAngel()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Serra Angel").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
     }
 
     private static Card createCreature(String name, String manaCost, CardSubtype subtype) {

@@ -77,6 +77,7 @@ class AppaLoyalSkyBisonTest extends BaseCardTest {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
 
         Permanent appa = harness.enterBattlefieldAndReturn(player1, new AppaLoyalSkyBison());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "Airbend another target nonland permanent you control");
@@ -84,6 +85,7 @@ class AppaLoyalSkyBisonTest extends BaseCardTest {
                 .contains(creature.getId())
                 .doesNotContain(appa.getId(), island.getId());
         harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();

@@ -414,9 +414,13 @@ public class BattlefieldPlacementService {
             permanentCounterSupport.fireCounterPutOnControlledCreatureTriggers(
                         gameData, permanent, added, controllerId);
         }
+        Card enteredCharacteristics = permanent.getCard().createRuntimeCopy();
+        enteredCharacteristics.setSubtypes(java.util.Arrays.stream(CardSubtype.values())
+                .filter(subtype -> gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype))
+                .toList());
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
-                .add(permanent.getCard());
+                .add(enteredCharacteristics);
         if (permanent.isFaceDown()) {
             gameData.faceDownPermanentsEnteredBattlefieldThisTurn
                     .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -1199,10 +1203,10 @@ public class BattlefieldPlacementService {
      * across all battlefields; while the source's parity is unchosen (null) it does nothing.
      */
     private void applyUnchosenParityEnterTapped(GameData gameData, Permanent enteringPermanent) {
-        if (!enteringPermanent.getCard().hasType(CardType.CREATURE)) {
+        if (!gameQueryService.isCreature(gameData, enteringPermanent)) {
             return;
         }
-        int manaValue = enteringPermanent.getCard().getManaValue();
+        int manaValue = enteringPermanent.isFaceDown() ? 0 : enteringPermanent.getCard().getManaValue();
         gameData.forEachPermanent((playerId, source) -> {
             for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                 if (!(effect instanceof CreaturesOfUnchosenParityEnterTappedEffect)) {
@@ -1945,7 +1949,8 @@ public class BattlefieldPlacementService {
         record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count,
                                boolean allCreatures) {}
         List<SourcedCounters> effects = battlefield.stream()
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(source -> !gameQueryService.hasLostAllAbilities(gameData, source))
+                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
                         .flatMap(effect -> {
                             ControlledCreaturesEnterWithAdditionalCountersEffect countersEffect = null;
                             if (effect instanceof ControlledCreaturesEnterWithAdditionalCountersEffect direct) {

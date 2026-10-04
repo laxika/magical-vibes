@@ -123,7 +123,7 @@ class DuergarCaveGuardTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent guard = addCreatureReady(player1, new DuergarCaveGuard());
         guard.setSummoningSick(true);
-        guard.setTapped(true);
+        guard.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

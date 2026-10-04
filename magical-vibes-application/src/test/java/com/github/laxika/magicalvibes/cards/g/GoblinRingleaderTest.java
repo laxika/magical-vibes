@@ -110,4 +110,47 @@ class GoblinRingleaderTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    @DisplayName("The controller chooses the order of the non-Goblin cards on the bottom")
+    void controllerChoosesBottomOrder() {
+        GoblinLegionnaire goblin = new GoblinLegionnaire();
+        DwarvenPatrol firstNonGoblin = new DwarvenPatrol();
+        EvasiveAction secondNonGoblin = new EvasiveAction();
+        DwarvenPatrol thirdNonGoblin = new DwarvenPatrol();
+        GoblinLegionnaire unrevealed = new GoblinLegionnaire();
+        harness.setLibrary(player1, List.of(
+                goblin, firstNonGoblin, secondNonGoblin, thirdNonGoblin, unrevealed));
+
+        castRingleader();
+
+        var reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(firstNonGoblin, secondNonGoblin, thirdNonGoblin);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(goblin);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(unrevealed, thirdNonGoblin, firstNonGoblin, secondNonGoblin);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("All four revealed Goblins go to hand without a reorder choice")
+    void allRevealedGoblinsGoToHand() {
+        GoblinRingleader first = new GoblinRingleader();
+        GoblinRingleader second = new GoblinRingleader();
+        GoblinRingleader third = new GoblinRingleader();
+        GoblinRingleader fourth = new GoblinRingleader();
+        GoblinRingleader unrevealed = new GoblinRingleader();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, unrevealed));
+
+        castRingleader();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third, fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
 }

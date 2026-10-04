@@ -38,4 +38,44 @@ class GolgariDeathSwarmTest extends BaseCardTest {
 
         assertThat(swarm.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("A flying creature can block Golgari Death Swarm")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new GolgariDeathSwarm());
+        Permanent blocker = addCreatureReady(player2, new GolgariDeathSwarm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a tapped Golgari Death Swarm to attack")
+    void tappedCreatureCannotAttackDespiteVigilance() {
+        Permanent swarm = addCreatureReady(player1, new GolgariDeathSwarm());
+        swarm.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(swarm.isAttacking()).isFalse();
+        assertThat(swarm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a summoning-sick Golgari Death Swarm to attack")
+    void summoningSickCreatureCannotAttackDespiteVigilance() {
+        Permanent swarm = addCreatureReady(player1, new GolgariDeathSwarm());
+        swarm.setSummoningSick(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(swarm.isAttacking()).isFalse();
+        assertThat(swarm.isTapped()).isFalse();
+    }
 }

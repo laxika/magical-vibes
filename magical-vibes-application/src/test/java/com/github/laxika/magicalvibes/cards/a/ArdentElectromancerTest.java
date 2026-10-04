@@ -127,6 +127,8 @@ class ArdentElectromancerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         harness.castFromHand(player1, new ZulaportDuelist(), "{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ardent Electromancer"));
         resolveStack();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
@@ -138,8 +140,10 @@ class ArdentElectromancerTest extends BaseCardTest {
     }
 
     private void resolveStack() {
-        while (!gd.stack.isEmpty()) {
+        for (int round = 0; !gd.stack.isEmpty() && round < 10; round++) {
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
             harness.passBothPriorities();
         }
+        assertThat(gd.stack).isEmpty();
     }
 }

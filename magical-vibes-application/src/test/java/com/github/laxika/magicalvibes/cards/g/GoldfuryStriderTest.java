@@ -82,6 +82,90 @@ class GoldfuryStriderTest extends BaseCardTest {
         assertThat(secondArtifact.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Summoning-sick artifact creatures can pay the cost and the source can target itself")
+    void summoningSickCreaturesCanPayCostToBoostSource() {
+        Permanent strider = addStrider();
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
+        assertThat(strider.isSummoningSick()).isTrue();
+        assertThat(other.isSummoningSick()).isTrue();
+
+        harness.activateAbility(player1, 0, 0, null, strider.getId());
+        harness.passBothPriorities();
+
+        assertThat(strider.isTapped()).isTrue();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, strider)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, strider)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A single artifact creature does not count as two permanents")
+    void requiresTwoDistinctPermanents() {
+        Permanent strider = addStrider();
+        harness.addToBattlefield(player2, new GoldfuryStrider());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, strider.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough untapped permanents");
+        assertThat(strider.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Strider can activate by tapping two other permanents and target an opponent's creature")
+    void tappedSourceCanBoostOpponentsCreature() {
+        Permanent strider = addStrider();
+        strider.tap();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldfuryStrider());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Already-tapped permanents cannot pay the activation cost")
+    void tappedPermanentsCannotPayCost() {
+        Permanent strider = addStrider();
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
+        other.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, strider.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough untapped permanents");
+        assertThat(strider.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sorcery timing prevents another activation while the first ability is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        Permanent strider = addStrider();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
+
+        harness.activateAbility(player1, 0, 0, null, strider.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, strider.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(strider.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, strider)).isEqualTo(5);
+    }
+
     private Permanent addStrider() {
         return harness.addToBattlefieldAndReturn(player1, new GoldfuryStrider());
     }

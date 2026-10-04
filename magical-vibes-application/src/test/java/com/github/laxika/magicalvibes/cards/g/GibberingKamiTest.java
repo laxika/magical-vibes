@@ -41,6 +41,8 @@ class GibberingKamiTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(kami.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Lantern Kami");
         harness.assertNotInGraveyard(player1, "Lantern Kami");
@@ -56,8 +58,10 @@ class GibberingKamiTest extends BaseCardTest {
         killKami();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Lantern Kami");
         harness.assertNotInHand(player1, "Lantern Kami");
@@ -92,5 +96,23 @@ class GibberingKamiTest extends BaseCardTest {
         killKami();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Soulshift can return a Spirit with mana value exactly 3")
+    void returnsSpiritAtManaValueBoundary() {
+        harness.addToBattlefield(player1, new GibberingKami());
+        Card spirit = new KamiOfTheHunt();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        killKami();
+
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Kami of the Hunt");
+        harness.assertNotInGraveyard(player1, "Kami of the Hunt");
     }
 }

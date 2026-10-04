@@ -107,7 +107,7 @@ class FalkenrathExterminatorTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent exterminator = harness.addToBattlefieldAndReturn(player1, new FalkenrathExterminator());
         exterminator.setSummoningSick(true);
-        exterminator.setTapped(true);
+        exterminator.tap();
         exterminator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent target = addCreatureReady(player2, new SeraphOfDawn());
         harness.addMana(player1, ManaColor.RED, 6);

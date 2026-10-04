@@ -112,7 +112,7 @@ class FreneticEfreetTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent efreet = harness.addToBattlefieldAndReturn(player1, new FreneticEfreet());
         efreet.setSummoningSick(true);
-        efreet.setTapped(true);
+        efreet.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

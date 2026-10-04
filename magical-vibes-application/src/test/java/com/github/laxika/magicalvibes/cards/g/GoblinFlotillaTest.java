@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
+import com.github.laxika.magicalvibes.cards.s.Seasinger;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinFlotilla.class, RiverMerfolk.class})
+@CardUsed({GoblinFlotilla.class, RiverMerfolk.class, Island.class, Seasinger.class})
 class GoblinFlotillaTest extends BaseCardTest {
 
     @Test
@@ -133,7 +134,6 @@ class GoblinFlotillaTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({Island.class})
     @DisplayName("Islandwalk prevents blocking while the defending player controls an Island")
     void islandwalkPreventsBlockingWithIsland() {
         harness.addToBattlefield(player2, new Island());
@@ -150,6 +150,54 @@ class GoblinFlotillaTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("The delayed first-strike trigger survives a change of controller during combat")
+    void delayedTriggerSurvivesControlChange() {
+        Permanent flotilla = addCreatureReady(player1, new GoblinFlotilla());
+        harness.addToBattlefield(player1, new Island());
+        Permanent attacker = addCreatureReady(player1, new RiverMerfolk());
+        Permanent seasinger = addCreatureReady(player2, new Seasinger());
+        harness.addToBattlefield(player2, new Island());
+
+        declineBeginningOfCombatPayment(player1, player1);
+
+        int seasingerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(seasinger);
+        harness.activateAbility(player2, seasingerIndex, null, flotilla.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(flotilla);
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(flotilla);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getSourcePermanentId()).isEqualTo(flotilla.getId());
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+        });
+        resolveAllTriggers();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted first strike remains after combat ends")
+    void firstStrikePersistsAfterCombat() {
+        Permanent flotilla = addCreatureReady(player1, new GoblinFlotilla());
+        Permanent blocker = addCreatureReady(player2, new RiverMerfolk());
+        declineBeginningOfCombatPayment(player1, player1);
+        flotilla.setAttacking(true);
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void declineBeginningOfCombatPayment(Player activePlayer, Player payer) {

@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GhoulcallersBell.class, Swamp.class})
 class GhoulcallersBellTest extends BaseCardTest {
-
-    // ===== Activating ability =====
 
     @Test
     @DisplayName("Activating ability taps Ghoulcaller's Bell")
@@ -37,8 +38,6 @@ class GhoulcallersBellTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
-
-    // ===== Mill effects =====
 
     @Test
     @DisplayName("Controller mills a card when ability resolves")
@@ -124,13 +123,53 @@ class GhoulcallersBellTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A newly entered noncreature Bell can activate without mana and mills only on resolution")
+    void newlyEnteredBellUsesStack() {
+        Permanent bell = harness.enterBattlefieldAndReturn(player1, new GhoulcallersBell());
+        Swamp controllerTop = new Swamp();
+        Swamp opponentTop = new Swamp();
+        harness.setLibrary(player1, List.of(controllerTop));
+        harness.setLibrary(player2, List.of(opponentTop));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(bell.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(controllerTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(controllerTop);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentTop);
+    }
+
+    @Test
+    @DisplayName("Ability still mills both players after its source leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent bell = addReadyBell(player1);
+        Swamp controllerTop = new Swamp();
+        Swamp opponentTop = new Swamp();
+        harness.setLibrary(player1, List.of(controllerTop));
+        harness.setLibrary(player2, List.of(opponentTop));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(bell);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(controllerTop);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentTop);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyBell(Player player) {
-        GhoulcallersBell card = new GhoulcallersBell();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GhoulcallersBell());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

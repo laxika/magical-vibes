@@ -48,7 +48,7 @@ class ArchfiendOfSorrowsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent archfiend = findPermanent(player1, "Archfiend of Sorrows");
-        assertThat(archfiend.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, archfiend, Keyword.HASTE)).isTrue();
 
         harness.passUntil(TurnStep.DECLARE_ATTACKERS);
         gs.declareAttackers(gd, player1, List.of());

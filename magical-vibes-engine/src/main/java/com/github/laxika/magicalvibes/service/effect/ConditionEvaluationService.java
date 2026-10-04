@@ -990,7 +990,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.orderedPlayerIds.stream()
                             .filter(pid -> !pid.equals(ctx.controllerId()))
-                            .anyMatch(pid -> gameData.getLife(pid) <= c.threshold());
+                            .anyMatch(pid -> gameData.getLife(pid) <= (c.belowHalfStartingLife()
+                                    ? (gameData.startingLife() - 1) / 2 : c.threshold()));
             case EachPlayerLifeAtMost c ->
                     gameData.orderedPlayerIds.stream()
                             .allMatch(pid -> gameData.playerLifeTotals.getOrDefault(pid, 20) <= c.threshold());

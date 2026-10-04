@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.Set;
 
@@ -27,5 +30,9 @@ public record GrantFlashbackToTargetGraveyardCardEffect(Set<CardType> cardTypes,
         this(cardTypes, false, flashbackCost);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)); }
+    @Override public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.graveyardCards(
+                new CardAnyOfPredicate(cardTypes.stream().<CardPredicate>map(CardTypePredicate::new).toList()),
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
+    }
 }

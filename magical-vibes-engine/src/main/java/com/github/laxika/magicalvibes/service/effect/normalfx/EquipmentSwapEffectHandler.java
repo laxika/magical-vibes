@@ -18,8 +18,7 @@ import java.util.UUID;
 
 /**
  * Resolves Equipment swap by offering eligible Equipment cards in hand and returning the source
- * Equipment when one is chosen. The source and its equipped creature must still exist when the
- * choice is made.
+ * Equipment when one is chosen, keeping the replacement attached to the same creature, if any.
  */
 @Component
 @RequiredArgsConstructor
@@ -41,8 +40,7 @@ public class EquipmentSwapEffectHandler implements NormalEffectHandlerBean {
         Permanent source = sourcePermanentId == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || !source.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                || !source.isAttached()) {
+        if (source == null || !source.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             return;
         }
 
@@ -52,7 +50,7 @@ public class EquipmentSwapEffectHandler implements NormalEffectHandlerBean {
         }
 
         Permanent host = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
-        if (host == null) {
+        if (source.isAttached() && host == null) {
             return;
         }
 
@@ -62,7 +60,7 @@ public class EquipmentSwapEffectHandler implements NormalEffectHandlerBean {
             for (int i = 0; i < hand.size(); i++) {
                 Card card = hand.get(i);
                 if (card.getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && equipSupport.canAttachEquipment(gameData, new Permanent(card), host)) {
+                        && (host == null || equipSupport.canAttachEquipment(gameData, new Permanent(card), host))) {
                     validIndices.add(i);
                 }
             }
@@ -77,7 +75,7 @@ public class EquipmentSwapEffectHandler implements NormalEffectHandlerBean {
                 controllerId,
                 validIndices,
                 "You may exchange this Equipment with an Equipment card from your hand.",
-                host.getId(),
+                host == null ? null : host.getId(),
                 null,
                 source.getId());
     }

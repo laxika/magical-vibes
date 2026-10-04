@@ -104,7 +104,7 @@ class FledglingMawcorTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent mawcor = addCreatureReady(player1, new FledglingMawcor());
-        mawcor.setTapped(true);
+        mawcor.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

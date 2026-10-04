@@ -1,22 +1,21 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GisasFavoriteShovel.class, GrizzlyBears.class, SuntailHawk.class})
+@CardUsed({GisasFavoriteShovel.class, GrizzlyBears.class, GarrukWildspeaker.class})
 class GisasFavoriteShovelTest extends BaseCardTest {
 
     @Test
@@ -94,10 +93,83 @@ class GisasFavoriteShovelTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Walker")).isEmpty();
     }
 
+    @Test
+    @DisplayName("An unattached Shovel does not trigger when a creature attacks")
+    void unattachedShovelDoesNotTrigger() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addShovelReady(player1);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(defender);
+            assertThat(findPermanents(player1, "Walker")).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Only the equipped creature's attack triggers the Shovel")
+    void otherAttackerDoesNotTriggerShovel() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        addShovelReady(player1).setAttachedTo(equipped.getId());
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(defender);
+            assertThat(findPermanents(player1, "Walker")).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("The Shovel's controller creates the Walker when another player controls the equipped creature")
+    void shovelControllerCreatesWalker() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        addShovelReady(player1).setAttachedTo(attacker.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+
+            harness.assertInGraveyard(player1, "Grizzly Bears");
+            assertThat(findPermanents(player1, "Walker")).hasSize(1);
+            assertThat(findPermanents(player2, "Walker")).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("The defending player still sacrifices after the attacked planeswalker leaves")
+    void defendingPlayerStillSacrificesAfterPlaneswalkerLeaves() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addShovelReady(player1).setAttachedTo(attacker.getId());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
+            assertThat(gd.stack).hasSize(1);
+
+            gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+            gd.playerGraveyards.get(player2.getId()).add(planeswalker.getCard());
+            resolveAllTriggers();
+
+            harness.assertInGraveyard(player2, "Grizzly Bears");
+            assertThat(findPermanents(player1, "Walker")).hasSize(1);
+        });
+    }
+
     private Permanent addShovelReady(Player player) {
-        Permanent shovel = new Permanent(new GisasFavoriteShovel());
-        shovel.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(shovel);
-        return shovel;
+        return harness.addToBattlefieldAndReturn(player, new GisasFavoriteShovel());
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinSoothsayer.class, GoblinEliteInfantry.class, FeralShadow.class, ViashinoWarrior.class})
+@CardUsed({GoblinSoothsayer.class, GoblinEliteInfantry.class, FeralShadow.class, ViashinoWarrior.class,
+        BoggartShenanigans.class})
 class GoblinSoothsayerTest extends BaseCardTest {
 
     @Test
@@ -104,5 +106,67 @@ class GoblinSoothsayerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new GoblinSoothsayer());
+        addCreatureReady(player1, new GoblinEliteInfantry());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Goblin Soothsayer");
+        harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and creatures are selected at resolution")
+    void selectsCreaturesAtResolution() {
+        addCreatureReady(player1, new GoblinSoothsayer());
+        Permanent warrior = addCreatureReady(player1, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Goblin Soothsayer");
+        harness.assertInGraveyard(player1, "Goblin Soothsayer");
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player2, new ViashinoWarrior());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player2, new ViashinoWarrior());
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a noncreature Goblin permanent")
+    void canSacrificeKindredGoblin() {
+        Permanent soothsayer = addCreatureReady(player1, new GoblinSoothsayer());
+        Permanent shenanigans = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        Permanent warrior = addCreatureReady(player1, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, shenanigans.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goblin Soothsayer");
+        harness.assertNotOnBattlefield(player1, "Boggart Shenanigans");
+        harness.assertInGraveyard(player1, "Boggart Shenanigans");
+        assertThat(soothsayer.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, soothsayer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soothsayer)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
     }
 }

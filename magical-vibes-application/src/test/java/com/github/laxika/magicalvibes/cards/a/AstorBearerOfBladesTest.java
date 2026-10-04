@@ -78,9 +78,12 @@ class AstorBearerOfBladesTest extends BaseCardTest {
         Permanent vehicle = addReady(player1, new StrixhavenSkycoach());
         Permanent creature = addReady(player1, new GrizzlyBears());
 
-        harness.activateAbility(player1, 1, 1, null, null);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 1, 1, null, null);
+            harness.handlePermanentChosen(player1, creature.getId());
+            harness.handlePermanentChosen(player1, player1.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();
         assertThat(creature.isTapped()).isTrue();
@@ -190,9 +193,12 @@ class AstorBearerOfBladesTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new SalvagedManaworker());
         creature.setSummoningSick(true);
 
-        harness.activateAbility(player1, 1, 1, null, null);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 1, 1, null, null);
+            harness.handlePermanentChosen(player1, creature.getId());
+            harness.handlePermanentChosen(player1, player1.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();
         assertThat(creature.isTapped()).isTrue();

@@ -143,7 +143,7 @@ class FesterleechTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Festerleech());
         Permanent leech = gd.playerBattlefields.get(player1.getId()).getFirst();
         leech.setSummoningSick(true);
-        leech.setTapped(true);
+        leech.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 2);

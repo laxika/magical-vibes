@@ -93,7 +93,7 @@ class ArrogantPoetTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.withAutoStop(gd.currentStep, () -> harness.handleMayAbilityChosen(player2, true));
 
         harness.assertLife(player2, attackingLifeBefore - 2);
         harness.assertLife(player1, defendingLifeBefore);

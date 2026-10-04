@@ -67,6 +67,41 @@ class GingerbreadCabinTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Food")).isZero();
     }
 
+    @Test
+    @DisplayName("Another Gingerbread Cabin counts as an other Forest even when tapped")
+    void anotherCabinCountsAsForest() {
+        addForests(player1, 2);
+        Permanent otherCabin = harness.addToBattlefieldAndReturn(player1, new GingerbreadCabin());
+        otherCabin.tap();
+
+        playCabin();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Gingerbread Cabin").get(1).isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Food is sacrificed as a cost and gains three life on resolution")
+    void foodCanBeSacrificedForLife() {
+        addForests(player1, 3);
+        playCabin();
+        harness.passBothPriorities();
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent food = findPermanent(player1, "Food");
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(food), 0, null, null);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 20);
+    }
+
     private void playCabin() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

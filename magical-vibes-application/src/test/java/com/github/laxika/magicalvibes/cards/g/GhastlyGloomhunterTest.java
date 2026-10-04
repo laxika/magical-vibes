@@ -39,4 +39,32 @@ class GhastlyGloomhunterTest extends BaseCardTest {
         Permanent gloomhunter = findPermanent(player1, "Ghastly Gloomhunter");
         assertThat(gloomhunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
+
+    @Test
+    void entersWithoutCountersWhenPutDirectlyOntoBattlefield() {
+        Permanent gloomhunter = harness.enterBattlefieldAndReturn(player1, new GhastlyGloomhunter());
+
+        assertThat(gloomhunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedCreatureDealsThreeCombatDamageAndGainsThreeLife() {
+        harness.setHand(player1, List.of(new GhastlyGloomhunter()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent gloomhunter = findPermanent(player1, "Ghastly Gloomhunter");
+        gloomhunter.setSummoningSick(false);
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
 }

@@ -96,4 +96,71 @@ class GoblinSledderTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Goblin Sledder can boost itself by sacrificing another Goblin")
+    void tappedSummoningSickSledderCanBoostItself() {
+        Permanent sledder = harness.addToBattlefieldAndReturn(player1, new GoblinSledder());
+        sledder.setSummoningSick(true);
+        sledder.setTapped(true);
+        Permanent sacrifice = addCreatureReady(player1, new GoblinSledder());
+
+        harness.activateAbility(player1, 0, null, sledder.getId());
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(sledder.getEffectivePower()).isEqualTo(2);
+        assertThat(sledder.getEffectiveToughness()).isEqualTo(2);
+        assertThat(sledder.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Goblin Sledder");
+    }
+
+    @Test
+    @DisplayName("Multiple activations stack and resolve even after Goblin Sledder sacrifices itself")
+    void multipleActivationsStackAfterSourceIsSacrificed() {
+        Permanent sledder = addCreatureReady(player1, new GoblinSledder());
+        Permanent sacrifice = addCreatureReady(player1, new GoblinSledder());
+        Permanent target = addCreatureReady(player1, new GlorySeeker());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(sledder.getId()));
+        harness.passBothPriorities();
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's Goblin cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsGoblin() {
+        addCreatureReady(player1, new GoblinSledder());
+        Permanent sacrifice = addCreatureReady(player1, new GoblinSledder());
+        Permanent opposingGoblin = addCreatureReady(player2, new GoblinSledder());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingGoblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Goblin Sledder");
+        harness.assertNotInGraveyard(player2, "Goblin Sledder");
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
 }

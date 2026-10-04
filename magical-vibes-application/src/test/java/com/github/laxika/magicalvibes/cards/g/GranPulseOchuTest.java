@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FireMagic;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,14 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GranPulseOchu.class, Forest.class, Shock.class})
+@CardUsed({GranPulseOchu.class, Forest.class, FireMagic.class})
 class GranPulseOchuTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets +1/+1 for each permanent card in its controller's graveyard")
     void boostsForPermanentCardsInControllerGraveyard() {
         Permanent ochu = addReadyOchu(player1);
-        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Shock()));
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new FireMagic()));
         harness.setGraveyard(player2, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
@@ -46,7 +46,68 @@ class GranPulseOchuTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ochu)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ochu)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ochu)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts permanent cards when the ability resolves, not when activated")
+    void countsGraveyardAtResolution() {
+        Permanent ochu = addReadyOchu(player1);
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setGraveyard(player1, List.of(new Forest(), new GranPulseOchu(), new FireMagic()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ochu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ochu)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The resolved boost stays fixed when the graveyard changes")
+    void resolvedBoostDoesNotTrackGraveyard() {
+        Permanent ochu = addReadyOchu(player1);
+        harness.setGraveyard(player1, List.of(new Forest(), new GranPulseOchu()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, ochu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ochu)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple activations add their independently determined boosts")
+    void multipleActivationsStack() {
+        Permanent ochu = addReadyOchu(player1);
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 16);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of(new Forest(), new GranPulseOchu()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ochu)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ochu)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("No boost is granted when the graveyard contains only nonpermanent cards")
+    void noPermanentCardsGiveNoBoost() {
+        Permanent ochu = addReadyOchu(player1);
+        harness.setGraveyard(player1, List.of(new FireMagic()));
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ochu)).isEqualTo(1);

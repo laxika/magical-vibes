@@ -129,4 +129,72 @@ class GlacialPlatingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Only age counters on the Aura determine its bonus")
+    void bonusTracksAuraCountersRatherThanCreatureCounters() {
+        Permanent creature = addCreatureReady(player1, new BorealDruid());
+        Permanent otherCreature = addCreatureReady(player1, new BorealDruid());
+        Permanent plating = harness.addToBattlefieldAndReturn(player1, new GlacialPlating());
+        plating.setAttachedTo(creature.getId());
+        creature.setCounterCount(CounterType.AGE, 4);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        plating.setCounterCount(CounterType.AGE, 2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(1);
+
+        plating.setCounterCount(CounterType.AGE, 0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted creature gets the bonus and loses it when upkeep is declined")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new BorealDruid());
+        harness.setHand(player1, java.util.List.of(new GlacialPlating()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent plating = findPermanent(player1, "Glacial Plating");
+        assertThat(plating.getAttachedTo()).isEqualTo(creature.getId());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(plating.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Glacial Plating");
+        harness.assertOnBattlefield(player2, "Boreal Druid");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("One snow mana cannot pay upkeep for two age counters even with ordinary mana available")
+    void insufficientSnowManaSacrificesWithoutPartialPayment() {
+        Permanent creature = addCreatureReady(player1, new BorealDruid());
+        Permanent plating = harness.addToBattlefieldAndReturn(player1, new GlacialPlating());
+        plating.setAttachedTo(creature.getId());
+        plating.setCounterCount(CounterType.AGE, 1);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Glacial Plating");
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
 }

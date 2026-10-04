@@ -136,7 +136,7 @@ class ExciseTest extends BaseCardTest {
     void controllerCanGenerateManaDuringResolution() {
         Permanent attacker = addAttacker(player1);
         Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
-        land.setTapped(false);
+        land.untap();
         castExcise(1, attacker.getId());
 
         harness.passBothPriorities();

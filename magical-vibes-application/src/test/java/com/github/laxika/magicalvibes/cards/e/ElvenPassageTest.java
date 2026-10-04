@@ -116,9 +116,9 @@ class ElvenPassageTest extends BaseCardTest {
     @DisplayName("A tapped Elf can be beheld without untapping it or another land")
     void tappedElfUntapsOnlyFetchedLand() {
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        elf.setTapped(true);
+        elf.tap();
         Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Plains());
-        otherLand.setTapped(true);
+        otherLand.tap();
         Forest forest = activatePassage();
 
         chooseFetchedLand();
@@ -154,7 +154,7 @@ class ElvenPassageTest extends BaseCardTest {
     void failToFindStillAllowsBehold() {
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Plains());
-        otherLand.setTapped(true);
+        otherLand.tap();
         Forest forest = activatePassage();
 
         harness.passBothPriorities();

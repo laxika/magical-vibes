@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GlintHawkIdol.class})
 class GlintHawkIdolTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Glint Hawk Idol puts it on the battlefield")
@@ -38,7 +37,6 @@ class GlintHawkIdolTest extends BaseCardTest {
         Permanent idolPerm = addIdolReady(player1);
 
         assertThat(gqs.isCreature(gd, idolPerm)).isFalse();
-        assertThat(idolPerm.getCard().getType()).isEqualTo(CardType.ARTIFACT);
     }
 
     @Test
@@ -54,6 +52,7 @@ class GlintHawkIdolTest extends BaseCardTest {
         assertThat(idolPerm.getAnimatedPower()).isEqualTo(2);
         assertThat(idolPerm.getAnimatedToughness()).isEqualTo(2);
         assertThat(gqs.isCreature(gd, idolPerm)).isTrue();
+        assertThat(gqs.isArtifact(gd, idolPerm)).isTrue();
         assertThat(gqs.getEffectivePower(gd, idolPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, idolPerm)).isEqualTo(2);
         assertThat(idolPerm.getTransientSubtypes()).contains(CardSubtype.BIRD);
@@ -189,12 +188,53 @@ class GlintHawkIdolTest extends BaseCardTest {
         );
     }
 
+    @Test
+    @DisplayName("An opponent's artifact does not trigger Idol")
+    void opposingArtifactDoesNotTrigger() {
+        Permanent idol = addIdolReady(player1);
+
+        harness.enterBattlefieldAndReturn(player2, new GlintHawkIdol());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.isCreature(gd, idol)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A newly entered Idol can activate its ability without haste")
+    void newlyEnteredIdolCanActivate() {
+        harness.setHand(player1, List.of(new GlintHawkIdol()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent idol = findPermanent(player1, "Glint Hawk Idol");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, idol)).isTrue();
+        assertThat(gqs.hasKeyword(gd, idol, Keyword.FLYING)).isTrue();
+        assertThat(idol.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animation does not affect another Idol if its source leaves before resolution")
+    void animationDoesNotMoveToAnotherIdol() {
+        Permanent source = addIdolReady(player1);
+        Permanent other = addIdolReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, other)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+    }
+
     private Permanent addIdolReady(Player player) {
-        GlintHawkIdol card = new GlintHawkIdol();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GlintHawkIdol());
     }
 
 }

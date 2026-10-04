@@ -107,7 +107,7 @@ class DruidsDeliveranceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of());
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId());
         Permanent chosen = tokens.getFirst();
-        chosen.setTapped(true);
+        chosen.tap();
         chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         List<UUID> originalIds = tokens.stream().map(Permanent::getId).toList();
 

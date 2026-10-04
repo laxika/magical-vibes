@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -40,11 +41,11 @@ public class AuroraShifter extends Card {
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-2),
-                                new BecomeCopyOfTargetCreaturePermanentlyEffect(
+                                new QueueReflexiveAbilityEffect(new BecomeCopyOfTargetCreaturePermanentlyEffect(
                                         null,
                                         EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                                         anotherCreatureYouControl,
-                                        List.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)))),
+                                        List.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))))),
                 "Pay {E}{E} to have Aurora Shifter become a copy of another creature you control?"));
     }
 }

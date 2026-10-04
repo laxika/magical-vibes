@@ -21,7 +21,7 @@ class GliderStaffTest extends BaseCardTest {
     @DisplayName("Equipped creature gets +1/+1 and flying")
     void equippedCreatureGetsBoostAndFlying() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent staff = addStaffReady(player1);
+        Permanent staff = addCreatureReady(player1, new GliderStaff());
         staff.setAttachedTo(creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -32,7 +32,7 @@ class GliderStaffTest extends BaseCardTest {
     @Test
     @DisplayName("Equip attaches Glider Staff to a creature you control")
     void equipAttachesToCreature() {
-        Permanent staff = addStaffReady(player1);
+        Permanent staff = addCreatureReady(player1, new GliderStaff());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -53,8 +53,7 @@ class GliderStaffTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
         assertThat(gd.exilePlayPermissions.get(creature.getOriginalCard().getId()))
@@ -74,10 +73,66 @@ class GliderStaffTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    private Permanent addStaffReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent staff = new Permanent(new GliderStaff());
-        staff.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(staff);
-        return staff;
+    @Test
+    void entersWithoutChoosingATargetOnAnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new GliderStaff()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Glider Staff");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void airbendsOwnCreatureAndAllowsCastingItForTwoGenericMana() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GliderStaff()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, creature.getOriginalCard().getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNull();
+    }
+
+    @Test
+    void movingEquipmentTransfersBothBonuses() {
+        Permanent staff = addCreatureReady(player1, new GliderStaff());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        staff.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        resolveAllTriggers();
+
+        assertThat(staff.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void cannotEquipAnOpponentsCreature() {
+        Permanent staff = addCreatureReady(player1, new GliderStaff());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(staff.getAttachedTo()).isNull();
     }
 }

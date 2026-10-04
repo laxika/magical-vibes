@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -34,11 +33,7 @@ class GlobalRuinTest extends BaseCardTest {
         Permanent p2Forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         GlobalRuin globalRuin = new GlobalRuin();
-        harness.setHand(player1, List.of(globalRuin));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, globalRuin, "{4}{W}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice firstChoice =
@@ -88,11 +83,7 @@ class GlobalRuinTest extends BaseCardTest {
         Permanent tropicalIsland = harness.addToBattlefieldAndReturn(player1, new TropicalIsland());
 
         GlobalRuin globalRuin = new GlobalRuin();
-        harness.setHand(player1, List.of(globalRuin));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, globalRuin, "{4}{W}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice forestChoice =
@@ -112,17 +103,41 @@ class GlobalRuinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A dual land may be chosen for Island while a separate Forest is kept")
+    void keepsSeparateLandsForOverlappingBasicLandTypes() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent dual = harness.addToBattlefieldAndReturn(player1, new TropicalIsland());
+        Permanent otherDual = harness.addToBattlefieldAndReturn(player1, new TropicalIsland());
+
+        harness.castFromHand(player1, new GlobalRuin(), "{4}{W}");
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice islandChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(islandChoice).isNotNull();
+        assertThat(islandChoice.validIds()).containsExactly(dual.getId(), otherDual.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(dual.getId()));
+
+        PendingInteraction.MultiPermanentChoice forestChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(forestChoice).isNotNull();
+        assertThat(forestChoice.validIds()).containsExactly(forest.getId(), dual.getId(), otherDual.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).containsExactly(forest.getId(), dual.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherDual.getCard());
+    }
+
+    @Test
     @DisplayName("Sacrifices every land when no player controls a land with a basic land type")
     void sacrificesAllLandsWithoutBasicLandTypes() {
         Permanent player1Land = harness.addToBattlefieldAndReturn(player1, new CoastalTower());
         Permanent player2Land = harness.addToBattlefieldAndReturn(player2, new CoastalTower());
 
         GlobalRuin globalRuin = new GlobalRuin();
-        harness.setHand(player1, List.of(globalRuin));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, globalRuin, "{4}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -143,12 +158,8 @@ class GlobalRuinTest extends BaseCardTest {
         Permanent player2OtherForest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         GlobalRuin globalRuin = new GlobalRuin();
-        harness.setHand(player2, List.of(globalRuin));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.forceActivePlayer(player2);
-
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, globalRuin, "{4}{W}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice firstChoice =

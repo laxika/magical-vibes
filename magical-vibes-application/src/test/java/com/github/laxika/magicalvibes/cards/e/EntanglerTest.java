@@ -86,7 +86,7 @@ class EntanglerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castEnchantment(player1, 0, blocker.getId());
         harness.passBothPriorities();
-        blocker.setTapped(true);
+        blocker.tap();
 
         prepareDeclareBlockers();
 

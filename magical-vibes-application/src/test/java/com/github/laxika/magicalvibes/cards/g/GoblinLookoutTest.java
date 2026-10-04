@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinLookout.class, GoblinTurncoat.class, AvenEnvoy.class})
+@CardUsed({GoblinLookout.class, GoblinTurncoat.class, AvenEnvoy.class, BoggartShenanigans.class})
 class GoblinLookoutTest extends BaseCardTest {
 
     @Test
@@ -47,7 +47,7 @@ class GoblinLookoutTest extends BaseCardTest {
         Permanent nonGoblin = addCreatureReady(player1, new AvenEnvoy());
         addCreatureReady(player1, new GoblinLookout());
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 2, null, null);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonGoblin.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -55,7 +55,6 @@ class GoblinLookoutTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(BoggartShenanigans.class)
     @DisplayName("Can sacrifice a noncreature permanent with the Goblin subtype")
     void canSacrificeNonCreatureGoblin() {
         Permanent lookout = addCreatureReady(player1, new GoblinLookout());
@@ -98,6 +97,59 @@ class GoblinLookoutTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Cannot activate Goblin Lookout while it has summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent lookout = addCreatureReady(player1, new GoblinLookout());
+        lookout.setSummoningSick(true);
+        addCreatureReady(player1, new GoblinTurncoat());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(lookout.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Goblin to pay the cost")
+    void cannotSacrificeOpponentsGoblin() {
+        Permanent lookout = addCreatureReady(player1, new GoblinLookout());
+        Permanent opponentGoblin = addCreatureReady(player2, new GoblinTurncoat());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentGoblin.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+
+        harness.handlePermanentChosen(player1, lookout.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentGoblin);
+        assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost affects Goblins present on resolution but not later arrivals")
+    void affectedGoblinsAreDeterminedOnResolution() {
+        Permanent lookout = addCreatureReady(player1, new GoblinLookout());
+        Permanent sacrificedGoblin = addCreatureReady(player1, new GoblinTurncoat());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificedGoblin.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificedGoblin);
+        assertThat(gqs.getEffectivePower(gd, lookout)).isEqualTo(1);
+        Permanent beforeResolution = addCreatureReady(player2, new GoblinTurncoat());
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreatureReady(player2, new GoblinTurncoat());
+
+        assertThat(gqs.getEffectivePower(gd, lookout)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test

@@ -170,7 +170,7 @@ class DwarvenScorcherTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedWithoutMana() {
         Permanent scorcher = addReadyScorcher();
-        scorcher.setTapped(true);
+        scorcher.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DwarvenDriller());
 
         activateScorcher(scorcher, target);

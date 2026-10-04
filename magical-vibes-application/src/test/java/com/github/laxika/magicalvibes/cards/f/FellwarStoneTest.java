@@ -197,7 +197,7 @@ class FellwarStoneTest extends BaseCardTest {
     @DisplayName("A tapped opponent land still contributes its mana color")
     void tappedOpponentLandStillContributesColor() {
         var stone = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
-        harness.addToBattlefieldAndReturn(player2, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Forest()).tap();
 
         harness.activateAbility(player1, 0, null, null);
 

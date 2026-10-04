@@ -77,7 +77,8 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, revealedCards, cardIds, false, false, false, false, false, 0, null,
                 eligibleCards.size(),
-                "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."));
+                "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield.",
+                false, 0, false, null, false, null, false, true));
 
         log.info("Game {} - {} resolving Ajani ultimate with {} revealed, {} eligible", gameData.id, playerName, count, eligibleCards.size());
     

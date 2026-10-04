@@ -82,7 +82,7 @@ class FlowstoneOverseerTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         setupBattlefield();
         Permanent overseer = findPermanent(player1, "Flowstone Overseer");
-        overseer.setTapped(true);
+        overseer.tap();
         overseer.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, overseer.getId());

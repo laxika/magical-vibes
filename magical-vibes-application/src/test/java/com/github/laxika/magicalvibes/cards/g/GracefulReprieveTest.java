@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DivinersWand;
 import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
 import com.github.laxika.magicalvibes.cards.w.WarrenWeirding;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,6 +21,68 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({GracefulReprieve.class, Disperse.class, DivinersWand.class, IndomitableAncients.class,
         WarrenWeirding.class})
 class GracefulReprieveTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The delayed return is controlled by the player who cast Graceful Reprieve")
+    void delayedTriggerBelongsToSpellController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        harness.setHand(player1, List.of(new GracefulReprieve()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        creature.setMarkedDamage(10);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Indomitable Ancients");
+        harness.assertNotOnBattlefield(player1, "Indomitable Ancients");
+    }
+
+    @Test
+    @DisplayName("The delayed return has Graceful Reprieve as its source")
+    void delayedTriggerHasSpellAsSource() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IndomitableAncients());
+        GracefulReprieve reprieve = new GracefulReprieve();
+        harness.setHand(player1, List.of(reprieve));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        creature.setMarkedDamage(10);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(reprieve.getId());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Indomitable Ancients");
+    }
+
+    @Test
+    @DisplayName("A returned creature is a new object and does not return from a second death")
+    void doesNotReturnAfterSecondDeath() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IndomitableAncients());
+        harness.setHand(player1, List.of(new GracefulReprieve()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        creature.setMarkedDamage(10);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Indomitable Ancients");
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Indomitable Ancients");
+        assertThat(returned.getId()).isNotEqualTo(creature.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+        returned.setMarkedDamage(10);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Indomitable Ancients");
+        harness.assertInGraveyard(player1, "Indomitable Ancients");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Returns the targeted creature to the battlefield under its owner's control when it dies this turn")

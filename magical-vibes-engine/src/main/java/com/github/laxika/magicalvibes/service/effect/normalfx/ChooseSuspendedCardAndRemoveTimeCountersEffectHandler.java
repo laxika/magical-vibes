@@ -43,12 +43,9 @@ public class ChooseSuspendedCardAndRemoveTimeCountersEffectHandler implements No
         synchronized (gameData.exiledCards) {
             validCardIds = gameData.exiledCards.stream()
                     .filter(exiled -> controllerId.equals(exiled.ownerId()) && !exiled.faceDown())
+                    .filter(exiled -> RemoveTimeCounterFromExiledCardEffectHandler.isSuspended(gameData, exiled))
                     .map(ExiledCardEntry::card)
                     .map(Card::getId)
-                    .filter(cardId -> {
-                        Integer counters = gameData.exiledCardTimeCounters.get(cardId);
-                        return counters != null && counters > 0;
-                    })
                     .toList();
         }
         if (validCardIds.isEmpty()) {

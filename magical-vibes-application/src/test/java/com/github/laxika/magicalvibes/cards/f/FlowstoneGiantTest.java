@@ -76,7 +76,7 @@ class FlowstoneGiantTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new FlowstoneGiant());
         giant.setSummoningSick(true);
-        giant.setTapped(true);
+        giant.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

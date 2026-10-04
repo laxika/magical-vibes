@@ -63,7 +63,7 @@ class FlamecacheGeckoTest extends BaseCardTest {
     @Test
     void discardIsPaidBeforeDrawResolvesAndTappedSourceCanActivate() {
         var gecko = harness.addToBattlefieldAndReturn(player1, new FlamecacheGecko());
-        gecko.setTapped(true);
+        gecko.tap();
         var discarded = new FlamecacheGecko();
         var drawn = new FlamecacheGecko();
         harness.setHand(player1, List.of(discarded));

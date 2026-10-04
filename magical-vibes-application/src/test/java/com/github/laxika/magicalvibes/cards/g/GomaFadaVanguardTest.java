@@ -32,7 +32,7 @@ class GomaFadaVanguardTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent-controlled Warriors do not increase the target power limit")
     void opponentWarriorsDoNotCount() {
-        Permanent vanguard = addCreatureReady(player1, new GomaFadaVanguard());
+        addCreatureReady(player1, new GomaFadaVanguard());
         Permanent opponentWarrior = addCreatureReady(player2, new GomaFadaVanguard());
         Permanent legalTarget = addCreatureReady(player2, new FugitiveWizard());
 
@@ -63,5 +63,51 @@ class GomaFadaVanguardTest extends BaseCardTest {
 
         assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
         assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature whose power equals the Warrior count is a legal target")
+    void powerEqualToWarriorCountIsLegal() {
+        addCreatureReady(player1, new GomaFadaVanguard());
+        addCreatureReady(player1, new GomaFadaVanguard());
+        Permanent target = addCreatureReady(player2, new GomaFadaVanguard());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The target becomes illegal if the Warrior count drops before resolution")
+    void warriorCountIsRecheckedOnResolution() {
+        addCreatureReady(player1, new GomaFadaVanguard());
+        Permanent otherWarrior = addCreatureReady(player1, new GomaFadaVanguard());
+        Permanent target = addCreatureReady(player2, new GomaFadaVanguard());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, otherWarrior));
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing Warriors after resolution does not end the blocking restriction")
+    void resolvedRestrictionDoesNotDependOnWarriorCount() {
+        addCreatureReady(player1, new GomaFadaVanguard());
+        Permanent otherWarrior = addCreatureReady(player1, new GomaFadaVanguard());
+        Permanent target = addCreatureReady(player2, new GomaFadaVanguard());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, otherWarrior));
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
     }
 }

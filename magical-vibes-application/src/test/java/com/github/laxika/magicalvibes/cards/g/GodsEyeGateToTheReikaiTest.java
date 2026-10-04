@@ -35,8 +35,7 @@ class GodsEyeGateToTheReikaiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, godsEye.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, godsEye.getId());
 
         harness.assertInGraveyard(player1, "Gods' Eye, Gate to the Reikai");
         assertThat(gd.stack).hasSize(1);
@@ -52,5 +51,26 @@ class GodsEyeGateToTheReikaiTest extends BaseCardTest {
         assertThat(spirit.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
         assertThat(spirit.getCard().getPower()).isEqualTo(1);
         assertThat(spirit.getCard().getToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent destroying Gods' Eye gives its controller the Spirit after the trigger resolves")
+    void opponentDestroyingLandCreatesSpiritForItsController() {
+        Permanent godsEye = harness.addToBattlefieldAndReturn(player2, new GodsEyeGateToTheReikai());
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, godsEye.getId());
+
+        harness.assertInGraveyard(player2, "Gods' Eye, Gate to the Reikai");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

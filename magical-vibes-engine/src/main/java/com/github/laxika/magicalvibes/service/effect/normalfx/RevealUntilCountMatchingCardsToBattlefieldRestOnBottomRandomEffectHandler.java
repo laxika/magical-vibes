@@ -119,7 +119,8 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
                 controllerId, revealedCards, matchingIds, false, false, false, true, false, 0, null,
                 matchingCards.size(),
                 "You may put any number of the revealed permanent cards onto the battlefield. "
-                        + "The rest are put on the bottom of your library in a random order."));
+                        + "The rest are put on the bottom of your library in a random order.",
+                false, 0, false, null, false, false, false, null, false, true, false, false));
 
         log.info("Game {} - {} resolving {} with required count {}, {} cards revealed, {} matching",
                 gameData.id, playerName, entry.getCard().getName(), requiredCount,
