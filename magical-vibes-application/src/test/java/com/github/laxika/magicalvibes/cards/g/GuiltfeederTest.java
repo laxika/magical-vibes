@@ -108,6 +108,37 @@ class GuiltfeederTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 4);
     }
 
+    @Test
+    @DisplayName("An unblocked trigger still resolves after Guiltfeeder leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.setGraveyard(player2, List.of(new Guiltfeeder(), new GiantWarthog()));
+        Permanent attacker = addAttackerForJudReview();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.setGraveyard(player1, List.of(attacker.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Guiltfeeder controlled by the other player counts only its defender's graveyard")
+    void otherPlayerAttacksAndUsesDefendingGraveyard() {
+        harness.setGraveyard(player1, List.of(new Guiltfeeder(), new GiantWarthog()));
+        harness.setGraveyard(player2, List.of(new Guiltfeeder()));
+        addCreatureReady(player2, new Guiltfeeder());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
     private Permanent addAttackerForJudReview() {
         Permanent attacker = addCreatureReady(player1, new Guiltfeeder());
         attacker.setAttacking(true);
