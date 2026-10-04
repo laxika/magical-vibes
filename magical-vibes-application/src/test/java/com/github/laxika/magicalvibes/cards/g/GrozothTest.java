@@ -134,6 +134,65 @@ class GrozothTest extends BaseCardTest {
     }
 
     @Test
+    void enterSearchMayStopAfterOneCardWhileAnotherMatchRemains() {
+        Grozoth selectedCard = new Grozoth();
+        Grozoth remainingCard = new Grozoth();
+        harness.setHand(player1, List.of(new Grozoth()));
+        harness.setLibrary(player1, List.of(selectedCard, remainingCard));
+        harness.addMana(player1, ManaColor.BLUE, 9);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selectedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    void enterSearchMayChooseZeroCardsEvenWhenMatchesExist() {
+        Grozoth matchingCard = new Grozoth();
+        harness.setHand(player1, List.of(new Grozoth()));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 9);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmuteDiscardsAsACostAndResolvesWithoutAMatchingCard() {
+        Grozoth source = new Grozoth();
+        Convolute nonMatchingCard = new Convolute();
+        harness.setHand(player1, List.of(source));
+        harness.setLibrary(player1, List.of(nonMatchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonMatchingCard);
+    }
+
+    @Test
     void transmuteCanOnlyBeActivatedAsASorcery() {
         Grozoth grozoth = new Grozoth();
         harness.setHand(player1, List.of(grozoth));
