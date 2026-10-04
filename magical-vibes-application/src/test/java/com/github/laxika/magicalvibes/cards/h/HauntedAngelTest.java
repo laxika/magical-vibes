@@ -22,15 +22,13 @@ class HauntedAngelTest extends BaseCardTest {
     @Test
     @DisplayName("When Haunted Angel dies, it is exiled and each opponent creates a 3/3 black Angel with flying")
     void diesExilesItAndGivesOpponentAnAngel() {
-        harness.addToBattlefield(player1, new HauntedAngel());
-        Permanent hauntedAngel = findPermanent(player1, "Haunted Angel");
+        Permanent hauntedAngel = harness.addToBattlefieldAndReturn(player1, new HauntedAngel());
 
         harness.setHand(player1, List.of(new Vindicate()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, hauntedAngel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, hauntedAngel.getId());
 
         harness.assertInGraveyard(player1, "Haunted Angel");
         harness.passBothPriorities();
@@ -51,5 +49,49 @@ class HauntedAngelTest extends BaseCardTest {
         assertThat(angel.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(angel.getCard().isToken()).isTrue();
         assertThat(findPermanents(player1, "Angel")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent still creates an Angel if the source has left the graveyard")
+    void createsAngelEvenIfSourceLeavesGraveyard() {
+        Permanent hauntedAngel = destroyHauntedAngel();
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(hauntedAngel.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Haunted Angel");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(findPermanents(player2, "Angel")).hasSize(1);
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A source that leaves and returns to the graveyard is not exiled by its old trigger")
+    void doesNotExileNewGraveyardObject() {
+        Permanent hauntedAngel = destroyHauntedAngel();
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(hauntedAngel.getCard()));
+        harness.setHand(player1, List.of());
+        gd.markGraveyardEntry(hauntedAngel.getCard());
+        harness.setGraveyard(player1, List.of(hauntedAngel.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Haunted Angel");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(findPermanents(player2, "Angel")).hasSize(1);
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+    }
+
+    private Permanent destroyHauntedAngel() {
+        Permanent hauntedAngel = harness.addToBattlefieldAndReturn(player1, new HauntedAngel());
+        harness.setHand(player1, List.of(new Vindicate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player1, 0, hauntedAngel.getId());
+        harness.assertInGraveyard(player1, "Haunted Angel");
+        return hauntedAngel;
     }
 }
