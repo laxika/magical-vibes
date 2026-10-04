@@ -82,6 +82,73 @@ class HeartlessActTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    void secondModeCanTargetCreatureWithNoCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Heartless Act");
+    }
+
+    @Test
+    void secondModeCanRemoveZeroCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        cast(1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "0");
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void secondModeCanRemoveLessThanMaximumFromOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        cast(1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "1");
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void firstModeCannotTargetCreatureWithNonStatCounter() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThatThrownBy(() -> cast(0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void firstModeCannotTargetNonCreaturePermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        assertThatThrownBy(() -> cast(0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void secondModeDoesNotDestroyCreatureAfterRemovingItsLastCounter() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.CHARGE, 1);
+
+        cast(1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "1");
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void cast(int mode, UUID targetId) {
         harness.setHand(player1, List.of(new HeartlessAct()));
         harness.addMana(player1, ManaColor.BLACK, 1);
