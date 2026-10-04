@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GammaGrotesque;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HulksThunderclap.class, GammaGrotesque.class, GrizzlyBears.class, HowlingMine.class})
+@CardUsed({HulksThunderclap.class, GammaGrotesque.class, GloriousAnthem.class, GrizzlyBears.class, HowlingMine.class})
 class HulksThunderclapTest extends BaseCardTest {
 
     @Test
@@ -26,9 +27,8 @@ class HulksThunderclapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, List.of(
+        harness.castAndResolveSorcery(player1, 0, List.of(
                 source.getId(), harness.getPermanentId(player2, "Grizzly Bears")));
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -67,5 +67,84 @@ class HulksThunderclapTest extends BaseCardTest {
                 List.of(source.getId(), victim.getId(), gamma.getId()), List.of(gamma.getId()), List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("noncreature artifact or noncreature enchantment");
+    }
+
+    @Test
+    @DisplayName("Beholding requires a noncreature artifact or enchantment target")
+    void requiresBonusTargetWhenBeholding() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent gamma = harness.addToBattlefieldAndReturn(player1, new GammaGrotesque());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HulksThunderclap()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithBehold(player1, 0, null,
+                List.of(source.getId(), victim.getId()), List.of(gamma.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The destruction target cannot be chosen without beholding")
+    void rejectsBonusTargetWithoutBeholding() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        harness.setHand(player1, List.of(new HulksThunderclap()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(source.getId(), victim.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Revealing a Gamma from hand enables destroying a noncreature enchantment")
+    void revealsGammaFromHandAndDestroysEnchantment() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        harness.setHand(player1, List.of(new HulksThunderclap(), new GammaGrotesque()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorceryWithBehold(player1, 0, null,
+                List.of(source.getId(), victim.getId(), enchantment.getId()), List.of(), List.of(1));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Glorious Anthem");
+        harness.assertInHand(player1, "Gamma Grotesque");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The damage recipient must be another creature")
+    void rejectsSourceAsDamageRecipient() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HulksThunderclap()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(source.getId(), source.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("All targets must be different");
+    }
+
+    @Test
+    @DisplayName("The damage source must be a creature you control")
+    void rejectsOpponentsCreatureAsDamageSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HulksThunderclap()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(source.getId(), victim.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("First target must be a creature you control");
     }
 }
