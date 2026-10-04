@@ -63,8 +63,7 @@ class GuardianAngelTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -87,6 +86,7 @@ class GuardianAngelTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntil(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.payGuardianAngel(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -102,10 +102,120 @@ class GuardianAngelTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntil(TurnStep.UPKEEP);
 
         castLightningBoltAtPlayer1();
 
         harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void unusedInitialPreventionCarriesOverToLaterDamage() {
+        castGuardianAngel(5, player1.getId());
+
+        castLightningBoltAtPlayer1();
+        harness.assertLife(player1, 20);
+
+        castLightningBoltAtPlayer1();
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void paymentWithZeroXProtectsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        castGuardianAngel(0, creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.payGuardianAngel(player1, creature.getId());
+        harness.payGuardianAngel(player1, creature.getId());
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canProtectOpponentWithInitialAndPaidPrevention() {
+        castGuardianAngel(1, player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.payGuardianAngel(player1, player2.getId());
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void initialPreventionExpiresAtCleanup() {
+        castGuardianAngel(3, player1.getId());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        castLightningBoltAtPlayer1();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void cannotPayWithoutManaAndFailedPaymentAddsNoPrevention() {
+        castGuardianAngel(0, player1.getId());
+
+        assertThatThrownBy(() -> harness.payGuardianAngel(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        castLightningBoltAtPlayer1();
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void illegalTargetOnResolutionGrantsNoPaymentPermission() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GuardianAngel()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, 2, creature.getId());
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Guardian Angel");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.payGuardianAngel(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    void paymentRequiresAnotherPassFromOpponentBeforePendingSpellResolves() {
+        castGuardianAngel(0, player1.getId());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.castInstant(player2, 0, player1.getId());
+            harness.passPriority(player2);
+            harness.payGuardianAngel(player1, player1.getId());
+            harness.passPriority(player1);
+
+            harness.assertLife(player1, 20);
+            assertThat(gd.stack).hasSize(1);
+
+            harness.passPriority(player2);
+            harness.assertLife(player1, 18);
+        });
     }
 
     private void castGuardianAngel(int xValue, UUID targetId) {
@@ -119,8 +229,6 @@ class GuardianAngelTest extends BaseCardTest {
     private void castLightningBoltAtPlayer1() {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
     }
 }
