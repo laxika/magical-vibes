@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
 import com.github.laxika.magicalvibes.cards.s.SparkSpray;
 import com.github.laxika.magicalvibes.cards.t.TempleOfTheFalseGod;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FrozenSolid.class, ScornfulEgotist.class, SparkSpray.class,
+@CardUsed({AuraGraft.class, FrozenSolid.class, ScornfulEgotist.class, SparkSpray.class,
         TempleOfTheFalseGod.class, TitanicBulvox.class, WipeClean.class})
 class FrozenSolidTest extends BaseCardTest {
 
@@ -56,8 +57,7 @@ class FrozenSolidTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
@@ -123,8 +123,7 @@ class FrozenSolidTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new SparkSpray()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, enchanted.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enchanted.getId());
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Frozen Solid"));
 
@@ -148,6 +147,65 @@ class FrozenSolidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Only the enchanted creature is prevented from untapping")
+    void otherCreaturesUntapNormally() {
+        Permanent enchanted = addCreatureReady(player2, new TitanicBulvox());
+        Permanent other = addCreatureReady(player2, new TitanicBulvox());
+        enchanted.tap();
+        other.tap();
+        attachFrozenSolid(enchanted);
+
+        advanceToUpkeep(player2);
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing Frozen Solid lets the creature untap normally")
+    void creatureUntapsAfterAuraLeaves() {
+        Permanent enchanted = addCreatureReady(player2, new TitanicBulvox());
+        enchanted.tap();
+        Permanent aura = attachFrozenSolid(enchanted);
+        harness.setHand(player1, List.of(new WipeClean()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        advanceToUpkeep(player2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
+        assertThat(enchanted.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+    }
+
+    @Test
+    @CardUsed({AuraGraft.class, FrozenSolid.class, TitanicBulvox.class, SparkSpray.class})
+    @DisplayName("A pending trigger destroys the damaged creature even if the Aura moves")
+    void pendingTriggerDestroysOriginalCreatureAfterAuraMoves() {
+        Permanent damaged = addCreatureReady(player2, new TitanicBulvox());
+        Permanent other = addCreatureReady(player2, new TitanicBulvox());
+        Permanent aura = attachFrozenSolid(damaged);
+        harness.setHand(player1, List.of(new SparkSpray()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, damaged.getId());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Frozen Solid"));
+
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handlePermanentChosen(player1, other.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(damaged);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        assertThat(aura.getAttachedTo()).isEqualTo(other.getId());
     }
 
     private Permanent attachFrozenSolid(Permanent creature) {
