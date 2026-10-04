@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HardenedAcademic.class, Forest.class, GrizzlyBears.class, Disentomb.class, NayaCharm.class})
 class HardenedAcademicTest extends BaseCardTest {
 
     @Test
@@ -36,6 +38,7 @@ class HardenedAcademicTest extends BaseCardTest {
 
         Permanent academic = findPermanent(player1, "Hardened Academic");
         assertThat(gqs.hasKeyword(gd, academic, Keyword.LIFELINK)).isTrue();
+        assertThat(academic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertInGraveyard(player1, "Forest");
     }
 
@@ -70,8 +73,7 @@ class HardenedAcademicTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, card.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, card.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -81,10 +83,7 @@ class HardenedAcademicTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        Permanent target = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(targetId))
-                .findFirst()
-                .orElseThrow();
+        Permanent target = findPermanent(player1, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -114,6 +113,29 @@ class HardenedAcademicTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(academic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Returning a noncreature card can put the counter on Hardened Academic itself")
+    void returningNoncreatureCardCanTargetItself() {
+        Permanent academic = addAcademic(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card forest = new Forest();
+        harness.setGraveyard(player1, List.of(forest));
+        harness.setHand(player1, List.of(new NayaCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, 1, forest.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, academic.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(academic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent addAcademic(Player player) {
