@@ -51,7 +51,7 @@ class HazezonTamarTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, hazezon.getId());
+        harness.castAndResolveInstant(player1, 0, hazezon.getId());
         resolveAllTriggers();
 
         advanceToUpkeep(player1);
@@ -72,7 +72,7 @@ class HazezonTamarTest extends BaseCardTest {
         Permanent opposingOtherWarrior = addToken(player2, "Other Warrior", CardSubtype.WARRIOR);
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, hazezon.getId());
+        harness.castAndResolveInstant(player1, 0, hazezon.getId());
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Sand Warrior")).isZero();
@@ -88,6 +88,58 @@ class HazezonTamarTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Sand Warrior")).isZero();
+    }
+
+    @Test
+    void countsLandsWhenDelayedAbilityResolvesAfterLandIsReturnedInResponse() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        castHazezon();
+        advanceToUpkeep(player1);
+        assertThat(countPermanents(player1, "Sand Warrior")).isZero();
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, land.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Sand Warrior")).isEqualTo(1);
+    }
+
+    @Test
+    void delayedCreationWaitsForControllersUpkeepAndDoesNotRepeat() {
+        harness.addToBattlefield(player1, new Forest());
+        castHazezon();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Sand Warrior")).isZero();
+        assertThat(countPermanents(player2, "Sand Warrior")).isZero();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Sand Warrior")).isEqualTo(1);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Sand Warrior")).isEqualTo(1);
+    }
+
+    @Test
+    void leavingInResponseToDelayedAbilityDoesNotExileTokensCreatedAfterward() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent hazezon = castHazezon();
+        advanceToUpkeep(player1);
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, hazezon.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Hazezon Tamar")).isZero();
+        assertThat(countPermanents(player1, "Sand Warrior")).isEqualTo(1);
     }
 
     private Permanent castHazezon() {
@@ -106,9 +158,8 @@ class HazezonTamarTest extends BaseCardTest {
         card.setSubtypes(List.of(subtypes));
         card.setToken(true);
 
-        Permanent token = new Permanent(card);
+        Permanent token = harness.addToBattlefieldAndReturn(player, card);
         token.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(token);
         return token;
     }
 }
