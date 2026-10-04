@@ -25,8 +25,7 @@ class HawkeyeAvengingArcherTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
@@ -62,6 +61,50 @@ class HawkeyeAvengingArcherTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
+    @Test
+    @DisplayName("Draws when another source later kills the damaged creature in the same turn")
+    void drawsWhenAnotherSourceFinishesDamagedCreature() {
+        harness.setHand(player1, List.of());
+        addReadyHawkeye();
+        addCreatureReady(player2, new HawkeyeAvengingArcher());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw when only another source damaged the dying creature")
+    void doesNotDrawForCreatureDamagedOnlyByAnotherSource() {
+        harness.setHand(player1, List.of());
+        addReadyHawkeye();
+        addCreatureReady(player2, new HawkeyeAvengingArcher());
+        Permanent target = addOneToughnessCreature(player2);
+        Forest notDrawn = new Forest();
+        harness.setLibrary(player1, List.of(notDrawn));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyHawkeye() {
         return addCreatureReady(player1, new HawkeyeAvengingArcher());
     }
