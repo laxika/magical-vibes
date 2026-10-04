@@ -65,9 +65,7 @@ class GroundbreakerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -89,8 +87,7 @@ class GroundbreakerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -103,6 +100,60 @@ class GroundbreakerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Groundbreaker");
         harness.assertInGraveyard(player1, "Groundbreaker");
+    }
+
+    @Test
+    @DisplayName("Each Groundbreaker sacrifices only itself at the end step")
+    void eachGroundbreakerSacrificesOnlyItself() {
+        addCreatureReady(player1, new Groundbreaker());
+        addCreatureReady(player1, new Groundbreaker());
+        addCreatureReady(player1, new MireBoa());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Groundbreaker")).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Mire Boa");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Groundbreaker");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Groundbreaker"))
+                .hasSize(2);
+        harness.assertOnBattlefield(player1, "Mire Boa");
+    }
+
+    @Test
+    @DisplayName("Groundbreaker entering after the end step begins waits until the next end step")
+    void enteringAfterEndStepBeginsWaitsUntilNextEndStep() {
+        Permanent original = addCreatureReady(player1, new Groundbreaker());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new Groundbreaker());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(newcomer).doesNotContain(original);
+        harness.assertInGraveyard(player1, "Groundbreaker");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Groundbreaker");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Groundbreaker"))
+                .hasSize(2);
     }
 
     @Test
