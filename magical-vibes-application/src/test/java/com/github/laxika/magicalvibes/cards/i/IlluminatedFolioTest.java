@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IlluminatedFolio.class, Forest.class, GrizzlyBears.class, HillGiant.class,
+        LlanowarElves.class, Ornithopter.class, SafeholdElite.class})
 class IlluminatedFolioTest extends BaseCardTest {
 
     @Test
@@ -30,7 +34,7 @@ class IlluminatedFolioTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         // Two green cards share a color.
         harness.setHand(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -48,7 +52,7 @@ class IlluminatedFolioTest extends BaseCardTest {
         addReadyFolio(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setHand(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -66,22 +70,74 @@ class IlluminatedFolioTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         // Green + red + colorless: no two share a color.
         harness.setHand(player1, List.of(new GrizzlyBears(), new HillGiant(), new Ornithopter()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("share a color");
     }
 
-    private Permanent addReadyFolio(Player player) {
-        Permanent perm = new Permanent(new IlluminatedFolio());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Two colorless cards cannot pay the reveal cost")
+    void cannotRevealTwoColorlessCards() {
+        Permanent folio = addReadyFolio(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new IlluminatedFolio(), new IlluminatedFolio()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("share a color");
+        assertThat(folio.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
-    private void setDeck(Player player, List<? extends Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("A single multicolored card cannot count as two cards")
+    void cannotRevealOneCardTwice() {
+        addReadyFolio(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new SafeholdElite()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("share a color");
+    }
+
+    @Test
+    @DisplayName("A hybrid card shares green with a monocolored green card")
+    void hybridCardCanPayRevealCostWithGreenCard() {
+        addReadyFolio(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Card hybrid = new SafeholdElite();
+        Card green = new GrizzlyBears();
+        Card drawn = new Forest();
+        harness.setHand(player1, List.of(hybrid, green));
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(hybrid, green, drawn);
+    }
+
+    @Test
+    @DisplayName("The controller chooses which pair to reveal when multiple pairs qualify")
+    void doesNotAutomaticallyRevealFirstPairWhenThereIsAChoice() {
+        Permanent folio = addReadyFolio(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new LlanowarElves(), new SafeholdElite()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(folio.isTapped()).isFalse();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("reveals") && log.contains("as a cost"));
+    }
+
+    private Permanent addReadyFolio(Player player) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new IlluminatedFolio());
+        perm.setSummoningSick(false);
+        return perm;
     }
 }
