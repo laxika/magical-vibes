@@ -53,4 +53,53 @@ class HobgoblinBanditLordTest extends BaseCardTest {
         assertThat(lord.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
+
+    @Test
+    void doesNotBoostItself() {
+        Permanent ownLord = harness.addToBattlefieldAndReturn(player1, new HobgoblinBanditLord());
+
+        assertThat(gqs.getEffectivePower(gd, ownLord)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownLord)).isEqualTo(3);
+    }
+
+    @Test
+    void dealsNoDamageWhenNoGoblinsEnteredThisTurn() {
+        Permanent lord = addCreatureReady(player1, new HobgoblinBanditLord());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(lord.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void countsGoblinsThatEnterAfterActivationAtResolution() {
+        addCreatureReady(player1, new HobgoblinBanditLord());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.enterBattlefieldAndReturn(player1, new GoblinPiker());
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new GoblinPiker());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void countsItselfWhenItEnteredThisTurn() {
+        Permanent lord = harness.enterBattlefieldAndReturn(player1, new HobgoblinBanditLord());
+        lord.setSummoningSick(false);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
 }
