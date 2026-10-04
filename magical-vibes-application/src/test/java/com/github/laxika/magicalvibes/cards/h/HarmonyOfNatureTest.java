@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,6 +85,56 @@ class HarmonyOfNatureTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Already tapped creatures are excluded when untapped creatures are available")
+    void onlyUntappedCreaturesAreEligible() {
+        harness.setLife(player1, 20);
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        tapped.tap();
+
+        castHarmonyOfNature();
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                harness.handleMultiplePermanentsChosen(player1, List.of(tapped.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(untapped.getId()));
+
+        assertThat(tapped.isTapped()).isTrue();
+        assertThat(untapped.isTapped()).isTrue();
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("Resolves without a choice when no creatures are controlled")
+    void noCreaturesResolvesWithoutChoice() {
+        harness.setLife(player1, 20);
+
+        castHarmonyOfNature();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Harmony of Nature");
+    }
+
+    @Test
+    @DisplayName("A creature that cannot become tapped contributes no life")
+    void gainsLifeOnlyForSuccessfulTaps() {
+        harness.setLife(player1, 20);
+        Permanent restricted = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        Permanent unrestricted = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        // Model the restriction created by Ood Sphere's chaos ability.
+        restricted.addTapRestriction(UUID.randomUUID());
+
+        castHarmonyOfNature();
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(restricted.getId(), unrestricted.getId()));
+
+        assertThat(restricted.isTapped()).isFalse();
+        assertThat(unrestricted.isTapped()).isTrue();
+        harness.assertLife(player1, 24);
     }
 
     private void castHarmonyOfNature() {
