@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -65,5 +66,48 @@ class ImpatientIguanaTest extends BaseCardTest {
                 .isEqualTo(openingHarness.getPlayer1().getId());
         assertThat(openingHarness.getGameData().activePlayerId)
                 .isEqualTo(openingHarness.getPlayer1().getId());
+    }
+
+    @Test
+    void originalStartingPlayerKeepsFirstTurnWhenBothPlayersRevealIguana() {
+        GameTestHarness openingHarness = new GameTestHarness();
+        openingHarness.setHand(openingHarness.getPlayer1(), List.of(new ImpatientIguana()));
+        openingHarness.setHand(openingHarness.getPlayer2(), List.of(new ImpatientIguana()));
+        openingHarness.skipMulligan();
+
+        boolean firstPlayerWasOfferedChoice = false;
+        boolean secondPlayerWasOfferedChoice = false;
+        for (int i = 0; i < 2; i++) {
+            PendingInteraction.MayAbilityChoice choice = openingHarness.getGameData().interaction
+                    .activeInteraction(PendingInteraction.MayAbilityChoice.class);
+            if (choice == null) break;
+            if (choice.playerId().equals(openingHarness.getPlayer1().getId())) {
+                firstPlayerWasOfferedChoice = true;
+                openingHarness.handleMayAbilityChosen(openingHarness.getPlayer1(), true);
+            } else {
+                secondPlayerWasOfferedChoice = true;
+                openingHarness.handleMayAbilityChosen(openingHarness.getPlayer2(), true);
+            }
+        }
+
+        assertThat(firstPlayerWasOfferedChoice).isTrue();
+        assertThat(secondPlayerWasOfferedChoice).isTrue();
+        assertThat(openingHarness.getGameData().startingPlayerId)
+                .isEqualTo(openingHarness.getPlayer1().getId());
+        assertThat(openingHarness.getGameData().activePlayerId)
+                .isEqualTo(openingHarness.getPlayer1().getId());
+        assertThat(openingHarness.getGameData().status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void canAttackOnTheTurnItIsCast() {
+        harness.setHand(player1, List.of(new ImpatientIguana()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isTrue();
     }
 }
