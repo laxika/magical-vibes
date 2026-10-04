@@ -29,8 +29,7 @@ class FerociousChargeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FerociousCharge()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isEqualTo(7);
         assertThat(target.getEffectiveToughness()).isEqualTo(7);
@@ -48,8 +47,7 @@ class FerociousChargeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FerociousCharge()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(top);
@@ -65,8 +63,7 @@ class FerociousChargeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FerociousCharge()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isEqualTo(7);
         assertThat(target.getEffectiveToughness()).isEqualTo(7);
@@ -108,6 +105,67 @@ class FerociousChargeTest extends BaseCardTest {
         Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can keep both scry cards on top in reverse order")
+    void keepsBothCardsOnTopInChosenOrder() {
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        Card first = new Forest();
+        Card second = new GrizzlyBears();
+        Card third = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new FerociousCharge()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ferocious Charge");
+    }
+
+    @Test
+    @DisplayName("Can put both scry cards below the remaining library in either order")
+    void putsBothCardsOnBottomInChosenOrder() {
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        Card first = new Forest();
+        Card second = new GrizzlyBears();
+        Card third = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new FerociousCharge()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ferocious Charge");
+    }
+
+    @Test
+    @DisplayName("Can boost your own creature and scry with only one card in the library")
+    void boostsOwnCreatureAndScriesSingleCard() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new FerociousCharge()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(6);
+        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ferocious Charge");
     }
 
     private void addMana() {

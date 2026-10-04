@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Flashfires.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
+@CardUsed({Flashfires.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class, Plateau.class})
 class FlashfiresTest extends BaseCardTest {
 
     @Test
@@ -58,7 +58,6 @@ class FlashfiresTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys nonbasic lands with the Plains subtype")
-    @CardUsed(Plateau.class)
     void destroysNonbasicPlains() {
         harness.addToBattlefield(player1, new Plateau());
         castFlashfiresAndResolve();
@@ -98,6 +97,32 @@ class FlashfiresTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Flashfires");
+    }
+
+    @Test
+    @DisplayName("Protected Plains survive while other Plains are destroyed")
+    void protectedPlainsDoNotPreventOtherPlainsFromBeingDestroyed() {
+        Permanent indestructible = harness.addToBattlefieldAndReturn(player1, new Plains());
+        indestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        Permanent regenerating = harness.addToBattlefieldAndReturn(player2, new Plains());
+        regenerating.setRegenerationShield(1);
+        harness.addToBattlefield(player1, new Plateau());
+        harness.addToBattlefield(player2, new Plateau());
+        harness.addToBattlefield(player2, new Island());
+
+        castFlashfiresAndResolve();
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertNotInGraveyard(player1, "Plains");
+        harness.assertNotInGraveyard(player2, "Plains");
+        assertThat(regenerating.isTapped()).isTrue();
+        assertThat(regenerating.getRegenerationShield()).isZero();
+        harness.assertNotOnBattlefield(player1, "Plateau");
+        harness.assertNotOnBattlefield(player2, "Plateau");
+        harness.assertInGraveyard(player1, "Plateau");
+        harness.assertInGraveyard(player2, "Plateau");
+        harness.assertOnBattlefield(player2, "Island");
     }
 
     private void castFlashfiresAndResolve() {

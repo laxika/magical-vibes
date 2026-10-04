@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffe
 
 @CardRegistration(set = "FIC", collectorNumber = "30")
 @CardRegistration(set = "FIC", collectorNumber = "138")
+@CardRegistration(set = "FIC", collectorNumber = "466")
 public class TataruTaru extends Card {
 
     public TataruTaru() {

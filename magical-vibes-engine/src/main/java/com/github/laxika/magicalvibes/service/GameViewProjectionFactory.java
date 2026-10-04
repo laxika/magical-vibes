@@ -266,6 +266,10 @@ public class GameViewProjectionFactory {
                 Map<UUID, List<CardView>> cardsByViewer = new LinkedHashMap<>();
                 for (ExiledCardEntry entry : data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId())) {
                     if (!entry.faceDown()) continue;
+                    if (p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(
+                            com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
+                        continue;
+                    }
                     UUID viewerId = entry.exilerId() != null ? entry.exilerId() : pid;
                     cardsByViewer.computeIfAbsent(viewerId, ignored -> new ArrayList<>())
                             .add(cardViewFactory.create(entry.card()));

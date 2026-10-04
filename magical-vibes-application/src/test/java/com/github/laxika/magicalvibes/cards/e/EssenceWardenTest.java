@@ -64,4 +64,55 @@ class EssenceWardenTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("A second Warden triggers the first but not itself")
+    void secondWardenTriggersOnlyTheFirst() {
+        harness.addToBattlefield(player1, new EssenceWarden());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new EssenceWarden(), "{G}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+
+        harness.castFromHand(player1, new CitanulWoodreaders(), "{2}{G}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Each Warden's controller gains life when a creature enters")
+    void wardensWithDifferentControllersBothTrigger() {
+        harness.addToBattlefield(player1, new EssenceWarden());
+        harness.addToBattlefield(player2, new EssenceWarden());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new CitanulWoodreaders(), "{2}{G}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    @DisplayName("Life gain waits for resolution and survives the Warden leaving")
+    void pendingTriggerResolvesAfterWardenDies() {
+        var warden = harness.addToBattlefieldAndReturn(player1, new EssenceWarden());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new CitanulWoodreaders());
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        warden.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Essence Warden");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
 }

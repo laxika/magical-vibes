@@ -76,7 +76,7 @@ class CanyonCrawlerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new CanyonCrawler());
         harness.passBothPriorities();
         var food = findPermanent(player1, "Food");
-        food.setTapped(true);
+        food.tap();
         int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(food);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

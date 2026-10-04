@@ -151,7 +151,7 @@ class DescendantOfSoramaroTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent descendant = harness.addToBattlefieldAndReturn(player1, new DescendantOfSoramaro());
         descendant.setSummoningSick(true);
-        descendant.setTapped(true);
+        descendant.tap();
         Card topCard = new ArabaMothrider();
         Card secondCard = new ArabaMothrider();
         harness.setHand(player1, List.of(new ArabaMothrider(), new ArabaMothrider()));

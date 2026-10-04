@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -70,6 +71,76 @@ class FlashFoliageTest extends BaseCardTest {
     private void castFlashFoliage(Permanent target) {
         giveSpell();
         harness.castAndResolveInstant(player2, 0, target.getId());
+    }
+
+    @Test
+    void saprolingTradesWithFlyingAttackerAndPreventsPlayerDamage() {
+        Permanent attacker = prepareUnblockedAttack();
+
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Mistral Charger");
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+        harness.assertInHand(player2, "Mistral Charger");
+    }
+
+    @Test
+    void illegalTargetOnResolutionPreventsBothTokenAndDraw() {
+        Permanent attacker = prepareUnblockedAttack();
+        harness.castInstant(player2, 0, attacker.getId());
+        attacker.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Flash Foliage");
+    }
+
+    @Test
+    void canCreateBlockerAfterCombatDamageWithoutUndoingPlayerDamage() {
+        Permanent attacker = prepareUnblockedAttack();
+        harness.resolveCombatDamage();
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        castFlashFoliage(attacker);
+
+        Permanent token = findPermanents(player2, "Saproling").getFirst();
+        assertThat(token.isBlocking()).isTrue();
+        assertThat(token.getBlockingTargetIds()).containsExactly(attacker.getId());
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Mistral Charger");
+        harness.assertInHand(player2, "Mistral Charger");
+    }
+
+    @Test
+    void canAddSaprolingToAlreadyBlockedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        Permanent blocker = addCreatureReady(player2, new MistralCharger());
+        giveSpell();
+        harness.setLibrary(player2, List.of(new MistralCharger()));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        Permanent token = findPermanents(player2, "Saproling").getFirst();
+        assertThat(token.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+        harness.assertInHand(player2, "Mistral Charger");
+    }
+
+    private Permanent prepareUnblockedAttack() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        giveSpell();
+        harness.setLibrary(player2, List.of(new MistralCharger()));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        return attacker;
     }
 
     private void giveSpell() {

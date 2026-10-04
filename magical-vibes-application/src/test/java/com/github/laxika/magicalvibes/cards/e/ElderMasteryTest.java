@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,14 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElderMastery.class, Forest.class, GrizzlyBears.class, Mountain.class, ProdigalPyromancer.class})
 class ElderMasteryTest extends BaseCardTest {
-
-    // ===== Static effects: +3/+3 and flying =====
 
     @Test
     @DisplayName("Enchanted creature gets +3/+3")
     void enchantedCreatureGetsBoost() {
-        Permanent bears = addReadyCreature(new GrizzlyBears()); // 2/2
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         attachElderMastery(bears);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
@@ -34,7 +35,7 @@ class ElderMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has flying")
     void enchantedCreatureHasFlying() {
-        Permanent bears = addReadyCreature(new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         attachElderMastery(bears);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
@@ -43,7 +44,7 @@ class ElderMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses boost and flying when Elder Mastery is removed")
     void creatureLosesBuffWhenRemoved() {
-        Permanent bears = addReadyCreature(new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachElderMastery(bears);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
@@ -53,12 +54,10 @@ class ElderMasteryTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Combat damage trigger: damaged player discards two cards =====
-
     @Test
     @DisplayName("Enchanted creature dealing combat damage makes the damaged player discard two cards")
     void damagedPlayerDiscardsTwo() {
-        Permanent bears = addReadyCreature(new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         attachElderMastery(bears);
         bears.setAttacking(true);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new GrizzlyBears(), new Mountain())));
@@ -75,8 +74,6 @@ class ElderMasteryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Cannot enchant a land")
@@ -95,24 +92,136 @@ class ElderMasteryTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helpers =====
+    @Test
+    void resolvesAttachedToOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ElderMastery()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Elder Mastery").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void damagedPlayerWithOneCardDiscardsIt() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        attachElderMastery(bears);
+        bears.setAttacking(true);
+        harness.setHand(player2, List.of(new Forest()));
+
+        resolveCombatAndTrigger();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleCardChosen(player2, 0);
+        }
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card instanceof Forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void damageToPlayerWithEmptyHandDoesNotRequestDiscard() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        attachElderMastery(bears);
+        bears.setAttacking(true);
+        harness.setHand(player2, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsEnchantedCreatureMakesAuraControllerDiscardWhenDamaged() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        attachElderMastery(bears);
+        bears.setAttacking(true);
+        harness.setHand(player1, List.of(new Forest(), new Mountain(), new GrizzlyBears()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void noncombatDamageAlsoMakesDamagedPlayerDiscardTwo() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        attachElderMastery(pyromancer);
+        harness.setHand(player2, List.of(new Forest(), new Mountain(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void damageToCreatureDoesNotTriggerDiscard() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        attachElderMastery(pyromancer);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Forest(), new Mountain(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void damageToEnchantedCreaturesControllerAlsoTriggersDiscard() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        attachElderMastery(pyromancer);
+        harness.setHand(player1, List.of(new Forest(), new Mountain(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent attachElderMastery(Permanent creature) {
-        Permanent aura = new Permanent(new ElderMastery());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ElderMastery());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities(); // resolve what combat damage triggered
+        resolveAllTriggers();
     }
 }

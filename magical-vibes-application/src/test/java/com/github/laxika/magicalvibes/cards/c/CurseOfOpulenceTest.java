@@ -160,7 +160,7 @@ class CurseOfOpulenceTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
         Permanent gold = findPermanent(player1, "Gold");
-        gold.setTapped(true);
+        gold.tap();
         int goldIndex = gd.playerBattlefields.get(player1.getId()).indexOf(gold);
 
         harness.activateAbility(player1, goldIndex, null, null);

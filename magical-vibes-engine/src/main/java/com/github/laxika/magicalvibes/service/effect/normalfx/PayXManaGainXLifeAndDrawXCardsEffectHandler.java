@@ -67,7 +67,7 @@ public class PayXManaGainXLifeAndDrawXCardsEffectHandler implements NormalEffect
         }
 
         int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
-        if (maxX <= 0) {
+        if (!cost.canPay(potentialManaService.buildVirtualManaPool(gameData, controllerId), 0)) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no mana to pay for " + cardName + "'s ability."));
             log.info("Game {} - {} has no mana for {}'s pay-X ability", gameData.id, playerName, cardName);
             return;

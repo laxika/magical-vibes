@@ -26,7 +26,7 @@ public class Arcades extends Card {
                         new DrawCardEffect(1)));
         addEffect(EffectSlot.STATIC,
                 new AssignCombatDamageWithToughnessEffect(
-                        GrantScope.OWN_CREATURES,
+                        GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER)));
         addEffect(EffectSlot.STATIC,
                 new MatchingCreaturesCanAttackAsThoughNoDefenderEffect(

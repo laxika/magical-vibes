@@ -41,7 +41,7 @@ class DiamondValleyTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        chosen.setTapped(true);
+        chosen.tap();
         harness.setLife(player1, 10);
 
         harness.activateAbility(player1, indexOf(player1, valley), null, null);
@@ -101,7 +101,7 @@ class DiamondValleyTest extends BaseCardTest {
     @Test
     void cannotActivateTappedValley() {
         Permanent valley = harness.addToBattlefieldAndReturn(player1, new DiamondValley());
-        valley.setTapped(true);
+        valley.tap();
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, valley), null, null))

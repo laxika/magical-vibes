@@ -93,4 +93,42 @@ class FoulSpiritTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("A tapped land can be sacrificed")
+    void tappedLandCanBeSacrificed() {
+        harness.addToBattlefield(player1, new Forest());
+        findPermanent(player1, "Forest").setTapped(true);
+        harness.setHand(player1, List.of(new FoulSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Foul Spirit");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The land sacrifice waits for the enter trigger to resolve")
+    void sacrificeIsSeparateFromCreatureResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new FoulSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Foul Spirit");
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Foul Spirit");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
 }

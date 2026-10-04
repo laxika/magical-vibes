@@ -59,8 +59,7 @@ class FlowstoneMaulerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -89,5 +88,52 @@ class FlowstoneMaulerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, mauler)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, mauler)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent mauler = harness.addToBattlefieldAndReturn(player1, new FlowstoneMauler());
+        mauler.setSummoningSick(true);
+        mauler.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mauler)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mauler)).isEqualTo(4);
+        assertThat(mauler.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reducing its toughness to zero puts it into the graveyard")
+    void repeatedActivationsCanReduceToughnessToZero() {
+        addCreatureReady(player1, new FlowstoneMauler());
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        for (int i = 0; i < 5; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Flowstone Mauler");
+        harness.assertInGraveyard(player1, "Flowstone Mauler");
+    }
+
+    @Test
+    @DisplayName("The boost applies only to the permanent whose ability was activated")
+    void boostAffectsOnlyItsSource() {
+        Permanent first = addCreatureReady(player1, new FlowstoneMauler());
+        Permanent second = addCreatureReady(player1, new FlowstoneMauler());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 }

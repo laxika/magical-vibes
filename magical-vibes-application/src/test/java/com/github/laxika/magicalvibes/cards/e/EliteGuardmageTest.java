@@ -17,8 +17,7 @@ class EliteGuardmageTest extends BaseCardTest {
     @Test
     @DisplayName("ETB gains 3 life and draws a card")
     void etbGainsLifeAndDrawsCard() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new EliteGuardmage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -28,12 +27,45 @@ class EliteGuardmageTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB waits for resolution and rewards only its controller")
+    void etbWaitsForResolutionAndRewardsOnlyController() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new EliteGuardmage()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Elite Guardmage");
+        harness.assertLife(player2, 10);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 13);
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
 }

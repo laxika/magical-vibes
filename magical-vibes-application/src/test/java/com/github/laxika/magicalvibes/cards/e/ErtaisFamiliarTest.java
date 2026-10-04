@@ -42,8 +42,7 @@ class ErtaisFamiliarTest extends BaseCardTest {
         gd.permanentsDealtDamageThisTurn.add(familiar.getId());
         harness.setHand(player1, List.of(new FatalBlow()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, familiar.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, familiar.getId());
 
         harness.assertNotOnBattlefield(player2, "Ertai's Familiar");
 
@@ -102,6 +101,63 @@ class ErtaisFamiliarTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Phasing back in does not mill additional cards")
+    void phasingInDoesNotMill() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new ErtaisFamiliar());
+        stockLibrary(player1);
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(familiar);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of())).doesNotContain(familiar);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The phase-out trigger mills only the available cards in a short library")
+    void millsShortLibrary() {
+        harness.addToBattlefield(player1, new ErtaisFamiliar());
+        harness.setHand(player1, List.of());
+        FatalBlow first = new FatalBlow();
+        FatalBlow second = new FatalBlow();
+        harness.setLibrary(player1, List.of(first, second));
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("Preventing phase-out does not prevent the leaves-the-battlefield mill trigger")
+    void preventionDoesNotStopLeavesBattlefieldTrigger() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new ErtaisFamiliar());
+        stockLibrary(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gd.permanentsDealtDamageThisTurn.add(familiar.getId());
+        harness.setHand(player2, List.of(new FatalBlow()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player2, 0, familiar.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ertai's Familiar");
+        harness.assertInGraveyard(player1, "Ertai's Familiar");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
     private void stockLibrary(Player player) {

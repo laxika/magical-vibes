@@ -1,5 +1,4 @@
 package com.github.laxika.magicalvibes.cards.f;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -13,16 +12,18 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FieryFall.class, AvatarOfMight.class, GrizzlyBears.class, HillGiant.class,
+        Plains.class, Forest.class, Island.class})
 class FieryFallTest extends BaseCardTest {
-
-    // ===== Spell: 5 damage to target creature =====
 
     @Test
     @DisplayName("Deals 5 damage to target creature, killing one with 5 or less toughness")
@@ -36,8 +37,7 @@ class FieryFallTest extends BaseCardTest {
         harness.castInstant(player1, 0, giant.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(giant.getId()));
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 
@@ -75,8 +75,6 @@ class FieryFallTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fiery Fall");
     }
 
-    // ===== Basic landcycling {1}{R} =====
-
     @Test
     @DisplayName("Basic landcycling discards the card and offers only basic lands")
     void basicLandcyclingDiscardsAndSearches() {
@@ -107,14 +105,96 @@ class FieryFallTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
+        harness.assertInHand(player1, chosenName);
     }
 
+    @Test
+    @DisplayName("Basic landcycling discards as a cost before the search resolves")
+    void discardsBeforeSearchResolves() {
+        harness.setHand(player1, List.of(new FieryFall()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Fiery Fall");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Basic landcycling may fail to find even with a basic land available")
+    void mayFailToFind() {
+        harness.setHand(player1, List.of(new FieryFall()));
+        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Fiery Fall");
+    }
+
+    @Test
+    @DisplayName("Basic landcycling resolves without drawing when the library has no basic lands")
+    void noBasicLandsDoesNotDraw() {
+        harness.setHand(player1, List.of(new FieryFall()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Basic landcycling requires red mana and does not discard on an illegal activation")
+    void cannotCycleWithoutRedMana() {
+        harness.setHand(player1, List.of(new FieryFall()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Fiery Fall");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fiery Fall cannot target a player")
+    void cannotTargetPlayer() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FieryFall()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Fiery Fall");
+        assertThat(gd.stack).isEmpty();
+    }
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 }

@@ -170,7 +170,8 @@ public class CombatDamageService {
                 || gameData.playerBattlefields.entrySet().stream()
                 .filter(entry -> !entry.getKey().equals(activeId))
                 .anyMatch(entry -> hasUnpreventableCombatant(gameData, entry.getValue(), false));
-        if (gameData.preventAllCombatDamage && !hasUnpreventableCombatDamage) {
+        if (gameData.preventAllCombatDamage && !hasUnpreventableCombatDamage
+                && gameQueryService.isDamagePreventable(gameData, true)) {
             String logEntry = "All combat damage is prevented.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             return CombatResult.ADVANCE_AND_AUTO_PASS;
@@ -734,8 +735,12 @@ public class CombatDamageService {
                 controllerId = gameData.findControllerOf(damageEntry.getKey());
             }
             if (controllerId != null && !controllerId.equals(defenderId)) {
-                gameData.monarchPlayerId = controllerId;
-                return;
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, null,
+                        defenderId, "Combat damage causes a player to become the monarch",
+                        List.of(new com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect()),
+                        controllerId, (UUID) null);
+                trigger.setNonTargeting(true);
+                gameData.enqueueTrigger(trigger);
             }
         }
     }
@@ -4587,6 +4592,9 @@ public class CombatDamageService {
                 damage = damagePreventionService.applyComeuppancePrevention(
                         gameData, defenderId, damage, atk.getCard(), atk,
                         sourceControllerId, true);
+                damage = damagePreventionService.applyJudgmentOfAlexanderPrevention(
+                        gameData, defenderId, damage, atk.getCard(), atk,
+                        sourceControllerId, true);
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
                 damage -= damageSupport.applyDamageToControllerCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
@@ -4699,7 +4707,7 @@ public class CombatDamageService {
                                                            Permanent target) {
         return gameData.preventAllCombatDamage
                 && (target == null || !target.isDamageCantBePreventedOrRedirectedThisTurn())
-                && !gameQueryService.isCombatDamageCantBePrevented(gameData)
+                && gameQueryService.isDamagePreventable(gameData, true)
                 && !gameQueryService.damageCantBePreventedFromSource(gameData, source, true);
     }
 
@@ -5139,7 +5147,7 @@ public class CombatDamageService {
             }
         }
         List<Permanent> blockers = livingBlockers.stream().map(defBf::get).toList();
-        if (gameQueryService.canUseBandsWithOther(gameData, blockers)) {
+        if (containsBandsWithOtherPair(gameData, blockers)) {
             return defenderId;
         }
         return activeId;
@@ -5178,10 +5186,20 @@ public class CombatDamageService {
                 return activeId;
             }
         }
-        if (gameQueryService.canUseBandsWithOther(gameData, blockedAttackers)) {
+        if (containsBandsWithOtherPair(gameData, blockedAttackers)) {
             return activeId;
         }
         return defenderId;
+    }
+
+    private boolean containsBandsWithOtherPair(GameData gameData, List<Permanent> creatures) {
+        for (int first = 0; first < creatures.size(); first++) {
+            for (int second = first + 1; second < creatures.size(); second++) {
+                if (gameQueryService.canUseBandsWithOther(gameData,
+                        List.of(creatures.get(first), creatures.get(second)))) return true;
+            }
+        }
+        return false;
     }
 
     private void restorePhase1State(GameData gameData, CombatDamageState state) {

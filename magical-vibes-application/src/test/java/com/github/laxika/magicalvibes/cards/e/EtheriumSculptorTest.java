@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.j.JhoirasFamiliar;
 import com.github.laxika.magicalvibes.cards.s.SylvokLifestaff;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EtheriumSculptor.class, GrizzlyBears.class, JhoirasFamiliar.class, SylvokLifestaff.class})
 class EtheriumSculptorTest extends BaseCardTest {
 
     @Test
@@ -59,12 +61,17 @@ class EtheriumSculptorTest extends BaseCardTest {
     @DisplayName("Etherium Sculptor does not reduce opponent's artifact spell costs")
     void doesNotReduceOpponentCosts() {
         harness.addToBattlefield(player1, new EtheriumSculptor());
+        harness.forceActivePlayer(player2);
         // Opponent's Sylvok Lifestaff should still cost {1}
         harness.setHand(player2, List.of(new SylvokLifestaff()));
 
         // No mana is not enough for {1} — reduction does not apply to opponent
         assertThatThrownBy(() -> harness.castArtifact(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player2, 0);
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
@@ -79,5 +86,66 @@ class EtheriumSculptorTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Jhoira's Familiar");
+    }
+
+    @Test
+    void twoSculptorsReduceFourManaArtifactToTwo() {
+        harness.addToBattlefield(player1, new EtheriumSculptor());
+        harness.addToBattlefield(player1, new EtheriumSculptor());
+        harness.setHand(player1, List.of(new JhoirasFamiliar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void reducesGenericManaOfColoredArtifact() {
+        harness.addToBattlefield(player1, new EtheriumSculptor());
+        harness.setHand(player1, List.of(new EtheriumSculptor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void excessReductionCannotPayColoredMana() {
+        harness.addToBattlefield(player1, new EtheriumSculptor());
+        harness.addToBattlefield(player1, new EtheriumSculptor());
+        harness.setHand(player1, List.of(new EtheriumSculptor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void sculptorDoesNotReduceItsOwnCostFromHand() {
+        harness.setHand(player1, List.of(new EtheriumSculptor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void sculptorInGraveyardDoesNotReduceCosts() {
+        harness.setGraveyard(player1, List.of(new EtheriumSculptor()));
+        harness.setHand(player1, List.of(new EtheriumSculptor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

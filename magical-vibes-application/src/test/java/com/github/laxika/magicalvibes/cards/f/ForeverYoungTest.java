@@ -83,4 +83,82 @@ class ForeverYoungTest extends BaseCardTest {
         assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
                 .validCardIds()).containsExactly(creature.getId());
     }
+
+    @Test
+    void emptyGraveyardStillDraws() {
+        Card topCard = new GiantSpider();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ForeverYoung()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void allTargetsLeavingGraveyardPreventsDraw() {
+        Card creature = new GrizzlyBears();
+        Card topCard = new GiantSpider();
+        Card spell = new ForeverYoung();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(creature));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    void remainingLegalTargetIsReturnedAndDrawn() {
+        Card creature1 = new GrizzlyBears();
+        Card creature2 = new GiantSpider();
+        Card topCard = new HolyDay();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ForeverYoung()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.setGraveyard(player1, List.of(creature2));
+        harness.setHand(player1, List.of(creature1));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature1, creature2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void chosenOrderDeterminesDrawAndRemainingLibraryOrder() {
+        Card creature1 = new GrizzlyBears();
+        Card creature2 = new GiantSpider();
+        Card topCard = new HolyDay();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ForeverYoung()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.passBothPriorities();
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        Card drawnCard = reorder.cards().get(1);
+        Card remainingCard = reorder.cards().get(0);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard, topCard);
+    }
 }

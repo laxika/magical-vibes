@@ -102,7 +102,7 @@ class ClawsOfGixTest extends BaseCardTest {
     void sacrificeLandWithColoredManaPaysCostBeforeResolution() {
         harness.addToBattlefield(player1, new ClawsOfGix());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Desert());
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
@@ -130,7 +130,7 @@ class ClawsOfGixTest extends BaseCardTest {
     void tappedSourceCanActivateRepeatedly() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ClawsOfGix());
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new ClawsOfGix());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player1);

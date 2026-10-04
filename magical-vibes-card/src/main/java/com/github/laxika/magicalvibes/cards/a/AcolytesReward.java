@@ -20,11 +20,13 @@ import java.util.List;
 public class AcolytesReward extends Card {
 
     public AcolytesReward() {
+        setAllowSharedTargets(true);
         target(TargetFilters.creature());
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate()
+                        new PermanentIsPlaneswalkerPredicate(),
+                        new com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate()
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"

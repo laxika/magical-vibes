@@ -25,6 +25,41 @@ class DwarvenRuinsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Also enters tapped when placed onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent ruins = harness.enterBattlefieldAndReturn(player1, new DwarvenRuins());
+
+        assertThat(ruins.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("After untapping, the newly played land can immediately produce mana")
+    void playedLandCanProduceManaAfterUntapping() {
+        harness.setHand(player1, List.of(new DwarvenRuins()));
+        harness.playLand(player1, 0);
+        harness.performUntapStep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Dwarven Ruins").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice mana resolves immediately without putting an ability on the stack")
+    void sacrificeManaDoesNotUseStack() {
+        harness.addToBattlefield(player1, new DwarvenRuins());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Dwarven Ruins");
+        harness.assertNotOnBattlefield(player1, "Dwarven Ruins");
+    }
+
+    @Test
     @DisplayName("Tap ability adds one red mana")
     void tapAddsOneRedMana() {
         harness.addToBattlefield(player1, new DwarvenRuins());

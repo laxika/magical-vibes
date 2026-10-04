@@ -89,4 +89,69 @@ class EmbalmedBrawlerTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
+
+    @Test
+    @DisplayName("May decline to reveal Zombies and enters without counters")
+    void mayRevealNoZombies() {
+        EmbalmedBrawler brawler = new EmbalmedBrawler();
+        DrippingDead zombie = new DrippingDead();
+        harness.setHand(player1, List.of(brawler, zombie));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(
+                PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, brawler.getName())
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(zombie);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Enters without counters when its controller has no other Zombies")
+    void entersWithoutEligibleCards() {
+        EmbalmedBrawler brawler = new EmbalmedBrawler();
+        harness.setHand(player1, List.of(brawler, new FugitiveWizard()));
+        harness.setHand(player2, List.of(new DrippingDead()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, brawler.getName())
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attack life loss counts counters when the trigger resolves")
+    void attackCountsCountersAtResolution() {
+        Permanent brawler = addCreatureReady(player1, new EmbalmedBrawler());
+        brawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        brawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Attacking without +1/+1 counters causes no life loss")
+    void attackWithoutCountersLosesNoLife() {
+        addCreatureReady(player1, new EmbalmedBrawler());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
 }

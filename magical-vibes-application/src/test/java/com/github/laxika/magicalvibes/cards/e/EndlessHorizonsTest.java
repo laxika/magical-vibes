@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EndlessHorizons.class, Plains.class, Forest.class})
 class EndlessHorizonsTest extends BaseCardTest {
-
-    // ===== ETB — search library for any number of Plains, exile them tracked with the source =====
 
     private void castAndResolveEtb(List<Card> library) {
         harness.setLibrary(player1, library);
@@ -49,8 +46,8 @@ class EndlessHorizonsTest extends BaseCardTest {
 
         UUID permId = harness.getPermanentId(player1, "Endless Horizons");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // exile first Plains, re-prompt
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // exile second Plains, no matches remain → done
+        harness.handleCardChosen(player1, 0); // exile first Plains, re-prompt
+        harness.handleCardChosen(player1, 0); // exile second Plains, no matches remain → done
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(2);
@@ -67,8 +64,8 @@ class EndlessHorizonsTest extends BaseCardTest {
 
         UUID permId = harness.getPermanentId(player1, "Endless Horizons");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));  // exile one Plains
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1)); // decline the rest
+        harness.handleCardChosen(player1, 0);  // exile one Plains
+        harness.handleCardChosen(player1, -1); // decline the rest
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);
@@ -86,8 +83,6 @@ class EndlessHorizonsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.getCardsExiledByPermanent(permId)).isEmpty();
     }
-
-    // ===== Upkeep — you may put an exiled card into your hand =====
 
     private UUID setupWithExiledCards(List<? extends Card> cards) {
         harness.addToBattlefield(player1, new EndlessHorizons());
@@ -182,5 +177,51 @@ class EndlessHorizonsTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(permId))
                 .hasSize(1)
                 .anyMatch(c -> c.getId().equals(opponentOwnedCard.getId()));
+    }
+
+    @Test
+    @DisplayName("The search may exile zero Plains even when Plains are available")
+    void etbCanChooseZeroCards() {
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        castAndResolveEtb(List.of(plains, forest));
+        UUID sourceId = harness.getPermanentId(player1, "Endless Horizons");
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, forest);
+    }
+
+    @Test
+    @DisplayName("Endless Horizons does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotReturnCard() {
+        UUID sourceId = setupWithExiledCards(List.of(new Plains()));
+        UUID exiledId = gd.getCardsExiledByPermanent(sourceId).getFirst().getId();
+
+        advanceToSecondTurnUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).extracting(Card::getId).containsExactly(exiledId);
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(exiledId));
+    }
+
+    @Test
+    @DisplayName("The upkeep ability returns a Plains exiled by the actual enters trigger")
+    void upkeepReturnsCardExiledByEtb() {
+        Plains plains = new Plains();
+        castAndResolveEtb(List.of(plains, new Forest()));
+        UUID sourceId = harness.getPermanentId(player1, "Endless Horizons");
+        harness.handleCardChosen(player1, 0);
+
+        advanceToSecondTurnUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(plains);
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(plains);
     }
 }

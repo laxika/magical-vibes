@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.Avizoa;
+import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DwarvenBerserker.class, Avizoa.class})
+@CardUsed({DwarvenBerserker.class, Avizoa.class, Thunderbolt.class})
 class DwarvenBerserkerTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
         assertThat(berserker.getPowerModifier()).isEqualTo(3);
         assertThat(berserker.getToughnessModifier()).isZero();
@@ -50,8 +51,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
         ));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
         assertThat(berserker.getPowerModifier()).isEqualTo(3);
         assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isTrue();
@@ -101,8 +101,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
@@ -112,5 +111,49 @@ class DwarvenBerserkerTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Blocking another creature does not grant the bonus")
+    void blockingDoesNotTriggerAbility() {
+        Permanent attacker = addCreatureReady(player1, new DwarvenBerserker());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DwarvenBerserker());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(3);
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The bonus still resolves after the blocker leaves the battlefield")
+    void blockerLeavingDoesNotPreventBonus() {
+        Permanent berserker = addCreatureReady(player1, new DwarvenBerserker());
+        berserker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Avizoa());
+        harness.setHand(player1, List.of(new Thunderbolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        harness.castModalInstant(player1, 0, 1, List.of(blocker.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Avizoa");
+        resolveAllTriggers();
+
+        assertThat(berserker.getPowerModifier()).isEqualTo(3);
+        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 }

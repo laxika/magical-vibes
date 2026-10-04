@@ -145,7 +145,7 @@ class BloodFountainTest extends BaseCardTest {
     @Test
     void tappedFountainCannotActivate() {
         Permanent fountain = addFountain();
-        fountain.setTapped(true);
+        fountain.tap();
         addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(

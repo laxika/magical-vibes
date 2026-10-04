@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LilianaOfTheDarkRealms;
 import com.github.laxika.magicalvibes.cards.m.MerfolkTrickster;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SheoldredTheApocalypse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -21,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ErtaiResurrected.class, Forest.class, GrizzlyBears.class, IcyManipulator.class,
-        Island.class, LilianaOfTheDarkRealms.class, MerfolkTrickster.class})
+        Island.class, LilianaOfTheDarkRealms.class, MerfolkTrickster.class,
+        EvolvedSleeper.class, SheoldredTheApocalypse.class})
 class ErtaiResurrectedTest extends BaseCardTest {
 
     @Test
@@ -29,10 +31,8 @@ class ErtaiResurrectedTest extends BaseCardTest {
     void countersSpellAndItsControllerDraws() {
         prepareMainPhase(player1);
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
 
         castErtai(player2, 0, bears.getId());
@@ -131,6 +131,43 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ertai Resurrected");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroys Sheoldred before its controller draws, so it cannot trigger")
+    void destroysDrawTriggerSourceBeforeDrawing() {
+        prepareMainPhase(player1);
+        Permanent sheoldred = harness.addToBattlefieldAndReturn(player1, new SheoldredTheApocalypse());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 20);
+
+        castErtai(player1, 1, sheoldred.getId());
+        resolveErtaiAndTrigger();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Sheoldred, the Apocalypse");
+        harness.assertInHand(player1, "Forest");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counters an activated ability without targets")
+    void countersActivatedAbilityWithoutTargets() {
+        prepareMainPhase(player1);
+        EvolvedSleeper sleeper = new EvolvedSleeper();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, sleeper);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passPriority(player1);
+
+        castErtai(player2, 0, sleeper.getId());
+        resolveCounterErtai(player2, sleeper.getId());
+
+        assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Evolved Sleeper");
+        harness.assertInHand(player1, "Forest");
         assertThat(gd.stack).isEmpty();
     }
 

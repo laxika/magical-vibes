@@ -71,7 +71,7 @@ class DaringMechanicTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Mechanic can activate repeatedly")
     void activatesRepeatedlyWhileTappedAndSummoningSick() {
         Permanent mechanic = harness.addToBattlefieldAndReturn(player1, new DaringMechanic());
-        mechanic.setTapped(true);
+        mechanic.tap();
         mechanic.setSummoningSick(true);
         Permanent mount = harness.addToBattlefieldAndReturn(player1, new BrightfieldGlider());
         addAbilityMana();

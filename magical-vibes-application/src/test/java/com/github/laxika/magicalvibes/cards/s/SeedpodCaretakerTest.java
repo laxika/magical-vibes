@@ -49,7 +49,7 @@ class SeedpodCaretakerTest extends BaseCardTest {
         castCaretaker();
         harness.handleListChoice(player1, "Put a +1/+1 counter on target artifact or creature you control.");
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, findPermanent(player1, "Seedpod Caretaker").getId());
         harness.passBothPriorities();
 

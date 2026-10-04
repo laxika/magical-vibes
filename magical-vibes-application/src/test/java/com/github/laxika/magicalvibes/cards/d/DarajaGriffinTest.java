@@ -109,7 +109,7 @@ class DarajaGriffinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player1, new DarajaGriffin());
         griffin.setSummoningSick(true);
-        griffin.setTapped(true);
+        griffin.tap();
         harness.forceActivePlayer(player1);
         Permanent target = addCreatureReady(player2, new ScatheZombies());
 

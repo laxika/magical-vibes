@@ -64,7 +64,7 @@ class DevoteeOfStrengthTest extends BaseCardTest {
         setupDevotee();
         Permanent devotee = findPermanent(player1, "Devotee of Strength");
         devotee.setSummoningSick(true);
-        devotee.setTapped(true);
+        devotee.tap();
 
         harness.activateAbility(player1, 0, null, devotee.getId());
         harness.passBothPriorities();

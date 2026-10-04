@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,7 +34,8 @@ class SeerOfStolenSightTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(creature.getCard(), artifact.getCard(), topCard);
     }
 
     @Test
@@ -52,7 +52,7 @@ class SeerOfStolenSightTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact.getCard(), topCard);
     }
 
     @Test

@@ -17,6 +17,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DwarvenGruntTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Dwarven Grunt cannot be blocked when the defending player's Mountain is tapped")
+    void cannotBeBlockedWhenDefendersMountainIsTapped() {
+        Permanent blockerPerm = addCreatureReady(player2, new DwarvenGrunt());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setTapped(true);
+        Permanent atkPerm = addCreatureReady(player1, new DwarvenGrunt());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Dwarven Grunt cannot be blocked when defending player controls a Mountain")
     void cannotBeBlockedWhenDefenderControlsMountain() {
         Permanent blockerPerm = addCreatureReady(player2, new DwarvenGrunt());

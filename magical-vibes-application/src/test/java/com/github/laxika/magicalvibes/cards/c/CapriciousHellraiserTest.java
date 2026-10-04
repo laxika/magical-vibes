@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.i.InfectiousInquiry;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianAtlas;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -98,7 +99,7 @@ class CapriciousHellraiserTest extends BaseCardTest {
     @Test
     void eightCardsDoNotReduceTheCost() {
         harness.setGraveyard(player1, java.util.stream.IntStream.range(0, 8)
-                .mapToObj(i -> new Forest()).toList());
+                .<Card>mapToObj(i -> new Forest()).toList());
         assertThatThrownBy(() -> harness.castFromHand(player1, new CapriciousHellraiser(), "{R}{R}{R}"))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
@@ -107,7 +108,7 @@ class CapriciousHellraiserTest extends BaseCardTest {
     @Test
     void opponentsGraveyardDoesNotEnableReduction() {
         harness.setGraveyard(player2, java.util.stream.IntStream.range(0, 9)
-                .mapToObj(i -> new Forest()).toList());
+                .<Card>mapToObj(i -> new Forest()).toList());
         assertThatThrownBy(() -> harness.castFromHand(player1, new CapriciousHellraiser(), "{R}{R}{R}"))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
@@ -145,7 +146,7 @@ class CapriciousHellraiserTest extends BaseCardTest {
     @Test
     void onlyThreeCardsAreExiledFromALargerGraveyard() {
         harness.setGraveyard(player1, java.util.stream.IntStream.range(0, 5)
-                .mapToObj(i -> new Forest()).toList());
+                .<Card>mapToObj(i -> new Forest()).toList());
         harness.castFromHand(player1, new CapriciousHellraiser(), "{3}{R}{R}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();

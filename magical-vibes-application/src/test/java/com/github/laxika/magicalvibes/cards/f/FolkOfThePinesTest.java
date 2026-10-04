@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(FolkOfThePines.class)
+@CardUsed({FolkOfThePines.class})
 class FolkOfThePinesTest extends BaseCardTest {
 
     @Test
@@ -86,5 +86,55 @@ class FolkOfThePinesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(folk.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped without untapping")
+    void canActivateWhileTapped() {
+        Permanent folk = addCreatureReady(player1, new FolkOfThePines());
+        folk.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(folk.getPowerModifier()).isEqualTo(1);
+        assertThat(folk.getToughnessModifier()).isEqualTo(0);
+        assertThat(folk.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot pay the green mana requirement")
+    void cannotActivateWithoutGreenMana() {
+        Permanent folk = addCreatureReady(player1, new FolkOfThePines());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(folk.getPowerModifier()).isEqualTo(0);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost uses the stack and affects only the activating permanent")
+    void boostsOnlySourceOnResolution() {
+        Permanent folk = addCreatureReady(player1, new FolkOfThePines());
+        Permanent other = addCreatureReady(player1, new FolkOfThePines());
+        Permanent opponent = addCreatureReady(player2, new FolkOfThePines());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(folk.getPowerModifier()).isEqualTo(0);
+
+        harness.passBothPriorities();
+
+        assertThat(folk.getPowerModifier()).isEqualTo(1);
+        assertThat(folk.getToughnessModifier()).isEqualTo(0);
+        assertThat(other.getPowerModifier()).isEqualTo(0);
+        assertThat(opponent.getPowerModifier()).isEqualTo(0);
     }
 }

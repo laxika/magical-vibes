@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,9 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FoundryHelix.class, GrizzlyBears.class, Spellbook.class})
+@CardUsed({FoundryHelix.class, GrizzlyBears.class, Spellbook.class, Ornithopter.class})
 class FoundryHelixTest extends BaseCardTest {
 
     @Test
@@ -40,10 +41,84 @@ class FoundryHelixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
     }
 
+    @Test
+    void sacrificingAnArtifactCreatureGainsLifeAndPaysCostImmediately() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new FoundryHelix()));
+        addMana();
+
+        harness.castInstantWithSacrifice(player1, 0, player2.getId(), artifact.getId());
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void sacrificingTheTargetPreventsDamageAndLifeGain() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new FoundryHelix()));
+        addMana();
+
+        harness.castInstantWithSacrifice(player1, 0, artifact.getId(), artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Foundry Helix");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void canTargetItsControllerAndGainLifeAfterDamage() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setHand(player1, List.of(new FoundryHelix()));
+        addMana();
+
+        harness.castInstantWithSacrifice(player1, 0, player1.getId(), artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Foundry Helix");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotCastWithoutSacrificingAPermanent() {
+        harness.setHand(player1, List.of(new FoundryHelix()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, player2.getId(), null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsPermanent() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.setHand(player1, List.of(new FoundryHelix()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, player2.getId(), artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
     private void addMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);

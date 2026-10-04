@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Soulblast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,7 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FeveredSuspicion.class, Forest.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({FeveredSuspicion.class, Forest.class, Mountain.class, GrizzlyBears.class,
+        Shock.class, Soulblast.class})
 class FeveredSuspicionTest extends BaseCardTest {
 
     @Test
@@ -59,10 +61,8 @@ class FeveredSuspicionTest extends BaseCardTest {
     @Test
     void reboundExilesTheSpellAndOffersItAtTheNextUpkeep() {
         FeveredSuspicion card = new FeveredSuspicion();
-        harness.setHand(player1, List.of(card));
-        addFeveredSuspicionMana();
-
-        harness.castSorcery(player1, 0);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, card, "{6}{B}{R}");
         harness.passBothPriorities();
 
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -70,17 +70,103 @@ class FeveredSuspicionTest extends BaseCardTest {
         assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
     }
 
-    private void castFeveredSuspicion() {
-        harness.setHand(player1, List.of(new FeveredSuspicion()));
-        addFeveredSuspicionMana();
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+    @Test
+    void leavesUncastCardsExiledAndStopsAtTheFirstNonland() {
+        Card land = new Mountain();
+        Card offered = new GrizzlyBears();
+        Card remaining = new Forest();
+        harness.setLibrary(player2, List.of(land, offered, remaining));
+        castFeveredSuspicion();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.findExiledCard(land.getId()).ownerId()).isEqualTo(player2.getId());
+        assertThat(gd.findExiledCard(offered.getId()).ownerId()).isEqualTo(player2.getId());
     }
 
-    private void addFeveredSuspicionMana() {
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
+    @Test
+    void exhaustsAnAllLandLibraryWithoutOfferingACast() {
+        Card land = new Mountain();
+        harness.setLibrary(player2, List.of(land));
+        castFeveredSuspicion();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(land.getId())).isNotNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void stolenInstantGoesToItsOwnersGraveyard() {
+        Card shock = new Shock();
+        harness.setLibrary(player2, List.of(shock));
+        castFeveredSuspicion();
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(shock);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shock);
+    }
+
+    @Test
+    void canPayAnAdditionalSacrificeCostForAnExiledSpell() {
+        Card soulblast = new Soulblast();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(soulblast));
+        castFeveredSuspicion();
+
+        harness.handleMultipleCardsChosen(player1, List.of(soulblast.getId()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void reboundCastsAgainAndThenGoesToTheGraveyard() {
+        FeveredSuspicion card = new FeveredSuspicion();
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.castFromHand(player1, card, "{6}{B}{R}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void decliningReboundLeavesTheSpellExiled() {
+        FeveredSuspicion card = new FeveredSuspicion();
+        harness.setLibrary(player2, List.of());
+        harness.castFromHand(player1, card, "{6}{B}{R}");
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    private void castFeveredSuspicion() {
+        harness.castFromHand(player1, new FeveredSuspicion(), "{6}{B}{R}");
+        harness.passBothPriorities();
     }
 
     private Player addThirdPlayer() {

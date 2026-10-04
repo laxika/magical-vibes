@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HornetSting;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,10 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FireServant.class, Blaze.class, FlamewaveInvoker.class, FurnaceOfRath.class,
-        GrizzlyBears.class, SerraAngel.class, Shock.class})
+        GrizzlyBears.class, HornetSting.class, SerraAngel.class, Shock.class})
 class FireServantTest extends BaseCardTest {
-
-    // ===== Doubles red instant damage =====
 
     @Test
     @DisplayName("Doubles Shock (red instant) damage to a player")
@@ -56,8 +52,6 @@ class FireServantTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Serra Angel");
     }
 
-    // ===== Doubles red sorcery damage =====
-
     @Test
     @DisplayName("Doubles Blaze (red sorcery) X damage to a player")
     void doublesRedSorceryDamageToPlayer() {
@@ -73,8 +67,6 @@ class FireServantTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
-    // ===== Does NOT double combat damage =====
-
     @Test
     @DisplayName("Does not double unblocked combat damage")
     void doesNotDoubleCombatDamage() {
@@ -83,24 +75,17 @@ class FireServantTest extends BaseCardTest {
 
         addCreatureReady(player1, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(1)); // bear is at index 1 (Fire Servant at 0)
+        declareAttackers(player1, List.of(1)); // bear is at index 1 (Fire Servant at 0)
 
         // 2 combat damage — NOT doubled (combat damage is not from an instant/sorcery spell)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Does NOT double activated ability damage =====
-
     @Test
     @DisplayName("Does not double activated ability damage")
     void doesNotDoubleActivatedAbilityDamage() {
         harness.addToBattlefield(player1, new FireServant());
-        addReadyInvoker(player1);
+        addCreatureReady(player1, new FlamewaveInvoker());
         harness.addMana(player1, ManaColor.RED, 8);
         harness.setLife(player2, 20);
 
@@ -110,8 +95,6 @@ class FireServantTest extends BaseCardTest {
         // 5 damage — NOT doubled (activated ability is not an instant/sorcery spell)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
-
-    // ===== Only doubles controller's spells =====
 
     @Test
     @DisplayName("Does not double opponent's red spells")
@@ -129,8 +112,6 @@ class FireServantTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
-    // ===== Two Fire Servants stack multiplicatively =====
-
     @Test
     @DisplayName("Two Fire Servants quadruple red spell damage")
     void twoFireServantsQuadrupleDamage() {
@@ -147,8 +128,6 @@ class FireServantTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
 
-    // ===== Fire Servant + Furnace of Rath =====
-
     @Test
     @DisplayName("Fire Servant stacks with Furnace of Rath for red spells")
     void stacksWithFurnaceOfRath() {
@@ -164,8 +143,6 @@ class FireServantTest extends BaseCardTest {
         // 2 * 2 (Furnace global) * 2 (Fire Servant spell) = 8 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
-
-    // ===== Removing Fire Servant stops doubling =====
 
     @Test
     @DisplayName("Removing Fire Servant from battlefield stops doubling")
@@ -196,9 +173,45 @@ class FireServantTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Does not double a green instant's damage")
+    void doesNotDoubleNonredSpellDamage() {
+        harness.addToBattlefield(player1, new FireServant());
+        harness.setHand(player1, List.of(new HornetSting()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player2, 20);
 
-    private Permanent addReadyInvoker(Player player) {
-        return addCreatureReady(player, new FlamewaveInvoker());
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Doubles red spell damage dealt to its controller")
+    void doublesDamageToController() {
+        harness.addToBattlefield(player1, new FireServant());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Doubling a zero-damage Blaze still deals no damage")
+    void zeroDamageRemainsZero() {
+        harness.addToBattlefield(player1, new FireServant());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
     }
 }

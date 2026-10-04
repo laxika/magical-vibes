@@ -87,6 +87,30 @@ class EntombTest extends BaseCardTest {
                 .hasMessageContaining("Cannot fail to find");
     }
 
+    @Test
+    @DisplayName("A land can be selected and only the controller's library is searched")
+    void choosingLandLeavesOpponentsLibraryUntouched() {
+        castEntomb();
+        Plains chosenLand = new Plains();
+        Swamp remainingCard = new Swamp();
+        DuskImp opponentsCard = new DuskImp();
+        harness.setLibrary(player1, List.of(chosenLand, remainingCard));
+        harness.setLibrary(player2, List.of(opponentsCard));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(chosenLand);
+        harness.assertInGraveyard(player1, "Entomb");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        harness.assertNotInGraveyard(player2, "Dusk Imp");
+        harness.assertNotInHand(player1, "Plains");
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
     private void castEntomb() {
         harness.castFromHand(player1, new Entomb(), "{B}");
     }

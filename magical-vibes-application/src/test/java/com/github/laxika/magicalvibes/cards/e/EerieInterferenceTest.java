@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -18,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EerieInterference.class, GrizzlyBears.class, HillGiant.class, ProdigalPyromancer.class, Shock.class})
+@CardUsed({EerieInterference.class, HillGiant.class, ProdigalPyromancer.class, Shock.class})
 class EerieInterferenceTest extends BaseCardTest {
 
     @Test
@@ -72,8 +71,7 @@ class EerieInterferenceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
@@ -94,18 +92,98 @@ class EerieInterferenceTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
     }
 
+    @Test
+    void preventsDamageToCreatureEnteringAfterResolution() {
+        Permanent pyromancer = addReadyPyromancer(player2);
+        castEerieInterference();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, battlefieldIndex(player2, pyromancer), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void doesNotPreventDamageToOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent pyromancer = addReadyPyromancer(player1);
+        castEerieInterference();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, pyromancer), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotPreventNoncreatureDamageToController() {
+        harness.setLife(player1, 20);
+        castEerieInterference();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void preventsCombatDamageToController() {
+        harness.setLife(player1, 20);
+        castEerieInterference();
+        Permanent attacker = addCreatureReady(player2, new HillGiant());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void preventsCombatDamageToControlledBlockerButNotOpposingAttacker() {
+        castEerieInterference();
+        Permanent attacker = addCreatureReady(player2, new HillGiant());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player1, new HillGiant());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat(player2);
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    void preventsCreatureDamageAfterSourceDiesInResponse() {
+        harness.setLife(player1, 20);
+        Permanent pyromancer = addReadyPyromancer(player2);
+        castEerieInterference();
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, battlefieldIndex(player2, pyromancer), null, player1.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, pyromancer.getId());
+        harness.assertInGraveyard(player2, "Prodigal Pyromancer");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
     private void castEerieInterference() {
         harness.setHand(player1, List.of(new EerieInterference()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private Permanent addReadyPyromancer(Player player) {
-        Permanent pyromancer = new Permanent(new ProdigalPyromancer());
-        pyromancer.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(pyromancer);
-        return pyromancer;
+        return addCreatureReady(player, new ProdigalPyromancer());
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {

@@ -72,6 +72,94 @@ class FomoriVaultTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void zeroArtifactsStillPaysCostsWithoutLookingAtCards() {
+        Permanent vault = addVault(player1);
+        harness.addToBattlefield(player2, new Ornithopter());
+        Card discarded = new GrizzlyBears();
+        Card top = new Ornithopter();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(top));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(vault.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void shortLibraryPutsItsOnlyCardIntoHand() {
+        addVault(player1);
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
+        Card chosen = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setLibrary(player1, List.of(chosen));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void countsArtifactsWhenAbilityResolves() {
+        addVault(player1);
+        Card chosen = new GrizzlyBears();
+        Card unlooked = new Ornithopter();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(chosen, unlooked));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unlooked);
+    }
+
+    @Test
+    void mustChooseOneCardAndBottomsTheRestWithoutAnOrderingChoice() {
+        addVault(player1);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new Ornithopter());
+        }
+        Card chosen = new GrizzlyBears();
+        Card firstBottom = new Ornithopter();
+        Card secondBottom = new GrizzlyBears();
+        Card unlooked = new Ornithopter();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(chosen, firstBottom, secondBottom, unlooked));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(unlooked);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 3))
+                .containsExactlyInAnyOrder(firstBottom, secondBottom);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addVault(Player player) {
         return harness.addToBattlefieldAndReturn(player, new FomoriVault());
     }

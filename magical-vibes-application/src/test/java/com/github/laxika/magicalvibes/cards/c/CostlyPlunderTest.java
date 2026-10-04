@@ -146,7 +146,7 @@ class CostlyPlunderTest extends BaseCardTest {
     @DisplayName("A tapped creature can pay the cost and cards are drawn only on resolution")
     void tappedCreaturePaysCostBeforeCardsAreDrawn() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new CostlyPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

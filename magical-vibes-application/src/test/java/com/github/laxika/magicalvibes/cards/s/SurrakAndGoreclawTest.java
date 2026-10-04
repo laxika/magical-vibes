@@ -27,13 +27,13 @@ class SurrakAndGoreclawTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -46,7 +46,6 @@ class SurrakAndGoreclawTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -55,7 +54,7 @@ class SurrakAndGoreclawTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -72,6 +71,21 @@ class SurrakAndGoreclawTest extends BaseCardTest {
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.d.DeadlyInsect.class)
+    void enteringCreatureWithShroudReceivesCounterAndHasteInOneAbility() {
+        harness.addToBattlefield(player1, new SurrakAndGoreclaw());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1,
+                new com.github.laxika.magicalvibes.cards.d.DeadlyInsect());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 }

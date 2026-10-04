@@ -81,6 +81,83 @@ class FeedTheBogTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cannotTargetOpponentsCreature() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new FeedTheBog()));
+        addFeedTheBogMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetNoncreatureCard() {
+        FeedTheBog target = new FeedTheBog();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new FeedTheBog()));
+        addFeedTheBogMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void boostsHighManaValueCreaturesButNotOpponentsGraveyard() {
+        GrizzlyBears target = new GrizzlyBears();
+        HillGiant largeCreature = new HillGiant();
+        GrizzlyBears opponentsCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, largeCreature));
+        harness.setGraveyard(player2, List.of(opponentsCreature));
+        harness.setHand(player1, List.of(new FeedTheBog()));
+        addFeedTheBogMana();
+        harness.castSorcery(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Zombify()));
+        addZombifyMana();
+        harness.castSorcery(player1, 0, largeCreature.getId());
+        harness.passBothPriorities();
+        Permanent returnedLargeCreature = findPermanent(player1, "Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, returnedLargeCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, returnedLargeCreature)).isEqualTo(4);
+
+        harness.setHand(player2, List.of(new Zombify()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, opponentsCreature.getId());
+        harness.passBothPriorities();
+        Permanent returnedOpponent = findPermanent(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, returnedOpponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returnedOpponent)).isEqualTo(2);
+    }
+
+    @Test
+    void unchangedReplicateTargetMakesOriginalFailWithoutAnotherBoost() {
+        GrizzlyBears target = new GrizzlyBears();
+        GrizzlyBears remaining = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, remaining));
+        harness.setHand(player1, List.of(new FeedTheBog()));
+        addFeedTheBogMana(1);
+        harness.castInstantWithRepeatedCosts(player1, 0, target.getId(), List.of("{1}{B}"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        Permanent returnedTarget = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, returnedTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, returnedTarget)).isEqualTo(3);
+        harness.setHand(player1, List.of(new Zombify()));
+        addZombifyMana();
+        harness.castSorcery(player1, 0, remaining.getId());
+        harness.passBothPriorities();
+        Permanent returnedRemaining = findPermanentByCardId(remaining.getId());
+        assertThat(gqs.getEffectivePower(gd, returnedRemaining)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, returnedRemaining)).isEqualTo(3);
+    }
+
     private void addFeedTheBogMana() {
         addFeedTheBogMana(0);
     }

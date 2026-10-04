@@ -50,8 +50,7 @@ class EssencePulseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
@@ -79,5 +78,78 @@ class EssencePulseTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Creatures with zero toughness die on both sides")
+    void killsCreaturesWithZeroToughness() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EssencePulse()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Life gained after resolution does not increase the reduction")
+    void laterLifeGainDoesNotChangeReduction() {
+        Permanent creature = addCreatureReady(player2, new AirElemental());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new EssencePulse(), new Revitalize()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 25);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are unaffected")
+    void laterCreaturesAreUnaffected() {
+        harness.setHand(player1, List.of(new EssencePulse(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent life gain does not contribute to X")
+    void ignoresOpponentLifeGain() {
+        Permanent creature = addCreatureReady(player2, new AirElemental());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Revitalize()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.setHand(player1, List.of(new EssencePulse()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 23);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

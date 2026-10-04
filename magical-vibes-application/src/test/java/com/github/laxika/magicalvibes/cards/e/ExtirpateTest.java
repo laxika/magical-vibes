@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Extirpate.class, GrizzlyBears.class, Peek.class, Plains.class, Shock.class})
+@CardUsed({Extirpate.class, GrizzlyBears.class, Peek.class, Plains.class, ProdigalPyromancer.class, Shock.class})
 class ExtirpateTest extends BaseCardTest {
 
     @Test
@@ -31,9 +32,7 @@ class ExtirpateTest extends BaseCardTest {
 
         harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
         harness.setHand(player2, List.of(handCopy, new Peek()));
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(libraryCopy);
-        gd.playerDecks.get(player2.getId()).add(new Plains());
+        harness.setLibrary(player2, List.of(libraryCopy, new Plains()));
 
         harness.setHand(player1, List.of(new Extirpate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -62,8 +61,7 @@ class ExtirpateTest extends BaseCardTest {
 
         harness.setGraveyard(player2, new ArrayList<>(List.of(target, graveyardCopy)));
         harness.setHand(player2, List.of(handCopy));
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(libraryCopy);
+        harness.setLibrary(player2, List.of(libraryCopy));
 
         harness.setHand(player1, List.of(new Extirpate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -108,5 +106,84 @@ class ExtirpateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Searching your own zones still permits leaving hidden copies behind")
+    void canTargetOwnGraveyardAndDeclineHiddenCopies() {
+        Card target = new Extirpate();
+        Card handCopy = new Extirpate();
+        Card libraryCopy = new Extirpate();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new Extirpate(), handCopy));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCopy);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCopy);
+        // The resolving spell was on the stack during the search.
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("An absent graveyard target prevents exiling its remaining copies")
+    void doesNotSearchWhenTargetLeavesGraveyard() {
+        Card target = new Extirpate();
+        Card handCopy = new Extirpate();
+        Card libraryCopy = new Extirpate();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player2, List.of(handCopy));
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.setHand(player1, List.of(new Extirpate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCopy);
+        harness.assertInGraveyard(player1, "Extirpate");
+    }
+
+    @Test
+    @DisplayName("Split second permits activating a land's mana ability")
+    void splitSecondAllowsManaAbility() {
+        Card target = new Extirpate();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new Extirpate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Split second prevents non-mana activated abilities")
+    void splitSecondPreventsNonManaAbility() {
+        Card target = new Extirpate();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player2, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new Extirpate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("split second");
+        assertThat(gd.stack).hasSize(1);
     }
 }

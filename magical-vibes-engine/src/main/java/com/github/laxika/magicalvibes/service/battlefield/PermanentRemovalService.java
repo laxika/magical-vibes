@@ -425,11 +425,13 @@ public class PermanentRemovalService {
     }
 
     private void snapshotEffectiveSubtypes(GameData gameData, Permanent permanent) {
+        Set<CardSubtype> subtypes = java.util.EnumSet.noneOf(CardSubtype.class);
         for (CardSubtype subtype : CardSubtype.values()) {
             if (gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype)) {
-                permanent.getGrantedSubtypes().add(subtype);
+                subtypes.add(subtype);
             }
         }
+        permanent.setLastKnownSubtypes(Set.copyOf(subtypes));
     }
 
     private boolean tryApplyDyingCreatureReturnToHandReplacement(GameData gameData, Permanent target) {
@@ -579,10 +581,15 @@ public class PermanentRemovalService {
      *         {@code false} if it was not on any battlefield
      */
     public boolean removePermanentToHand(GameData gameData, Permanent target) {
+        return removePermanentToHand(gameData, target, false);
+    }
+
+    /** Reports whether a bounce occurred when a caller needs a conditional return rider. */
+    public boolean removePermanentToHand(GameData gameData, Permanent target, boolean requireReturnToHand) {
         boolean dynamicToken = markDynamicToken(gameData, target);
         // Replacement effect: exile instead of going to hand (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, false, "returning to hand")) {
-            return true;
+            return !requireReturnToHand;
         }
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
@@ -629,7 +636,7 @@ public class PermanentRemovalService {
         if (commanderChoice) gameData.commanderBounceContexts.put(target.getCard().getId(),
                 new com.github.laxika.magicalvibes.model.CommanderBounceContext(target, controllerId, ownerId, wasCreature));
         else gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(ownerId);
-        forgetDamageDealtToDepartedPermanent(gameData, target);
+        forgetDepartedPermanentState(gameData, target);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         if (!commanderChoice) triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId, target);
         target.setAttachedTo(null);
@@ -664,7 +671,7 @@ public class PermanentRemovalService {
             triggerCollectionService.checkYourCommanderPutIntoCommandZoneTriggers(
                     gameData, leaving, ownerId, target);
         }
-        forgetDamageDealtToDepartedPermanent(gameData, target);
+        forgetDepartedPermanentState(gameData, target);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         target.setAttachedTo(null);
         return true;
@@ -705,7 +712,7 @@ public class PermanentRemovalService {
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
-        forgetDamageDealtToDepartedPermanent(gameData, target);
+        forgetDepartedPermanentState(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         target.setAttachedTo(null);
@@ -834,7 +841,7 @@ public class PermanentRemovalService {
                 gameData, target, wasCreature, controllerId, exiledPowerAtTrigger);
         triggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers(
                 gameData, target, controllerId, exilingControllerId(gameData));
-        forgetDamageDealtToDepartedPermanent(gameData, target);
+        forgetDepartedPermanentState(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
@@ -926,7 +933,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkCardsPutIntoLibraryTriggers(
                 gameData, ownerId, target.cardsLeavingBattlefield().size()
                         + (werewhatCompanion == null ? 0 : 1));
-        forgetDamageDealtToDepartedPermanent(gameData, target);
+        forgetDepartedPermanentState(gameData, target);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         if (shuffle) {
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
@@ -984,7 +991,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkCardsPutIntoLibraryTriggers(
                 gameData, ownerId, target.cardsLeavingBattlefield().size()
                         + (werewhatCompanion == null ? 0 : 1));
-        forgetDamageDealtToDepartedPermanent(gameData, target);
+        forgetDepartedPermanentState(gameData, target);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
     }
@@ -1727,6 +1734,15 @@ public class PermanentRemovalService {
                 List<StackEntry> watchingEntries = new ArrayList<>(gameData.stack);
                 watchingEntries.addAll(gameData.pendingManaAbilityTriggers);
                 for (StackEntry entry : watchingEntries) {
+                    if (target.getId().equals(entry.getAttackedTargetId())) {
+                        if (gameQueryService.isBattle(gameData, target)) {
+                            entry.setDefendingPlayerId(target.getProtectorPlayerId());
+                        } else if (gameQueryService.isPlaneswalker(gameData, target)) {
+                            entry.setDefendingPlayerId(playerId);
+                        }
+                    }
+                    entry.getLastKnownPermanentCounters().put(target.getId(),
+                            new java.util.EnumMap<>(target.getCounters()));
                     if (target.getId().equals(entry.getSourcePermanentId())) {
                         entry.setSourcePermanentSnapshot(new Permanent(target));
                         for (CardEffect resolvingEffect : entry.getEffectsToResolve()) {
@@ -1796,8 +1812,9 @@ public class PermanentRemovalService {
         }
     }
 
-    private void forgetDamageDealtToDepartedPermanent(GameData gameData, Permanent departed) {
+    private void forgetDepartedPermanentState(GameData gameData, Permanent departed) {
         UUID cardId = departed.getCard().getId();
+        gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.remove(cardId);
         for (Set<UUID> damagedCardIds : gameData.creatureCardsDamagedThisTurnBySourcePermanent.values()) {
             damagedCardIds.remove(cardId);
         }
@@ -2574,6 +2591,21 @@ public class PermanentRemovalService {
             if (entry.getValue().equals(removedId)) {
                 Permanent animatedTarget = gameQueryService.findPermanentById(gameData, entry.getKey());
                 if (animatedTarget != null) {
+                    FloatingContinuousEffect remainingAnimation = gameData.floatingEffects.stream()
+                            .filter(floating -> animatedTarget.getId().equals(floating.affectedPermanentId())
+                                    && floating.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                                    && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect
+                                    && floating.sourcePermanentId() != null)
+                            .max(java.util.Comparator.comparingLong(FloatingContinuousEffect::timestamp))
+                            .orElse(null);
+                    if (remainingAnimation != null) {
+                        var base = (com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect)
+                                remainingAnimation.effect();
+                        animatedTarget.setPermanentAnimatedPower(base.power());
+                        animatedTarget.setPermanentAnimatedToughness(base.toughness());
+                        entry.setValue(remainingAnimation.sourcePermanentId());
+                        continue;
+                    }
                     animatedTarget.setPermanentlyAnimated(false);
                     animatedTarget.setPermanentAnimatedPower(0);
                     animatedTarget.setPermanentAnimatedToughness(0);
@@ -2625,8 +2657,9 @@ public class PermanentRemovalService {
             return;
         }
 
-        boolean returnsThroughLeavesTrigger = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
-                .stream().anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect exile
+        boolean returnsThroughLeavesTrigger = java.util.stream.Stream.of(
+                        EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.ON_TURNED_FACE_UP)
+                .flatMap(slot -> removedPermanent.getCard().getEffects(slot).stream()).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect exile
                         && exile.returnToHand());
         if (returnsThroughLeavesTrigger) {
             if (!hadPrintedAbilities) {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(EiganjoCastle.class)
+@CardUsed({EiganjoCastle.class, MirriCatWarrior.class, LightningBolt.class, GrizzlyBears.class})
 class EiganjoCastleTest extends BaseCardTest {
 
     @Test
@@ -57,8 +58,7 @@ class EiganjoCastleTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, mirri.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, mirri.getId());
 
         assertThat(mirri.getMarkedDamage()).isEqualTo(1);
         assertThat(mirri.getDamagePreventionShield()).isZero();
@@ -99,5 +99,55 @@ class EiganjoCastleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An exhausted shield does not prevent damage from a later spell")
+    void exhaustedShieldDoesNotPreventLaterDamage() {
+        harness.addToBattlefield(player1, new EiganjoCastle());
+        Permanent mirri = harness.addToBattlefieldAndReturn(player1, new MirriCatWarrior());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 1, null, mirri.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, mirri.getId());
+        assertThat(mirri.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Mirri, Cat Warrior");
+
+        harness.castAndResolveInstant(player1, 0, mirri.getId());
+        harness.assertNotOnBattlefield(player1, "Mirri, Cat Warrior");
+        harness.assertInGraveyard(player1, "Mirri, Cat Warrior");
+    }
+
+    @Test
+    @DisplayName("Unused prevention expires when the turn ends")
+    void unusedShieldExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new EiganjoCastle());
+        Permanent mirri = harness.addToBattlefieldAndReturn(player1, new MirriCatWarrior());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 1, null, mirri.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, mirri.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mirri, Cat Warrior");
+        harness.assertInGraveyard(player1, "Mirri, Cat Warrior");
+    }
+
+    @Test
+    @DisplayName("Prevention requires white mana and leaves the land untapped if payment fails")
+    void preventionRequiresWhiteMana() {
+        Permanent castle = harness.addToBattlefieldAndReturn(player1, new EiganjoCastle());
+        Permanent mirri = harness.addToBattlefieldAndReturn(player1, new MirriCatWarrior());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, mirri.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(castle.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

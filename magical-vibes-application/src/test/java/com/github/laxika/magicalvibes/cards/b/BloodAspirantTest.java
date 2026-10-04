@@ -162,7 +162,7 @@ class BloodAspirantTest extends BaseCardTest {
     @DisplayName("A tapped Blood Aspirant cannot activate its ability")
     void tappedSourceCannotActivate() {
         Permanent aspirant = addReadyAspirant(player1);
-        aspirant.setTapped(true);
+        aspirant.tap();
         harness.addToBattlefield(player1, new UnderworldBreach());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GravebreakerLamia());
 

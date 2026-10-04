@@ -53,4 +53,16 @@ class FightingDrakeTest extends BaseCardTest {
 
         assertThat(blocker.getBlockingTargetIds()).contains(attacker.getId());
     }
+
+    @Test
+    @DisplayName("Fighting Drake can block a creature without flying")
+    void fightingDrakeCanBlockCreatureWithoutFlying() {
+        Permanent attacker = addCreatureReady(player1, new FugitiveWizard());
+        Permanent blocker = addCreatureReady(player2, new FightingDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getBlockingTargetIds()).contains(attacker.getId());
+    }
 }

@@ -174,7 +174,7 @@ class CrownOfConvergenceTest extends BaseCardTest {
     @DisplayName("A tapped Crown can activate and a single card library keeps the same card")
     void tappedCrownCanActivateWithSingleCardLibrary() {
         Permanent crown = addCrown();
-        crown.setTapped(true);
+        crown.tap();
         Card topCard = new ElvishSkysweeper();
         harness.setLibrary(player1, List.of(topCard));
         harness.addMana(player1, ManaColor.GREEN, 1);

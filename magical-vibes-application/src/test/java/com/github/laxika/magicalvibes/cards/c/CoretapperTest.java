@@ -81,7 +81,7 @@ class CoretapperTest extends BaseCardTest {
     @DisplayName("A summoning-sick tapped Coretapper can be sacrificed for an opponent's artifact")
     void canSacrificeWhileSummoningSickAndTapped() {
         Permanent coretapper = harness.addToBattlefieldAndReturn(player1, new Coretapper());
-        coretapper.setTapped(true);
+        coretapper.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
 
         harness.activateAbility(player1, 0, 1, null, artifact.getId());

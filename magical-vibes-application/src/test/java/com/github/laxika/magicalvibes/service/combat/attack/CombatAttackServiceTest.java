@@ -576,17 +576,21 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(com.github.laxika.magicalvibes.cards.j.JaceBeleren.class)
         @DisplayName("A creature forced to attack a specific player may not be pointed elsewhere")
         void aForcedAttackTargetIsEnforced() {
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-            // Alluring Siren's "attacks you this turn if able" is recorded on the creature itself;
-            // pointing it at its own controller leaves the defending player an illegal choice.
-            bears.setMustAttackTargetId(player1.getId());
+            Permanent planeswalker = harness.addToBattlefieldAndReturn(player2,
+                    new com.github.laxika.magicalvibes.cards.j.JaceBeleren());
+            bears.setMustAttackTargetId(player2.getId());
             enterDeclareAttackers();
 
-            assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index(bears))))
+            assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index(bears)),
+                    Map.of(index(bears), planeswalker.getId())))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("must attack the specified player");
+
+            assertThatCode(() -> declare(List.of(index(bears)))).doesNotThrowAnyException();
         }
 
         @Test

@@ -84,7 +84,7 @@ class DisruptDecorumTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped and summoning-sick creatures are not required to attack")
     void creaturesUnableToAttackMayStayBack() {
-        addCreatureReady(player2, new GrizzlyBears()).setTapped(true);
+        addCreatureReady(player2, new GrizzlyBears()).tap();
         addCreatureReady(player2, new GrizzlyBears()).setSummoningSick(true);
         castAndResolve();
 
@@ -95,9 +95,9 @@ class DisruptDecorumTest extends BaseCardTest {
     @DisplayName("A creature goaded while tapped must attack once it becomes able")
     void tappedCreatureIsStillGoaded() {
         var creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         castAndResolve();
-        creature.setTapped(false);
+        creature.untap();
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -110,7 +110,7 @@ class DisruptDecorumTest extends BaseCardTest {
         var creature = addCreatureReady(player2, new GrizzlyBears());
         castAndResolve();
         declareAttackers(player2, List.of(0));
-        creature.setTapped(false);
+        creature.untap();
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)

@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
+import java.util.List;
+
 /**
  * "Whenever a creature you control [...] enters, [you may] put N counters of a specified type on it."
  *
@@ -17,8 +19,22 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * an {@link EnteringCreatureExactStatsConditionalEffect} (Sigil Captain: count = 2, is 1/1, mandatory).
  */
 public record PutCountersOnEnteringCreatureEffect(CounterType counterType, DynamicAmount amount, boolean optional,
-                                                  CounterType requiredCounterType)
+                                                  CounterType requiredCounterType, List<CardEffect> followUpEffects)
         implements CardEffect {
+
+    public PutCountersOnEnteringCreatureEffect {
+        followUpEffects = List.copyOf(followUpEffects);
+    }
+
+    public PutCountersOnEnteringCreatureEffect(CounterType counterType, DynamicAmount amount, boolean optional,
+                                               CounterType requiredCounterType) {
+        this(counterType, amount, optional, requiredCounterType, List.of());
+    }
+
+    /** Additional effects resolve on the entering creature as part of the same ability. */
+    public PutCountersOnEnteringCreatureEffect(int count, boolean optional, List<CardEffect> followUpEffects) {
+        this(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(count), optional, null, followUpEffects);
+    }
 
     /** The existing +1/+1-counter form (optional). */
     public PutCountersOnEnteringCreatureEffect(int count) {

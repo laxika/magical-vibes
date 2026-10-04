@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EarthServant.class, Mountain.class, Forest.class})
 class EarthServantTest extends BaseCardTest {
-
-    // ===== Base stats without Mountains =====
 
     @Test
     @DisplayName("Without Mountains, is 4/4")
@@ -23,8 +23,6 @@ class EarthServantTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, earthServant)).isEqualTo(4);
     }
 
-    // ===== With one Mountain =====
-
     @Test
     @DisplayName("With one Mountain, is 4/5")
     void withOneMountainIs4x5() {
@@ -34,8 +32,6 @@ class EarthServantTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, earthServant)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, earthServant)).isEqualTo(5);
     }
-
-    // ===== With multiple Mountains =====
 
     @Test
     @DisplayName("With three Mountains, is 4/7")
@@ -49,8 +45,6 @@ class EarthServantTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, earthServant)).isEqualTo(7);
     }
 
-    // ===== Opponent's Mountains don't count =====
-
     @Test
     @DisplayName("Opponent's Mountains don't affect Earth Servant's toughness")
     void opponentMountainsDontCount() {
@@ -62,28 +56,53 @@ class EarthServantTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, earthServant)).isEqualTo(4);
     }
 
-    // ===== Non-Mountain lands don't count =====
-
     @Test
     @DisplayName("Non-Mountain lands don't affect Earth Servant's toughness")
     void nonMountainLandsDontCount() {
         Permanent earthServant = addEarthServant(player1);
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Forest()));
+        harness.addToBattlefield(player1, new Forest());
 
         assertThat(gqs.getEffectivePower(gd, earthServant)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, earthServant)).isEqualTo(4);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Toughness updates as Mountains enter and leave the battlefield")
+    void toughnessTracksMountainsEnteringAndLeaving() {
+        Permanent servant = addEarthServant(player1);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(4);
+
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.setTapped(true);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(5);
+
+        gd.playerBattlefields.get(player1.getId()).remove(mountain);
+        harness.setGraveyard(player1, java.util.List.of(mountain.getCard()));
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Bonus uses the current controller's Mountains after control changes")
+    void bonusTracksCurrentController() {
+        Permanent servant = addEarthServant(player1);
+        addMountain(player1);
+        addMountain(player2);
+        addMountain(player2);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(5);
+
+        gd.playerBattlefields.get(player1.getId()).remove(servant);
+        gd.playerBattlefields.get(player2.getId()).add(servant);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(4);
+    }
 
     private Permanent addEarthServant(Player player) {
-        Permanent perm = new Permanent(new EarthServant());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new EarthServant());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void addMountain(Player player) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(new Mountain()));
+        harness.addToBattlefield(player, new Mountain());
     }
 }

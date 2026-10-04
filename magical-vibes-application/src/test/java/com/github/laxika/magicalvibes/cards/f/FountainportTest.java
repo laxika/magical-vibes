@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -83,5 +84,65 @@ class FountainportTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void sacrificesTreasureAsCostBeforeDrawing() {
+        harness.addToBattlefield(player1, new Fountainport());
+        harness.addToBattlefield(player1, new Fountainport());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, 3, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Fountainport()));
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Fountainport")).allMatch(Permanent::isTapped);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fountainport");
+    }
+
+    @Test
+    void cannotSacrificeOpponentsToken() {
+        harness.addToBattlefield(player2, new Fountainport());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new Fountainport());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Fish");
+        assertThat(findPermanent(player1, "Fountainport").isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    void fishLifePaymentHappensBeforeResolution() {
+        harness.addToBattlefield(player1, new Fountainport());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLife(player1, 2);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        harness.assertLife(player1, 1);
+        harness.assertNotOnBattlefield(player1, "Fish");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "Fountainport").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        assertThat(findPermanents(player1, "Fish")).hasSize(1);
     }
 }

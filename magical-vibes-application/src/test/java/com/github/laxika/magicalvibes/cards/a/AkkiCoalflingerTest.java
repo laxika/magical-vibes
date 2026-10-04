@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -126,11 +127,14 @@ class AkkiCoalflingerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SuddenSpoiling()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            assertThat(attacker.isAttacking()).isTrue();
+            assertThat(gqs.hasLostPrintedAbilities(gd, attacker)).isTrue();
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
     }

@@ -511,7 +511,7 @@ class CacklingCounterpartTest extends BaseCardTest {
     @DisplayName("Token copy does not copy tapped state, counters, or marked damage")
     void tokenCopyDoesNotCopyPermanentState() {
         Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        original.setTapped(true);
+        original.tap();
         original.setSummoningSick(false);
         original.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 2);
         original.setMarkedDamage(1);

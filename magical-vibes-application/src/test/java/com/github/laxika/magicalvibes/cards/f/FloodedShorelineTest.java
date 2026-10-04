@@ -105,9 +105,7 @@ class FloodedShorelineTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        List<Permanent> islands = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
-                .toList();
+        List<Permanent> islands = findPermanents(player1, "Island");
 
         int shorelineIndex = battlefieldIndex(player1, "Flooded Shoreline");
         harness.activateAbility(player1, shorelineIndex, null, bears.getId());
@@ -124,6 +122,69 @@ class FloodedShorelineTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Tapped Islands can pay the return cost and your own creature can be targeted")
+    void returnsTappedIslandsAndOwnCreature() {
+        harness.addToBattlefield(player1, new FloodedShoreline());
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        firstIsland.setTapped(true);
+        secondIsland.setTapped(true);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Flooded Shoreline"), null, bears.getId());
+
+        assertThat(countPermanents(player1, "Island")).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent's Islands cannot pay the activation cost")
+    void cannotUseOpponentsIslands() {
+        harness.addToBattlefield(player1, new FloodedShoreline());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                battlefieldIndex(player1, "Flooded Shoreline"), null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents");
+
+        assertThat(countPermanents(player1, "Island")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Island")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returned Islands and a controlled creature go to their owners' hands")
+    void returnsBorrowedPermanentsToOwners() {
+        harness.addToBattlefield(player1, new FloodedShoreline());
+        Permanent borrowedIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        Permanent borrowedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(borrowedIsland.getId(), player2.getId());
+        gd.stolenCreatures.put(borrowedBears.getId(), player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Flooded Shoreline"), null,
+                borrowedBears.getId());
+
+        harness.assertInHand(player1, "Island");
+        harness.assertInHand(player2, "Island");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     private int battlefieldIndex(Player owner, String name) {

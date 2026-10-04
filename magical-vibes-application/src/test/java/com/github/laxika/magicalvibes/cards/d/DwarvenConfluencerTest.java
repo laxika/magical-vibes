@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DwarvenConfluencer.class, GrizzlyBears.class, ManaConfluence.class, Mountain.class})
+@CardUsed({DwarvenConfluencer.class, DarksteelCitadel.class, GrizzlyBears.class, ManaConfluence.class, Mountain.class})
 class DwarvenConfluencerTest extends BaseCardTest {
 
     @Test
@@ -29,13 +29,9 @@ class DwarvenConfluencerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Mountain");
-        Permanent token = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Mana Confluence"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player2, "Mana Confluence");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getType()).isEqualTo(CardType.LAND);
-        assertThat(token.getCard().getActivatedAbilities()).hasSize(1);
 
         harness.setLife(player2, 20);
         harness.activateAbility(player2, battlefieldIndex(player2, token), 0, null, null);
@@ -65,6 +61,70 @@ class DwarvenConfluencerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, confluencer), 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An indestructible land survives but its controller still creates the token")
+    void createsTokenEvenWhenLandCannotBeDestroyed() {
+        Permanent confluencer = addCreatureReady(player1, new DwarvenConfluencer());
+        Permanent citadel = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, confluencer), 0, null, citadel.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        harness.assertNotInGraveyard(player2, "Darksteel Citadel");
+        assertThat(countPermanents(player2, "Mana Confluence")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Mana Confluence")).isZero();
+    }
+
+    @Test
+    @DisplayName("Targeting your own land gives you the replacement token")
+    void canTargetOwnLand() {
+        Permanent confluencer = addCreatureReady(player1, new DwarvenConfluencer());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, confluencer), 0, null, mountain.getId());
+        assertThat(confluencer.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Mountain");
+        assertThat(countPermanents(player1, "Mana Confluence")).isZero();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(countPermanents(player1, "Mana Confluence")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Mana Confluence")).isZero();
+        assertThat(findPermanent(player1, "Mana Confluence").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An ability whose land target has left the battlefield creates no token")
+    void missingTargetCreatesNoToken() {
+        Permanent confluencer = addCreatureReady(player1, new DwarvenConfluencer());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, confluencer), 0, null, mountain.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(mountain);
+        gd.playerHands.get(player2.getId()).add(mountain.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Mountain");
+        assertThat(countPermanents(player1, "Mana Confluence")).isZero();
+        assertThat(countPermanents(player2, "Mana Confluence")).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the source does not stop its activated ability")
+    void abilityResolvesWithoutSource() {
+        Permanent confluencer = addCreatureReady(player1, new DwarvenConfluencer());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, confluencer), 0, null, mountain.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(confluencer);
+        gd.playerGraveyards.get(player1.getId()).add(confluencer.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Mountain");
+        assertThat(countPermanents(player2, "Mana Confluence")).isEqualTo(1);
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {

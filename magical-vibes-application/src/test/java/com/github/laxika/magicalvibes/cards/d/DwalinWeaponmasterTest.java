@@ -29,7 +29,7 @@ class DwalinWeaponmasterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(attachedStaff.getCounterCount(CounterType.HONE)).isEqualTo(1);
         assertThat(unattachedStaff.getCounterCount(CounterType.HONE)).isEqualTo(1);
@@ -54,5 +54,43 @@ class DwalinWeaponmasterTest extends BaseCardTest {
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dwalin));
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    void enterTriggerUsesEquipmentAtResolutionAfterDwalinLeaves() {
+        harness.setHand(player1, List.of(new DwalinWeaponmaster()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent dwalin = findPermanent(player1, "Dwalin, Weaponmaster");
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new WizardsStaff());
+        Permanent opponentStaff = harness.addToBattlefieldAndReturn(player2, new WizardsStaff());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dwalin));
+        resolveAllTriggers();
+
+        assertThat(staff.getCounterCount(CounterType.HONE)).isEqualTo(1);
+        assertThat(opponentStaff.getCounterCount(CounterType.HONE)).isZero();
+    }
+
+    @Test
+    void equippedDwalinAttackHonesEachEquipmentTwiceWithoutIncreasingToughness() {
+        Permanent dwalin = addCreatureReady(player1, new DwalinWeaponmaster());
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new WizardsStaff());
+        Permanent unattachedStaff = harness.addToBattlefieldAndReturn(player1, new WizardsStaff());
+        Permanent opponentStaff = harness.addToBattlefieldAndReturn(player2, new WizardsStaff());
+        staff.setAttachedTo(dwalin.getId());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(staff.getCounterCount(CounterType.HONE)).isEqualTo(2);
+        assertThat(unattachedStaff.getCounterCount(CounterType.HONE)).isEqualTo(2);
+        assertThat(opponentStaff.getCounterCount(CounterType.HONE)).isZero();
+        assertThat(dwalin.getCounterCount(CounterType.HONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, dwalin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dwalin)).isEqualTo(1);
     }
 }

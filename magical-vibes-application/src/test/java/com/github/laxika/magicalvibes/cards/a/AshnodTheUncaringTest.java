@@ -17,12 +17,13 @@ class AshnodTheUncaringTest extends BaseCardTest {
 
     @Test
     void mayCopyAbilityAfterSourceArtifactIsSacrificed() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.addToBattlefield(player1, new AshnodTheUncaring());
         harness.addToBattlefield(player1, new AetherSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -35,12 +36,13 @@ class AshnodTheUncaringTest extends BaseCardTest {
 
     @Test
     void decliningCopyLeavesAbilityUncopied() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addToBattlefield(player1, new AshnodTheUncaring());
         harness.addToBattlefield(player1, new AetherSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();

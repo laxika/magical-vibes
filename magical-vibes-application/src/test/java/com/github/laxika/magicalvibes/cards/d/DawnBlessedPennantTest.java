@@ -178,7 +178,7 @@ class DawnBlessedPennantTest extends BaseCardTest {
     @Test
     void tappedPennantCannotActivate() {
         Permanent pennant = addPennant(CardSubtype.ELF);
-        pennant.setTapped(true);
+        pennant.tap();
         Card elf = new EclipsedElf();
         harness.setGraveyard(player1, List.of(elf));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

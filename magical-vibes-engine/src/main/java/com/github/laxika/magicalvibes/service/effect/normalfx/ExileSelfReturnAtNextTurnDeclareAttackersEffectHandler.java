@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfReturnAtNextTurnDeclareAttackersEffect;
@@ -48,9 +47,10 @@ public class ExileSelfReturnAtNextTurnDeclareAttackersEffectHandler implements N
         Card card = cards.getFirst();
         permanentRemovalService.removePermanentToExile(gameData, self);
 
-        gameData.queueDelayedAction(new PendingExileReturn(
-                card, entry.getControllerId(), true, false, TurnStep.DECLARE_ATTACKERS, 0,
-                cards.size() == 1 ? List.of() : cards.subList(1, cards.size()), true, false, true));
+        gameData.queueDelayedAction(PendingExileReturn.forNextControllerDeclareAttackers(
+                card, entry.getControllerId(),
+                cards.size() == 1 ? List.of() : cards.subList(1, cards.size()),
+                ((ExileSelfReturnAtNextTurnDeclareAttackersEffect) effect).returnCantBeBlocked()));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameLogService.append(gameData, GameLog.cardThen(card,

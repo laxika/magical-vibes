@@ -18,9 +18,9 @@ public class AlseidOfLifesBounty extends Card {
     public AlseidOfLifesBounty() {
         addActivatedAbility(new ActivatedAbility(
                 false,
-                null,
+                "{1}",
                 List.of(new SacrificeSelfCost(), new GrantProtectionChoiceUntilEndOfTurnEffect()),
-                "Sacrifice this creature: Target creature or enchantment you control gains protection from the color of your choice until end of turn.",
+                "{1}, Sacrifice this creature: Target creature or enchantment you control gains protection from the color of your choice until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

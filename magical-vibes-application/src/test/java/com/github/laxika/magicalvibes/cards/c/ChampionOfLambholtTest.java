@@ -128,7 +128,7 @@ class ChampionOfLambholtTest extends BaseCardTest {
     void tappedAttackingChampionUsesCurrentPower() {
         Permanent champion = addCreatureReady(player1, new ChampionOfLambholt());
         champion.setAttacking(true);
-        champion.setTapped(true);
+        champion.tap();
         addCreatureReady(player2, new MoorlandInquisitor());
         champion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         prepareDeclareBlockers();

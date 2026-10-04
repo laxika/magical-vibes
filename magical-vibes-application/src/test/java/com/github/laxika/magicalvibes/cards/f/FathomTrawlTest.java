@@ -154,4 +154,54 @@ class FathomTrawlTest extends BaseCardTest {
         // Nothing was placed on the bottom; the Island stays where it was
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(islandBelow);
     }
+
+    @Test
+    @DisplayName("An all-land library is revealed and reordered without putting cards in hand")
+    void allLandLibraryIsReorderedWithoutDrawing() {
+        Card forest = new Forest();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+
+        castFathomTrawl();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        assertThat(reorder).containsExactlyInAnyOrder(forest, island);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(reorder.indexOf(island), reorder.indexOf(forest))));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island, forest);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reordered lands go below every unrevealed card, including a fourth nonland")
+    void reorderedLandsStayBelowUnrevealedCards() {
+        Card forest = new Forest();
+        Card island = new Island();
+        Card firstNonland = new CennsHeir();
+        Card secondNonland = new CennsHeir();
+        Card thirdNonland = new CennsHeir();
+        Card fourthNonland = new CennsHeir();
+        Card untouchedLand = new Forest();
+        harness.setLibrary(player1, List.of(forest, firstNonland, island, secondNonland,
+                thirdNonland, fourthNonland, untouchedLand));
+
+        castFathomTrawl();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(firstNonland, secondNonland, thirdNonland);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourthNonland, untouchedLand);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        assertThat(reorder).containsExactlyInAnyOrder(forest, island);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(reorder.indexOf(island), reorder.indexOf(forest))));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(fourthNonland, untouchedLand, island, forest);
+    }
 }

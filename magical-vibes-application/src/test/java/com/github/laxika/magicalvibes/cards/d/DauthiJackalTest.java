@@ -84,7 +84,7 @@ class DauthiJackalTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Jackal can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent jackal = addCreatureReady(player1, new DauthiJackal());
-        jackal.setTapped(true);
+        jackal.tap();
         jackal.setSummoningSick(true);
         addBlackMana(player1);
         Permanent blocker = addBlocker();

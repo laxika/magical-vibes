@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(EssenceBottle.class)
+@CardUsed({EssenceBottle.class, Disenchant.class})
 class EssenceBottleTest extends BaseCardTest {
 
     @Test
@@ -96,6 +99,99 @@ class EssenceBottleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature bottle can activate its tap ability")
+    void newlyEnteredBottleCanActivate() {
+        Permanent bottle = harness.addToBattlefieldAndReturn(player1, new EssenceBottle());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(bottle.isTapped()).isTrue();
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isOne();
+    }
+
+    @Test
+    @DisplayName("Life gain uses the counters paid rather than counters present at resolution")
+    void lifeGainUsesCountersRemovedAtActivation() {
+        Permanent bottle = addReadyBottle(player1);
+        bottle.setCounterCount(CounterType.ELIXIR, 3);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(bottle.isTapped()).isTrue();
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isZero();
+        harness.assertLife(player1, startingLife);
+        bottle.setCounterCount(CounterType.ELIXIR, 1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, startingLife + 6);
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isOne();
+    }
+
+    @Test
+    @DisplayName("The activating player gains the life even when they are player two")
+    void playerTwoGainsLifeFromTheirBottle() {
+        Permanent bottle = addReadyBottle(player2);
+        bottle.setCounterCount(CounterType.ELIXIR, 2);
+        int playerOneLife = gd.playerLifeTotals.get(player1.getId());
+        int playerTwoLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, playerOneLife);
+        harness.assertLife(player2, playerTwoLife + 4);
+    }
+
+    @Test
+    @DisplayName("Life gain still resolves after the bottle is destroyed in response")
+    void lifeGainSurvivesBottleDestruction() {
+        Permanent bottle = addReadyBottle(player1);
+        bottle.setCounterCount(CounterType.ELIXIR, 3);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.castInstant(player2, 0, bottle.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Essence Bottle");
+        harness.assertLife(player1, startingLife);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, startingLife + 6);
+    }
+
+    @Test
+    @DisplayName("A counter-adding ability does not affect a replacement bottle")
+    void counterAbilityDoesNotAffectReplacementBottle() {
+        Permanent bottle = addReadyBottle(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castInstant(player2, 0, bottle.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Essence Bottle");
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new EssenceBottle());
+        harness.passBothPriorities();
+
+        assertThat(replacement.getCounterCount(CounterType.ELIXIR)).isZero();
     }
 
     private Permanent addReadyBottle(Player player) {

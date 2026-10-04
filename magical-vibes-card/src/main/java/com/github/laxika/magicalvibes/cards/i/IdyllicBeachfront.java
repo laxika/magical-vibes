@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "DMU", collectorNumber = "249")
+@CardRegistration(set = "FIC", collectorNumber = "404")
 public class IdyllicBeachfront extends Card {
 
     public IdyllicBeachfront() {

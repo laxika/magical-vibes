@@ -99,7 +99,7 @@ class CaseyJonesAsphaltHooliganTest extends BaseCardTest {
     void abilityCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent casey = harness.addToBattlefieldAndReturn(player1, new CaseyJonesAsphaltHooligan());
         casey.setSummoningSick(true);
-        casey.setTapped(true);
+        casey.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);

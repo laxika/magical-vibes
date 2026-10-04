@@ -125,7 +125,7 @@ class BloodshotCyclopsTest extends BaseCardTest {
         addReadyCyclops(player1);
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         sacrifice.setSummoningSick(true);
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, player2.getId());

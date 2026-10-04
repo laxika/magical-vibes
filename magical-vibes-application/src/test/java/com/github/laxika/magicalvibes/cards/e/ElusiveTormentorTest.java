@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrownyardExplorers;
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElusiveTormentor.class, DrownyardExplorers.class, FieryTemper.class})
 class ElusiveTormentorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a card and paying {1} transforms Elusive Tormentor")
     void discardAndPayTransformsTormentor() {
         Permanent tormentor = addReadyTormentor();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DrownyardExplorers()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -33,7 +36,7 @@ class ElusiveTormentorTest extends BaseCardTest {
 
         assertThat(tormentor.isTransformed()).isTrue();
         assertThat(tormentor.getCard().getName()).isEqualTo("Insidious Mist");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Drownyard Explorers");
     }
 
     @Test
@@ -76,7 +79,7 @@ class ElusiveTormentorTest extends BaseCardTest {
     @Test
     @DisplayName("Insidious Mist cannot block")
     void mistCannotBlock() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addReadyCreature(player1, new DrownyardExplorers());
         Permanent mist = addTransformedMist(player2);
         attacker.setAttacking(true);
         beginBlockerDeclaration();
@@ -92,7 +95,7 @@ class ElusiveTormentorTest extends BaseCardTest {
     @DisplayName("Insidious Mist cannot be blocked")
     void mistCannotBeBlocked() {
         Permanent attackingMist = addTransformedMist(player1);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addReadyCreature(player2, new DrownyardExplorers());
         attackingMist.setAttacking(true);
         beginBlockerDeclaration();
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
@@ -101,6 +104,76 @@ class ElusiveTormentorTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, attackingMistIndex))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Elusive Tormentor cannot activate without a card to discard")
+    void cannotActivateWithEmptyHand() {
+        Permanent tormentor = addReadyTormentor();
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tormentor.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Elusive Tormentor cannot activate without mana")
+    void cannotActivateWithoutMana() {
+        Permanent tormentor = addReadyTormentor();
+        harness.setHand(player1, List.of(new DrownyardExplorers()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tormentor.isTransformed()).isFalse();
+        harness.assertInHand(player1, "Drownyard Explorers");
+    }
+
+    @Test
+    @DisplayName("Two queued activations transform Elusive Tormentor only once")
+    void queuedActivationsTransformOnlyOnce() {
+        Permanent tormentor = addReadyTormentor();
+        harness.setHand(player1, List.of(new DrownyardExplorers(), new DrownyardExplorers()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        assertThat(tormentor.isTransformed()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(tormentor.isTransformed()).isTrue();
+        harness.passBothPriorities();
+        assertThat(tormentor.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Insidious Mist survives lethal damage from its controller's spell")
+    void mistSurvivesLethalDamage() {
+        Permanent mist = addTransformedMist();
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, mist.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mist);
+        assertThat(mist.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent cannot target Insidious Mist")
+    void opponentCannotTargetMist() {
+        Permanent mist = addTransformedMist(player2);
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, mist.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Fiery Temper");
     }
 
     private Permanent addReadyTormentor() {
@@ -113,18 +186,16 @@ class ElusiveTormentorTest extends BaseCardTest {
 
     private Permanent addTransformedMist(com.github.laxika.magicalvibes.model.Player player) {
         Card front = new ElusiveTormentor();
-        Permanent mist = new Permanent(front);
+        Permanent mist = harness.addToBattlefieldAndReturn(player, front);
         mist.setCard(front.getBackFaceCard());
         mist.setTransformed(true);
         mist.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(mist);
         return mist;
     }
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

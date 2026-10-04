@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -145,6 +146,41 @@ class FeralThrowbackTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Amplify allows revealing zero cards even with a Beast in hand")
+    void mayRevealNoBeasts() {
+        harness.setHand(player1, List.of(new FeralThrowback(), new Brontotherium()));
+        addManaForFeralThrowback();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(findPermanent(player1, "Feral Throwback")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInHand(player1, "Brontotherium");
+    }
+
+    @Test
+    @DisplayName("Provoke's requirement expires after combat even when its target could not block")
+    void provokeRequirementExpiresAfterCombat() {
+        addCreatureReady(player1, new FeralThrowback());
+        Permanent blocker = addCreatureReady(player2, new Earthblighter());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(blocker.isTapped()).isFalse();
+
+        blocker.tap();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(blocker.getMustBlockIds()).isEmpty();
     }
 
     private void addManaForFeralThrowback() {

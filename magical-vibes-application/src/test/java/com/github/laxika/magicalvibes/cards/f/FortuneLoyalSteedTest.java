@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrainedArynx;
+import com.github.laxika.magicalvibes.cards.c.ColossalRattlewurm;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FortuneLoyalSteed.class, GrizzlyBears.class})
+@CardUsed({FortuneLoyalSteed.class, TrainedArynx.class, ColossalRattlewurm.class})
 class FortuneLoyalSteedTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class FortuneLoyalSteedTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -37,7 +39,7 @@ class FortuneLoyalSteedTest extends BaseCardTest {
     @DisplayName("Saddling Fortune records the creature that paid the cost")
     void saddleTapsAnotherCreatureAndSaddlesFortune() {
         Permanent fortune = addCreatureReady(player1, new FortuneLoyalSteed());
-        Permanent helper = addCreatureReady(player1, new GrizzlyBears());
+        Permanent helper = addCreatureReady(player1, new TrainedArynx());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -50,16 +52,14 @@ class FortuneLoyalSteedTest extends BaseCardTest {
     @DisplayName("Attacking while saddled flickers Fortune and the chosen saddler")
     void attacksAndFlickersFortuneAndSaddler() {
         Permanent fortune = addCreatureReady(player1, new FortuneLoyalSteed());
-        Permanent helper = addCreatureReady(player1, new GrizzlyBears());
+        Permanent helper = addCreatureReady(player1, new TrainedArynx());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        for (int i = 0; i < 8 && !gd.interaction.isAwaitingInput(); i++) {
-            harness.passBothPriorities();
-        }
+        advanceToEndOfCombatChoice();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
         harness.handleMultiplePermanentsChosen(player1, List.of(helper.getId()));
@@ -74,5 +74,111 @@ class FortuneLoyalSteedTest extends BaseCardTest {
         assertThat(battlefield).hasSize(2);
         assertThat(battlefield).extracting(Permanent::getId)
                 .doesNotContain(fortune.getId(), helper.getId());
+    }
+
+    @Test
+    void mayDeclineToExileSaddler() {
+        Permanent fortune = addCreatureReady(player1, new FortuneLoyalSteed());
+        Permanent helper = addCreatureReady(player1, new TrainedArynx());
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        advanceToEndOfCombatChoice();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .extracting(Permanent::getId).contains(helper.getId()).doesNotContain(fortune.getId());
+        assertThat(helper.isTapped()).isTrue();
+    }
+
+    @Test
+    void attackingWithoutSaddleDoesNotFlicker() {
+        Permanent fortune = addCreatureReady(player1, new FortuneLoyalSteed());
+        Permanent helper = addCreatureReady(player1, new TrainedArynx());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+        for (int i = 0; i < 8 && !gd.interaction.isAwaitingInput(); i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .extracting(Permanent::getId).containsExactlyInAnyOrder(fortune.getId(), helper.getId());
+    }
+
+    @Test
+    void exiledTokenSaddlerDoesNotReturn() {
+        Permanent fortune = addCreatureReady(player1, new FortuneLoyalSteed());
+        TrainedArynx token = new TrainedArynx();
+        token.setToken(true);
+        Permanent helper = addCreatureReady(player1, token);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        advanceToEndOfCombatChoice();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(helper.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .extracting(Permanent::getId).doesNotContain(fortune.getId(), helper.getId());
+    }
+
+    @Test
+    void stolenSaddlerReturnsToItsOwner() {
+        addCreatureReady(player1, new FortuneLoyalSteed());
+        Permanent helper = addCreatureReady(player1, new TrainedArynx());
+        gd.stolenCreatures.put(helper.getId(), player2.getId());
+        helper.getCard().setOwnerId(player2.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        advanceToEndOfCombatChoice();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(helper.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1)
+                .extracting(Permanent::getCard).containsExactly(helper.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isTapped()).isFalse();
+    }
+
+    private void advanceToEndOfCombatChoice() {
+        resolveCombat();
+        for (int i = 0; i < 8 && !gd.interaction.isAwaitingInput(); i++) {
+            harness.passBothPriorities();
+        }
+    }
+
+    @Test
+    void saddlerCanStillFlickerAfterFortuneDiesInCombat() {
+        Permanent fortune = addCreatureReady(player1, new FortuneLoyalSteed());
+        Permanent helper = addCreatureReady(player1, new TrainedArynx());
+        addCreatureReady(player2, new ColossalRattlewurm());
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        resolveAllTriggers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        advanceToEndOfCombatChoice();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(fortune.getCard());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(helper.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .extracting(Permanent::getCard).containsExactly(helper.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getId()).isNotEqualTo(helper.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(fortune.getCard());
     }
 }

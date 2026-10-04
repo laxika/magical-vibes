@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.c.CoilingOracle;
 import com.github.laxika.magicalvibes.cards.n.NovijenHeartOfProgress;
 import com.github.laxika.magicalvibes.cards.v.Voidslime;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -84,6 +87,67 @@ class FertileImaginationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CardType.class, names = {"LAND", "INSTANT", "SORCERY"})
+    void createsTokensForNoncreatureCards(CardType chosenType) {
+        harness.setHand(player1, List.of(new FertileImagination(), new CoilingOracle()));
+        List<Card> opponentHand = List.of(
+                new CoilingOracle(), new Voidslime(), new NovijenHeartOfProgress(), new FertileImagination());
+        harness.setHand(player2, opponentHand);
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, chosenType.name());
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(opponentHand);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Fertile Imagination");
+    }
+
+    @Test
+    void emptyHandStillAllowsChoiceAndCreatesNoTokens() {
+        harness.setHand(player1, List.of(new FertileImagination()));
+        harness.setHand(player2, List.of());
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Fertile Imagination");
+    }
+
+    @Test
+    void choosesTypeAndCountsHandAtResolution() {
+        harness.setHand(player1, List.of(new FertileImagination()));
+        harness.setHand(player2, List.of(new CoilingOracle()));
+        addMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog).noneMatch(log -> log.plainText().contains("reveals their hand"));
+        harness.setHand(player2, List.of(new CoilingOracle(), new CoilingOracle()));
+        harness.passBothPriorities();
+        assertThat(gd.gameLog).noneMatch(log -> log.plainText().contains("reveals their hand"));
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(4);
+    }
+
+    @Test
+    void offersAllLegalCardTypes() {
+        harness.setHand(player1, List.of(new FertileImagination()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).contains("CONSPIRACY", "DUNGEON", "VANGUARD");
     }
 
     private void addMana() {

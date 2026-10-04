@@ -126,7 +126,7 @@ class CodexShredderTest extends BaseCardTest {
     void tappedShredderCannotActivateEitherAbility() {
         Card target = new Forest();
         harness.addToBattlefield(player1, new CodexShredder());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 

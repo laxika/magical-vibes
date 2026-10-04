@@ -161,7 +161,7 @@ class CollectiveEffortTest extends BaseCardTest {
     @DisplayName("An already tapped creature cannot pay the escalate cost")
     void rejectsTappedCreatureForEscalate() {
         Permanent tapper = addCreatureReady(player1, new GrizzlyBears());
-        tapper.setTapped(true);
+        tapper.tap();
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new CampaignOfVengeance());
         harness.setHand(player1, List.of(new CollectiveEffort()));
         addMana();

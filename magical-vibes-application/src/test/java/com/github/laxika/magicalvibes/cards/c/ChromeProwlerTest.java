@@ -69,7 +69,7 @@ class ChromeProwlerTest extends BaseCardTest {
     @DisplayName("An already tapped opposing creature is a legal target")
     void canTargetTappedCreature() {
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new ChromeProwler());
-        victim.setTapped(true);
+        victim.tap();
 
         castProwler(player1, victim.getId());
         resolveAllTriggers();

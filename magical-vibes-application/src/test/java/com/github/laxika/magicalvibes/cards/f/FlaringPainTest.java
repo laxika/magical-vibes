@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -53,8 +54,7 @@ class FlaringPainTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new FlaringPain()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.damageCantBePreventedThisTurn).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
@@ -72,5 +72,91 @@ class FlaringPainTest extends BaseCardTest {
 
         assertThat(gd.damageCantBePreventedThisTurn).isFalse();
         assertThat(gqs.isDamagePreventable(gd)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Prevention cast after Flaring Pain cannot prevent either player's damage")
+    void laterPreventionCannotPreventDamageFromEitherPlayer() {
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player2, new PrismaticStrands(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "RED");
+
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.setHand(player2, List.of(new EmberShot()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Flashback overrides an existing prevention effect")
+    void flashbackOverridesExistingPrevention() {
+        harness.castFromHand(player2, new PrismaticStrands(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "RED");
+
+        harness.setGraveyard(player1, List.of(new FlaringPain()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Flaring Pain does not undo damage already prevented")
+    void doesNotUndoPreviouslyPreventedDamage() {
+        harness.castFromHand(player2, new PrismaticStrands(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "RED");
+
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("New damage prevention works on the following turn")
+    void preventionWorksOnFollowingTurn() {
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player2, new PrismaticStrands(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "RED");
+
+        harness.setHand(player1, List.of(new EmberShot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
     }
 }

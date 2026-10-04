@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.MonarchBoundControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
@@ -71,6 +73,10 @@ public class CreatureControlService {
     @Autowired
     @Lazy
     private AuraCopyService auraCopyService;
+
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler ascendEffectHandler;
 
     @Autowired
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
@@ -106,6 +112,15 @@ public class CreatureControlService {
     public boolean applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
                                    CardEffect wrappedEffect, EffectDuration duration,
                                    UUID sourcePermanentId, String sourceCardName) {
+        return applyControlEffect(gameData, newControllerId, target, wrappedEffect, duration,
+                sourcePermanentId, sourceCardName, null);
+    }
+
+    /** Applies control with an optional player id whose monarch status governs the effect's lifetime. */
+    public boolean applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
+                                   CardEffect wrappedEffect, EffectDuration duration,
+                                   UUID sourcePermanentId, String sourceCardName,
+                                   UUID affectedPlayerId) {
         UUID currentControllerId = gameData.findControllerOf(target);
         if (currentControllerId != null && !currentControllerId.equals(newControllerId)
                 && gameQueryService.cantBeControlledByOtherPlayers(gameData, target)) {
@@ -113,7 +128,7 @@ public class CreatureControlService {
         }
         FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
-                wrappedEffect, target.getId(), null, null, duration, 0));
+                wrappedEffect, target.getId(), affectedPlayerId, null, duration, 0));
         if (duration == EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN) {
             gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
                     stamped.id(), newControllerId, gameData.turnNumber));
@@ -214,6 +229,9 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
+        if (ascendEffectHandler != null) {
+            ascendEffectHandler.checkPermanentAscend(gameData, derived);
+        }
         if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
                 && gameData.getDelayedActions(EchoAtNextUpkeep.class).stream()
                 .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {
@@ -526,6 +544,9 @@ public class CreatureControlService {
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
                 stale = affected == null || !gameQueryService.isEnchanted(gameData, affected);
+            }
+            if (!stale && fe.effect() instanceof MonarchBoundControlEffect) {
+                stale = !Objects.equals(gameData.monarchPlayerId, fe.affectedPlayerId());
             }
             if (stale) {
                 gameData.floatingEffects.remove(fe);

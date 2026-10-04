@@ -74,11 +74,57 @@ class ExpungeTest extends BaseCardTest {
         harness.assertInHand(player1, "Gorilla Warrior");
     }
 
+    @Test
+    @DisplayName("Can destroy a creature controlled by the caster")
+    void destroysOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+
+        castExpunge(creature);
+
+        harness.assertNotOnBattlefield(player1, "Gorilla Warrior");
+        harness.assertInGraveyard(player1, "Gorilla Warrior");
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new Expunge()));
+        harness.setLibrary(player1, List.of(new GorillaWarrior()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Expunge");
+        harness.assertInGraveyard(player1, "Expunge");
+        harness.assertNotInHand(player1, "Gorilla Warrior");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gorilla Warrior");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with only one mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new Expunge()));
+        harness.setLibrary(player1, List.of(new GorillaWarrior()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Expunge");
+        harness.assertNotInGraveyard(player1, "Expunge");
+        harness.assertNotInHand(player1, "Gorilla Warrior");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castExpunge(Permanent target) {
         harness.setHand(player1, List.of(new Expunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

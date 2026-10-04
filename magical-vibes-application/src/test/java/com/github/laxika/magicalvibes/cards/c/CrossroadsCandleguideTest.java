@@ -118,7 +118,7 @@ class CrossroadsCandleguideTest extends BaseCardTest {
     @Test
     void manaAbilityCanBeRepeatedWhileTappedAndDoesNotUseStack() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new CrossroadsCandleguide());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 10);
         for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
                 ManaColor.RED, ManaColor.GREEN)) {

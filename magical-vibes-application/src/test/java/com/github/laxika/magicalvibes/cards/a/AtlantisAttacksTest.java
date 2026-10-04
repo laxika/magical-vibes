@@ -131,6 +131,7 @@ class AtlantisAttacksTest extends BaseCardTest {
         Permanent secondTapper = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new AtlantisAttacks()));
         addMana();
 

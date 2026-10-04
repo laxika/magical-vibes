@@ -164,7 +164,7 @@ class BruceBannerTest extends BaseCardTest {
         addHulkMana();
         harness.setLibrary(player1, List.of(new BruceBanner()));
         harness.activateAbility(player1, 0, 0, 1, null);
-        bruce.setTapped(false);
+        bruce.untap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 1, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -192,7 +192,7 @@ class BruceBannerTest extends BaseCardTest {
     @Test
     void transformationPreservesTappedStateAndCounters() {
         Permanent bruce = addFrontReady(player1);
-        bruce.setTapped(true);
+        bruce.tap();
         bruce.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         prepareMainPhase();
         addHulkMana();
@@ -208,7 +208,7 @@ class BruceBannerTest extends BaseCardTest {
     @Test
     void nonattackingHulkDoesNotUntapOrGrantCombat() {
         Permanent hulk = addBackReady(player1);
-        hulk.setTapped(true);
+        hulk.tap();
         prepareMainPhase();
         harness.setHand(player1, List.of(new LightningStrike()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -226,7 +226,7 @@ class BruceBannerTest extends BaseCardTest {
         Permanent hulk = addBackReady(player1);
         hulk.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 5);
         hulk.setAttacking(true);
-        hulk.setTapped(true);
+        hulk.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

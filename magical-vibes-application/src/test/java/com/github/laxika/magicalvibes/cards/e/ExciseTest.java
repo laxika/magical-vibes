@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.DivingGriffin;
+import com.github.laxika.magicalvibes.cards.w.WintermoonMesa;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Excise.class, DivingGriffin.class})
+@CardUsed({Excise.class, DivingGriffin.class, WintermoonMesa.class})
 class ExciseTest extends BaseCardTest {
 
     @Test
@@ -69,12 +70,14 @@ class ExciseTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With X equal to zero, the target is not exiled")
-    void zeroXDoesNotExileTarget() {
+    @DisplayName("With X equal to zero, paying zero keeps the target")
+    void zeroXCanBePaidToKeepTarget() {
         Permanent attacker = addAttacker(player1);
         castExcise(0, attacker.getId());
 
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -112,6 +115,42 @@ class ExciseTest extends BaseCardTest {
                 .hasMessageContaining("attacking creature");
     }
 
+    @Test
+    @DisplayName("With X equal to zero, the controller can decline and exile the target")
+    void zeroXCanBeDeclined() {
+        Permanent attacker = addAttacker(player1);
+        castExcise(0, attacker.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Diving Griffin");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName).contains("Diving Griffin");
+    }
+
+    @Test
+    @DisplayName("The controller may activate mana abilities during resolution to pay")
+    void controllerCanGenerateManaDuringResolution() {
+        Permanent attacker = addAttacker(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        land.setTapped(false);
+        castExcise(1, attacker.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        int landIndex = gd.playerBattlefields.get(player1.getId()).indexOf(land);
+        harness.activateAbility(player1, landIndex, 0, null, null, null);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
     private void castExcise(int x, java.util.UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -125,8 +164,8 @@ class ExciseTest extends BaseCardTest {
 
     private Permanent addAttacker(Player owner) {
         Permanent attacker = addCreatureReady(owner, new DivingGriffin());
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(owner.getId().equals(player1.getId()) ? player2.getId() : player1.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(owner, List.of(gd.playerBattlefields.get(owner.getId()).indexOf(attacker))));
         return attacker;
     }
 }

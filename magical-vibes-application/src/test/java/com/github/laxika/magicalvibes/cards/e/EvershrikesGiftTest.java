@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EvershrikesGift.class, GrizzlyBears.class, HillGiant.class})
 class EvershrikesGiftTest extends BaseCardTest {
 
     @Test
@@ -29,10 +31,9 @@ class EvershrikesGiftTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Evershrike's Gift")
-                        && p.isAttached()
-                        && p.getAttachedTo().equals(bears.getId()));
+        Permanent gift = findPermanent(player1, "Evershrike's Gift");
+        assertThat(gift.isAttached()).isTrue();
+        assertThat(gift.getAttachedTo()).isEqualTo(bears.getId());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
@@ -91,5 +92,137 @@ class EvershrikesGiftTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Evershrike's Gift can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        harness.setHand(player1, List.of(new EvershrikesGift()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Evershrike's Gift").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blight can kill the chosen creature without preventing the return")
+    void lethalBlightStillReturnsGift() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new EvershrikesGift()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Evershrike's Gift");
+        harness.assertInHand(player1, "Evershrike's Gift");
+    }
+
+    @Test
+    @DisplayName("Only the activated copy returns from the graveyard")
+    void returnsOnlyActivatedCopy() {
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        EvershrikesGift activated = new EvershrikesGift();
+        EvershrikesGift other = new EvershrikesGift();
+        harness.setGraveyard(player1, List.of(activated, other));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(activated).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the blight cost")
+    void cannotActivateWithoutControlledCreature() {
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new EvershrikesGift()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Evershrike's Gift");
+        harness.assertNotInHand(player1, "Evershrike's Gift");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana prevents activation before any counters are paid")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new EvershrikesGift()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Evershrike's Gift");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The graveyard ability cannot be activated outside a main phase")
+    void cannotActivateDuringUpkeep() {
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new EvershrikesGift()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Evershrike's Gift");
+    }
+
+    @Test
+    @DisplayName("The graveyard ability cannot be activated while an Aura spell is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        harness.setHand(player1, List.of(new EvershrikesGift()));
+        harness.setGraveyard(player1, List.of(new EvershrikesGift()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, giant.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Evershrike's Gift");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
     }
 }

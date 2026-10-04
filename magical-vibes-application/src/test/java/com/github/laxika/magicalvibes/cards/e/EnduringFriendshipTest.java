@@ -51,22 +51,75 @@ class EnduringFriendshipTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Enduring Friendship")
-                        && !card.hasKeyword(Keyword.DOUBLE));
-        assertThat(gqs.hasKeyword(gd, friendship, Keyword.DOUBLE)).isFalse();
+                        && !card.hasKeyword(Keyword.DOUBLE_TEAM));
+        assertThat(gqs.hasKeyword(gd, friendship, Keyword.DOUBLE_TEAM)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Double team does not conjure for a token")
+    void tokenDoesNotConjure() {
+        EnduringFriendship card = new EnduringFriendship();
+        card.setToken(true);
+        addCreatureReady(player1, card);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.assertNotInHand(player1, "Enduring Friendship");
+    }
+
+    @Test
+    @DisplayName("An instant boosts each qualifying creature only once")
+    void instantBoostsEachQualifyingCreatureOnce() {
+        Permanent friendship = addCreatureReady(player1, new EnduringFriendship());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, friendship)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, friendship)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The returned enchantment retains its spell trigger")
+    void returnedEnchantmentStillBoostsCreatures() {
+        Permanent friendship = harness.addToBattlefieldAndReturn(player1, new EnduringFriendship());
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.castAndResolveInstant(player2, 0, friendship.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Enduring Friendship");
+        Permanent otherFriendship = addCreatureReady(player1, new EnduringFriendship());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, otherFriendship)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherFriendship)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Returns from the graveyard as an enchantment")
     void returnsAsEnchantmentOnly() {
-        harness.addToBattlefield(player1, new EnduringFriendship());
-        Permanent friendship = findPermanent(player1, "Enduring Friendship");
+        Permanent friendship = harness.addToBattlefieldAndReturn(player1, new EnduringFriendship());
 
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, friendship.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, friendship.getId());
+        resolveAllTriggers();
 
         Permanent returned = findPermanent(player1, "Enduring Friendship");
         assertThat(gqs.getEffectiveCardTypes(gd, returned)).containsExactly(CardType.ENCHANTMENT);
@@ -77,8 +130,7 @@ class EnduringFriendshipTest extends BaseCardTest {
     @Test
     @DisplayName("Does not return when it dies as a noncreature")
     void doesNotReturnWhenItWasNotACreature() {
-        harness.addToBattlefield(player1, new EnduringFriendship());
-        Permanent friendship = findPermanent(player1, "Enduring Friendship");
+        Permanent friendship = harness.addToBattlefieldAndReturn(player1, new EnduringFriendship());
 
         harness.setHand(player1, List.of(new OneWithTheStars()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -92,9 +144,8 @@ class EnduringFriendshipTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, friendship.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, friendship.getId());
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Enduring Friendship");
         harness.assertNotOnBattlefield(player1, "Enduring Friendship");

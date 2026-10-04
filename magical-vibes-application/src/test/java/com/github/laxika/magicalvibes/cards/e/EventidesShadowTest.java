@@ -73,11 +73,36 @@ class EventidesShadowTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Removing the last available counter completes the spell without choosing Done")
+    void removingAllCountersCompletesResolution() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        land.setCounterCount(CounterType.CHARGE, 1);
+
+        castEventidesShadow();
+        chooseCounter(first.getId(), CounterType.PLUS_ONE_PLUS_ONE);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        chooseCounter(second.getId(), CounterType.PLUS_ONE_PLUS_ONE);
+        chooseCounter(land.getId(), CounterType.CHARGE);
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(land.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
     private void castEventidesShadow() {
-        harness.setHand(player1, List.of(new EventidesShadow()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new EventidesShadow(), "{4}{B}");
         harness.passBothPriorities();
     }
 

@@ -41,4 +41,53 @@ class EbonDrakeTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
+
+    @Test
+    @DisplayName("Casting Ebon Drake does not trigger its own ability")
+    void doesNotTriggerForItsOwnCast() {
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new EbonDrake(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ebon Drake");
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each Ebon Drake triggers separately and before the spell resolves")
+    void multipleDrakesTriggerSeparatelyBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new EbonDrake());
+        harness.addToBattlefield(player1, new EbonDrake());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new EbonDrake(), "{2}{B}");
+        harness.assertLife(player1, lifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore - 1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore - 2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        harness.assertLife(player1, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Drakes controlled by different players each make their own controller lose life")
+    void eachDrakeMakesItsOwnControllerLoseLife() {
+        harness.addToBattlefield(player1, new EbonDrake());
+        harness.addToBattlefield(player2, new EbonDrake());
+        int life1Before = gd.playerLifeTotals.get(player1.getId());
+        int life2Before = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player1, new EbonDrake(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, life1Before - 1);
+        harness.assertLife(player2, life2Before - 1);
+    }
 }

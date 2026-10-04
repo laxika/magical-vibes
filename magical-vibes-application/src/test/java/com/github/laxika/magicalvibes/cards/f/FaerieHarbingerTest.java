@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.n.NectarFaerie;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SilvergillDouser;
+import com.github.laxika.magicalvibes.cards.w.WingsOfVelisVel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FaerieHarbinger.class, NectarFaerie.class, SilvergillDouser.class, Plains.class, Island.class})
+@CardUsed({FaerieHarbinger.class, NectarFaerie.class, SilvergillDouser.class, Plains.class, Island.class, WingsOfVelisVel.class})
 class FaerieHarbingerTest extends BaseCardTest {
 
     @Test
@@ -106,6 +107,60 @@ class FaerieHarbingerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Silvergill Douser", "Plains", "Island");
+    }
+
+    @Test
+    @DisplayName("A noncreature card with changeling can be found and put on top")
+    void canFindNoncreatureChangeling() {
+        setupAndCast();
+        Card wings = new WingsOfVelisVel();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(island, wings));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(wings);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(wings, island);
+        harness.assertNotInHand(player1, "Wings of Velis Vel");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A restricted search may fail to find even when a Faerie is present")
+    void canFailToFindWithFaeriePresent() {
+        setupAndCast();
+        Card faerie = new NectarFaerie();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(faerie, island));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(faerie, island);
+        harness.assertNotInHand(player1, "Nectar Faerie");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library completes the ability")
+    void acceptingMayWithEmptyLibraryCompletes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupAndCast() {

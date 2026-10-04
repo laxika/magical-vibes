@@ -23,6 +23,118 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FlashOfInsightTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Normal casting with X zero leaves the library untouched")
+    void zeroNormalCastLeavesLibraryUntouched() {
+        Card spell = new FlashOfInsight();
+        Card top = new SuntailHawk();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(top));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Positive X resolves without a choice when the library is empty")
+    void positiveXWithEmptyLibraryResolves() {
+        Card spell = new FlashOfInsight();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashback pays only its fixed mana cost and takes the sole available library card")
+    void flashbackWithShortLibraryPaysFixedManaCost() {
+        Card spell = new FlashOfInsight();
+        Card blue1 = new HaplessResearcher();
+        Card blue2 = new AvenFogbringer();
+        Card nonBlue = new SuntailHawk();
+        Card top = new GiantWarthog();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(top));
+        harness.setGraveyard(player1, List.of(blue1, spell, nonBlue, blue2));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.ensurePriority(player1);
+        gs.playFlashbackSpell(gd, player1, 1, 2, null, List.of(), List.of(0, 3));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonBlue);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(blue2, blue1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(blue2, blue1, spell);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot count the same blue graveyard card twice")
+    void flashbackRejectsDuplicateExileSelection() {
+        Card spell = new FlashOfInsight();
+        Card blue = new HaplessResearcher();
+        harness.setGraveyard(player1, List.of(spell, blue));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.ensurePriority(player1);
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, 2, null, List.of(), List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell, blue);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exactly one looked-at card must be chosen when cards are available")
+    void mustChooseExactlyOneLookedAtCard() {
+        Card spell = new FlashOfInsight();
+        Card top1 = new SuntailHawk();
+        Card top2 = new HaplessResearcher();
+        Card belowTop = new GiantWarthog();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(top1, top2, belowTop));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(top1.getId(), top2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(belowTop.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(top1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(belowTop, top2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("Flashback exiles X blue cards and looks at X cards")
     void flashbackExilesBlueCardsAndResolvesXEffect() {
         Card top1 = new SuntailHawk();

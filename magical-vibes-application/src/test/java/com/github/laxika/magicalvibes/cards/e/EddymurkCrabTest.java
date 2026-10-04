@@ -38,8 +38,7 @@ class EddymurkCrabTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castWithTarget(player1, List.of(target.getId()));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent crab = findCrab(player1);
         assertThat(crab.isTapped()).isFalse();
@@ -54,13 +53,87 @@ class EddymurkCrabTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         castWithTarget(player1, List.of(firstTarget.getId(), secondTarget.getId()));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent crab = findCrab(player1);
         assertThat(crab.isTapped()).isTrue();
         assertThat(firstTarget.isTapped()).isTrue();
         assertThat(secondTarget.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's instant and sorcery cards do not reduce the cost")
+    void opponentGraveyardDoesNotReduceCost() {
+        harness.setGraveyard(player2, List.of(new Shock(), new LavaAxe()));
+        harness.setHand(player1, List.of(new EddymurkCrab()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess cost reduction does not reduce the two blue mana required")
+    void excessReductionLeavesColoredCost() {
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock(), new Shock(),
+                new LavaAxe(), new LavaAxe(), new LavaAxe()));
+        harness.setHand(player1, List.of(new EddymurkCrab()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("May choose zero creatures when entering without being cast")
+    void canChooseZeroTargets() {
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+
+        Permanent crab = harness.enterBattlefieldAndReturn(player1, new EddymurkCrab());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(crab.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The entering Crab can target itself and another friendly creature")
+    void canTargetItselfAndFriendlyCreature() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        Permanent crab = harness.enterBattlefieldAndReturn(player1, new EddymurkCrab());
+        harness.handlePermanentChosen(player1, crab.getId());
+        harness.handlePermanentChosen(player1, other.getId());
+        resolveAllTriggers();
+
+        assertThat(crab.isTapped()).isTrue();
+        assertThat(other.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Still taps the surviving target when the other target leaves the battlefield")
+    void tapsRemainingLegalTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castWithTarget(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, first.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first);
+        assertThat(second.isTapped()).isTrue();
     }
 
     private void castWithTarget(Player caster, List<UUID> targets) {

@@ -50,4 +50,27 @@ class ElvesOfDeepShadowTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
+
+    @Test
+    @DisplayName("Mana ability damage is attributed to the Elves permanent")
+    void damageIsDealtByElves() {
+        Permanent elves = addCreatureReady(player1, new ElvesOfDeepShadow());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.damageDealtThisTurnBySource.get(elves.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can activate at one life because the damage is not a life payment")
+    void canActivateAtOneLife() {
+        addCreatureReady(player1, new ElvesOfDeepShadow());
+        harness.setLife(player1, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 20);
+    }
 }

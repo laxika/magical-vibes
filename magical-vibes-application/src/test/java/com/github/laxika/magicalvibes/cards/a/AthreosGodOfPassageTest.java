@@ -175,7 +175,7 @@ class AthreosGodOfPassageTest extends BaseCardTest {
         addBlackPermanents(5);
 
         harness.inMutationScope(() ->
-                harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, athreos));
+                harness.getPermanentRemovalService().tryDestroyPermanent(gd, athreos));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Athreos, God of Passage");

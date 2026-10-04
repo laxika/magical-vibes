@@ -29,7 +29,7 @@ class AngelOfIndemnityTest extends BaseCardTest {
         addCastingMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
@@ -73,7 +73,7 @@ class AngelOfIndemnityTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         harness.assertNotInGraveyard(player1, "Angel of Indemnity");
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 
     @Test
@@ -85,6 +85,7 @@ class AngelOfIndemnityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }

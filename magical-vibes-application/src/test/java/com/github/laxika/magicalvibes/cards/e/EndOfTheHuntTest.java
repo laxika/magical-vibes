@@ -8,13 +8,16 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EndOfTheHunt.class, EnvironmentalScientist.class, EternalStudent.class})
 class EndOfTheHuntTest extends BaseCardTest {
 
     @Test
@@ -84,11 +87,49 @@ class EndOfTheHuntTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
-    private void castEndOfTheHunt() {
+    @Test
+    @DisplayName("Cannot target the caster instead of an opponent")
+    void cannotTargetCaster() {
+        harness.addToBattlefield(player1, new EnvironmentalScientist());
+        harness.setHand(player1, List.of(new EndOfTheHunt()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Only compares permanents controlled by the targeted opponent")
+    void ignoresCastersGreaterManaValueCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new EternalStudent());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new EnvironmentalScientist());
+
+        castEndOfTheHunt();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCreature.getCard());
+    }
+
+    @Test
+    @DisplayName("Determines the greatest mana value when the spell resolves")
+    void determinesEligiblePermanentsAtResolution() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new EnvironmentalScientist());
         harness.setHand(player1, List.of(new EndOfTheHunt()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castSorcery(player1, 0, player2.getId());
+        Permanent larger = harness.addToBattlefieldAndReturn(player2, new EternalStudent());
+
         harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(original);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(larger.getCard());
+    }
+
+    private void castEndOfTheHunt() {
+        harness.setHand(player1, List.of(new EndOfTheHunt()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private Permanent addCreature(Player player, String name, String manaCost) {
@@ -116,8 +157,6 @@ class EndOfTheHuntTest extends BaseCardTest {
         card.setType(type);
         card.setManaCost(manaCost);
         configure.accept(card);
-        Permanent permanent = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, card);
     }
 }

@@ -37,8 +37,7 @@ class FertileThicketTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(forest, plains);
         assertThat(search.params().reveals()).isTrue();
 
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         harness.getGameService().handleInteractionAnswer(
@@ -72,6 +71,81 @@ class FertileThicketTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN))
                 .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Choosing no basic land bottoms all five cards without disturbing the sixth")
+    void choosingNoLandBottomsOnlyTopFive() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Forest fourth = new Forest();
+        Forest fifth = new Forest();
+        Forest sixth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth));
+
+        playFertileThicket(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(first, second, third, fourth, fifth);
+        harness.handleCardChosen(player1, -1);
+        harness.getGameService().handleInteractionAnswer(
+                gd, player1, new InteractionAnswer.CardOrder(List.of(4, 3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, fifth, fourth, third, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A nonbasic land is not eligible even when the sixth card is a basic land")
+    void noBasicLandAmongTopFiveBottomsAllLookedAtCards() {
+        FertileThicket first = new FertileThicket();
+        FertileThicket second = new FertileThicket();
+        FertileThicket third = new FertileThicket();
+        FertileThicket fourth = new FertileThicket();
+        FertileThicket fifth = new FertileThicket();
+        Forest sixth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth));
+
+        playFertileThicket(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        harness.getGameService().handleInteractionAnswer(
+                gd, player1, new InteractionAnswer.CardOrder(List.of(4, 3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, fifth, fourth, third, second, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Looking at an empty library finishes without a card choice")
+    void emptyLibraryFinishesAbility() {
+        harness.setLibrary(player1, List.of());
+
+        playFertileThicket(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Selecting the only basic land in a one-card library leaves it on top")
+    void singleBasicLandCanBeSelected() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        playFertileThicket(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void playFertileThicket(Player player) {

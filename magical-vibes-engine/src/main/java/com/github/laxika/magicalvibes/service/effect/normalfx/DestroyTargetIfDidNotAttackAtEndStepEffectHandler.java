@@ -37,7 +37,7 @@ public class DestroyTargetIfDidNotAttackAtEndStepEffectHandler implements Normal
             return;
         }
 
-        gameData.queueDelayedAction(new DestroyPermanentIfDidNotAttackAtEndStep(target.getId()));
+        gameData.queueDelayedAction(new DestroyPermanentIfDidNotAttackAtEndStep(target.getId(), entry.getControllerId(), entry.getCard()));
 
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(),

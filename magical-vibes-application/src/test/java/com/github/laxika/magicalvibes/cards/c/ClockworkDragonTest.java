@@ -141,7 +141,7 @@ class ClockworkDragonTest extends BaseCardTest {
     @DisplayName("Its counter ability can be activated while tapped and summoning sick")
     void activatedAbilityDoesNotRequireTapOrHaste() {
         Permanent dragon = castDragon();
-        dragon.setTapped(true);
+        dragon.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

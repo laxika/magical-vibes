@@ -38,6 +38,43 @@ class EmperorCrocodileTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An ordinary land does not prevent the sacrifice trigger")
+    void noncreaturePermanentDoesNotCount() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new EmperorCrocodile(), "{3}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Emperor Crocodile");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Emperor Crocodile");
+        harness.assertNotOnBattlefield(player1, "Emperor Crocodile");
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Repeated state checks do not duplicate a pending sacrifice trigger")
+    void doesNotTriggerAgainWhileAbilityIsOnStack() {
+        harness.castFromHand(player1, new EmperorCrocodile(), "{3}{G}");
+        harness.passBothPriorities();
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.assertOnBattlefield(player1, "Emperor Crocodile");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Emperor Crocodile");
+        harness.assertNotOnBattlefield(player1, "Emperor Crocodile");
+    }
+
+    @Test
     @DisplayName("Sacrifice still resolves after another creature enters")
     void sacrificeStillResolvesAfterAnotherCreatureEnters() {
         harness.castFromHand(player1, new EmperorCrocodile(), "{3}{G}");

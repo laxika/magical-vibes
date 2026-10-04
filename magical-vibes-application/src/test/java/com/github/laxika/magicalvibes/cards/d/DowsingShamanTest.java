@@ -89,7 +89,7 @@ class DowsingShamanTest extends BaseCardTest {
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhileTapped() {
         Permanent shaman = addCreatureReady(player1, new DowsingShaman());
-        shaman.setTapped(true);
+        shaman.tap();
         Card enchantment = new FistsOfIronwood();
         harness.setGraveyard(player1, List.of(enchantment));
         addActivationMana();

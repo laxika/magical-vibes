@@ -71,4 +71,64 @@ class FlowstoneCrusherTest extends BaseCardTest {
         assertThat(crusher.getPowerModifier()).isEqualTo(0);
         assertThat(crusher.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent crusher = harness.addToBattlefieldAndReturn(player1, new FlowstoneCrusher());
+        crusher.setSummoningSick(true);
+        crusher.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crusher.getPowerModifier()).isEqualTo(1);
+        assertThat(crusher.getToughnessModifier()).isEqualTo(-1);
+        assertThat(crusher.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability boosts only its source among multiple Crushers")
+    void boostsOnlyItsSource() {
+        Permanent source = addCreatureReady(player1, new FlowstoneCrusher());
+        Permanent other = addCreatureReady(player1, new FlowstoneCrusher());
+        Permanent opponent = addCreatureReady(player2, new FlowstoneCrusher());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(-1);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Zero toughness kills the source before its remaining activation resolves")
+    void zeroToughnessKillsSourceWithActivationStillOnStack() {
+        addCreatureReady(player1, new FlowstoneCrusher());
+        Permanent other = addCreatureReady(player1, new FlowstoneCrusher());
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        for (int i = 0; i < 5; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
+        harness.assertInGraveyard(player1, "Flowstone Crusher");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
 }

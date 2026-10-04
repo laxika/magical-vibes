@@ -45,6 +45,9 @@ class AxgardArtisanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new BondBeetle()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.GREEN, 1);
         castBondBeetle(artisan);
 

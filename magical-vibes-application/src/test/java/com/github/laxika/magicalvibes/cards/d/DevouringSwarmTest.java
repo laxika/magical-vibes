@@ -105,9 +105,9 @@ class DevouringSwarmTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Swarm can sacrifice a tapped creature")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent swarm = harness.addToBattlefieldAndReturn(player1, new DevouringSwarm());
-        swarm.setTapped(true);
+        swarm.tap();
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
-        bear.setTapped(true);
+        bear.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bear.getId());

@@ -125,7 +125,7 @@ class CapriciousSorcererTest extends BaseCardTest {
     @Test
     void cannotActivateWhenAlreadyTapped() {
         setupSorcererOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        findPermanent(player1, "Capricious Sorcerer").setTapped(true);
+        findPermanent(player1, "Capricious Sorcerer").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

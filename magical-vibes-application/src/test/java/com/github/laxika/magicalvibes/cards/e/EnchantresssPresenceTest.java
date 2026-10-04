@@ -15,6 +15,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EnchantresssPresence.class, ElvishWarrior.class, Forest.class})
 class EnchantresssPresenceTest extends BaseCardTest {
+    @Test
+    @DisplayName("Presence does not trigger from casting itself")
+    void castingPresenceWithoutAnotherPresenceDoesNotDraw() {
+        harness.setHand(player1, List.of(new EnchantresssPresence()));
+        Forest notDrawn = new Forest();
+        harness.setLibrary(player1, List.of(notDrawn));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Enchantress's Presence");
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(notDrawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(notDrawn);
+    }
+
+    @Test
+    @DisplayName("The draw resolves before the enchantment spell")
+    void drawResolvesBeforeEnchantmentSpell() {
+        harness.addToBattlefield(player1, new EnchantresssPresence());
+        EnchantresssPresence spell = new EnchantresssPresence();
+        harness.setHand(player1, List.of(spell));
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
 
     @Test
     @DisplayName("Casting an enchantment spell draws a card")

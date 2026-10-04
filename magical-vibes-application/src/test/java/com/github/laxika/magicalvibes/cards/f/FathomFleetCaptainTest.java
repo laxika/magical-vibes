@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.DireFleetInterloper;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FathomFleetCaptain.class, DireFleetInterloper.class})
 class FathomFleetCaptainTest extends BaseCardTest {
-
-    // ===== Trigger fires and creates token when condition met =====
 
     @Test
     @DisplayName("Attacking with another nontoken Pirate triggers may-pay and creates 2/2 Pirate token with menace")
@@ -50,8 +51,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
                         && p.getCard().getKeywords().contains(Keyword.MENACE));
     }
 
-    // ===== Decline does not create token =====
-
     @Test
     @DisplayName("Declining may-pay does not create token")
     void declineDoesNotCreateToken() {
@@ -73,8 +72,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Pirate") && p.getCard().isToken());
     }
 
-    // ===== No other Pirate — trigger does not fire =====
-
     @Test
     @DisplayName("Attacking without another Pirate does not trigger ability")
     void attackWithoutAnotherPirateDoesNotTrigger() {
@@ -88,8 +85,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Token Pirates do not satisfy the condition =====
-
     @Test
     @DisplayName("Pirate tokens do not satisfy the 'another nontoken Pirate' condition")
     void pirateTokensDoNotSatisfyCondition() {
@@ -102,8 +97,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
         // No triggered ability on the stack because the only other Pirate is a token
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Nontoken Pirate satisfies but token Pirate does not =====
 
     @Test
     @DisplayName("Nontoken Pirate satisfies condition even when Pirate tokens also present")
@@ -123,8 +116,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
-
-    // ===== Cannot pay — no token created =====
 
     @Test
     @DisplayName("Accepting with insufficient mana treats as decline")
@@ -147,20 +138,60 @@ class FathomFleetCaptainTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Pirate") && p.getCard().isToken());
     }
 
-    // ===== Helper methods =====
+    @Test
+    void opposingPirateDoesNotSatisfyCondition() {
+        addCreatureReady(player1, new FathomFleetCaptain());
+        addPirateCreature(player2);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    void losingOtherPirateBeforeResolutionPreventsPaymentAndToken() {
+        addCreatureReady(player1, new FathomFleetCaptain());
+        Permanent otherPirate = addCreatureReady(player1, new DireFleetInterloper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(otherPirate);
+        gd.playerGraveyards.get(player1.getId()).add(otherPirate.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(countPermanents(player1, "Pirate")).isZero();
+    }
+
+    @Test
+    void removingCaptainDoesNotRemoveItsAttackTrigger() {
+        Permanent captain = addCreatureReady(player1, new FathomFleetCaptain());
+        addPirateCreature(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        declareAttackers(player1, List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(captain);
+        gd.playerGraveyards.get(player1.getId()).add(captain.getCard());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Pirate")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Pirate")).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        Permanent token = findPermanent(player1, "Pirate");
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+    }
 
     private void addPirateCreature(Player player) {
-        Card pirate = new Card();
-        pirate.setName("Pirate Creature");
-        pirate.setType(CardType.CREATURE);
-        pirate.setSubtypes(List.of(CardSubtype.HUMAN, CardSubtype.PIRATE));
-        pirate.setPower(2);
-        pirate.setToughness(2);
-        pirate.setManaCost("{1}{B}");
-        pirate.setColor(CardColor.BLACK);
-        Permanent perm = new Permanent(pirate);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        addCreatureReady(player, new DireFleetInterloper());
     }
 
     private void addPirateToken(Player player) {
@@ -172,8 +203,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
         pirate.setToughness(2);
         pirate.setColor(CardColor.BLACK);
         pirate.setToken(true);
-        Permanent perm = new Permanent(pirate);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        addCreatureReady(player, pirate);
     }
 }

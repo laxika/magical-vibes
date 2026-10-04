@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.u.UncoveredClues;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,11 +17,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Fluxcharger.class, Shock.class, GrizzlyBears.class, UncoveredClues.class})
 class FluxchargerTest extends BaseCardTest {
 
     private Permanent addFluxcharger(Player player) {
-        harness.addToBattlefield(player, new Fluxcharger());
-        return gd.playerBattlefields.get(player.getId()).getLast();
+        return harness.addToBattlefieldAndReturn(player, new Fluxcharger());
     }
 
     private void setUpMainPhase(Player activePlayer) {
@@ -40,8 +42,8 @@ class FluxchargerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve Shock, trigger goes on stack
-        harness.passBothPriorities(); // resolve trigger -> may prompt
+        harness.passBothPriorities(); // Resolve the trigger above Shock and open the may prompt.
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -109,5 +111,60 @@ class FluxchargerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, fluxcharger)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, fluxcharger)).isEqualTo(5);
+    }
+    @Test
+    @DisplayName("An opponent's instant does not trigger Fluxcharger")
+    void opponentsInstantDoesNotTrigger() {
+        Permanent fluxcharger = addFluxcharger(player1);
+        setUpMainPhase(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, fluxcharger)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fluxcharger)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Accepting two switches in one turn restores the original stats")
+    void twoSwitchesCancelEachOther() {
+        Permanent fluxcharger = addFluxcharger(player1);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, fluxcharger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, fluxcharger)).isEqualTo(1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, fluxcharger)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fluxcharger)).isEqualTo(5);
+    }
+    @Test
+    @DisplayName("A sorcery triggers the switch before the spell resolves")
+    void sorceryTriggersBeforeResolving() {
+        Permanent fluxcharger = addFluxcharger(player1);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new UncoveredClues()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, fluxcharger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, fluxcharger)).isEqualTo(1);
     }
 }

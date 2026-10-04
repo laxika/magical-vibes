@@ -30,8 +30,7 @@ class FoilTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Foil");
@@ -90,5 +89,64 @@ class FoilTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithAlternateDiscards(
                 player2, 0, bears.getId(), 1, List.of(2)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Two Island cards can pay the alternate cost with Foil between them in hand")
+    void alternateCostAcceptsTwoIslandsAroundSpell() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Island firstIsland = new Island();
+        Island secondIsland = new Island();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(firstIsland, new Foil(), secondIsland));
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstantWithAlternateDiscards(player2, 1, bears.getId(), 2, List.of(0));
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(firstIsland, secondIsland);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Foil");
+    }
+
+    @Test
+    @DisplayName("Foil cannot discard itself to pay its alternate cost")
+    void cannotDiscardSpellBeingCast() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Foil(), new Island(), new Shock()));
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateDiscards(
+                player2, 0, bears.getId(), 1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters an instant spell without allowing its damage to resolve")
+    void countersInstantSpell() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Foil(), new Island(), new Island()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstantWithAlternateDiscards(player2, 0, shock.getId(), 1, List.of(2));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player2, "Foil");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).isEmpty();
     }
 }

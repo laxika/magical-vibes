@@ -20,17 +20,28 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
         CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
         boolean enterTapped, boolean enterAttacking,
         boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters,
-        boolean onlyCardsOwnedByController, boolean grantHaste)
+        boolean onlyCardsOwnedByController, boolean grantHaste,
+        EnterWithCountersEffect battlefieldEntryReplacement)
         implements CardEffect {
 
+    public ReturnCardExiledWithSourceToBattlefieldEffect(
+            CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
+            boolean enterTapped, boolean enterAttacking, boolean returnAtRandom, boolean targeted,
+            int additionalPlusOnePlusOneCounters, boolean onlyCardsOwnedByController,
+            boolean grantHaste) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
+                returnAtRandom, targeted, additionalPlusOnePlusOneCounters,
+                onlyCardsOwnedByController, grantHaste, null);
+    }
+
     public ReturnCardExiledWithSourceToBattlefieldEffect() {
-        this(null, false, null, false, false, false, false, 0, false, false);
+        this(null, false, null, false, false, false, false, 0, false, false, null);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
                                                          boolean requiresManaValueEqualsX,
                                                          CardSubtype grantedSubtype) {
-        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, false, 0, false, false);
+        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, false, 0, false, false, null);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
@@ -39,7 +50,7 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
                                                          boolean enterTapped,
                                                          boolean enterAttacking) {
         this(filter, requiresManaValueEqualsX, grantedSubtype,
-                enterTapped, enterAttacking, false, false, 0, false, false);
+                enterTapped, enterAttacking, false, false, 0, false, false, null);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
@@ -47,14 +58,14 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
                                                          CardSubtype grantedSubtype,
                                                          boolean grantHaste) {
         this(filter, requiresManaValueEqualsX, grantedSubtype,
-                false, false, false, false, 0, false, grantHaste);
+                false, false, false, false, 0, false, grantHaste, null);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
             CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
             boolean enterTapped, boolean enterAttacking, boolean returnAtRandom) {
         this(filter, requiresManaValueEqualsX, grantedSubtype,
-                enterTapped, enterAttacking, returnAtRandom, false, 0, false, false);
+                enterTapped, enterAttacking, returnAtRandom, false, 0, false, false, null);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
@@ -62,20 +73,20 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
             boolean enterTapped, boolean enterAttacking, boolean targeted,
             int additionalPlusOnePlusOneCounters) {
         this(filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
-                false, targeted, additionalPlusOnePlusOneCounters, false, false);
+                false, targeted, additionalPlusOnePlusOneCounters, false, false, null);
     }
 
     public static ReturnCardExiledWithSourceToBattlefieldEffect targetedCreature(
             boolean enterTapped, int additionalPlusOnePlusOneCounters) {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(
                 new CardTypePredicate(CardType.CREATURE), false, null,
-                enterTapped, false, false, true, additionalPlusOnePlusOneCounters, false, false);
+                enterTapped, false, false, true, additionalPlusOnePlusOneCounters, false, false, null);
     }
 
     /** Returns one source-tracked card owned by the ability controller. */
     public static ReturnCardExiledWithSourceToBattlefieldEffect ownedByController() {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(
-                null, false, null, false, false, false, false, 0, true, false);
+                null, false, null, false, false, false, false, 0, true, false, null);
     }
 
     @Override

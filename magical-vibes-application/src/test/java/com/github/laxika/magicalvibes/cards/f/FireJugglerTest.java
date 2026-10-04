@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.cards.s.Stenchskipper;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -33,7 +35,7 @@ class FireJugglerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
-        harness.passBothPriorities();
+        resolveClashKeepingCardsOnTop();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(blocker1.getId()));
@@ -58,7 +60,7 @@ class FireJugglerTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveClashKeepingCardsOnTop();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(blocker.getId()));
@@ -76,11 +78,80 @@ class FireJugglerTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveClashKeepingCardsOnTop();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(blocker.getId()));
         assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Winning the clash kills a blocker with less than 4 toughness")
+    void wonClashKillsBlocker() {
+        addAttackingJuggler(player1);
+        addCreatureReady(player2, new PricklyBoggart());
+        forcePlayer1ClashWin();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveClashKeepingCardsOnTop();
+
+        harness.assertInGraveyard(player2, "Prickly Boggart");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unblocked Fire Juggler does not clash")
+    void unblockedJugglerDoesNotClash() {
+        addAttackingJuggler(player1);
+        addCreatureReady(player2, new IndomitableAncients());
+        forcePlayer1ClashWin();
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("clashes:")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both clash cards move only after both placement choices are made")
+    void clashPlacementMovesCardsSimultaneously() {
+        addAttackingJuggler(player1);
+        Permanent blocker = addCreatureReady(player2, new IndomitableAncients());
+        Stenchskipper firstTop = new Stenchskipper();
+        PricklyBoggart firstSecond = new PricklyBoggart();
+        PricklyBoggart secondTop = new PricklyBoggart();
+        Stenchskipper secondSecond = new Stenchskipper();
+        harness.setLibrary(player1, List.of(firstTop, firstSecond));
+        harness.setLibrary(player2, List.of(secondTop, secondSecond));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstTop, firstSecond);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0))));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstSecond, firstTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondSecond, secondTop);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(4);
+    }
+
+    private void resolveClashKeepingCardsOnTop() {
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.passBothPriorities();
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+            gs.handleInteractionAnswer(gd, player2,
+                    new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        });
     }
 
     private void forcePlayer1ClashWin() {
@@ -89,10 +160,8 @@ class FireJugglerTest extends BaseCardTest {
     }
 
     private Permanent addAttackingJuggler(Player player) {
-        Permanent perm = new Permanent(new FireJuggler());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new FireJuggler());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

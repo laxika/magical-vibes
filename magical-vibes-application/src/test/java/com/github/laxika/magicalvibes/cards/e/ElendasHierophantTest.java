@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,9 +38,7 @@ class ElendasHierophantTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        UUID hierophantId = hierophant.getId();
-        harness.castInstant(player2, 0, hierophantId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hierophant.getId());
         harness.passBothPriorities();
 
         List<Permanent> tokens = findPermanents(player1, "Vampire");
@@ -51,5 +48,60 @@ class ElendasHierophantTest extends BaseCardTest {
             assertThat(token.getEffectiveToughness()).isEqualTo(1);
             assertThat(token.getCard().getKeywords()).contains(Keyword.LIFELINK);
         });
+    }
+
+    @Test
+    void separateLifeGainEventsEachPutOneCounterOnIt() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new ElendasHierophant());
+        harness.setHand(player1, List.of(new AngelOfMercy(), new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 10);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+
+        assertThat(hierophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertLife(player1, 26);
+    }
+
+    @Test
+    void opponentGainingLifeDoesNotPutCounterOnIt() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new ElendasHierophant());
+        harness.setHand(player2, List.of(new AngelOfMercy()));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.forceActivePlayer(player2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 23);
+        assertThat(hierophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void dyingBeforeLifeGainTriggerResolvesUsesPowerBeforePendingCounter() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new ElendasHierophant());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(hierophant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 23);
+
+        harness.castAndResolveInstant(player2, 0, hierophant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elenda's Hierophant");
+        assertThat(findPermanents(player1, "Vampire")).hasSize(1);
+        assertThat(findPermanents(player2, "Vampire")).isEmpty();
     }
 }

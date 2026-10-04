@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class FlipTheSwitchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
         assertDecayedZombieCreated();
     }
 
@@ -64,8 +65,77 @@ class FlipTheSwitchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
         assertDecayedZombieCreated();
+    }
+
+    @Test
+    @DisplayName("Counters the spell and creates a Zombie when its controller declines payment")
+    void decliningPaymentStillCreatesZombie() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.setHand(player1, List.of(new FlipTheSwitch()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, shock.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertLife(player1, 20);
+        assertDecayedZombieCreated();
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Does not create a Zombie when its only target has left the stack")
+    void missingTargetPreventsTokenCreation() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new FlipTheSwitch(), new FlipTheSwitch()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, shock.getId());
+        harness.castInstant(player1, 0, shock.getId());
+
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The created Zombie deals combat damage and is sacrificed at end of combat")
+    void attackingZombieIsSacrificedAtEndOfCombat() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new FlipTheSwitch()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, shock.getId());
+        harness.passBothPriorities();
+        Permanent zombie = findPermanent(player1, "Zombie");
+        zombie.setSummoningSick(false);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(zombie)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Zombie");
     }
 
     private void assertDecayedZombieCreated() {

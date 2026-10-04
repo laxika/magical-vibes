@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FIC", collectorNumber = "89")
 @CardRegistration(set = "FIC", collectorNumber = "179")
+@CardRegistration(set = "FIC", collectorNumber = "476")
 public class MogMoogleWarrior extends Card {
 
     public MogMoogleWarrior() {

@@ -21,7 +21,7 @@ class DrakeHatchlingTest extends BaseCardTest {
     void pumpWorksWhileSummoningSickAndTapped() {
         Permanent drake = addCreatureReady(player1, new DrakeHatchling());
         drake.setSummoningSick(true);
-        drake.setTapped(true);
+        drake.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

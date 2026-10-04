@@ -43,13 +43,13 @@ class FirebreathingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enchanted creature can activate {R}: +1/+0")
-    void grantedAbilityBoostsEnchantedCreature() {
+    @DisplayName("Aura controller can activate {R}: enchanted creature gets +1/+0")
+    void auraAbilityBoostsEnchantedCreature() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachTo(creature);
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -62,9 +62,9 @@ class FirebreathingTest extends BaseCardTest {
         attachTo(creature);
 
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
@@ -85,7 +85,7 @@ class FirebreathingTest extends BaseCardTest {
         creature.tap();
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -93,18 +93,20 @@ class FirebreathingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only the enchanted creature gains the activated ability")
-    void onlyEnchantedCreatureGainsAbility() {
+    @DisplayName("Only the Aura has the activated ability")
+    void onlyAuraHasAbility() {
         Permanent enchantedCreature = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         attachTo(enchantedCreature);
 
         harness.addMana(player1, ManaColor.RED, 1);
 
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 2, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, enchantedCreature)).isEqualTo(3);
@@ -118,18 +120,18 @@ class FirebreathingTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("The enchanted creature's controller can activate the granted ability")
-    void enchantedCreatureControllerCanActivateGrantedAbility() {
+    @DisplayName("The Aura controller can boost an opponent's enchanted creature")
+    void auraControllerCanBoostOpponentsCreature() {
         Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
         attachTo(bearsPerm);
 
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.activateAbility(player2, 0, null, null);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
@@ -137,8 +139,8 @@ class FirebreathingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The granted ability disappears when Firebreathing leaves the battlefield")
-    void grantedAbilityDisappearsWhenAuraLeavesBattlefield() {
+    @DisplayName("The creature has no activated ability after Firebreathing leaves the battlefield")
+    void creatureHasNoAbilityAfterAuraLeavesBattlefield() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachTo(bearsPerm);
 
@@ -166,6 +168,34 @@ class FirebreathingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent cannot activate the ability merely by controlling the enchanted creature")
+    void opponentCannotActivateEnchantedCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        attachTo(creature);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A resolved boost remains after the Aura leaves the battlefield")
+    void resolvedBoostRemainsAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = attachTo(creature);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
@@ -179,8 +209,4 @@ class FirebreathingTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void attachFirebreathing(Permanent creature) {
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Firebreathing());
-        aura.setAttachedTo(creature.getId());
-    }
 }

@@ -147,7 +147,7 @@ class CircleOfProtectionShadowTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
 
-        fireslinger.setTapped(false);
+        fireslinger.untap();
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
 

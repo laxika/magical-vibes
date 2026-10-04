@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.d.DominatingLicid;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -16,8 +18,56 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EntropicSpecter.class, RagingGoblin.class})
+@CardUsed({EntropicSpecter.class, RagingGoblin.class, DominatingLicid.class})
 class EntropicSpecterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An opponent is chosen as the Specter enters")
+    void choosesOpponentAsItEnters() {
+        harness.setHand(player2, handOf(3));
+        harness.castFromHand(player1, new EntropicSpecter(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        Permanent specter = findPermanent(player1, "Entropic Specter");
+        assertThat(gqs.getEffectivePower(gd, specter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, specter)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Changing controllers does not change whose hand determines power and toughness")
+    void keepsChosenOpponentAfterControlChange() {
+        harness.setHand(player2, handOf(3));
+        harness.castFromHand(player1, new EntropicSpecter(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        Permanent specter = findPermanent(player1, "Entropic Specter");
+        harness.setHand(player1, handOf(5));
+        addCreatureReady(player2, new DominatingLicid());
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player2, 0, null, specter.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.findControllerOf(specter)).isEqualTo(player2.getId());
+        assertThat(gqs.getEffectivePower(gd, specter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, specter)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Without a chosen opponent the Specter has zero power and toughness in hand")
+    void noChosenOpponentOutsideBattlefield() {
+        EntropicSpecter specter = new EntropicSpecter();
+        harness.setHand(player1, List.of(specter));
+        harness.setHand(player2, handOf(3));
+
+        assertThat(gqs.getEffectiveCardPower(gd, specter)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, specter)).isZero();
+    }
 
     @Test
     @DisplayName("Power and toughness equal the opponent's hand size")

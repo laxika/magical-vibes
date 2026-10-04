@@ -92,8 +92,8 @@ class ChiefWargsCompanyTest extends BaseCardTest {
         addCreatureReady(player1, new ChiefWargsCompany());
         Permanent firstWolf = harness.addToBattlefieldAndReturn(player1, new ChiefWargsCompany());
         Permanent secondWolf = harness.addToBattlefieldAndReturn(player1, new ChiefWargsCompany());
-        firstWolf.setTapped(true);
-        secondWolf.setTapped(true);
+        firstWolf.tap();
+        secondWolf.tap();
 
         declareAttackers(player1, List.of(0));
 

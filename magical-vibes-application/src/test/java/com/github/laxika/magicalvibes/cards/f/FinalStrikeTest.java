@@ -140,4 +140,68 @@ class FinalStrikeTest extends BaseCardTest {
 
         harness.assertLife(player2, 19); // 1 damage
     }
+
+    @Test
+    @DisplayName("Can target a planeswalker you control")
+    void dealsDamageToOwnPlaneswalker() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraBoldPyromancer());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new FinalStrike()));
+        addManaForFinalStrike();
+
+        harness.castSorceryWithSacrifice(player1, 0, planeswalker.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A zero-power sacrifice deals no damage but still pays the cost")
+    void zeroPowerDealsNoDamage() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        sacrifice.setPowerModifier(-2);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FinalStrike()));
+        addManaForFinalStrike();
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A negative-power sacrifice deals no damage and does not grant life")
+    void negativePowerDealsNoDamage() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        sacrifice.setPowerModifier(-3);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FinalStrike()));
+        addManaForFinalStrike();
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a creature controlled by the opponent")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent opponentsCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FinalStrike()));
+        addManaForFinalStrike();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, player2.getId(), opponentsCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
 }

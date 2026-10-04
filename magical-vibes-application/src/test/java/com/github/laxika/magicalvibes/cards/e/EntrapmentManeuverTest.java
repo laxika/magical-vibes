@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -59,6 +60,46 @@ class EntrapmentManeuverTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Soldier")).isZero();
     }
 
+    @Test
+    @DisplayName("Can target the caster and sacrifice their own attacking creature")
+    void canTargetCaster() {
+        Permanent attacker = addAttackingCreature(player1, new GrizzlyBears());
+        attacker.setAttackTarget(player2.getId());
+        harness.setHand(player1, List.of(new EntrapmentManeuver()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Soldier")).isZero();
+    }
+
+    @Test
+    @DisplayName("Uses toughness including counters before the creature leaves the battlefield")
+    void usesModifiedToughnessBeforeSacrifice() {
+        Permanent attacker = addAttackingCreature(player2, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        castAtPlayer2();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Marked damage does not reduce the number of Soldier tokens")
+    void markedDamageDoesNotReduceTokenCount() {
+        Permanent attacker = addAttackingCreature(player2, new AzureDrake());
+        attacker.setMarkedDamage(3);
+
+        castAtPlayer2();
+
+        harness.assertInGraveyard(player2, "Azure Drake");
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(4);
+    }
+
     private void castAtPlayer2() {
         harness.setHand(player1, List.of(new EntrapmentManeuver()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -67,8 +108,7 @@ class EntrapmentManeuverTest extends BaseCardTest {
 
     private Permanent addAttackingCreature(com.github.laxika.magicalvibes.model.Player player,
                                            com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
         permanent.setAttackTarget(player1.getId());
         return permanent;

@@ -108,7 +108,7 @@ class BloodHustlerTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        hustler.setTapped(true);
+        hustler.tap();
         int opponentLifeBefore = gd.getLife(player2.getId());
         int controllerLifeBefore = gd.getLife(player1.getId());
         harness.addMana(player1, ManaColor.BLACK, 1);

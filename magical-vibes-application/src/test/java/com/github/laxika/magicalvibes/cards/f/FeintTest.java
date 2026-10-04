@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,8 +26,7 @@ class FeintTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2, new BarbaryApes());
         Permanent secondBlocker = addCreatureReady(player2, new BarbaryApes());
 
-        declareAttackers(player1, List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -53,8 +53,7 @@ class FeintTest extends BaseCardTest {
         addCreatureReady(player1, new BarbaryApes());
         Permanent otherBlocker = addCreatureReady(player2, new BarbaryApes());
 
-        declareAttackers(player1, List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         harness.setHand(player1, List.of(new Feint()));
@@ -66,6 +65,32 @@ class FeintTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(targetAttacker.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Blockers declared after Feint resolves still deal combat damage")
+    void laterBlockersStillDealCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new BarbaryApes());
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new Feint()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.castInstant(player1, 0, attacker.getId());
+            harness.passBothPriorities();
+        });
+
+        assertThat(blocker.isTapped()).isFalse();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getMarkedDamage()).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 

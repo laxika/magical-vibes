@@ -86,7 +86,7 @@ class BorosKeyruneTest extends BaseCardTest {
     @DisplayName("A tapped Boros Keyrune can animate without untapping")
     void tappedKeyruneCanAnimate() {
         Permanent keyrune = harness.addToBattlefieldAndReturn(player1, new BorosKeyrune());
-        keyrune.setTapped(true);
+        keyrune.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,29 +15,24 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EidolonOfCountlessBattles.class, GrizzlyBears.class, HolyStrength.class, Swamp.class})
 class EidolonOfCountlessBattlesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Eidolon gets +1/+1 for each creature and Aura its controller controls")
     void boostsItselfFromControlledCreaturesAndAuras() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new EidolonOfCountlessBattles()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent eidolon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Eidolon of Countless Battles"))
-                .findFirst()
-                .orElseThrow();
+        Permanent eidolon = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Eidolon of Countless Battles"));
         assertThat(gqs.getEffectivePower(gd, eidolon)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, eidolon)).isEqualTo(2);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
-                .findFirst()
-                .orElseThrow();
         harness.setHand(player1, List.of(new HolyStrength()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castEnchantment(player1, 0, bears.getId());
@@ -77,10 +73,8 @@ class EidolonOfCountlessBattlesTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, bears.getId());
         harness.passBothPriorities();
-        Permanent eidolon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent != bears)
-                .findFirst()
-                .orElseThrow();
+        Permanent eidolon = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Eidolon of Countless Battles"));
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
         harness.runStateBasedActions();
@@ -101,5 +95,54 @@ class EidolonOfCountlessBattlesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Bestow on an opponent's creature counts the Aura controller's permanents")
+    void bestowOnOpposingCreatureUsesAuraControllerAndUpdatesDynamically() {
+        Permanent host = harness.addToBattlefieldAndReturn(player2, new EidolonOfCountlessBattles());
+        harness.addToBattlefield(player2, new EidolonOfCountlessBattles());
+        harness.setHand(player1, List.of(new EidolonOfCountlessBattles()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castWithAlternateCost(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Eidolon of Countless Battles"));
+        assertThat(aura.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.isCreature(gd, aura)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new EidolonOfCountlessBattles());
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A bestow spell whose target leaves resolves as a creature")
+    void bestowResolvesAsCreatureWhenTargetLeavesBeforeResolution() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new EidolonOfCountlessBattles());
+        harness.setHand(player1, List.of(new EidolonOfCountlessBattles()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castWithAlternateCost(player1, 0, host.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, host));
+        harness.passBothPriorities();
+
+        Permanent eidolon = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Eidolon of Countless Battles"));
+        assertThat(gqs.isCreature(gd, eidolon)).isTrue();
+        assertThat(eidolon.isAttached()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, eidolon)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, eidolon)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

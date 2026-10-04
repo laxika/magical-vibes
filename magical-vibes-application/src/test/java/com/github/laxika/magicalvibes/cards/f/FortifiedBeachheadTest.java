@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
+import com.github.laxika.magicalvibes.cards.y.YotianFrontliner;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FortifiedBeachhead.class, GrizzlyBears.class, YotianSoldier.class})
+@CardUsed({FortifiedBeachhead.class, ArgothianSprite.class, YotianFrontliner.class})
 class FortifiedBeachheadTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class FortifiedBeachheadTest extends BaseCardTest {
     @Test
     @DisplayName("Enters untapped when you control a Soldier")
     void entersUntappedWithControlledSoldier() {
-        harness.addToBattlefield(player1, new YotianSoldier());
+        harness.addToBattlefield(player1, new YotianFrontliner());
 
         playLand(new FortifiedBeachhead());
 
@@ -41,12 +41,66 @@ class FortifiedBeachheadTest extends BaseCardTest {
     void entersUntappedWhenRevealingSoldier() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new FortifiedBeachhead(), new YotianSoldier()));
+        harness.setHand(player1, List.of(new FortifiedBeachhead(), new YotianFrontliner()));
 
         harness.playLand(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(findPermanent(player1, "Fortified Beachhead").isTapped()).isFalse();
+        harness.assertInHand(player1, "Yotian Frontliner");
+    }
+
+    @Test
+    @DisplayName("Declining to reveal a Soldier makes the land enter tapped")
+    void entersTappedWhenRevealDeclined() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new FortifiedBeachhead(), new YotianFrontliner()));
+
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findPermanent(player1, "Fortified Beachhead").isTapped()).isTrue();
+        harness.assertInHand(player1, "Yotian Frontliner");
+    }
+
+    @Test
+    @DisplayName("An opponent's Soldier does not let the land enter untapped")
+    void opponentSoldierDoesNotQualify() {
+        harness.addToBattlefield(player2, new YotianFrontliner());
+
+        playLand(new FortifiedBeachhead());
+
+        assertThat(findPermanent(player1, "Fortified Beachhead").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A non-Soldier in hand cannot be revealed for untapped entry")
+    void nonSoldierInHandDoesNotQualify() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new FortifiedBeachhead(), new ArgothianSprite()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Fortified Beachhead").isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Soldier can still be revealed when you already control a Soldier")
+    void canRevealDespiteControlledSoldier() {
+        harness.addToBattlefield(player1, new YotianFrontliner());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new FortifiedBeachhead(), new YotianFrontliner()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(findPermanent(player1, "Fortified Beachhead").isTapped()).isFalse();
+        harness.assertInHand(player1, "Yotian Frontliner");
     }
 
     @Test
@@ -65,8 +119,8 @@ class FortifiedBeachheadTest extends BaseCardTest {
     @DisplayName("The Soldier pump affects only Soldiers until end of turn")
     void pumpsSoldiersUntilEndOfTurn() {
         Permanent land = addReadyLand();
-        Permanent soldier = addCreatureReady(player1, new YotianSoldier());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent soldier = addCreatureReady(player1, new YotianFrontliner());
+        Permanent bear = addCreatureReady(player1, new ArgothianSprite());
         int soldierPower = gqs.getEffectivePower(gd, soldier);
         int soldierToughness = gqs.getEffectiveToughness(gd, soldier);
         int bearPower = gqs.getEffectivePower(gd, bear);
@@ -83,6 +137,41 @@ class FortifiedBeachheadTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(bearToughness);
     }
 
+    @Test
+    @DisplayName("The pump expires at cleanup and excludes opponents and later arrivals")
+    void pumpExpiresAndOnlyAffectsOwnSoldiersAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addReadyLand();
+        Permanent soldier = addCreatureReady(player1, new YotianFrontliner());
+        Permanent opponentSoldier = addCreatureReady(player2, new YotianFrontliner());
+        int power = gqs.getEffectivePower(gd, soldier);
+        int toughness = gqs.getEffectiveToughness(gd, soldier);
+        int opponentPower = gqs.getEffectivePower(gd, opponentSoldier);
+        int opponentToughness = gqs.getEffectiveToughness(gd, opponentSoldier);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness + 1);
+        assertThat(gqs.getEffectivePower(gd, opponentSoldier)).isEqualTo(opponentPower);
+        assertThat(gqs.getEffectiveToughness(gd, opponentSoldier)).isEqualTo(opponentToughness);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        Permanent laterSoldier = addCreatureReady(player1, new YotianFrontliner());
+        assertThat(gqs.getEffectivePower(gd, laterSoldier)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, laterSoldier)).isEqualTo(toughness);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness);
+    }
+
     private void playLand(com.github.laxika.magicalvibes.model.Card land) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -91,9 +180,6 @@ class FortifiedBeachheadTest extends BaseCardTest {
     }
 
     private Permanent addReadyLand() {
-        Permanent land = new Permanent(new FortifiedBeachhead());
-        land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
-        return land;
+        return addCreatureReady(player1, new FortifiedBeachhead());
     }
 }

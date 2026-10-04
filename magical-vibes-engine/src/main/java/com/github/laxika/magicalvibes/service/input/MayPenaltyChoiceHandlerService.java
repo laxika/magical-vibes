@@ -164,7 +164,10 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but can't actually pay — fall through to the penalty.
         }
 
-        UUID abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        UUID abilityControllerId = ability.sourceControllerId();
+        if (abilityControllerId == null) {
+            abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        }
         if (abilityControllerId == null) {
             abilityControllerId = payingPlayerId;
         }
@@ -1334,7 +1337,10 @@ public class MayPenaltyChoiceHandlerService {
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
             // Declined (or can no longer pay) — tap the creature.
-            UUID abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+            UUID abilityControllerId = ability.sourceControllerId();
+        if (abilityControllerId == null) {
+            abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        }
             if (abilityControllerId == null) {
                 abilityControllerId = payingPlayerId;
             }
@@ -1402,7 +1408,10 @@ public class MayPenaltyChoiceHandlerService {
             }
         }
 
-        UUID abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        UUID abilityControllerId = ability.sourceControllerId();
+        if (abilityControllerId == null) {
+            abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        }
         if (abilityControllerId == null) {
             abilityControllerId = payingPlayerId;
         }

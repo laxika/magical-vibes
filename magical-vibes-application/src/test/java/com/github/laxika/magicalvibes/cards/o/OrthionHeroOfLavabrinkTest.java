@@ -45,7 +45,7 @@ class OrthionHeroOfLavabrinkTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 9);
 
-        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(6);
@@ -65,7 +65,7 @@ class OrthionHeroOfLavabrinkTest extends BaseCardTest {
                 .hasMessageContaining("another creature you control");
 
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, opponentCreature.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("another creature you control");
     }

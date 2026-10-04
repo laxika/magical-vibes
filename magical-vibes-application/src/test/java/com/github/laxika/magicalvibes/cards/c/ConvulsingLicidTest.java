@@ -63,7 +63,7 @@ class ConvulsingLicidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, secondHost.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        licid.setTapped(false);
+        licid.untap();
         harness.activateAbility(player1, 0, null, secondHost.getId());
         harness.passBothPriorities();
 

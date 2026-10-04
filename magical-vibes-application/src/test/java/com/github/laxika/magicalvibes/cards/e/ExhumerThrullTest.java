@@ -77,10 +77,47 @@ class ExhumerThrullTest extends BaseCardTest {
 
     private void destroyWithDouseInGloom(UUID targetId) {
         harness.forceActivePlayer(player2);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DouseInGloom()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player2, 0, targetId);
+    }
+
+    @Test
+    void enteringWithoutOwnCreatureCardsDoesNotReturnAnOpponentsCard() {
+        harness.setGraveyard(player1, List.of(new DouseInGloom()));
+        harness.setGraveyard(player2, List.of(new DaggerclawImp()));
+        harness.setHand(player1, List.of(new ExhumerThrull()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Exhumer Thrull");
+        harness.assertInGraveyard(player1, "Douse in Gloom");
+        harness.assertInGraveyard(player2, "Daggerclaw Imp");
+        harness.assertNotInHand(player1, "Daggerclaw Imp");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void hauntDoesNotExileThrullWhenItsTargetDiesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DaggerclawImp());
+        Permanent exhumer = harness.addToBattlefieldAndReturn(player1, new ExhumerThrull());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, exhumer));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        destroyWithDouseInGloom(target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Exhumer Thrull");
+        harness.assertInGraveyard(player2, "Daggerclaw Imp");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

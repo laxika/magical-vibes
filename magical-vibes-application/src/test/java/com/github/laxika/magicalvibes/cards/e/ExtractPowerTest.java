@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.PumpkinBombardment;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,8 +15,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExtractPower.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({ExtractPower.class, Forest.class, GrizzlyBears.class, Island.class, PumpkinBombardment.class})
 class ExtractPowerTest extends BaseCardTest {
 
     @Test
@@ -81,6 +84,101 @@ class ExtractPowerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Island");
         assertThat(gd.findExiledCard(land.getId())).isNull();
+    }
+
+    @Test
+    void emptyLibrariesDoNotPreventResolution() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        castExtractPower();
+
+        assertThat(gd.exiledCards).isEmpty();
+        harness.assertInGraveyard(player1, "Extract Power");
+    }
+
+    @Test
+    void creatureCannotBeCastOutsideMainPhase() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(creature));
+        castExtractPower();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+    }
+
+    @Test
+    void ownerCannotUseCastersPermission() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(creature));
+        castExtractPower();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+    }
+
+    @Test
+    void playingOneExiledLandDoesNotAllowASecondLandPlay() {
+        Card firstLand = new Island();
+        Card secondLand = new Forest();
+        harness.setLibrary(player1, List.of(firstLand));
+        harness.setLibrary(player2, List.of(secondLand));
+        castExtractPower();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromExile(player1, firstLand.getId());
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, secondLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.findExiledCard(secondLand.getId())).isNotNull();
+    }
+
+    @Test
+    void freePlayPermissionSurvivesUntilALaterTurn() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(creature, new Forest(), new Forest(), new Forest()));
+        castExtractPower();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(creature.getId())).isNull();
+    }
+
+    @Test
+    void canPayAdditionalManaCostOfAnExiledSpell() {
+        Card spell = new PumpkinBombardment();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(spell));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castExtractPower();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromExile(player1, spell.getId(), harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Pumpkin Bombardment");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private void castExtractPower() {

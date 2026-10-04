@@ -77,16 +77,67 @@ class ForfendTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Mutavault());
         castForfend();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.forceStep(TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
         harness.setHand(player1, List.of(new ShardVolley()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstantWithSacrifice(player1, 0, creature.getId(), land.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Ballyrush Banneret");
+    }
+
+    @Test
+    @DisplayName("Does not prevent spell damage to players")
+    void doesNotPreventSpellDamageToPlayers() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mutavault());
+        castForfend();
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new ShardVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstantWithSacrifice(player1, 0, player2.getId(), land.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Protects a creature cast after Forfend resolves")
+    void protectsCreatureEnteringLater() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mutavault());
+        castForfend();
+        harness.castFromHand(player1, new BallyrushBanneret(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent creature = findPermanent(player1, "Ballyrush Banneret");
+
+        harness.setHand(player2, List.of(new ShardVolley()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstantWithSacrifice(player2, 0, creature.getId(), land.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Ballyrush Banneret");
+    }
+
+    @Test
+    @DisplayName("Protects a land animated after Forfend resolves from repeated damage")
+    void protectsAnimatedLandFromRepeatedDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Mutavault());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Mutavault());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Mutavault());
+        castForfend();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        for (Permanent land : List.of(firstLand, secondLand)) {
+            harness.setHand(player1, List.of(new ShardVolley()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castInstantWithSacrifice(player1, 0, creature.getId(), land.getId());
+            harness.passBothPriorities();
+
+            assertThat(creature.getMarkedDamage()).isZero();
+            harness.assertOnBattlefield(player2, "Mutavault");
+        }
     }
 }

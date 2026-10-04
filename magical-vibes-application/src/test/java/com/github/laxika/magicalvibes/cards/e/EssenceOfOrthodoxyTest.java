@@ -14,7 +14,7 @@ class EssenceOfOrthodoxyTest extends BaseCardTest {
 
     @Test
     void incubatesWhenItEnters() {
-        harness.addToBattlefield(player1, new EssenceOfOrthodoxy());
+        harness.enterBattlefieldAndReturn(player1, new EssenceOfOrthodoxy());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Incubator")).singleElement()
@@ -24,10 +24,10 @@ class EssenceOfOrthodoxyTest extends BaseCardTest {
 
     @Test
     void incubatesWhenAnotherPhyrexianEnters() {
-        harness.addToBattlefield(player1, new EssenceOfOrthodoxy());
+        harness.enterBattlefieldAndReturn(player1, new EssenceOfOrthodoxy());
         harness.passBothPriorities();
 
-        harness.addToBattlefield(player1, new PhyrexianBroodlings());
+        harness.enterBattlefieldAndReturn(player1, new PhyrexianBroodlings());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Incubator")).hasSize(2)
@@ -37,18 +37,18 @@ class EssenceOfOrthodoxyTest extends BaseCardTest {
 
     @Test
     void doesNotIncubateWhenANonPhyrexianEnters() {
-        harness.addToBattlefield(player1, new EssenceOfOrthodoxy());
+        harness.enterBattlefieldAndReturn(player1, new EssenceOfOrthodoxy());
         harness.passBothPriorities();
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(findPermanents(player1, "Incubator")).hasSize(1);
     }
 
     @Test
     void doesNotTriggerForAnOpponentsPhyrexian() {
-        harness.addToBattlefield(player1, new EssenceOfOrthodoxy());
+        harness.enterBattlefieldAndReturn(player1, new EssenceOfOrthodoxy());
         harness.passBothPriorities();
-        harness.addToBattlefield(player2, new PhyrexianBroodlings());
+        harness.enterBattlefieldAndReturn(player2, new PhyrexianBroodlings());
 
         assertThat(findPermanents(player1, "Incubator")).hasSize(1);
     }

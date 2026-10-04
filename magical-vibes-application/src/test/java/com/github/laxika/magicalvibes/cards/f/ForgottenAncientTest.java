@@ -22,8 +22,8 @@ class ForgottenAncientTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castFromHand(player2, new GildedLight(), "{1}{W}");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -74,6 +74,7 @@ class ForgottenAncientTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castFromHand(player2, new GildedLight(), "{1}{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -88,8 +89,8 @@ class ForgottenAncientTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castFromHand(player1, new GildedLight(), "{1}{W}");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -127,5 +128,90 @@ class ForgottenAncientTest extends BaseCardTest {
 
         assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canSkipOwnCreatureAndMoveAllCountersToOpposingCreature() {
+        Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
+        Permanent ownCreature = addCreatureReady(player1, new ScornfulEgotist());
+        Permanent opposingCreature = addCreatureReady(player2, new ScornfulEgotist());
+        ancient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 3);
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player1, 3);
+
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void keepsCountersWhenThereAreNoOtherCreatures() {
+        Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
+        ancient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void finishesUpkeepAbilityWhenThereAreNoCountersToMove() {
+        Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
+        Permanent otherCreature = addCreatureReady(player1, new ScornfulEgotist());
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotTriggerCounterMovementDuringOpponentsUpkeep() {
+        Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
+        Permanent otherCreature = addCreatureReady(player2, new ScornfulEgotist());
+        ancient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void spellCastTriggerGoesOnStackBeforeItsOptionalChoiceIsMade() {
+        Permanent ancient = addCreatureReady(player1, new ForgottenAncient());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new GildedLight(), "{1}{W}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(ancient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player2, "Gilded Light");
     }
 }

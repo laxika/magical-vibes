@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -8,28 +9,23 @@ import com.github.laxika.magicalvibes.model.effect.GrantBaseStatsToCounterBearer
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import lombok.extern.slf4j.Slf4j;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
-/**
- * Resolves {@link GrantBaseStatsToCounterBearersEffect} by installing the source-independent
- * floating continuous effects that make "every creature with a {@code counterType} counter has
- * base P/T {@code power}/{@code toughness} and has {@code keywords}" a game-wide rule.
- *
- * <p>The base-P/T set (layer 7b) and keyword grant (layer 6) are recorded as
- * {@link FloatingContinuousEffect}s with a {@code null} source and a {@code PERMANENT} duration,
- * scoped by {@link PermanentHasCountersPredicate}: the layered pass applies them to exactly the
- * creatures that currently hold such a counter, so the effect survives the creating card leaving
- * the battlefield and lapses as soon as the counter is removed. Establishing the same rule twice
- * (a second copy of the source) is a no-op.
- */
-@Slf4j
+/** Installs stats and abilities on the affected creature while its counters remain. */
 @Component
+@RequiredArgsConstructor
 public class GrantBaseStatsToCounterBearersEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,40 +35,22 @@ public class GrantBaseStatsToCounterBearersEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var rule = (GrantBaseStatsToCounterBearersEffect) effect;
-
-        if (ruleAlreadyEstablished(gameData, rule)) {
-            return;
-        }
-
-        String sourceName = entry.getCard() != null ? entry.getCard().getName() : null;
-        UUID controllerId = entry.getControllerId();
-        var scope = new PermanentHasCountersPredicate(rule.counterType());
-
+        Permanent target = entry.getTargetId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null || target.getCounterCount(rule.counterType()) <= 0
+                || gameQueryService.cantHaveCounters(gameData, target)) return;
+        var scope = new PermanentAllOfPredicate(List.of(
+                new PermanentIsSpecificPermanentPredicate(target.getId()),
+                new PermanentHasCountersPredicate(rule.counterType(),
+                        target.getLastCounterRemovalVersions().getOrDefault(rule.counterType(), 0L))));
+        String sourceName = entry.getCard().getName();
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName, null,
-                controllerId, new SetBasePowerToughnessEffect(rule.power(), rule.toughness(), GrantScope.ALL_CREATURES),
+                entry.getControllerId(), new SetBasePowerToughnessEffect(rule.power(), rule.toughness(), GrantScope.ALL_CREATURES),
                 null, null, scope, EffectDuration.PERMANENT, 0));
-
         if (!rule.keywords().isEmpty()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName, null,
-                    controllerId, new GrantKeywordEffect(rule.keywords(), GrantScope.ALL_CREATURES),
+                    entry.getControllerId(), new GrantKeywordEffect(rule.keywords(), GrantScope.ALL_CREATURES),
                     null, null, scope, EffectDuration.PERMANENT, 0));
         }
-
-        log.info("Game {} - established rule: creatures with a {} counter have base {}/{} and {}",
-                gameData.id, rule.counterType(), rule.power(), rule.toughness(), rule.keywords());
-    }
-
-    private boolean ruleAlreadyEstablished(GameData gameData, GrantBaseStatsToCounterBearersEffect rule) {
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect fe : gameData.floatingEffects) {
-                if (fe.scope() instanceof PermanentHasCountersPredicate p
-                        && p.counterType() == rule.counterType()
-                        && fe.effect() instanceof SetBasePowerToughnessEffect s
-                        && s.power() == rule.power() && s.toughness() == rule.toughness()) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }

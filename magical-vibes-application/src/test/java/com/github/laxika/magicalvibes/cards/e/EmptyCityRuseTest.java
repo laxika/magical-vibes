@@ -36,13 +36,16 @@ class EmptyCityRuseTest extends BaseCardTest {
         // Give player2 a ready attacker so combat would otherwise halt progression.
         addCreatureReady(player2, new AlertShuInfantry());
 
-        gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new EmptyCityRuse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.combatPhasesThisTurn).isZero();
     }
 
     @Test
@@ -73,5 +76,29 @@ class EmptyCityRuseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("The caster keeps combat and the opponent resumes combat on their following turn")
+    void onlyOpponentsNextTurnIsAffected() {
+        addCreatureReady(player1, new AlertShuInfantry());
+        addCreatureReady(player2, new AlertShuInfantry());
+        harness.setHand(player1, List.of(new EmptyCityRuse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.combatPhasesThisTurn).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
     }
 }

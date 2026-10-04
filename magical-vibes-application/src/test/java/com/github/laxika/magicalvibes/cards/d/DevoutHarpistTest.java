@@ -84,7 +84,7 @@ class DevoutHarpistTest extends BaseCardTest {
         Permanent harpist = addReadyHarpist(player1);
         Permanent creature = addCreatureReady(player2, new DevoutHarpist());
         Permanent aura = addAuraAttachedTo(player2, new TreacherousLink(), creature);
-        harpist.setTapped(true);
+        harpist.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, aura.getId()))
                 .isInstanceOf(IllegalStateException.class);

@@ -81,7 +81,7 @@ class CephalidScoutTest extends BaseCardTest {
     @DisplayName("A tapped Scout can activate repeatedly and sacrifice tapped lands")
     void tappedScoutCanActivateRepeatedly() {
         harness.addToBattlefield(player1, new CephalidScout());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -89,7 +89,7 @@ class CephalidScoutTest extends BaseCardTest {
 
         for (int i = 0; i < 2; i++) {
             harness.addToBattlefield(player1, new Forest());
-            gd.playerBattlefields.get(player1.getId()).getLast().setTapped(true);
+            gd.playerBattlefields.get(player1.getId()).getLast().tap();
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
         }

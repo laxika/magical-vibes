@@ -78,6 +78,42 @@ class FeastOfTheUnicornTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple copies give cumulative power bonuses")
+    void multipleCopiesStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FeastOfTheUnicorn(), new FeastOfTheUnicorn()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Feast of the Unicorn")).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Aura goes to its owner's graveyard when the enchanted opposing creature dies")
+    void auraGoesToGraveyardWhenEnchantedCreatureDies() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FeastOfTheUnicorn()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, creature));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Feast of the Unicorn");
+        harness.assertInGraveyard(player1, "Feast of the Unicorn");
+        harness.assertNotInGraveyard(player2, "Feast of the Unicorn");
+    }
+
+    @Test
     @DisplayName("Feast of the Unicorn fizzles if its target leaves before resolution")
     void fizzlesIfTargetLeavesBeforeResolution() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

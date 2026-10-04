@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
+import com.github.laxika.magicalvibes.cards.d.DeftDuelist;
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlamingGambit.class, ElspethKnightErrant.class, CylianElf.class})
+@CardUsed({FlamingGambit.class, ElspethKnightErrant.class, CylianElf.class, DeftDuelist.class})
 class FlamingGambitTest extends BaseCardTest {
 
     @Test
@@ -177,5 +178,84 @@ class FlamingGambitTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Declining redirection damages the targeted planeswalker rather than its controller")
+    void decliningRedirectDamagesPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setHand(player1, List.of(new FlamingGambit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 2, planeswalker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Flashback preserves X when damage is redirected and exiles the spell")
+    void flashbackCanRedirectLethalDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player1, new CylianElf());
+        harness.setGraveyard(player1, List.of(new FlamingGambit()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashback(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactly(creature.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Cylian Elf");
+        harness.assertInGraveyard(player2, "Cylian Elf");
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+        harness.assertNotInGraveyard(player1, "Flaming Gambit");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Flaming Gambit"));
+    }
+
+    @Test
+    @DisplayName("The chosen creature is not targeted and may have shroud")
+    void mayRedirectDamageToCreatureWithShroud() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DeftDuelist());
+        harness.setHand(player1, List.of(new FlamingGambit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactly(creature.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Deft Duelist");
+        harness.assertInGraveyard(player2, "Deft Duelist");
+    }
+
+    @Test
+    @DisplayName("X may be zero and the spell resolves without changing life")
+    void zeroDamageResolves() {
+        harness.setHand(player1, List.of(new FlamingGambit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Flaming Gambit");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

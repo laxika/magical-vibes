@@ -81,4 +81,45 @@ class DwarvenThaumaturgistTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, djinn)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, djinn)).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("Can target itself with its switch ability")
+    void canTargetItself() {
+        Permanent source = addThaumaturgistReady();
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DwarvenThaumaturgist());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Thaumaturgist cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent source = addThaumaturgistReady();
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+    }
 }

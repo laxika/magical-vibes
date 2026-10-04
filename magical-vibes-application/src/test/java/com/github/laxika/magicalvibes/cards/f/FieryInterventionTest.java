@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.h.HowlingGolem;
+import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,12 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FieryIntervention.class, GrizzlyBears.class, Millstone.class, HowlingGolem.class, PrimordialWurm.class})
 class FieryInterventionTest extends BaseCardTest {
 
     
 
     @Nested
     @DisplayName("Mode 1: Deal 5 damage to target creature")
+    @CardUsed({FieryIntervention.class, GrizzlyBears.class, Millstone.class})
     class DamageMode {
 
         @Test
@@ -34,8 +39,7 @@ class FieryInterventionTest extends BaseCardTest {
 
             Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
-            harness.castSorcery(player1, 0, 0, bearsPermanent.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 0, bearsPermanent.getId());
 
             harness.assertNotOnBattlefield(player2, "Grizzly Bears");
             harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -59,6 +63,7 @@ class FieryInterventionTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Destroy target artifact")
+    @CardUsed({FieryIntervention.class, GrizzlyBears.class, Millstone.class})
     class DestroyMode {
 
         @Test
@@ -72,8 +77,7 @@ class FieryInterventionTest extends BaseCardTest {
 
             Permanent millstonePermanent = findPermanent(player2, "Millstone");
 
-            harness.castSorcery(player1, 0, 1, millstonePermanent.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 1, millstonePermanent.getId());
 
             harness.assertNotOnBattlefield(player2, "Millstone");
             harness.assertInGraveyard(player2, "Millstone");
@@ -93,6 +97,60 @@ class FieryInterventionTest extends BaseCardTest {
             assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, bearsPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
+    }
+
+    @Test
+    void damageModeMarksExactlyFiveDamageWithoutDestroyingLargerCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
+        harness.setHand(player1, List.of(new FieryIntervention()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Primordial Wurm");
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void damageModeCanTargetOwnArtifactCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HowlingGolem());
+        harness.setHand(player1, List.of(new FieryIntervention()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Howling Golem");
+        harness.assertNotOnBattlefield(player1, "Howling Golem");
+    }
+
+    @Test
+    void destroyModeCanTargetOwnArtifactCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HowlingGolem());
+        harness.setHand(player1, List.of(new FieryIntervention()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+
+        harness.assertInGraveyard(player1, "Howling Golem");
+        harness.assertNotOnBattlefield(player1, "Howling Golem");
+    }
+
+    @Test
+    void missingTargetDoesNotRedirectDamageToAnotherCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
+        harness.setHand(player1, List.of(new FieryIntervention()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, 0, target.getId());
+        gd.battlefield.get(player2.getId()).remove(target);
+        gd.graveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(other.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Fiery Intervention");
     }
 
     @Test
@@ -122,8 +180,7 @@ class FieryInterventionTest extends BaseCardTest {
 
         Permanent bearsPermanent = findPermanent(player2, "Grizzly Bears");
 
-        harness.castSorcery(player1, 0, 0, bearsPermanent.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, bearsPermanent.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();

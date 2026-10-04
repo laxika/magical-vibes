@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.d.DisasterRadius;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LoxodonMystic;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmrakulTheAeonsTorn.class, Cancel.class, Terror.class, GrizzlyBears.class, LoxodonMystic.class})
+@CardUsed({EmrakulTheAeonsTorn.class, Cancel.class, Terror.class, GrizzlyBears.class,
+        LoxodonMystic.class, DisasterRadius.class, Millstone.class})
 class EmrakulTheAeonsTornTest extends BaseCardTest {
 
     @Test
@@ -48,8 +51,7 @@ class EmrakulTheAeonsTornTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, emrakul.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, emrakul.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -109,5 +111,72 @@ class EmrakulTheAeonsTornTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         List<Card> library = gd.playerDecks.get(player1.getId());
         assertThat(library).containsExactlyInAnyOrder(emrakulCard, bears);
+    }
+
+    @Test
+    @DisplayName("Protection prevents damage from a colored spell even when it does not target Emrakul")
+    void preventsDamageFromNontargetingColoredSpell() {
+        Permanent emrakul = harness.addToBattlefieldAndReturn(player2, new EmrakulTheAeonsTorn());
+        harness.setHand(player1, List.of(new DisasterRadius(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorceryWithDiscard(player1, 0, 1);
+        harness.passBothPriorities();
+
+        assertThat(emrakul.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Emrakul, the Aeons Torn");
+        harness.assertInGraveyard(player1, "Disaster Radius");
+    }
+
+    @Test
+    @DisplayName("Putting Emrakul onto the battlefield without casting it gives no extra turn")
+    void enteringWithoutCastingDoesNotGiveExtraTurn() {
+        harness.enterBattlefieldAndReturn(player1, new EmrakulTheAeonsTorn());
+
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Emrakul, the Aeons Torn");
+    }
+
+    @Test
+    @DisplayName("Annihilator sacrifices all permanents when the defending player has fewer than six")
+    void annihilatorWithFewerThanSixPermanents() {
+        addCreatureReady(player1, new EmrakulTheAeonsTorn());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Millstone());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Millstone");
+        harness.assertOnBattlefield(player1, "Emrakul, the Aeons Torn");
+    }
+
+    @Test
+    @DisplayName("Milling Emrakul triggers a shuffle of its owner's entire graveyard")
+    void millingShufflesTheEntireGraveyardAfterTriggerResolves() {
+        EmrakulTheAeonsTorn emrakul = new EmrakulTheAeonsTorn();
+        GrizzlyBears milledBears = new GrizzlyBears();
+        GrizzlyBears oldBears = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(emrakul, milledBears));
+        harness.setGraveyard(player2, List.of(oldBears));
+        harness.addToBattlefield(player1, new Millstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(emrakul, milledBears, oldBears);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactlyInAnyOrder(emrakul, milledBears, oldBears);
     }
 }

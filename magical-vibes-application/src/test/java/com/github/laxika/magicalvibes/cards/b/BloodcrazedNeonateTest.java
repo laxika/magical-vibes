@@ -127,7 +127,7 @@ class BloodcrazedNeonateTest extends BaseCardTest {
     @DisplayName("A tapped Bloodcrazed Neonate is not required to attack")
     void tappedNeonateDoesNotHaveToAttack() {
         Permanent neonate = addReadyNeonate();
-        neonate.setTapped(true);
+        neonate.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
         harness.setLife(player2, 20);

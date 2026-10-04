@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -119,19 +118,65 @@ class EquilibriumTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
     @DisplayName("An opponent's creature spell does not trigger Equilibrium")
     void opponentCreatureCastDoesNotTrigger() {
         harness.addToBattlefield(player1, new Equilibrium());
+        harness.addToBattlefield(player1, new HillGiant());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The triggered ability resolves before the creature spell")
+    void triggerResolvesBeforeCreatureSpell() {
+        harness.addToBattlefield(player1, new Equilibrium());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Hill Giant"));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A target destroyed in response prevents the payment and bounce")
+    void destroyedTargetPreventsPayment() {
+        harness.addToBattlefield(player1, new Equilibrium());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
+        harness.handlePermanentChosen(player1, targetId);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }

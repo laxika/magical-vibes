@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,9 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EvolvingWilds.class, Plains.class, Forest.class, Island.class, GrizzlyBears.class})
 class EvolvingWildsTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating Evolving Wilds sacrifices it and puts ability on stack")
@@ -71,7 +70,7 @@ class EvolvingWildsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -88,7 +87,7 @@ class EvolvingWildsTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Plains")
@@ -101,9 +100,7 @@ class EvolvingWildsTest extends BaseCardTest {
     @DisplayName("Resolving with no basic lands in library does not prompt")
     void noBasicLandsNoPrompt() {
         activateWilds();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 
@@ -139,14 +136,79 @@ class EvolvingWildsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Evolving Wilds");
     }
 
+    @Test
+    @DisplayName("Nonbasic lands are excluded and only the chosen basic land leaves the library")
+    void excludesNonbasicLandsAndMovesExactlyOneCard() {
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        EvolvingWilds nonbasicLand = new EvolvingWilds();
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonbasicLand, creature, plains, forest));
+        activateWilds();
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(plains, forest);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(permanent -> {
+            assertThat(permanent.getCard()).isSameAs(plains);
+            assertThat(permanent.isTapped()).isTrue();
+        });
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(nonbasicLand, creature, forest);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Search uses the ability controller's library and leaves the opponent's library unchanged")
+    void searchesOnlyControllersLibrary() {
+        Plains plains = new Plains();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(plains));
+        harness.setLibrary(player2, List.of(island));
+        activateWilds();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player2, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(island);
+    }
+
+    @Test
+    @DisplayName("Failing to find preserves every library card")
+    void failingToFindPreservesLibrary() {
+        List<Card> cards = List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears());
+        harness.setLibrary(player1, cards);
+        activateWilds();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void activateWilds() {
         harness.addToBattlefield(player1, new EvolvingWilds());
         harness.activateAbility(player1, 0, null, null);
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 }

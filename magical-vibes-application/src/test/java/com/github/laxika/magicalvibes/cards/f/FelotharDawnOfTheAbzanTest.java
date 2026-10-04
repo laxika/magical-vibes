@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JeskaiMonument;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -84,13 +83,79 @@ class FelotharDawnOfTheAbzanTest extends BaseCardTest {
         assertThat(choice.validIds()).doesNotContain(land.getId());
     }
 
+    @Test
+    @CardUsed(JeskaiMonument.class)
+    @DisplayName("A noncreature artifact can be sacrificed for counters")
+    void sacrificingArtifactPutsCountersOnFelothar() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new JeskaiMonument());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new JeskaiMonument());
+        Permanent felothar = castFelothar();
+
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(artifact.getId());
+        assertThat(choice.validIds()).doesNotContain(opponentArtifact.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Jeskai Monument");
+        assertThat(felothar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentArtifact);
+    }
+
+    @Test
+    @DisplayName("Felothar may sacrifice itself and still put counters on surviving creatures")
+    void sacrificingFelotharStillPutsCountersOnSurvivors() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent felothar = castFelothar();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, felothar.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Felothar, Dawn of the Abzan");
+        harness.assertNotOnBattlefield(player1, "Felothar, Dawn of the Abzan");
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counters wait for the reflexive trigger and include creatures entering before it resolves")
+    void countersUseBattlefieldWhenReflexiveTriggerResolves() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent felothar = castFelothar();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        assertThat(felothar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(felothar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(newcomer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining the attack sacrifice preserves the creature and adds no counters")
+    void decliningAttackSacrificeDoesNothing() {
+        Permanent felothar = addCreatureReady(player1, new FelotharDawnOfTheAbzan());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor);
+        assertThat(felothar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent castFelothar() {
         harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new FelotharDawnOfTheAbzan()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FelotharDawnOfTheAbzan(), "{W}{B}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         return findPermanent(player1, "Felothar, Dawn of the Abzan");

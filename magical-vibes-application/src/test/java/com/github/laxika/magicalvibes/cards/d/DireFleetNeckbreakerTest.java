@@ -61,7 +61,7 @@ class DireFleetNeckbreakerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(dinosaurPower);
 
         harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
-            gs.declareBlockers(gd, player2, java.util.Map.of());
+            gs.declareBlockers(gd, player2, List.of());
             harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         });
 

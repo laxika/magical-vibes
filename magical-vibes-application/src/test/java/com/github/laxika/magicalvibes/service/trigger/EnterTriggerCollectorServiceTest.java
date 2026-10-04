@@ -478,6 +478,37 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
+    void nontokenCreatureCounterAndKeywordGrantShareOneNonTargetingAbility() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+                new PutCountersOnEnteringCreatureEffect(1, false, List.of(
+                        new GrantKeywordEffect(Keyword.HASTE,
+                                com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET))));
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        service.checkAllyNontokenCreatureEntersTriggers(gd, player1Id, entering);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
+    }
+
+    @Test
+    void nontokenCreatureCounterTriggerExcludesTokens() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+                new PutCountersOnEnteringCreatureEffect(1, false));
+        Card entering = enteringCreature(2, 2);
+        entering.setToken(true);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+
+        service.checkAllyNontokenCreatureEntersTriggers(gd, player1Id, entering);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Ally-creature counter gate matches the entering permanent's oil counters")
     void allyCreatureCounterConditionalMatchesEnteringPermanent() {
         addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

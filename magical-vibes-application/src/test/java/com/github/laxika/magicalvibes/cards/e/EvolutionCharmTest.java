@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +36,7 @@ class EvolutionCharmTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(forest);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
@@ -102,6 +101,63 @@ class EvolutionCharmTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Basic-land search may fail to find even when a basic land is available")
+    void mayDeclineToFindBasicLand() {
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        castCharm(0);
+
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        harness.assertInGraveyard(player1, "Evolution Charm");
+    }
+
+    @Test
+    @DisplayName("Basic-land search resolves when the library has no basic lands")
+    void resolvesWithoutMatchingBasicLand() {
+        Card creature = new KavuPredator();
+        harness.setLibrary(player1, List.of(creature));
+        castCharm(0);
+
+        harness.assertNotInHand(player1, "Kavu Predator");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        harness.assertInGraveyard(player1, "Evolution Charm");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Creature-return mode cannot use a creature in an opponent's graveyard")
+    void cannotReturnOpponentsCreature() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new KavuPredator()));
+        harness.setHand(player1, List.of(new EvolutionCharm()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Kavu Predator");
+    }
+
+    @Test
+    @DisplayName("Creature-return mode does not return a target that leaves the graveyard")
+    void doesNotReturnDepartedGraveyardTarget() {
+        Card creature = new KavuPredator();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new EvolutionCharm()));
+        addMana();
+        harness.castInstant(player1, 0, 1, null);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Kavu Predator");
+        harness.assertInGraveyard(player1, "Evolution Charm");
     }
 
     private void castCharm(int mode, UUID... targetIds) {

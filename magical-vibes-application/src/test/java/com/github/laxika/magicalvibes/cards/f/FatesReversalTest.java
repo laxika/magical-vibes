@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
@@ -16,19 +15,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatesReversal.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({FatesReversal.class, HillGiantHerdgorger.class})
 class FatesReversalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns up to one target creature card and ventures into the dungeon")
     void returnsCreatureAndVentures() {
-        Card creature = new GrizzlyBears();
+        Card creature = new HillGiantHerdgorger();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new FatesReversal()));
         addManaForFatesReversal();
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+        harness.handleListChoice(player1, "Lost Mine of Phandelver");
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(creature.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(creature.getId()));
@@ -42,8 +41,8 @@ class FatesReversalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatesReversal()));
         addManaForFatesReversal();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleListChoice(player1, "Lost Mine of Phandelver");
 
         assertThat(gd.playerDungeonProgress.get(player1.getId()))
                 .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
@@ -52,13 +51,76 @@ class FatesReversalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature card in a graveyard")
     void cannotTargetNoncreatureCard() {
-        Card noncreature = new HolyDay();
+        Card noncreature = new FatesReversal();
         harness.setGraveyard(player1, List.of(noncreature));
         harness.setHand(player1, List.of(new FatesReversal()));
         addManaForFatesReversal();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can omit a target even when a creature is available")
+    void canLeaveAvailableCreatureInGraveyard() {
+        Card creature = new HillGiantHerdgorger();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new FatesReversal()));
+        addManaForFatesReversal();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleListChoice(player1, "Tomb of Annihilation");
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerDungeonProgress.get(player1.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.TOMB_OF_ANNIHILATION, 0));
+        assertThat(gd.playerDungeonProgress.get(player2.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature in an opponent's graveyard")
+    void cannotTargetOpponentsCreature() {
+        Card creature = new HillGiantHerdgorger();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new FatesReversal()));
+        addManaForFatesReversal();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not venture when its chosen target leaves the graveyard")
+    void illegalTargetPreventsVenture() {
+        Card creature = new HillGiantHerdgorger();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new FatesReversal()));
+        addManaForFatesReversal();
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDungeonProgress.get(player1.getId())).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Fates' Reversal");
+    }
+
+    @Test
+    @DisplayName("Advances an existing dungeon along the chosen arrow")
+    void advancesExistingDungeon() {
+        gd.playerDungeonProgress.put(player1.getId(),
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+        harness.setHand(player1, List.of(new FatesReversal()));
+        addManaForFatesReversal();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleListChoice(player1, "Mine Tunnels");
+
+        assertThat(gd.playerDungeonProgress.get(player1.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
     }
 
     private void addManaForFatesReversal() {

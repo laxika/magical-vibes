@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -33,12 +32,7 @@ class ForiysianInterceptorTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new ForiysianInterceptor()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.passPriority(player2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ForiysianInterceptor(), "{3}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Foriysian Interceptor");
@@ -92,6 +86,37 @@ class ForiysianInterceptorTest extends BaseCardTest {
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("too many times");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Foriysian Interceptor can block two attackers")
+    void canBlockTwoAttackersWhileSummoningSick() {
+        Permanent interceptor = harness.addToBattlefieldAndReturn(player2, new ForiysianInterceptor());
+        interceptor.setSummoningSick(true);
+        addAttackers(2);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)
+        ));
+
+        assertThat(interceptor.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
+    }
+
+    @Test
+    @DisplayName("The additional-block ability does not allow a tapped Interceptor to block")
+    void cannotBlockWhileTapped() {
+        Permanent interceptor = addInterceptor();
+        interceptor.setTapped(true);
+        addAttackers(2);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)
+        )))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addInterceptor() {

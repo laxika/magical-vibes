@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,8 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlorianVoldarenScion.class, GrizzlyBears.class, Shock.class})
+@CardUsed({FlorianVoldarenScion.class, GrizzlyBears.class, Shock.class, Mountain.class})
 class FlorianVoldarenScionTest extends BaseCardTest {
 
     @Test
@@ -63,13 +65,11 @@ class FlorianVoldarenScionTest extends BaseCardTest {
     void doesNothingWhenOpponentsLostNoLife() {
         Card top = new GrizzlyBears();
         harness.addToBattlefield(player1, new FlorianVoldarenScion());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(top);
+        harness.setLibrary(player1, List.of(top));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.stack).hasSize(1);
 
@@ -80,10 +80,165 @@ class FlorianVoldarenScionTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
     }
 
+    @Test
+    void countsLifeLostInResponseToTrigger() {
+        Card first = new GrizzlyBears();
+        Card second = new Shock();
+        Card third = new Mountain();
+        Card fourth = new GrizzlyBears();
+        Card untouched = new Mountain();
+        setupFlorianAndDealTwoDamage(first, second, third, fourth, untouched);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(first, second, third, fourth);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 4))
+                .containsExactlyInAnyOrder(second, third, fourth);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void looksAtEntireLibraryWhenLifeLostExceedsLibrarySize() {
+        Card onlyCard = new GrizzlyBears();
+        setupFlorianAndDealTwoDamage(onlyCard);
+
+        assertThat(resolveFlorianTrigger().params().cards()).containsExactly(onlyCard);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNothingWithEmptyLibrary() {
+        setupFlorianAndDealTwoDamage();
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsPostcombatMainPhase() {
+        Card top = new GrizzlyBears();
+        setupFlorianAndDealTwoDamage(top);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    void mustExileOneOfTheLookedAtCards() {
+        setupFlorianAndDealTwoDamage(new GrizzlyBears(), new Shock());
+        resolveFlorianTrigger();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void mayPlayExiledLandButDoesNotGrantAnAdditionalLandPlay() {
+        Card exiled = new Mountain();
+        setupFlorianAndDealTwoDamage(exiled, new Shock());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.playLand(player1, 0);
+        resolveFlorianTrigger();
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
+    }
+
+    @Test
+    void mayPlayExiledLandWithUnusedLandPlay() {
+        Card exiled = new Mountain();
+        setupFlorianAndDealTwoDamage(exiled, new Shock());
+        resolveFlorianTrigger();
+        harness.handleCardChosen(player1, 0);
+
+        harness.castFromExile(player1, exiled.getId());
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(exiled);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotCastSelectedSpellWithoutPayingItsManaCost() {
+        Card exiled = new GrizzlyBears();
+        setupFlorianAndDealTwoDamage(exiled, new Shock());
+        resolveFlorianTrigger();
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void playPermissionExpiresButUnplayedCardRemainsExiled() {
+        Card exiled = new GrizzlyBears();
+        setupFlorianAndDealTwoDamage(exiled, new Shock(), new Mountain());
+        resolveFlorianTrigger();
+        harness.handleCardChosen(player1, 0);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(exiled.getId());
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void ignoresLifeLostByItsController() {
+        Card top = new GrizzlyBears();
+        harness.addToBattlefield(player1, new FlorianVoldarenScion());
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
+    }
+
     private void setupFlorianAndDealTwoDamage(Card... topCards) {
         harness.addToBattlefield(player1, new FlorianVoldarenScion());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(topCards));
+        harness.setLibrary(player1, List.of(topCards));
 
         harness.setHand(player1, List.of(new Shock()));
         harness.setLife(player2, 20);
@@ -97,8 +252,7 @@ class FlorianVoldarenScionTest extends BaseCardTest {
     private PendingInteraction.LibrarySearch resolveFlorianTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.stack).hasSize(1);
 

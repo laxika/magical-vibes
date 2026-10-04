@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AirResponseUnit;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BrightfieldGlider;
+import com.github.laxika.magicalvibes.cards.s.SnakeskinVeil;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FloodTheEngine.class, AirResponseUnit.class, BrightfieldGlider.class, Forest.class, SnakeskinVeil.class})
 class FloodTheEngineTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flood the Engine taps an enchanted creature when it enters")
     void tapsEnchantedCreatureWhenItEnters() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BrightfieldGlider());
 
         castFloodTheEngine(creature);
 
@@ -32,7 +33,7 @@ class FloodTheEngineTest extends BaseCardTest {
     @DisplayName("Flood the Engine can enchant a Vehicle and removes its abilities")
     void enchantsVehicleAndRemovesItsAbilities() {
         Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new AirResponseUnit());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BrightfieldGlider());
 
         castFloodTheEngine(vehicle);
 
@@ -48,7 +49,7 @@ class FloodTheEngineTest extends BaseCardTest {
         Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new AirResponseUnit());
         castFloodTheEngine(vehicle);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(vehicle.isTapped()).isTrue();
     }
@@ -70,8 +71,7 @@ class FloodTheEngineTest extends BaseCardTest {
         addCastingMana();
 
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addCastingMana() {
@@ -79,14 +79,58 @@ class FloodTheEngineTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Flood the Engine removes a creature's vigilance")
+    void removesCreatureKeywords() {
+        Permanent creature = addCreatureReady(player2, new BrightfieldGlider());
+
+        castFloodTheEngine(creature);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flood the Engine removes an uncrewed Vehicle's keywords")
+    void removesUncrewedVehicleKeywords() {
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new AirResponseUnit());
+
+        castFloodTheEngine(vehicle);
+
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enter trigger taps the enchanted creature even if it gains hexproof in response")
+    void enterTriggerDoesNotTargetEnchantedCreature() {
+        Permanent creature = addCreatureReady(player2, new BrightfieldGlider());
+        harness.setHand(player1, List.of(new FloodTheEngine()));
+        addCastingMana();
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.setHand(player2, List.of(new SnakeskinVeil()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the enchanted permanent is prevented from untapping")
+    void otherPermanentsUntapNormally() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new AirResponseUnit());
+        Permanent other = addCreatureReady(player2, new BrightfieldGlider());
+        other.tap();
+        castFloodTheEngine(enchanted);
+
+        harness.performUntapStep(player2);
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
     }
 }

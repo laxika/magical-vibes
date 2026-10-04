@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,7 +41,7 @@ class FamishedGhoulTest extends BaseCardTest {
         Permanent ghoul = addCreatureReady(player1, new FamishedGhoul());
         Card card1 = new AngelicWall();
         Card card2 = new AbandonedOutpost();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setGraveyard(player2, List.of(card1, card2));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(ghoul), 0,
@@ -61,7 +60,7 @@ class FamishedGhoulTest extends BaseCardTest {
         Permanent ghoul = addCreatureReady(player1, new FamishedGhoul());
         Card chosen = new AngelicWall();
         Card remaining = new AbandonedOutpost();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(chosen, remaining)));
+        harness.setGraveyard(player1, List.of(chosen, remaining));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(ghoul), 0,
@@ -80,8 +79,8 @@ class FamishedGhoulTest extends BaseCardTest {
         Permanent ghoul = addCreatureReady(player1, new FamishedGhoul());
         Card mine = new AngelicWall();
         Card theirs = new AbandonedOutpost();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(mine)));
-        harness.setGraveyard(player2, new ArrayList<>(List.of(theirs)));
+        harness.setGraveyard(player1, List.of(mine));
+        harness.setGraveyard(player2, List.of(theirs));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(ghoul), 0,
@@ -95,7 +94,7 @@ class FamishedGhoulTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         Permanent ghoul = addCreatureReady(player1, new FamishedGhoul());
         Card target = new AngelicWall();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
+        harness.setGraveyard(player2, List.of(target));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(ghoul), 0,
@@ -121,6 +120,74 @@ class FamishedGhoulTest extends BaseCardTest {
 
     private int ghoulIndex(Permanent ghoul) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(ghoul);
+    }
+
+    @Test
+    void canActivateWhileSummoningSickWithEmptyGraveyards() {
+        Permanent ghoul = addCreatureReady(player1, new FamishedGhoul());
+        ghoul.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(ghoul), 0, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ghoul);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ghoul.getCard());
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotChooseSameCardTwice() {
+        Permanent ghoul = addCreatureReady(player1, new FamishedGhoul());
+        Card target = new AngelicWall();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(ghoul), 0,
+                List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void cannotTargetItselfBeforeSacrificeCostIsPaid() {
+        Permanent ghoul = addCreatureReady(player1, new FamishedGhoul());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(ghoul), 0,
+                List.of(ghoul.getCard().getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
+    }
+
+    @Test
+    void stillExilesRemainingLegalTargetWhenOtherTargetIsExiledInResponse() {
+        Permanent first = addCreatureReady(player1, new FamishedGhoul());
+        Permanent second = addCreatureReady(player1, new FamishedGhoul());
+        Card removed = new AngelicWall();
+        Card remaining = new AbandonedOutpost();
+        harness.setGraveyard(player2, List.of(removed, remaining));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(first), 0,
+                List.of(removed.getId(), remaining.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, ghoulIndex(second), 0,
+                List.of(removed.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(removed);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(removed, remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(first.getCard(), second.getCard());
     }
 
 }
