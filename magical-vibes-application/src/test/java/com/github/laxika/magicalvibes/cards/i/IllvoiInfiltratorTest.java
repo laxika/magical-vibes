@@ -75,8 +75,41 @@ class IllvoiInfiltratorTest extends BaseCardTest {
         harness.setHand(player1, shocks);
         harness.addMana(player1, ManaColor.RED, count);
         for (int i = 0; i < count; i++) {
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
         }
+    }
+
+    @Test
+    @DisplayName("Opponent's spells do not make the infiltrator unblockable")
+    void opponentsSpellsDoNotEnableUnblockability() {
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        Permanent infiltrator = addCreatureReady(player1, new IllvoiInfiltrator());
+        infiltrator.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a blocker does not draw a card")
+    void doesNotDrawWhenBlocked() {
+        addCreatureReady(player1, new IllvoiInfiltrator()).setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 }
