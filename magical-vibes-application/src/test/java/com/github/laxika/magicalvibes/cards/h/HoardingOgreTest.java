@@ -57,6 +57,66 @@ class HoardingOgreTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
     }
 
+    @Test
+    void minimumRollCreatesOneTreasure() {
+        attackWithRoll(1);
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();
+    }
+
+    @Test
+    void highestMiddleRollCreatesTwoTreasures() {
+        attackWithRoll(19);
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    void treasuresAreCreatedOnlyWhenAttackTriggerResolves() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(20));
+        addCreatureReady(player1, new HoardingOgre());
+        declareAttackers(List.of(0));
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
+    }
+
+    @Test
+    void nonattackingOgreDoesNotCreateAdditionalTreasures() {
+        addCreatureReady(player1, new HoardingOgre());
+
+        attackWithRoll(20);
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(3);
+    }
+
+    @Test
+    void eachAttackingOgreCreatesItsOwnTreasures() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(20));
+        addCreatureReady(player1, new HoardingOgre());
+        addCreatureReady(player1, new HoardingOgre());
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(6);
+    }
+
+    @Test
+    void opponentControlledOgreCreatesTreasuresForItsController() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(20));
+        addCreatureReady(player2, new HoardingOgre());
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(3);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
     private void attackWithRoll(int result) {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
         addCreatureReady(player1, new HoardingOgre());
