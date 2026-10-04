@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.j.JandorsRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HolyArmor.class, GrizzlyBears.class, JandorsRing.class})
+@CardUsed({HolyArmor.class, GrizzlyBears.class, JandorsRing.class, Disenchant.class})
 class HolyArmorTest extends BaseCardTest {
 
     @Test
@@ -162,5 +163,51 @@ class HolyArmorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Ability still boosts the last enchanted creature after Holy Armor is destroyed in response")
+    void abilityResolvesAfterAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyArmor());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Holy Armor");
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Resolved temporary boost remains after Holy Armor is destroyed")
+    void resolvedBoostRemainsAfterAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyArmor());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Holy Armor");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 }
