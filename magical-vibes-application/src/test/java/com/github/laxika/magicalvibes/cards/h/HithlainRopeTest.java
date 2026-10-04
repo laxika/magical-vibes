@@ -72,4 +72,62 @@ class HithlainRopeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         return harness.addToBattlefieldAndReturn(player, new HithlainRope());
     }
+
+    @Test
+    @DisplayName("Failing to find a basic land still passes the Rope")
+    void failingToFindStillPassesRope() {
+        Permanent rope = addRope(player1);
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rope);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(rope);
+        assertThat(rope.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library still passes the Rope")
+    void emptyLibraryStillPassesRope() {
+        Permanent rope = addRope(player1);
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rope);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(rope);
+        assertThat(rope.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The new controller draws for themselves and passes the Rope back")
+    void newControllerCanDrawAndPassRopeBack() {
+        Permanent rope = addRope(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player2, List.of(drawnCard));
+        harness.performUntapStep(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rope);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(rope);
+        assertThat(gqs.cantBeSacrificed(gd, rope)).isTrue();
+    }
 }
