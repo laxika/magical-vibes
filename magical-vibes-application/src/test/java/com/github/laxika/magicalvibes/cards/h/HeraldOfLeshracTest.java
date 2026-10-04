@@ -63,6 +63,74 @@ class HeraldOfLeshracTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Second upkeep gains two distinct lands and updates the boost")
+    void secondUpkeepRequiresTwoDistinctLands() {
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfLeshrac());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, first.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, third.getId());
+
+        assertThat(herald.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(herald, first, second, third);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(unchosen);
+        assertThat(gqs.getEffectivePower(gd, herald)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, herald)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Insufficient lands for the entire upkeep causes sacrifice without partial payment")
+    void cannotPartiallyPaySecondUpkeep() {
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfLeshrac());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, first.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Herald of Leshrac");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(herald, remaining);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(remaining).doesNotContain(first);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, remaining);
+    }
+
+    @Test
+    @DisplayName("Upkeep may be declined even when a land is available")
+    void canDeclineAffordableUpkeep() {
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfLeshrac());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Herald of Leshrac");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(herald, island);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(island);
+    }
+
+    @Test
     @DisplayName("When Herald of Leshrac leaves, only lands it controlled return to their owners")
     void returnsOnlyControlledOwnedLandsWhenItLeaves() {
         harness.addToBattlefield(player1, new HeraldOfLeshrac());
