@@ -96,9 +96,103 @@ class GuardDogsTest extends BaseCardTest {
         assertThat(damageRecipient.getMarkedDamage()).isEqualTo(2);
     }
 
+    @Test
+    void canChooseGuardDogsWhenItIsTheOnlyControlledPermanent() {
+        Permanent guardDogs = addCreatureReady(player1, new GuardDogs());
+        Permanent attacker = addCreatureReady(player2, new AuroraGriffin());
+
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        assertThat(guardDogs.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        int lifeBeforeCombat = gd.getLife(player1.getId());
+        attackWithoutBlockers(attacker);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBeforeCombat);
+    }
+
+    @Test
+    void checksColorsAfterResponsesResolve() {
+        Permanent guardDogs = addCreatureReady(player1, new GuardDogs());
+        addCreatureReady(player1, new AuroraGriffin());
+        Permanent attacker = addCreatureReady(player2, new SlingshotGoblin());
+
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, guardDogs.getId());
+
+        int lifeBeforeCombat = gd.getLife(player1.getId());
+        attackWithoutBlockers(attacker);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBeforeCombat);
+    }
+
+    @Test
+    void gainingASharedColorAfterResolutionDoesNotCreatePrevention() {
+        Permanent guardDogs = addCreatureReady(player1, new GuardDogs());
+        addCreatureReady(player1, new AuroraGriffin());
+        Permanent attacker = addCreatureReady(player2, new SlingshotGoblin());
+
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, guardDogs.getId());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        int lifeBeforeCombat = gd.getLife(player1.getId());
+        attackWithoutBlockers(attacker);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBeforeCombat - 2);
+    }
+
+    @Test
+    void losingTheSharedColorAfterResolutionDoesNotRemovePrevention() {
+        addCreatureReady(player1, new GuardDogs());
+        addCreatureReady(player1, new AuroraGriffin());
+        Permanent chosen = addCreatureReady(player1, new MoggSentry());
+        Permanent attacker = addCreatureReady(player2, new SlingshotGoblin());
+
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, chosen.getId());
+        harness.passBothPriorities();
+
+        int lifeBeforeCombat = gd.getLife(player1.getId());
+        attackWithoutBlockers(attacker);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBeforeCombat);
+    }
+
+    @Test
+    void cannotChooseAnOpponentsPermanent() {
+        Permanent guardDogs = addCreatureReady(player1, new GuardDogs());
+        addCreatureReady(player1, new AuroraGriffin());
+        Permanent attacker = addCreatureReady(player2, new AuroraGriffin());
+
+        addAbilityMana(player1);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, guardDogs.getId());
+        int lifeBeforeCombat = gd.getLife(player1.getId());
+        attackWithoutBlockers(attacker);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBeforeCombat);
+    }
+
     private void attackWithoutBlockers(Permanent attacker) {
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player1, List.of());
         harness.passBothPriorities();
     }
