@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.IsperiaSupremeJudge;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GuildFeud.class, Forest.class, HillGiant.class, LlanowarElves.class, Shock.class,
+        DrudgeBeetle.class, IsperiaSupremeJudge.class})
 class GuildFeudTest extends BaseCardTest {
 
     /** Resolves Guild Feud's upkeep trigger targeting player2, leaving the first reveal pending. */
@@ -70,10 +75,8 @@ class GuildFeudTest extends BaseCardTest {
         answerReveal(player1, elves);
 
         // Hill Giant (3/3) kills Llanowar Elves (1/1) and survives with 1 damage marked.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
-                .contains("Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Hill Giant"))
                 .singleElement()
@@ -114,8 +117,7 @@ class GuildFeudTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Llanowar Elves"))
                 .singleElement()
                 .matches(permanent -> permanent.getMarkedDamage() == 0);
-        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
-                .contains("Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 
     @Test
@@ -134,7 +136,98 @@ class GuildFeudTest extends BaseCardTest {
 
         answerReveal(player1, elves);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Llanowar Elves"));
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    void decliningTheSecondCreatureSkipsTheFight() {
+        DrudgeBeetle opponentCreature = new DrudgeBeetle();
+        DrudgeBeetle controllerCreature = new DrudgeBeetle();
+        harness.setLibrary(player2, List.of(opponentCreature));
+        harness.setLibrary(player1, List.of(controllerCreature));
+
+        triggerAgainstPlayer2();
+        answerReveal(player2, opponentCreature);
+        answerReveal(player1, null);
+
+        harness.assertOnBattlefield(player2, "Drudge Beetle");
+        harness.assertInGraveyard(player1, "Drudge Beetle");
+        assertThat(gd.playerBattlefields.get(player2.getId())).singleElement()
+                .matches(permanent -> permanent.getMarkedDamage() == 0);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void equalCreaturesFromShortLibrariesBothDieInTheFight() {
+        DrudgeBeetle opponentCreature = new DrudgeBeetle();
+        DrudgeBeetle controllerCreature = new DrudgeBeetle();
+        harness.setLibrary(player2, List.of(opponentCreature, new Forest()));
+        harness.setLibrary(player1, List.of(controllerCreature));
+
+        triggerAgainstPlayer2();
+        answerReveal(player2, opponentCreature);
+        answerReveal(player1, controllerCreature);
+
+        harness.assertNotOnBattlefield(player1, "Drudge Beetle");
+        harness.assertNotOnBattlefield(player2, "Drudge Beetle");
+        harness.assertInGraveyard(player1, "Drudge Beetle");
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Drudge Beetle", "Forest");
+    }
+
+    @Test
+    void cardsBelowTheTopThreeAreNotRevealedOrMilled() {
+        DrudgeBeetle fourthCard = new DrudgeBeetle();
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), fourthCard));
+        harness.setLibrary(player1, List.of());
+
+        triggerAgainstPlayer2();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(fourthCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        harness.assertNotOnBattlefield(player2, "Drudge Beetle");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void emptyOpponentLibraryStillAllowsControllerToPutInACreature() {
+        DrudgeBeetle creature = new DrudgeBeetle();
+        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player1, List.of(creature));
+
+        triggerAgainstPlayer2();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        answerReveal(player1, creature);
+
+        harness.assertOnBattlefield(player1, "Drudge Beetle");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void legendRuleWaitsUntilAfterBothRevealsAndTheFight() {
+        harness.addToBattlefield(player2, new IsperiaSupremeJudge());
+        IsperiaSupremeJudge revealedIsperia = new IsperiaSupremeJudge();
+        DrudgeBeetle beetle = new DrudgeBeetle();
+        harness.setLibrary(player2, List.of(revealedIsperia));
+        harness.setLibrary(player1, List.of(beetle));
+
+        triggerAgainstPlayer2();
+        answerReveal(player2, revealedIsperia);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+
+        answerReveal(player1, beetle);
+
+        harness.assertInGraveyard(player1, "Drudge Beetle");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(revealedIsperia.getId()))
+                .singleElement().matches(permanent -> permanent.getMarkedDamage() == 2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
     }
 }
