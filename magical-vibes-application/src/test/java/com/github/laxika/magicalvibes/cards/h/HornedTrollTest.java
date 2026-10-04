@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,10 +9,55 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HornedTroll.class, GrizzlyBears.class})
+@CardUsed({HornedTroll.class, GrizzlyBears.class, Shock.class})
 class HornedTrollTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can activate regeneration while summoning sick without tapping")
+    void canActivateWhileSummoningSick() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new HornedTroll());
+        troll.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(troll.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each regeneration shield replaces only one lethal damage event")
+    void multipleShieldsAreConsumedOneAtATime() {
+        Permanent troll = addCreatureReady(player1, new HornedTroll());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        for (int activation = 0; activation < 2; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(troll.isTapped()).isFalse();
+
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        for (int damageEvent = 0; damageEvent < 2; damageEvent++) {
+            harness.castAndResolveInstant(player2, 0, troll.getId());
+
+            harness.assertOnBattlefield(player1, "Horned Troll");
+            assertThat(troll.getRegenerationShield()).isEqualTo(1 - damageEvent);
+            assertThat(troll.getMarkedDamage()).isZero();
+            assertThat(troll.isTapped()).isTrue();
+        }
+
+        harness.castAndResolveInstant(player2, 0, troll.getId());
+
+        harness.assertNotOnBattlefield(player1, "Horned Troll");
+        harness.assertInGraveyard(player1, "Horned Troll");
+    }
 
     @Test
     @DisplayName("Paying {G} grants a regeneration shield")
