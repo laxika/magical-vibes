@@ -19,6 +19,49 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HolisticWisdomTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Overlapping activations each use their own exiled card")
+    void overlappingActivationsRememberTheirOwnExiledCards() {
+        Card creatureTarget = new Werebear();
+        Card instantTarget = new HowlingGale();
+        harness.addToBattlefield(player1, new HolisticWisdom());
+        harness.setHand(player1, List.of(new NimbleMongoose(), new HowlingGale()));
+        harness.setGraveyard(player1, List.of(creatureTarget, instantTarget));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, creatureTarget.getId(), Zone.GRAVEYARD);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, instantTarget.getId(), Zone.GRAVEYARD);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(creatureTarget, instantTarget);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A later activation cannot make an earlier mismatched target return")
+    void laterActivationDoesNotChangeEarlierTypeMismatch() {
+        Card firstTarget = new Werebear();
+        Card secondTarget = new NimbleMongoose();
+        harness.addToBattlefield(player1, new HolisticWisdom());
+        harness.setHand(player1, List.of(new HowlingGale(), new Werebear()));
+        harness.setGraveyard(player1, List.of(firstTarget, secondTarget));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, firstTarget.getId(), Zone.GRAVEYARD);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, secondTarget.getId(), Zone.GRAVEYARD);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondTarget);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstTarget);
+    }
+
+
+    @Test
     @DisplayName("Exiles a hand card and returns a graveyard card sharing a type")
     void returnsCardSharingTypeWithExiledCard() {
         Card target = new Werebear();
