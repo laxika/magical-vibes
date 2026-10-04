@@ -89,6 +89,47 @@ class GraxiplonTest extends BaseCardTest {
                 .hasMessageContaining("can't be blocked");
     }
 
+    @Test
+    @DisplayName("A single unrelated creature can block when three tapped creatures share a type")
+    void tappedSharedTypeCreaturesAllowAnUnrelatedSingleBlocker() {
+        Permanent graxiplon = addAttackingGraxiplon();
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player2, new GlorySeeker()).setTapped(true);
+        }
+        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(graxiplon))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::isBlocking)
+                .containsExactly(false, false, false, true);
+    }
+
+    @Test
+    @DisplayName("More than three shared-type creatures also allow a single blocker")
+    void moreThanThreeSharedTypeCreaturesAllowBlocking() {
+        Permanent graxiplon = addAttackingGraxiplon();
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player2, new GlorySeeker());
+        }
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(graxiplon))));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::isBlocking)
+                .containsExactly(true, false, false, false);
+    }
+
     private Permanent addAttackingGraxiplon() {
         Permanent graxiplon = addCreatureReady(player1, new Graxiplon());
         graxiplon.setAttacking(true);
