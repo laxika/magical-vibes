@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HungerOfTheNimTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Gives target creature +1/+0 for each artifact its controller controls")
+    @DisplayName("Gives target creature +1/+0 for each artifact the spell controller controls")
     void scalesPowerBoostWithControlledArtifacts() {
         harness.addToBattlefield(player1, new DarksteelBrute());
         harness.addToBattlefield(player1, new DarksteelBrute());
@@ -91,5 +91,60 @@ class HungerOfTheNimTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Darksteel Brute");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Resolves without a boost when the spell controller has no artifacts")
+    void noArtifactsGivesNoBoost() {
+        harness.addToBattlefield(player1, new PteronGhost());
+        harness.addToBattlefield(player2, new DarksteelBrute());
+        harness.setHand(player1, List.of(new HungerOfTheNim()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Pteron Ghost"));
+
+        Permanent target = findPermanent(player1, "Pteron Ghost");
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Hunger of the Nim");
+    }
+
+    @Test
+    @DisplayName("Artifacts entering after resolution do not increase the boost")
+    void boostIsFixedAfterResolution() {
+        harness.addToBattlefield(player1, new DarksteelBrute());
+        harness.addToBattlefield(player1, new PteronGhost());
+        harness.setHand(player1, List.of(new HungerOfTheNim()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Pteron Ghost"));
+        harness.addToBattlefield(player1, new DarksteelBrute());
+
+        Permanent target = findPermanent(player1, "Pteron Ghost");
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not resolve when its only target is sacrificed in response")
+    void sacrificedTargetIsIllegalAtResolution() {
+        harness.addToBattlefield(player1, new DarksteelBrute());
+        harness.addToBattlefield(player1, new PteronGhost());
+        harness.setHand(player1, List.of(new HungerOfTheNim()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        Permanent target = findPermanent(player1, "Pteron Ghost");
+        harness.castSorcery(player1, 0, target.getId());
+        harness.activateAbility(player1, 1, null, harness.getPermanentId(player1, "Darksteel Brute"));
+        resolveAllTriggers();
+
+        assertThat(target.getPowerModifier()).isZero();
+        harness.assertNotOnBattlefield(player1, "Pteron Ghost");
+        harness.assertInGraveyard(player1, "Pteron Ghost");
+        harness.assertInGraveyard(player1, "Hunger of the Nim");
+        assertThat(gd.stack).isEmpty();
     }
 }
