@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SteadfastPaladin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GateToTheCitadel.class, GrizzlyBears.class, Plains.class})
+@CardUsed({GateToTheCitadel.class, SteadfastPaladin.class, Plains.class})
 class GateToTheCitadelTest extends BaseCardTest {
 
     @Test
@@ -44,16 +45,16 @@ class GateToTheCitadelTest extends BaseCardTest {
     @DisplayName("The gate seeks a nonland card once")
     void seeksNonlandCardOnce() {
         Permanent gate = addReadyGate();
-        GrizzlyBears bears = new GrizzlyBears();
+        SteadfastPaladin paladin = new SteadfastPaladin();
         Plains plains = new Plains();
-        harness.setLibrary(player1, List.of(plains, bears));
+        harness.setLibrary(player1, List.of(plains, paladin));
         addSeekMana();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gate.isTapped()).isTrue();
-        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
+        assertThat(gd.playerHands.get(player1.getId())).contains(paladin);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
     }
 
@@ -74,10 +75,69 @@ class GateToTheCitadelTest extends BaseCardTest {
                 .hasMessageContaining("only once");
     }
 
+    @Test
+    void seekingFromLandOnlyLibraryLeavesItsOrderUnchanged() {
+        Permanent gate = addReadyGate();
+        Plains first = new Plains();
+        Plains second = new Plains();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of());
+        addSeekMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gate.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void eachGateCanSeekIndependently() {
+        addReadyGate();
+        addReadyGate();
+        SteadfastPaladin first = new SteadfastPaladin();
+        SteadfastPaladin second = new SteadfastPaladin();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of());
+        addSeekMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        addSeekMana();
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void seekUsesTheStackAndPreservesRemainingLibraryOrder() {
+        addReadyGate();
+        Plains first = new Plains();
+        Plains second = new Plains();
+        SteadfastPaladin paladin = new SteadfastPaladin();
+        harness.setLibrary(player1, List.of(first, paladin, second));
+        harness.setHand(player1, List.of());
+        addSeekMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(paladin);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+    }
+
     private Permanent addReadyGate() {
-        Permanent gate = new Permanent(new GateToTheCitadel());
+        Permanent gate = harness.addToBattlefieldAndReturn(player1, new GateToTheCitadel());
         gate.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gate);
         return gate;
     }
 

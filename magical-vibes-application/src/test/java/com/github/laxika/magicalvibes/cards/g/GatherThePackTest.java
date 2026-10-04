@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GatherThePack.class, GrizzlyBears.class, HillGiant.class, Forest.class, Shock.class})
 class GatherThePackTest extends BaseCardTest {
 
     @Test
@@ -127,6 +128,99 @@ class GatherThePackTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("reveals") && log.contains("Gather the Pack"));
     }
 
+    @Test
+    void spellMasteryAllowsChoosingOnlyOneCreature() {
+        harness.setGraveyard(player1, List.of(new Shock(), new GatherThePack()));
+        Card bears = new GrizzlyBears();
+        Card giant = new HillGiant();
+        Card forest = new Forest();
+        setupTopFive(bears, giant, forest);
+
+        resolveGatherThePack();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(giant, forest).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void spellMasteryAllowsChoosingNoCreatures() {
+        harness.setGraveyard(player1, List.of(new GatherThePack(), new GatherThePack()));
+        Card bears = new GrizzlyBears();
+        Card giant = new HillGiant();
+        setupTopFive(bears, giant);
+
+        resolveGatherThePack();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears, giant).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void resolvingSpellAndRevealedInstantsDoNotEnableSpellMastery() {
+        harness.setGraveyard(player1, List.of(new Shock()));
+        Card bears = new GrizzlyBears();
+        Card giant = new HillGiant();
+        Card shock = new Shock();
+        setupTopFive(bears, giant, shock);
+
+        resolveGatherThePack();
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(giant, shock).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentsGraveyardDoesNotEnableSpellMastery() {
+        harness.setGraveyard(player2, List.of(new Shock(), new GatherThePack()));
+        Card bears = new GrizzlyBears();
+        Card giant = new HillGiant();
+        setupTopFive(bears, giant);
+
+        resolveGatherThePack();
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(giant).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void cardsBelowTopFiveRemainInTheirOriginalOrder() {
+        Card bears = new GrizzlyBears();
+        Card giant = new HillGiant();
+        Card sixth = new GrizzlyBears();
+        Card seventh = new Forest();
+        harness.setLibrary(player1, List.of(bears, giant, new Forest(), new Shock(), new Shock(),
+                sixth, seventh));
+
+        resolveGatherThePack();
+        assertThat(offeredCards()).containsExactly("Grizzly Bears", "Hill Giant");
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, seventh);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(giant).hasSize(5);
+    }
+
+    @Test
+    void emptyLibraryFinishesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        resolveGatherThePack();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void resolveGatherThePack() {
         harness.setHand(player1, List.of(new GatherThePack()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -136,8 +230,7 @@ class GatherThePackTest extends BaseCardTest {
     }
 
     private void chooseCard(int index) {
-        harness.getGameService().handleInteractionAnswer(
-                harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 
     private List<String> offeredCards() {
@@ -146,8 +239,6 @@ class GatherThePackTest extends BaseCardTest {
     }
 
     private void setupTopFive(Card... cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }

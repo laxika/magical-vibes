@@ -74,10 +74,63 @@ class GateToTumbledownTest extends BaseCardTest {
                 .hasMessageContaining("only once");
     }
 
+    @Test
+    @DisplayName("Seeking from an all-land library leaves the library unchanged")
+    void seekWithNoNonlandCards() {
+        addReadyGate();
+        Mountain first = new Mountain();
+        Mountain second = new Mountain();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+        addSeekMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("Each gate can activate its seek ability once")
+    void separateGatesHaveSeparateActivationLimits() {
+        addReadyGate();
+        addReadyGate();
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+        addSeekMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        addSeekMana();
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The gate can still produce mana after using its seek ability")
+    void producesManaAfterSeeking() {
+        Permanent gate = addReadyGate();
+        harness.setLibrary(player1, List.of());
+        addSeekMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        gate.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gate.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
     private Permanent addReadyGate() {
-        Permanent gate = new Permanent(new GateToTumbledown());
+        Permanent gate = harness.addToBattlefieldAndReturn(player1, new GateToTumbledown());
         gate.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gate);
         return gate;
     }
 
