@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "34")
+@CardRegistration(set = "ARC", collectorNumber = "81")
 @CardRegistration(set = "PC2", collectorNumber = "83")
 @CardRegistration(set = "PCA", collectorNumber = "83")
 @CardRegistration(set = "M3C", collectorNumber = "255")

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "SHM", collectorNumber = "70")
 @CardRegistration(set = "HOP", collectorNumber = "32")
 @CardRegistration(set = "ECC", collectorNumber = "76")
+@CardRegistration(set = "ARC", collectorNumber = "17")
 public class IncrementalBlight extends Card {
 
     public IncrementalBlight() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "5")
+@CardRegistration(set = "ARC", collectorNumber = "85")
 public class FieldmistBorderpost extends Card {
 
     public FieldmistBorderpost() {

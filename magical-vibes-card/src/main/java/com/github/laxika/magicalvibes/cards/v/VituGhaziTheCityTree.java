@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "AFC", collectorNumber = "272")
 @CardRegistration(set = "WOC", collectorNumber = "173")
 @CardRegistration(set = "SCD", collectorNumber = "332")
+@CardRegistration(set = "ARC", collectorNumber = "136")
 public class VituGhaziTheCityTree extends Card {
 
     public VituGhaziTheCityTree() {

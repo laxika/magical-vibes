@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffec
 @CardRegistration(set = "MRD", collectorNumber = "249")
 @CardRegistration(set = "C13", collectorNumber = "261")
 @CardRegistration(set = "C21", collectorNumber = "268")
+@CardRegistration(set = "ARC", collectorNumber = "117")
 public class SunDroplet extends Card {
 
     public SunDroplet() {

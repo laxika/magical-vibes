@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "213")
+@CardRegistration(set = "ARC", collectorNumber = "116")
 public class SorcerersStrongbox extends Card {
 
     public SorcerersStrongbox() {

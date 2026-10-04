@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "MM2", collectorNumber = "170")
 @CardRegistration(set = "MM3", collectorNumber = "150")
 @CardRegistration(set = "2X2", collectorNumber = "168")
+@CardRegistration(set = "ARC", collectorNumber = "76")
 public class AgonyWarp extends Card {
 
     public AgonyWarp() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "96")
 @CardRegistration(set = "DDK", collectorNumber = "27")
+@CardRegistration(set = "ARC", collectorNumber = "98")
 public class Unmake extends Card {
 
     public Unmake() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "99")
 @CardRegistration(set = "TSR", collectorNumber = "165")
+@CardRegistration(set = "ARC", collectorNumber = "40")
 public class GathanRaiders extends Card {
 
     public GathanRaiders() {

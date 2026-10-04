@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "158")
 @CardRegistration(set = "HOP", collectorNumber = "83")
+@CardRegistration(set = "ARC", collectorNumber = "82")
 public class BranchingBolt extends Card {
 
     public BranchingBolt() {

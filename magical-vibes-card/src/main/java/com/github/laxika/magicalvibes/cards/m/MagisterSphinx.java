@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "CON", collectorNumber = "116")
 @CardRegistration(set = "2X2", collectorNumber = "247")
+@CardRegistration(set = "ARC", collectorNumber = "89")
 public class MagisterSphinx extends Card {
 
     public MagisterSphinx() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "74")
+@CardRegistration(set = "ARC", collectorNumber = "51")
 public class VolcanicFallout extends Card {
 
     public VolcanicFallout() {

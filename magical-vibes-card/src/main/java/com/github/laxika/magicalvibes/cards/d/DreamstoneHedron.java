@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "BRC", collectorNumber = "139")
 @CardRegistration(set = "C18", collectorNumber = "204")
 @CardRegistration(set = "C17", collectorNumber = "209")
+@CardRegistration(set = "ARC", collectorNumber = "105")
 public class DreamstoneHedron extends Card {
 
     public DreamstoneHedron() {
