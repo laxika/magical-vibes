@@ -20,8 +20,7 @@ class IceStormTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IceStorm()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
@@ -33,8 +32,7 @@ class IceStormTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IceStorm()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Forest"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Forest"));
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
@@ -51,5 +49,40 @@ class IceStormTest extends BaseCardTest {
                 player1, 0, harness.getPermanentId(player2, "Grizzly Bears")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    void leavesUntargetedLandsOnBattlefield() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new IceStorm()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Ice Storm");
+    }
+
+    @Test
+    void doesNotDestroyAnotherLandWhenTargetLeavesBeforeResolution() {
+        var target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new IceStorm()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Ice Storm");
     }
 }
