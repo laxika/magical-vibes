@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
+@CardUsed({HavocFestival.class, AngelOfMercy.class})
 class HavocFestivalTest extends BaseCardTest {
 
     @Test
@@ -15,13 +14,8 @@ class HavocFestivalTest extends BaseCardTest {
     void playersCantGainLife() {
         harness.addToBattlefield(player1, new HavocFestival());
 
-        harness.setHand(player1, List.of(new AngelOfMercy()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
+        resolveAllTriggers();
 
         harness.assertLife(player1, 20);
     }
@@ -60,5 +54,56 @@ class HavocFestivalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 9);
+    }
+
+    @Test
+    void opponentCantGainLife() {
+        harness.addToBattlefield(player1, new HavocFestival());
+
+        harness.castFromHand(player2, new AngelOfMercy(), "{4}{W}");
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void pendingTriggerUsesLifeTotalAtResolution() {
+        harness.addToBattlefield(player1, new HavocFestival());
+        advanceToUpkeep(player1);
+        harness.assertLife(player1, 20);
+
+        harness.setLife(player1, 13);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 6);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void multipleFestivalsHalveLifeSequentially() {
+        harness.addToBattlefield(player1, new HavocFestival());
+        harness.addToBattlefield(player2, new HavocFestival());
+        harness.setLife(player1, 19);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 9);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 4);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void oneLifeIsLostRatherThanRoundedToZero() {
+        harness.addToBattlefield(player1, new HavocFestival());
+        harness.setLife(player1, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 20);
     }
 }
