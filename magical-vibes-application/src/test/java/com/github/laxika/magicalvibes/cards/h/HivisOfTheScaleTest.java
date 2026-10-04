@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.c.CatacombDragon;
 import com.github.laxika.magicalvibes.cards.i.IllicitAuction;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
+import com.github.laxika.magicalvibes.cards.j.Jolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HivisOfTheScale.class, CatacombDragon.class, IronTuskElephant.class, IllicitAuction.class})
+@CardUsed({HivisOfTheScale.class, CatacombDragon.class, IronTuskElephant.class, IllicitAuction.class, Jolt.class})
 class HivisOfTheScaleTest extends BaseCardTest {
 
     @Test
@@ -117,6 +118,86 @@ class HivisOfTheScaleTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(dragon.getId()));
     }
 
+    @Test
+    @DisplayName("Untapping Hivis in response prevents the control effect from starting")
+    void untappingBeforeResolutionPreventsControl() {
+        Permanent hivis = addReadyHivis(player1);
+        Permanent dragon = addCreatureReady(player2, new CatacombDragon());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(hivis);
+        harness.activateAbility(player1, idx, null, dragon.getId());
+        castJolt(hivis);
+        harness.passBothPriorities();
+
+        assertThat(hivis.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(dragon);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dragon);
+    }
+
+    @Test
+    @DisplayName("Untapping and activating again does not revive the earlier ability's duration")
+    void untappingAndReactivatingDoesNotReviveEarlierAbility() {
+        Permanent hivis = addReadyHivis(player1);
+        Permanent firstDragon = addCreatureReady(player2, new CatacombDragon());
+        Permanent secondDragon = addCreatureReady(player2, new CatacombDragon());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(hivis);
+        harness.activateAbility(player1, idx, null, firstDragon.getId());
+        castJolt(hivis);
+        assertThat(gd.stack).hasSize(1);
+        activate(hivis, secondDragon);
+        harness.passBothPriorities();
+
+        assertThat(hivis.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondDragon).doesNotContain(firstDragon);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstDragon).doesNotContain(secondDragon);
+    }
+
+    @Test
+    @DisplayName("An instant untap ends control immediately and tapping again does not restore it")
+    void instantUntapEndsControlPermanently() {
+        Permanent hivis = addReadyHivis(player1);
+        Permanent firstDragon = addCreatureReady(player2, new CatacombDragon());
+        Permanent secondDragon = addCreatureReady(player2, new CatacombDragon());
+
+        activate(hivis, firstDragon);
+        castJolt(hivis);
+
+        assertThat(hivis.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstDragon);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstDragon);
+
+        activate(hivis, secondDragon);
+
+        assertThat(hivis.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondDragon).doesNotContain(firstDragon);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstDragon);
+    }
+
+    @Test
+    @DisplayName("Hivis can target a Dragon already controlled by its controller")
+    void canTargetOwnDragon() {
+        Permanent hivis = addReadyHivis(player1);
+        Permanent dragon = addCreatureReady(player1, new CatacombDragon());
+
+        activate(hivis, dragon);
+        castJolt(hivis);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dragon);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(dragon);
+    }
+
+    private void castJolt(Permanent target) {
+        harness.setHand(player1, List.of(new Jolt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.castInstant(player1, 0, target.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        });
+    }
+
     private void activate(Permanent hivis, Permanent target) {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(hivis);
         harness.activateAbility(player1, idx, null, target.getId());
@@ -124,10 +205,7 @@ class HivisOfTheScaleTest extends BaseCardTest {
     }
 
     private Permanent addReadyHivis(Player player) {
-        Permanent perm = new Permanent(new HivisOfTheScale());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HivisOfTheScale());
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
