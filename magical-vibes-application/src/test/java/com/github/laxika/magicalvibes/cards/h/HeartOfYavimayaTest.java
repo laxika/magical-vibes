@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HeartOfYavimaya.class, Forest.class, GrizzlyBears.class})
 class HeartOfYavimayaTest extends BaseCardTest {
@@ -72,6 +73,48 @@ class HeartOfYavimayaTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertNotOnBattlefield(player1, "Heart of Yavimaya");
         harness.assertInGraveyard(player1, "Heart of Yavimaya");
+    }
+
+    @Test
+    void opponentsForestCannotPayEntrySacrifice() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new HeartOfYavimaya()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Heart of Yavimaya");
+        harness.assertInGraveyard(player1, "Heart of Yavimaya");
+    }
+
+    @Test
+    void sacrificesOnlyTheChosenForestAndEntersUntapped() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new HeartOfYavimaya()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Heart of Yavimaya");
+        harness.activateAbility(player1, 1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void pumpCannotTargetANoncreatureLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new HeartOfYavimaya());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
