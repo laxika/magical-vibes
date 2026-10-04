@@ -27,8 +27,7 @@ class HuntingMoaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HuntingMoa()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castCreature(player1, 0, 0, spider.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -54,8 +53,7 @@ class HuntingMoaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HuntingMoa()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castCreature(player1, 0, 0, spider.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -73,8 +71,7 @@ class HuntingMoaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HuntingMoa()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castCreature(player1, 0, 0, spider.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -87,6 +84,7 @@ class HuntingMoaTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hunting Moa");
 
         advanceToUpkeep(player1);
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Hunting Moa");
     }
@@ -101,5 +99,62 @@ class HuntingMoaTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The entry trigger can target Hunting Moa itself")
+    void entryTriggerCanTargetItself() {
+        harness.setHand(player1, List.of(new HuntingMoa()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent moa = findPermanent(player1, "Hunting Moa");
+        harness.handlePermanentChosen(player1, moa.getId());
+        resolveAllTriggers();
+
+        assertThat(moa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Echo still triggers when the entry trigger loses its only target")
+    void echoTriggersAfterEntryTriggerLosesTarget() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new PlatedSpider());
+        harness.setHand(player1, List.of(new HuntingMoa()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0, 0, spider.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, spider));
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Hunting Moa");
+        harness.assertInGraveyard(player1, "Hunting Moa");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Hunting Moa to unpaid echo triggers a counter on an opposing creature")
+    void unpaidEchoTriggersDeathCounterOnOpposingCreature() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new PlatedSpider());
+        harness.setHand(player1, List.of(new HuntingMoa()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0, 0, spider.getId());
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, spider.getId());
+        resolveAllTriggers();
+
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Hunting Moa");
     }
 }
