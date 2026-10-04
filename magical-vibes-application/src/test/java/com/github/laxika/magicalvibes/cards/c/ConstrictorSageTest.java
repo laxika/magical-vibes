@@ -102,7 +102,7 @@ class ConstrictorSageTest extends BaseCardTest {
     @DisplayName("ETB stuns an already tapped creature and prevents its next untap")
     void etbStunsAlreadyTappedCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KrotiqNestguard());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new ConstrictorSage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

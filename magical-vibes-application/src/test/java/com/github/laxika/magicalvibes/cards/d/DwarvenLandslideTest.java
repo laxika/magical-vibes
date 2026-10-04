@@ -24,8 +24,7 @@ class DwarvenLandslideTest extends BaseCardTest {
         addBaseMana();
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, "Forest");
         harness.assertOnBattlefield(player2, "Mountain");
@@ -55,6 +54,9 @@ class DwarvenLandslideTest extends BaseCardTest {
         UUID firstTargetId = harness.getPermanentId(player2, "Forest");
         UUID secondTargetId = harness.getPermanentId(player2, "Mountain");
         harness.castKickedSorceryWithSacrifice(player1, 0, firstTargetId, secondTargetId, sacrificeId);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Mountain");
@@ -107,6 +109,59 @@ class DwarvenLandslideTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castKickedSorceryWithSacrifice(
                 player1, 0, targetId, targetId, sacrificeId))
                 .hasMessageContaining("All targets must be different");
+    }
+
+    @Test
+    void sacrificedPrimaryTargetDoesNotPreventDestroyingSecondTarget() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new DwarvenLandslide()));
+        addKickedMana();
+
+        UUID sacrificeId = harness.getPermanentId(player1, "Mountain");
+        UUID otherTargetId = harness.getPermanentId(player2, "Forest");
+        harness.castKickedSorceryWithSacrifice(player1, 0, sacrificeId, otherTargetId, sacrificeId);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Dwarven Landslide");
+    }
+
+    @Test
+    void sacrificedSecondTargetDoesNotPreventDestroyingPrimaryTarget() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new DwarvenLandslide()));
+        addKickedMana();
+
+        UUID sacrificeId = harness.getPermanentId(player1, "Mountain");
+        UUID otherTargetId = harness.getPermanentId(player2, "Forest");
+        harness.castKickedSorceryWithSacrifice(player1, 0, otherTargetId, sacrificeId, sacrificeId);
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Dwarven Landslide");
+    }
+
+    @Test
+    void cannotSacrificeOpponentsLandToPayKicker() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new DwarvenLandslide()));
+        addKickedMana();
+
+        UUID firstTargetId = harness.getPermanentId(player2, "Forest");
+        UUID secondTargetId = harness.getPermanentId(player2, "Mountain");
+        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrifice(
+                player1, 0, firstTargetId, secondTargetId, secondTargetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertInHand(player1, "Dwarven Landslide");
     }
 
     private void addBaseMana() {

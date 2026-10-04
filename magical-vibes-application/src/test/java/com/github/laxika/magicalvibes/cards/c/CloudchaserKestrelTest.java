@@ -128,7 +128,7 @@ class CloudchaserKestrelTest extends BaseCardTest {
     @DisplayName("Can activate repeatedly while tapped and summoning sick")
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent kestrel = harness.addToBattlefieldAndReturn(player1, new CloudchaserKestrel());
-        kestrel.setTapped(true);
+        kestrel.tap();
         kestrel.setSummoningSick(true);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());

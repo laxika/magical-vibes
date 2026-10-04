@@ -151,7 +151,7 @@ class CaretakersTalentTest extends BaseCardTest {
     void copyDoesNotInheritCountersOrTappedStatus() {
         Permanent caretaker = castCaretakersTalent();
         Permanent wall = createWall();
-        wall.setTapped(true);
+        wall.tap();
         wall.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         levelUp(player1, caretaker, 0);
         harness.handlePermanentChosen(player1, wall.getId());

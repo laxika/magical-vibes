@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.l.LavamancersSkill;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ExaltedAngel.class, GlorySeeker.class})
+@CardUsed({ExaltedAngel.class, GlorySeeker.class, LavamancersSkill.class})
 class ExaltedAngelTest extends BaseCardTest {
 
     @Test
@@ -21,7 +22,6 @@ class ExaltedAngelTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent angel = findPermanent(player1, "Exalted Angel");
@@ -53,7 +53,7 @@ class ExaltedAngelTest extends BaseCardTest {
     }
 
     @Test
-    void stillGainsLifeFromDamageToABlockerWhenItDies() {
+    void stillGainsLifeFromDamageToAnAttackerWhenItDies() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
 
@@ -61,14 +61,14 @@ class ExaltedAngelTest extends BaseCardTest {
         card.setPower(4);
         card.setToughness(1);
         Permanent angel = addCreatureReady(player1, card);
-        angel.setAttacking(true);
+        angel.setBlocking(true);
+        angel.addBlockingTarget(0);
 
-        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new GlorySeeker());
+        attacker.setAttacking(true);
 
-        resolveCombat();
-        harness.passBothPriorities();
+        resolveCombat(player2);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Exalted Angel");
         harness.assertLife(player1, 14);
@@ -87,5 +87,69 @@ class ExaltedAngelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void faceDownAngelDoesNotGainLifeFromCombatDamage() {
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new ExaltedAngel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent angel = findPermanent(player1, "Exalted Angel");
+        angel.setSummoningSick(false);
+        angel.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void faceDownAngelDoesNotGainLifeWhenItDiesDealingDamage() {
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new ExaltedAngel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent angel = findPermanent(player1, "Exalted Angel");
+        angel.setBlocking(true);
+        angel.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new GlorySeeker());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Exalted Angel");
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void noncombatDamageGainsLifeOnlyWhenTheTriggerResolves() {
+        harness.setLife(player1, 10);
+        Permanent angel = addCreatureReady(player1, new ExaltedAngel());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new LavamancersSkill()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, angel.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 10);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 11);
     }
 }

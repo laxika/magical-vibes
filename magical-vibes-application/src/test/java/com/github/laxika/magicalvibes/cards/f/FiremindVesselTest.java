@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 
@@ -44,6 +46,56 @@ class FiremindVesselTest extends BaseCardTest {
 
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(vessel.isTapped()).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "WHITE, BLUE", "WHITE, BLACK", "WHITE, RED", "WHITE, GREEN",
+            "BLUE, BLACK", "BLUE, RED", "BLUE, GREEN",
+            "BLACK, RED", "BLACK, GREEN", "RED, GREEN"
+    })
+    @DisplayName("Every pair of different colors is available without using the stack")
+    void acceptsEveryDifferentColorPair(ManaColor first, ManaColor second) {
+        Permanent vessel = harness.addToBattlefieldAndReturn(player1, new FiremindVessel());
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.handleListChoice(player1, ManaColor.COLORLESS.name()))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, first.name());
+        assertThatThrownBy(() -> harness.handleListChoice(player1, ManaColor.COLORLESS.name()))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, second.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(first)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(second)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(vessel.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Vessel entering tapped cannot activate until it untaps")
+    void cannotActivateOnEnteringButCanAfterUntapping() {
+        Permanent vessel = harness.enterBattlefieldAndReturn(player1, new FiremindVessel());
+
+        assertThat(vessel.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(vessel.isTapped()).isTrue();
     }
 }

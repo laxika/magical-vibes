@@ -15,6 +15,54 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FireDrakeTest extends BaseCardTest {
 
     @Test
+    void cannotActivateAgainWhileFirstActivationIsOnStack() {
+        Permanent drake = addCreatureReady(player1, new FireDrake());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(drake.getPowerModifier()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+        assertThat(drake.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void eachDrakeCanActivateOnceIndependently() {
+        Permanent first = addCreatureReady(player1, new FireDrake());
+        Permanent second = addCreatureReady(player1, new FireDrake());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isZero();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new FireDrake());
+        drake.setSummoningSick(true);
+        drake.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(drake.getToughnessModifier()).isZero();
+        assertThat(drake.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Resolving ability gives +1/+0 until end of turn")
     void resolvingAbilityBoostsSelf() {
         Permanent drake = addCreatureReady(player1, new FireDrake());
@@ -70,13 +118,7 @@ class FireDrakeTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);

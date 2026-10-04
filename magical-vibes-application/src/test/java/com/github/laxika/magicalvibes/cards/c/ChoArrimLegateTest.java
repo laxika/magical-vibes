@@ -89,8 +89,8 @@ class ChoArrimLegateTest extends BaseCardTest {
 
     @Test
     void castsForFreeWithNoManaEvenWhenQualifyingLandsAreTapped() {
-        harness.addToBattlefieldAndReturn(player1, new Plains()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player2, new Swamp()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).tap();
         harness.setHand(player1, List.of(new ChoArrimLegate()));
 
         harness.castWithAlternateCost(player1, 0, (UUID) null);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,9 +9,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,11 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({FallOfTheThran.class, Plains.class, Island.class, Mountain.class, Forest.class, BalothGorger.class})
 class FallOfTheThranTest extends BaseCardTest {
-
-    // ===== Chapter I: Destroy all lands =====
 
     @Test
     @DisplayName("Chapter I destroys all lands on the battlefield for both players")
@@ -69,16 +74,11 @@ class FallOfTheThranTest extends BaseCardTest {
         assertThat(p2GraveyardLands).isEqualTo(2);
     }
 
-    // ===== Chapters II/III: Each player returns up to two land cards =====
-
     @Test
-    @DisplayName("Chapter II returns up to two lands from each player's graveyard when they have 2 or fewer")
+    @DisplayName("Chapter II returns all available lands when each graveyard has at most two")
     void chapterIIReturnsLandsAutoWhenTwoOrFewer() {
         harness.addToBattlefield(player1, new FallOfTheThran());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = findPermanent(player1, "Fall of the Thran");
         saga.setCounterCount(CounterType.LORE, 1);
 
         // Put 2 lands in each player's graveyard
@@ -126,10 +126,7 @@ class FallOfTheThranTest extends BaseCardTest {
     @DisplayName("Chapter II returns only one land when player has exactly one in graveyard")
     void chapterIIReturnsOneLandWhenOnlyOneAvailable() {
         harness.addToBattlefield(player1, new FallOfTheThran());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = findPermanent(player1, "Fall of the Thran");
         saga.setCounterCount(CounterType.LORE, 1);
 
         // Put 1 land in player1's graveyard, none in player2's
@@ -154,10 +151,7 @@ class FallOfTheThranTest extends BaseCardTest {
     @DisplayName("Chapter II does nothing when no lands in any graveyard")
     void chapterIIDoesNothingWhenNoLandsInGraveyard() {
         harness.addToBattlefield(player1, new FallOfTheThran());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = findPermanent(player1, "Fall of the Thran");
         saga.setCounterCount(CounterType.LORE, 1);
 
         harness.setGraveyard(player1, new ArrayList<>());
@@ -185,10 +179,7 @@ class FallOfTheThranTest extends BaseCardTest {
     @DisplayName("Chapter II prompts choice when player has more than two lands in graveyard")
     void chapterIIPromptsChoiceWhenMoreThanTwoLands() {
         harness.addToBattlefield(player1, new FallOfTheThran());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = findPermanent(player1, "Fall of the Thran");
         saga.setCounterCount(CounterType.LORE, 1);
 
         // Put 3 lands in player1's graveyard (more than maxCount of 2)
@@ -243,14 +234,11 @@ class FallOfTheThranTest extends BaseCardTest {
     @DisplayName("Only land cards are returned, not other card types")
     void onlyLandCardsAreReturned() {
         harness.addToBattlefield(player1, new FallOfTheThran());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = findPermanent(player1, "Fall of the Thran");
         saga.setCounterCount(CounterType.LORE, 1);
 
         // Put a mix of lands and non-lands in graveyard
-        Card creature = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
+        Card creature = new BalothGorger();
         harness.setGraveyard(player1, new ArrayList<>(List.of(new Plains(), creature)));
         harness.setGraveyard(player2, new ArrayList<>());
 
@@ -269,21 +257,14 @@ class FallOfTheThranTest extends BaseCardTest {
         assertThat(p1Lands).isEqualTo(1);
 
         // Creature should still be in graveyard
-        boolean creatureInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.hasType(CardType.CREATURE));
-        assertThat(creatureInGraveyard).isTrue();
+        harness.assertInGraveyard(player1, "Baloth Gorger");
     }
-
-    // ===== Saga lifecycle =====
 
     @Test
     @DisplayName("Saga is sacrificed after chapter III resolves")
     void sagaSacrificedAfterChapterIII() {
         harness.addToBattlefield(player1, new FallOfTheThran());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = findPermanent(player1, "Fall of the Thran");
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.setGraveyard(player1, new ArrayList<>(List.of(new Plains())));
@@ -295,22 +276,123 @@ class FallOfTheThranTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → chapter III triggers
 
         // Chapter III on stack — saga should still be on battlefield
-        boolean sagaOnBf = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Fall of the Thran"));
-        assertThat(sagaOnBf).isTrue();
+        harness.assertOnBattlefield(player1, "Fall of the Thran");
 
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
+        harness.assertNotOnBattlefield(player1, "Fall of the Thran");
+        harness.assertInGraveyard(player1, "Fall of the Thran");
+    }
 
-        // Saga should be sacrificed
-        boolean sagaStillOnBf = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Fall of the Thran"));
-        assertThat(sagaStillOnBf).isFalse();
+    @Test
+    @DisplayName("Chapter III returns two lands for each player before the Saga is sacrificed")
+    void chapterIIIReturnsLandsForBothPlayers() {
+        harness.addToBattlefield(player1, new FallOfTheThran());
+        findPermanent(player1, "Fall of the Thran").setCounterCount(CounterType.LORE, 2);
+        harness.setGraveyard(player1, List.of(new Plains(), new Island(), new BalothGorger()));
+        harness.setGraveyard(player2, List.of(new Mountain(), new Forest()));
 
-        // Saga should be in graveyard
-        boolean sagaInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Fall of the Thran"));
-        assertThat(sagaInGraveyard).isTrue();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Fall of the Thran");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Baloth Gorger");
+        harness.assertNotOnBattlefield(player1, "Fall of the Thran");
+        harness.assertInGraveyard(player1, "Fall of the Thran");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("Chapters II and III require both land returns when three lands are available")
+    void landReturnsCannotBeDeclined(int initialLore) {
+        harness.addToBattlefield(player1, new FallOfTheThran());
+        findPermanent(player1, "Fall of the Thran").setCounterCount(CounterType.LORE, initialLore);
+        harness.setGraveyard(player1, List.of(new Plains(), new Island(), new Forest()));
+        harness.setGraveyard(player2, List.of());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("The active player chooses first and all selected lands enter after both players choose")
+    void activePlayerChoosesFirstAndLandsReturnTogether(int initialLore) {
+        harness.addToBattlefield(player2, new FallOfTheThran());
+        findPermanent(player2, "Fall of the Thran").setCounterCount(CounterType.LORE, initialLore);
+        harness.setGraveyard(player1, List.of(new Plains(), new Island(), new Forest()));
+        harness.setGraveyard(player2, List.of(new Mountain(), new Island(), new Forest()));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Island");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        if (initialLore == 2) {
+            harness.assertNotOnBattlefield(player2, "Fall of the Thran");
+            harness.assertInGraveyard(player2, "Fall of the Thran");
+        }
+    }
+
+    @Test
+    @DisplayName("Chapter I leaves creatures and enchantments on the battlefield")
+    void chapterIDoesNotDestroyNonlands() {
+        harness.addToBattlefield(player1, new BalothGorger());
+        harness.addToBattlefield(player2, new BalothGorger());
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new FallOfTheThran()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Baloth Gorger");
+        harness.assertOnBattlefield(player2, "Baloth Gorger");
+        harness.assertOnBattlefield(player1, "Fall of the Thran");
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertInGraveyard(player1, "Plains");
     }
 }

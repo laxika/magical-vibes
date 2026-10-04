@@ -195,7 +195,7 @@ class DarkSupplicantTest extends BaseCardTest {
     @DisplayName("A tapped Dark Supplicant cannot activate even with three Clerics")
     void cannotActivateWhileTapped() {
         addThreeSupplicants();
-        findPermanent(player1, "Dark Supplicant").setTapped(true);
+        findPermanent(player1, "Dark Supplicant").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

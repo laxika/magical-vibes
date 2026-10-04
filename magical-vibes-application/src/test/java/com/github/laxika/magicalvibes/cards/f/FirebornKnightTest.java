@@ -58,15 +58,10 @@ class FirebornKnightTest extends BaseCardTest {
     @DisplayName("Fireborn Knight deals combat damage in both combat damage steps")
     void doubleStrikeDealsDamageTwice() {
         harness.setLife(player2, 20);
-        Permanent knight = new Permanent(new FirebornKnight());
-        knight.setSummoningSick(false);
+        Permanent knight = addReadyKnight();
         knight.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(knight);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -78,6 +73,64 @@ class FirebornKnightTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Mixed red and white mana pays the hybrid pump cost")
+    void mixedManaActivatesPumpAbility() {
+        Permanent knight = addReadyKnight();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        activatePump();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Repeated pump activations stack and affect only their source")
+    void repeatedActivationsBoostOnlyTheirSource() {
+        Permanent knight = addReadyKnight();
+        Permanent otherKnight = addReadyKnight();
+        addFourMana(ManaColor.RED);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, otherKnight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherKnight)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Fireborn Knight can activate its pump")
+    void tappedSummoningSickKnightCanActivate() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new FirebornKnight());
+        knight.setSummoningSick(true);
+        knight.setTapped(true);
+        addFourMana(ManaColor.WHITE);
+
+        activatePump();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
+        assertThat(knight.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Off-color mana cannot pay the hybrid pump cost")
+    void offColorManaCannotActivate() {
+        addReadyKnight();
+        addFourMana(ManaColor.BLUE);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

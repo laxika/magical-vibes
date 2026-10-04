@@ -95,7 +95,7 @@ class DarwinAdaptiveMutantTest extends BaseCardTest {
     @DisplayName("Tapped and summoning-sick Darwin pays counters immediately and gains indestructible on resolution")
     void activatesWhileTappedAndSummoningSick() {
         Permanent darwin = harness.addToBattlefieldAndReturn(player1, new DarwinAdaptiveMutant());
-        darwin.setTapped(true);
+        darwin.tap();
         darwin.setSummoningSick(true);
         darwin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 

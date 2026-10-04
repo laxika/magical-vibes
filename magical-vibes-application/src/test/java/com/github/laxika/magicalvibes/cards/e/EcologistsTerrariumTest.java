@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BearerOfMemory;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,14 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EcologistsTerrarium.class, Forest.class, GrizzlyBears.class})
+@CardUsed({EcologistsTerrarium.class, Forest.class, BearerOfMemory.class})
 class EcologistsTerrariumTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield may search for a basic land to hand")
     void enteringMaySearchForBasicLand() {
         Forest forest = new Forest();
-        GrizzlyBears bears = new GrizzlyBears();
+        BearerOfMemory bears = new BearerOfMemory();
         harness.setLibrary(player1, List.of(bears, forest));
         castTerrarium();
 
@@ -35,13 +32,12 @@ class EcologistsTerrariumTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        GameData gd = harness.getGameData();
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(forest);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bears);
@@ -65,7 +61,7 @@ class EcologistsTerrariumTest extends BaseCardTest {
     @DisplayName("Activating the ability sacrifices the artifact and puts a +1/+1 counter on a creature")
     void activationSacrificesAndPutsCounterOnTarget() {
         Permanent terrarium = harness.addToBattlefieldAndReturn(player1, new EcologistsTerrarium());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -98,7 +94,7 @@ class EcologistsTerrariumTest extends BaseCardTest {
     @DisplayName("The counter ability can activate only as a sorcery")
     void counterAbilityIsSorcerySpeed() {
         harness.addToBattlefield(player1, new EcologistsTerrarium());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -113,5 +109,67 @@ class EcologistsTerrariumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EcologistsTerrarium()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
+    }
+
+    @Test
+    void searchMayFailToFindEvenWithBasicLandAvailable() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        castTerrarium();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void searchWithNoBasicLandFinishesWithoutTakingCard() {
+        BearerOfMemory creature = new BearerOfMemory();
+        harness.setLibrary(player1, List.of(creature));
+        castTerrarium();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void activationCanTargetOpponentCreatureAndPaysSacrificeBeforeResolution() {
+        Permanent terrarium = harness.addToBattlefieldAndReturn(player1, new EcologistsTerrarium());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BearerOfMemory());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(terrarium);
+        harness.assertInGraveyard(player1, "Ecologist's Terrarium");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+    }
+
+    @Test
+    void cannotActivateWhileAnotherSpellIsOnStack() {
+        Permanent terrarium = harness.addToBattlefieldAndReturn(player1, new EcologistsTerrarium());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
+        castTerrarium();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(terrarium);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

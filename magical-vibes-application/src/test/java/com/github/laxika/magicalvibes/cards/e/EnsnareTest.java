@@ -83,4 +83,55 @@ class EnsnareTest extends BaseCardTest {
                 player1, 0, List.of(island.getId(), island.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Tapped Islands can pay the alternate cost before resolution")
+    void tappedIslandsAreReturnedBeforeResolution() {
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        firstIsland.tap();
+        secondIsland.tap();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SpinelessThug());
+        harness.setHand(player1, List.of(new Ensnare()));
+
+        harness.castWithAlternateCost(player1, 0, List.of(firstIsland.getId(), secondIsland.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstIsland.getCard(), secondIsland.getCard());
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Ensnare");
+    }
+
+    @Test
+    @DisplayName("Taps creatures present at resolution, including ones that entered after casting")
+    void tapsCreaturesThatEnterBeforeResolution() {
+        Permanent alreadyTapped = harness.addToBattlefieldAndReturn(player1, new SpinelessThug());
+        alreadyTapped.tap();
+        harness.castFromHand(player1, new Ensnare(), "{3}{U}");
+        Permanent newCreature = harness.addToBattlefieldAndReturn(player2, new SpinelessThug());
+
+        harness.passBothPriorities();
+
+        assertThat(alreadyTapped.isTapped()).isTrue();
+        assertThat(newCreature.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Ensnare");
+    }
+
+    @Test
+    @DisplayName("Alternate cost cannot return a non-Island permanent")
+    void alternateCostRejectsNonIsland() {
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SpinelessThug());
+        harness.setHand(player1, List.of(new Ensnare()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(firstIsland.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

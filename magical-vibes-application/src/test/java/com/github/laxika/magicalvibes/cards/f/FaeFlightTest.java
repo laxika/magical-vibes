@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FaeFlight.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({FaeFlight.class, FountainOfYouth.class, GrizzlyBears.class, Naturalize.class})
 class FaeFlightTest extends BaseCardTest {
 
     @Test
@@ -59,15 +60,60 @@ class FaeFlightTest extends BaseCardTest {
     @Test
     @DisplayName("Fae Flight cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new FaeFlight()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Fae Flight can enchant an opponent's creature during their turn; hexproof waits for its trigger")
+    void flashOnOpponentsTurnAndDelayedHexproof() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new FaeFlight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying Fae Flight removes its continuous effects but not the resolved hexproof grant")
+    void hexproofPersistsAfterAuraIsDestroyed() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FaeFlight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        Permanent aura = findPermanent(player1, "Fae Flight");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Fae Flight");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -61,7 +62,7 @@ class FallOfTheFirstCivilizationTest extends BaseCardTest {
         PendingInteraction.PermanentChoice target =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(target.validPermanentIds()).containsExactly(opponentArtifact.getId());
-        assertThat(target.validPlayerIds()).containsExactly(player1.getId());
+        assertThat(target.validPlayerIds()).isEmpty();
         harness.handlePermanentChosen(player1, opponentArtifact.getId());
         harness.passBothPriorities();
 
@@ -114,6 +115,111 @@ class FallOfTheFirstCivilizationTest extends BaseCardTest {
                 .contains("Fall of the First Civilization", "Grizzly Bears", "Millstone");
     }
 
+    @Test
+    void chapterIDrawsForTheActivePlayerBeforeTheOpponent() {
+        addSagaWithLore(0);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        int logSizeBefore = gd.gameLog.size();
+
+        harness.passBothPriorities();
+
+        String controllerDraw = gd.playerIdToName.get(player1.getId()) + " draws a card.";
+        String opponentDraw = gd.playerIdToName.get(player2.getId()) + " draws a card.";
+        assertThat(gd.gameLog.subList(logSizeBefore, gd.gameLog.size()).stream()
+                .map(GameLogEntry::plainText)
+                .filter(text -> text.equals(controllerDraw) || text.equals(opponentDraw)))
+                .containsExactly(controllerDraw, controllerDraw, opponentDraw, opponentDraw);
+    }
+
+    @Test
+    void enteringTriggersChapterI() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.castFromHand(player1, new FallOfTheFirstCivilization(), "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        int controllerHandBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandBefore + 2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore + 2);
+        assertThat(findPermanent(player1, "Fall of the First Civilization")
+                .getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
+
+    @Test
+    void chapterIICannotSkipWhenAnOpponentControlsAnArtifact() {
+        addSagaWithLore(1);
+        harness.addToBattlefield(player2, new Millstone());
+        triggerNextChapter();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chapterIIRejectsOwnArtifactsAndOpponentNonartifacts() {
+        addSagaWithLore(1);
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        triggerNextChapter();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, opponentArtifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownArtifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature)
+                .doesNotContain(opponentArtifact);
+    }
+
+    @Test
+    void chapterIIIKeepsAllNonlandsWhenPlayersHaveFewerThanThree() {
+        Permanent saga = addSagaWithLore(2);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent controllerLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact, controllerLand)
+                .doesNotContain(saga);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentLand);
+        harness.assertInGraveyard(player1, "Fall of the First Civilization");
+        harness.assertNotInGraveyard(player1, "Millstone");
+    }
+
+    @Test
+    void chapterIIIRequiresExactlyThreeChoicesWhenMoreAreAvailable() {
+        Permanent saga = addSagaWithLore(2);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second, third)
+                .doesNotContain(saga);
+        harness.assertInGraveyard(player1, "Fall of the First Civilization");
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new FallOfTheFirstCivilization());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -123,7 +229,6 @@ class FallOfTheFirstCivilizationTest extends BaseCardTest {
     private void triggerNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }

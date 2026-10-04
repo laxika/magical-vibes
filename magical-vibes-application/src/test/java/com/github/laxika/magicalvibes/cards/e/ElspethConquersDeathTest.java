@@ -110,11 +110,128 @@ class ElspethConquersDeathTest extends BaseCardTest {
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Chapter II does not tax the controller's noncreature spells")
+    void chapterIIDoesNotTaxController() {
+        addSagaWithLore(1);
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new Opt(), "{U}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Chapter II does not tax opponents' creature spells")
+    void chapterIIDoesNotTaxCreatureSpells() {
+        addSagaWithLore(1);
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Chapter II expires when the controller's next turn begins")
+    void chapterIITaxExpiresAtNextTurn() {
+        Permanent saga = addSagaWithLore(1);
+        triggerNextChapter();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(saga);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.castFromHand(player2, new Opt(), "{U}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Chapter III may put a loyalty counter on a creature after it returns")
+    void chapterIIICanPutLoyaltyCounterOnCreature() {
+        GrizzlyBears creatureCard = new GrizzlyBears();
+        addSagaWithLore(2);
+        harness.setGraveyard(player1, List.of(creatureCard));
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Put a loyalty counter on it");
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Chapter III may put a plus-one-plus-one counter on a planeswalker")
+    void chapterIIICanPutPlusOneCounterOnPlaneswalker() {
+        ChandraNalaar planeswalkerCard = new ChandraNalaar();
+        addSagaWithLore(2);
+        harness.setGraveyard(player1, List.of(planeswalkerCard));
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(planeswalkerCard.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Put a +1/+1 counter on it");
+
+        Permanent returned = findPermanent(player1, "Chandra Nalaar");
+        assertThat(returned.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Chapter III only targets creatures and planeswalkers in your graveyard")
+    void chapterIIIRestrictsGraveyardTargets() {
+        GrizzlyBears ownCreature = new GrizzlyBears();
+        ChandraNalaar ownPlaneswalker = new ChandraNalaar();
+        Opt ownInstant = new Opt();
+        GrizzlyBears opponentCreature = new GrizzlyBears();
+        addSagaWithLore(2);
+        harness.setGraveyard(player1, List.of(ownCreature, ownPlaneswalker, ownInstant));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
+                ownCreature.getId(), ownPlaneswalker.getId());
+    }
+
+    @Test
+    @DisplayName("Chapter III does not return a target removed from the graveyard in response")
+    void chapterIIIDoesNotReturnMissingTarget() {
+        GrizzlyBears creatureCard = new GrizzlyBears();
+        Permanent saga = addSagaWithLore(2);
+        harness.setGraveyard(player1, List.of(creatureCard));
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creatureCard));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creatureCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(saga).isNotIn(gd.playerBattlefields.get(player1.getId()));
+    }
+
     private void castSaga() {
-        harness.setHand(player1, List.of(new ElspethConquersDeath()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ElspethConquersDeath(), "{3}{W}{W}");
         harness.passBothPriorities();
     }
 

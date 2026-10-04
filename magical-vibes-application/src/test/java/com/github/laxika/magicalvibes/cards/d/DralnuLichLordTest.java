@@ -145,7 +145,7 @@ class DralnuLichLordTest extends BaseCardTest {
         Permanent dralnu = addCreatureReady(player1, new DralnuLichLord());
         Assassinate spell = new Assassinate();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player1);

@@ -130,4 +130,40 @@ class DwarvenWarriorsTest extends BaseCardTest {
         assertThat(target.isCantBeBlocked()).isFalse();
     }
 
+    @Test
+    void canTargetItself() {
+        Permanent warriors = addCreatureReady(player1, new DwarvenWarriors());
+
+        harness.activateAbility(player1, 0, null, warriors.getId());
+        harness.passBothPriorities();
+
+        assertThat(warriors.isTapped()).isTrue();
+        assertThat(warriors.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void summoningSickWarriorsCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void increasingPowerAfterResolutionDoesNotRemoveUnblockability() {
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
 }

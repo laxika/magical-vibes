@@ -68,7 +68,7 @@ class DefiantSalvagerTest extends BaseCardTest {
     @Test
     void sacrificeIsPaidBeforeTheCounterAbilityResolves() {
         Permanent salvager = harness.addToBattlefieldAndReturn(player1, new DefiantSalvager());
-        salvager.setTapped(true);
+        salvager.tap();
         Permanent artifactCreature = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new RenegadeMap());
         prepareForSorcerySpeed(player1);

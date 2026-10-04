@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,12 +33,30 @@ class FerociousTigorillaTest extends BaseCardTest {
         assertThat(tigorilla.hasKeyword(Keyword.MENACE)).isTrue();
     }
 
-    private Permanent castAndChoose(String counterType) {
-        harness.setHand(player1, List.of(new FerociousTigorilla()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
+    @Test
+    void choosesCounterWhenEnteringWithoutBeingCast() {
+        Permanent tigorilla = new Permanent(new FerociousTigorilla());
+        harness.inMutationScope(() -> {
+            harness.getBattlefieldEntryService().putPermanentOntoBattlefield(gd, player2.getId(), tigorilla);
+            harness.getBattlefieldEntryService().handleCreatureEnteredBattlefield(
+                    gd, player2.getId(), tigorilla.getCard(), null, false);
+        });
 
-        harness.castCreature(player1, 0);
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactly("trample", "menace");
+        harness.handleListChoice(player2, "menace");
+
+        assertThat(tigorilla.getCounterCount(CounterType.MENACE)).isEqualTo(1);
+        assertThat(tigorilla.getCounterCount(CounterType.TRAMPLE)).isZero();
+        assertThat(tigorilla.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(tigorilla.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private Permanent castAndChoose(String counterType) {
+        harness.castFromHand(player1, new FerociousTigorilla(), "{3}{R}");
         harness.passBothPriorities();
 
         PendingInteraction.ColorChoice choice =

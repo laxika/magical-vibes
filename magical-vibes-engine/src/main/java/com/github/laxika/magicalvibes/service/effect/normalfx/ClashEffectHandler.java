@@ -13,12 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link ClashEffect}: each iteration dispatches the {@code beforeClash} effects in
- * order, performs the clash for the controller via {@link TriggerCollectionService#performClash},
- * and on a win dispatches the {@code onWin} effect against the same stack entry (so it acts on
- * the source permanent). With {@code repeatWhileWinning} the whole sequence repeats until the
- * controller loses a clash (or decks out, which counts as a loss in {@code performClash}).
- * Mirrors {@link FlipCoinWinEffectHandler}.
+ * Resolves a clash, then inserts both library-placement choices and any win reward into the
+ * current stack entry. Each placement choice can pause for input before the sequence continues.
+ * Winning with {@code repeatWhileWinning} inserts another clash after those choices.
  */
 @Slf4j
 @Component
@@ -37,21 +34,20 @@ public class ClashEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ClashEffect) effect;
 
-        boolean won;
-        do {
-            for (CardEffect beforeEffect : e.beforeClash()) {
-                dispatch(gameData, entry, beforeEffect);
-            }
-
-            won = triggerCollectionService.performClash(gameData, entry.getControllerId());
-            // Record the result so a later effect on the same stack entry can branch on it via the
-            // WonClash condition (e.g. Whirlpool Whelm's optional "put on top of library instead").
-            gameData.lastClashWonByController.put(entry.getControllerId(), won);
-
-            if (won && e.onWin() != null) {
-                dispatch(gameData, entry, e.onWin());
-            }
-        } while (won && e.repeatWhileWinning());
+        for (CardEffect beforeEffect : e.beforeClash()) {
+            dispatch(gameData, entry, beforeEffect);
+        }
+        boolean won = triggerCollectionService.performClash(gameData, entry.getControllerId());
+        gameData.lastClashWonByController.put(entry.getControllerId(), won);
+        java.util.List<CardEffect> followUps = new java.util.ArrayList<>();
+        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.CONTROLLER, false));
+        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.OPPONENT, false));
+        if (won && e.onWin() != null) followUps.add(e.onWin());
+        if (won && e.repeatWhileWinning()) followUps.add(e);
+        int index = entry.getEffectsToResolve().indexOf(effect);
+        entry.insertEffectsToResolve(index + 1, followUps);
     }
 
     private void dispatch(GameData gameData, StackEntry entry, CardEffect effect) {

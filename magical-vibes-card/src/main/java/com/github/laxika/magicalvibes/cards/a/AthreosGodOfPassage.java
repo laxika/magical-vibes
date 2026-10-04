@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -29,6 +32,8 @@ public class AthreosGodOfPassage extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
-                new ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect(3));
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
+                        new ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect(3)));
     }
 }

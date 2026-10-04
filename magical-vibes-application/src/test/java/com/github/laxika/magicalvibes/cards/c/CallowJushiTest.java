@@ -267,7 +267,7 @@ class CallowJushiTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        jushi.setTapped(true);
+        jushi.tap();
         jushi.setSummoningSick(true);
 
         FirstVolley spell = new FirstVolley();

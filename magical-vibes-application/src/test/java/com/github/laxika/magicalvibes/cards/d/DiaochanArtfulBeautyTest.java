@@ -203,7 +203,7 @@ class DiaochanArtfulBeautyTest extends BaseCardTest {
     @DisplayName("Cannot pay the tap cost when already tapped")
     void cannotActivateWhileTapped() {
         Permanent diaochan = setupDiaochanOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        diaochan.setTapped(true);
+        diaochan.tap();
         Permanent target = addCreatureReady(player2, new ForestBear());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

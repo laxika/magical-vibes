@@ -97,7 +97,7 @@ class DiabolicIntentTest extends BaseCardTest {
     @DisplayName("Diabolic Intent can sacrifice a tapped creature and sacrifices only the chosen creature")
     void canSacrificeTappedCreature() {
         Permanent sacrifice = addCreatureReady(player1, new AncientSpider());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         Permanent survivor = addCreatureReady(player1, new AncientSpider());
         harness.setHand(player1, List.of(new DiabolicIntent()));
         harness.addMana(player1, ManaColor.BLACK, 2);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenalishInfantry.class, FitOfRage.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({BenalishInfantry.class, FitOfRage.class, FireElemental.class, GrizzlyBears.class, MindStone.class, Unsummon.class})
 class FitOfRageTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class FitOfRageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FitOfRage()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
         assertThat(creature.getToughnessModifier()).isEqualTo(3);
@@ -43,8 +43,7 @@ class FitOfRageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FitOfRage()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -90,27 +89,19 @@ class FitOfRageTest extends BaseCardTest {
     @Test
     @DisplayName("Granted first strike deals combat damage before a blocker")
     void grantedFirstStrikeDealsCombatDamageFirst() {
-        GrizzlyBears attackerCard = new GrizzlyBears();
-        attackerCard.setPower(1);
-        attackerCard.setToughness(1);
-        Permanent attacker = addCreatureReady(player1, attackerCard);
-
-        GrizzlyBears blockerCard = new GrizzlyBears();
-        blockerCard.setPower(4);
-        blockerCard.setToughness(4);
-        addCreatureReady(player2, blockerCard);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new FireElemental());
 
         harness.setHand(player1, List.of(new FitOfRage()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveSorcery(player1, 0, attacker.getId());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Fire Elemental");
     }
 
     @Test
@@ -132,11 +123,31 @@ class FitOfRageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FitOfRage()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
         assertThat(creature.getToughnessModifier()).isEqualTo(3);
         assertThat(creature.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FitOfRage(), new Unsummon()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fit of Rage");
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
     }
 }

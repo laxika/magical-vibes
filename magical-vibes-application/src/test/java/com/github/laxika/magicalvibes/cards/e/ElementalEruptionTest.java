@@ -24,8 +24,7 @@ class ElementalEruptionTest extends BaseCardTest {
     void createsDragonElementalToken() {
         castElementalEruption();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Dragon Elemental");
         assertThat(tokens).hasSize(1);
@@ -50,11 +49,45 @@ class ElementalEruptionTest extends BaseCardTest {
 
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Dragon prowess triggers for a subsequent cast but not its storm copies")
+    void prowessTriggersOnlyForCastSpell() {
+        castElementalEruption();
+        resolveAllTriggers();
+        Permanent firstDragon = findPermanent(player1, "Dragon Elemental");
+
+        castElementalEruption();
+        resolveAllTriggers();
+
+        assertThat(firstDragon.getEffectivePower()).isEqualTo(5);
+        assertThat(firstDragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(3);
+        assertThat(findPermanents(player1, "Dragon Elemental").stream()
+                .filter(token -> token != firstDragon))
+                .allSatisfy(token -> {
+                    assertThat(token.getEffectivePower()).isEqualTo(4);
+                    assertThat(token.getEffectiveToughness()).isEqualTo(4);
+                });
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Storm counts are fixed when cast and exclude spells recorded afterward")
+    void stormDoesNotCountLaterSpells() {
+        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        castElementalEruption();
+        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(2);
     }
 
     private void castElementalEruption() {

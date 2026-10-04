@@ -26,8 +26,7 @@ class FailedFordingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FailedFording()));
         addManaForFailedFording();
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -44,8 +43,7 @@ class FailedFordingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FailedFording()));
         addManaForFailedFording();
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player2, "Grizzly Bears");
@@ -62,8 +60,7 @@ class FailedFordingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FailedFording()));
         addManaForFailedFording();
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
@@ -83,6 +80,62 @@ class FailedFordingTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a nonland permanent");
     }
 
+    @Test
+    @DisplayName("Can keep the surveilled card on top")
+    void keepsSurveilledCardOnTop() {
+        harness.addToBattlefield(player1, new SunscorchedDesert());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new FailedFording()));
+        addManaForFailedFording();
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's Desert does not enable surveil")
+    void opponentsDesertDoesNotEnableSurveil() {
+        harness.addToBattlefield(player2, new SunscorchedDesert());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new FailedFording()));
+        addManaForFailedFording();
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Does not surveil when the only target leaves before resolution")
+    void illegalTargetPreventsSurveil() {
+        harness.addToBattlefield(player1, new SunscorchedDesert());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new FailedFording()));
+        addManaForFailedFording();
+
+        harness.castInstant(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.assertInGraveyard(player1, "Failed Fording");
+    }
     private void addManaForFailedFording() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

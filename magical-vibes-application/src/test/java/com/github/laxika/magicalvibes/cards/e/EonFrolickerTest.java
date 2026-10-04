@@ -67,8 +67,9 @@ class EonFrolickerTest extends BaseCardTest {
     @Test
     @DisplayName("An Eon Frolicker that was not cast does not create the extra turn effect")
     void etbWithoutCastingDoesNotTrigger() {
-        harness.addToBattlefield(player1, new EonFrolicker());
+        harness.enterBattlefieldAndReturn(player1, new EonFrolicker());
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.extraTurns).isEmpty();
         assertThat(gd.playerProtectionFromPlayerIdsUntilNextTurn).doesNotContainKey(player1.getId());
     }
@@ -85,6 +86,100 @@ class EonFrolickerTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
     }
 
+    @Test
+    @DisplayName("Planeswalkers entering after the trigger resolves do not gain protection")
+    void laterPlaneswalkerDoesNotGainProtection() {
+        castEon(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 3);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, jace.getId());
+
+        assertThat(jace.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A protected planeswalker retains protection after changing controller")
+    void protectionStaysWithPlaneswalkerAfterControlChange() {
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 3);
+        castEon(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(jace);
+        gd.playerBattlefields.get(player2.getId()).add(jace);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, jace.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection persists after Eon Frolicker leaves the battlefield")
+    void protectionDoesNotDependOnSourceRemaining() {
+        castEon(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard() instanceof EonFrolicker);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(gd.extraTurns).containsExactly(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Protection from the opponent does not prevent the controller's own spells")
+    void ownSpellCanTargetProtectedPlayer() {
+        castEon(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Protection prevents combat damage to the player and their planeswalker")
+    void opponentCombatDamageIsPrevented() {
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 3);
+        castEon(player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLife(player1, 20);
+
+        Permanent playerAttacker = harness.addToBattlefieldAndReturn(player2, new EonFrolicker());
+        playerAttacker.setSummoningSick(false);
+        playerAttacker.setAttacking(true);
+        playerAttacker.setAttackTarget(player1.getId());
+        Permanent planeswalkerAttacker = harness.addToBattlefieldAndReturn(player2, new EonFrolicker());
+        planeswalkerAttacker.setSummoningSick(false);
+        planeswalkerAttacker.setAttacking(true);
+        planeswalkerAttacker.setAttackTarget(jace.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 20);
+        assertThat(jace.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY))
+                .isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Jace Beleren");
+    }
     private void castEon(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new EonFrolicker()));
         harness.addMana(player1, ManaColor.BLUE, 2);

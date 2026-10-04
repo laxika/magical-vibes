@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MosscoatGoriak;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,14 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FootfallCrater.class, Forest.class, GrizzlyBears.class})
+@CardUsed({FootfallCrater.class, Forest.class, MosscoatGoriak.class})
 class FootfallCraterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted land can give a creature trample and haste")
     void enchantedLandGrantsTrampleAndHaste() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new MosscoatGoriak());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FootfallCrater());
         aura.setAttachedTo(forest.getId());
 
@@ -38,7 +38,7 @@ class FootfallCraterTest extends BaseCardTest {
     @DisplayName("The granted keywords wear off at end of turn")
     void grantedKeywordsWearOffAtEndOfTurn() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new MosscoatGoriak());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FootfallCrater());
         aura.setAttachedTo(forest.getId());
 
@@ -71,7 +71,7 @@ class FootfallCraterTest extends BaseCardTest {
     @Test
     @DisplayName("Footfall Crater can enchant only a land")
     void cannotEnchantCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new MosscoatGoriak());
         harness.setHand(player1, List.of(new FootfallCrater()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -105,5 +105,69 @@ class FootfallCraterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    void canEnchantOpponentsLandAndItsControllerCanTargetOpponentsCreature() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MosscoatGoriak());
+        harness.setHand(player1, List.of(new FootfallCrater()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void activatedAbilityResolvesAfterAuraLeaves() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MosscoatGoriak());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FootfallCrater());
+        aura.setAttachedTo(forest.getId());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void tappedLandCannotPayGrantedAbilityCost() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MosscoatGoriak());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FootfallCrater());
+        aura.setAttachedTo(forest.getId());
+        forest.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void cyclingDiscardsAsCostBeforeDrawingOnResolution() {
+        harness.setHand(player1, List.of(new FootfallCrater()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Footfall Crater");
+        harness.assertNotInHand(player1, "Footfall Crater");
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
     }
 }

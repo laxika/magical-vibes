@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.MeteorCrater;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +20,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({FleetfootPanther.class, AlphaKavu.class, AuroraGriffin.class, KavuRecluse.class,
         MeteorCrater.class})
 class FleetfootPantherTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Flash allows casting Panther during an opponent's upkeep")
+    void canBeCastDuringOpponentsUpkeep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.castFromHand(player1, new FleetfootPanther(), "{1}{G}{W}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Fleetfoot Panther"));
+
+        harness.assertInHand(player1, "Fleetfoot Panther");
+        harness.assertNotOnBattlefield(player1, "Fleetfoot Panther");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still requires returning a creature")
+    void enteringWithoutCastingTriggersReturn() {
+        UUID greenId = harness.addToBattlefieldAndReturn(player1, new AlphaKavu()).getId();
+
+        harness.enterBattlefieldAndReturn(player1, new FleetfootPanther());
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, greenId);
+
+        harness.assertInHand(player1, "Alpha Kavu");
+        harness.assertNotOnBattlefield(player1, "Alpha Kavu");
+        harness.assertOnBattlefield(player1, "Fleetfoot Panther");
+    }
 
     @Test
     @DisplayName("ETB allows choosing a green or white creature you control, including itself")

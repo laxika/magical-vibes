@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FavorOfTheMighty.class, CennsHeir.class, PloverKnights.class,
-        OakgnarlWarrior.class, Tarfire.class})
+        OakgnarlWarrior.class, Tarfire.class, Opalescence.class})
 class FavorOfTheMightyTest extends BaseCardTest {
 
     private void addFavor() {
@@ -112,7 +112,6 @@ class FavorOfTheMightyTest extends BaseCardTest {
                 .isNotEmpty();
     }
 
-    @CardUsed(Opalescence.class)
     @Test
     @DisplayName("An animated Favor of the Mighty protects itself")
     void animatedFavorProtectsItself() {
@@ -121,5 +120,45 @@ class FavorOfTheMightyTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, favor)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, favor, CardColor.RED)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A lone creature is protected even when its mana value equals Favor's")
+    void loneCreatureIsProtected() {
+        addFavor();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CennsHeir());
+
+        for (CardColor color : CardColor.values()) {
+            assertThat(gqs.hasProtectionFrom(gd, creature, color)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("A colored spell deals damage to a creature below the greatest mana value")
+    void lowerManaValueCreatureTakesDamage() {
+        addFavor();
+        harness.addToBattlefield(player2, new PloverKnights());
+        Permanent lower = harness.addToBattlefieldAndReturn(player1, new CennsHeir());
+
+        castTarfireAt(lower);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cenn's Heir");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof CennsHeir);
+    }
+
+    @Test
+    @DisplayName("Gaining protection before resolution makes a colored spell's target illegal")
+    void protectionGainedBeforeResolutionStopsColoredSpell() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CennsHeir());
+        castTarfireAt(creature);
+
+        addFavor();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Cenn's Heir");
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 }

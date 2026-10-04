@@ -273,7 +273,7 @@ class BorosBattleshaperTest extends BaseCardTest {
     @DisplayName("A tapped first target is not required to attack")
     void tappedFirstTargetDoesNotHaveToAttack() {
         Permanent creature = addCreatureReady(player1, new MazeBehemoth());
-        creature.setTapped(true);
+        creature.tap();
         addCreatureReady(player1, new BorosBattleshaper());
 
         advanceToCombat(player1);

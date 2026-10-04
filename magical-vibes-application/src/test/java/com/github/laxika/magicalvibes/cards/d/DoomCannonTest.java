@@ -87,7 +87,7 @@ class DoomCannonTest extends BaseCardTest {
         harness.handleListChoice(player1, "GOBLIN");
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiledriver());
         goblin.setSummoningSick(true);
-        goblin.setTapped(true);
+        goblin.tap();
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

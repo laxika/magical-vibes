@@ -166,4 +166,39 @@ class DwarvenScorcherTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    void canActivateWhileTappedWithoutMana() {
+        Permanent scorcher = addReadyScorcher();
+        scorcher.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DwarvenDriller());
+
+        activateScorcher(scorcher, target);
+        harness.assertInGraveyard(player1, "Dwarven Scorcher");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Dwarven Driller");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void targetSacrificedInResponseLeavesNoDamageChoice() {
+        Permanent scorcher = addReadyScorcher();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DwarvenScorcher());
+
+        activateScorcher(scorcher, target);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, battlefieldIndex(player2, target), 0, null, target.getId());
+        harness.assertInGraveyard(player2, "Dwarven Scorcher");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Dwarven Scorcher");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }

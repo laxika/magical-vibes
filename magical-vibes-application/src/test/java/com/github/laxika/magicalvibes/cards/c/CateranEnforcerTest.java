@@ -110,7 +110,7 @@ class CateranEnforcerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent enforcer = addCreatureReady(player1, new CateranEnforcer());
-        enforcer.setTapped(true);
+        enforcer.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(FireNationSoldier.class)
 class FireNationSoldierTest extends BaseCardTest {
@@ -25,5 +26,21 @@ class FireNationSoldierTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Haste does not allow a tapped Fire Nation Soldier to attack")
+    void hasteDoesNotAllowAttackingWhileTapped() {
+        harness.setHand(player1, List.of(new FireNationSoldier()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

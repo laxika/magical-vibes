@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.f.FieryImpulse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MaritimeGuard;
+import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EnthrallingVictor.class, GrizzlyBears.class, HillGiant.class,
+        MaritimeGuard.class, TitanicGrowth.class, FieryImpulse.class})
 class EnthrallingVictorTest extends BaseCardTest {
 
     @Test
@@ -71,6 +77,53 @@ class EnthrallingVictorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Entire trigger fails if the target's power grows above two before resolution")
+    void targetBecomesTooPowerfulBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MaritimeGuard());
+        target.tap();
+        castVictor(target.getId());
+
+        harness.setHand(player2, List.of(new TitanicGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Trigger still steals, untaps and grants haste after Victor dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MaritimeGuard());
+        target.tap();
+        castVictor(target.getId());
+        UUID victorId = harness.getPermanentId(player1, "Enthralling Victor");
+
+        harness.setHand(player2, List.of(new FieryImpulse()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, victorId);
+        harness.assertInGraveyard(player1, "Enthralling Victor");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Victor can enter when there are no legal targets")
+    void entersWithoutLegalTargets() {
+        castVictor(null);
+
+        harness.assertOnBattlefield(player1, "Enthralling Victor");
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addCreature(Card card, Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);

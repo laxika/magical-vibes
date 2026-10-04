@@ -10,8 +10,14 @@ import com.github.laxika.magicalvibes.model.GameData;
  *  chooses any number from 0 to {@code count} through a delayed triggered ability on the stack
  *  (Arcane Denial). Drained in {@code StepTriggerService}. */
 public record DrawCardsAtNextUpkeep(UUID controllerId, int count, Card sourceCard, boolean upTo,
-                                    int registeredTurnNumber, UUID activePlayerAtRegistration)
+                                    int registeredTurnNumber, UUID activePlayerAtRegistration,
+                                    UUID triggerControllerId)
         implements DelayedAction {
+
+    public DrawCardsAtNextUpkeep(UUID controllerId, int count, Card sourceCard, boolean upTo,
+                                int registeredTurnNumber, UUID activePlayerAtRegistration) {
+        this(controllerId, count, sourceCard, upTo, registeredTurnNumber, activePlayerAtRegistration, controllerId);
+    }
 
     public DrawCardsAtNextUpkeep(UUID controllerId, int count, Card sourceCard) {
         this(controllerId, count, sourceCard, false, -1, null);

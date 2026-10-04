@@ -171,7 +171,7 @@ class BrineShamanTest extends BaseCardTest {
     void counterAbilityDoesNotRequireTapOrHaste() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new BrineShaman());
         shaman.setSummoningSick(true);
-        shaman.setTapped(true);
+        shaman.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         BalduvianBears spell = new BalduvianBears();

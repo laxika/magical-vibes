@@ -113,10 +113,10 @@ class AngelsHeraldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new EmpyrialArchangel()));
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(herald.isTapped()).isTrue();
         harness.handlePermanentChosen(player1, greenId);
         harness.handlePermanentChosen(player1, herald.getId());
 
+        assertThat(herald.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Angel's Herald");
         harness.assertInGraveyard(player1, "Druid of the Anima");
         harness.assertInGraveyard(player1, "Cathartic Adept");

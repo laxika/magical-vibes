@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -20,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({FlamewaveInvoker.class, FugitiveWizard.class, JaceBeleren.class})
 class FlamewaveInvokerTest extends BaseCardTest {
 
-    // ===== Activation =====
-
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
@@ -30,7 +27,6 @@ class FlamewaveInvokerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -56,11 +52,8 @@ class FlamewaveInvokerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Resolving ability deals 5 damage to target player")
@@ -72,9 +65,8 @@ class FlamewaveInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -101,8 +93,7 @@ class FlamewaveInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        harness.assertLife(player1, 15);
     }
 
     @Test
@@ -117,8 +108,7 @@ class FlamewaveInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
+        harness.assertLife(player2, 10);
     }
 
     @Test
@@ -131,11 +121,8 @@ class FlamewaveInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("takes") && log.contains("5") && log.contains("damage"));
     }
-
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate ability without enough mana")
@@ -153,15 +140,74 @@ class FlamewaveInvokerTest extends BaseCardTest {
     void cannotTargetCreature() {
         addReadyInvoker(player1);
         harness.addMana(player1, ManaColor.RED, 8);
-        harness.addToBattlefield(player2, new FugitiveWizard());
-        Permanent creature = findPermanent(player2, "Fugitive Wizard");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a planeswalker or player");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can activate while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new FlamewaveInvoker());
+        invoker.setSummoningSick(true);
+        invoker.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        assertThat(invoker.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the red mana requirement with colorless mana")
+    void cannotActivateWithoutRedMana() {
+        addReadyInvoker(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent invoker = addReadyInvoker(player1);
+        harness.addMana(player1, ManaColor.RED, 8);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(invoker);
+        gd.playerGraveyards.get(player1.getId()).add(invoker.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability does not damage a player when its planeswalker target leaves")
+    void doesNotRedirectDamageFromMissingPlaneswalker() {
+        addReadyInvoker(player1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        harness.addMana(player1, ManaColor.RED, 8);
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        gd.playerGraveyards.get(player2.getId()).add(planeswalker.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyInvoker(Player player) {
         return addCreatureReady(player, new FlamewaveInvoker());

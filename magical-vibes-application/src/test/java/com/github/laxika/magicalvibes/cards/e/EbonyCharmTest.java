@@ -24,6 +24,7 @@ class EbonyCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Target opponent loses 1 life and you gain 1 life")
+    @CardUsed(EbonyCharm.class)
     class DrainMode {
 
         @Test
@@ -55,6 +56,7 @@ class EbonyCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Exile up to three target cards from a single graveyard")
+    @CardUsed({EbonyCharm.class, WildElephant.class, Forest.class})
     class ExileMode {
 
         @Test
@@ -116,6 +118,44 @@ class EbonyCharmTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("The exile mode can be cast with empty graveyards")
+        void canChooseExileWithEmptyGraveyards() {
+            harness.setGraveyard(player1, List.of());
+            harness.setGraveyard(player2, List.of());
+            harness.setHand(player1, List.of(new EbonyCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            harness.castInstant(player1, 0, 1, null);
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            harness.assertInGraveyard(player1, "Ebony Charm");
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
+        }
+
+        @Test
+        @DisplayName("Exiles noncreature cards and still exiles remaining legal targets")
+        void exilesRemainingTargetsWhenOneLeavesGraveyard() {
+            Card removed = new WildElephant();
+            Card remaining = new Forest();
+            harness.setGraveyard(player2, List.of(removed, remaining));
+            harness.setHand(player1, List.of(new EbonyCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            harness.castInstant(player1, 0, 1, null);
+            harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+            harness.setGraveyard(player2, List.of(remaining));
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+            assertThat(gd.exiledCards.stream().map(e -> e.card().getId()))
+                    .contains(remaining.getId())
+                    .doesNotContain(removed.getId());
+        }
+
+        @Test
         @DisplayName("Targets must all come from a single graveyard")
         void rejectsTargetsAcrossTwoGraveyards() {
             Card mine = new WildElephant();
@@ -134,6 +174,7 @@ class EbonyCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Target creature gains fear until end of turn")
+    @CardUsed({EbonyCharm.class, WildElephant.class, Forest.class})
     class FearMode {
 
         @Test
@@ -147,6 +188,23 @@ class EbonyCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Can grant fear to an opponent's creature without affecting other creatures")
+        void grantsFearToOpposingCreatureOnly() {
+            Permanent target = addCreatureReady(player2, new WildElephant());
+            Permanent other = addCreatureReady(player1, new WildElephant());
+            harness.setHand(player1, List.of(new EbonyCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            harness.castInstant(player1, 0, 2, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
+            assertThat(gqs.hasKeyword(gd, other, Keyword.FEAR)).isFalse();
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
         }
 
         @Test
@@ -169,11 +227,9 @@ class EbonyCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a noncreature permanent")
         void cannotTargetNoncreaturePermanent() {
-            harness.addToBattlefield(player1, new Forest());
+            Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
             harness.setHand(player1, List.of(new EbonyCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
-
-            Permanent forest = findPermanent(player1, "Forest");
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, forest.getId()))
                     .isInstanceOf(IllegalStateException.class)

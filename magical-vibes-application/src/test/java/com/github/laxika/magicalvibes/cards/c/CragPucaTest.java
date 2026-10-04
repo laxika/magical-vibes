@@ -78,7 +78,7 @@ class CragPucaTest extends BaseCardTest {
         Permanent puca = harness.addToBattlefieldAndReturn(player1, new CragPuca());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new CragPuca());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new CragPuca());
-        puca.setTapped(true);
+        puca.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

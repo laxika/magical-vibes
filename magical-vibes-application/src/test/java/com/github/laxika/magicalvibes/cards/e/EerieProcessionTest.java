@@ -76,6 +76,37 @@ class EerieProcessionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Eerie Procession");
     }
 
+    @Test
+    @DisplayName("An empty library resolves without a search prompt")
+    void emptyLibraryResolves() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Eerie Procession");
+    }
+
+    @Test
+    @DisplayName("Only one of multiple matching Arcane cards is moved to hand")
+    void choosesExactlyOneArcaneCard() {
+        setupAndCast();
+        DampenThought first = new DampenThought();
+        DampenThought second = new DampenThought();
+        harness.setLibrary(player1, List.of(first, new Plains(), second));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(first).doesNotContain(second).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player2, "Dampen Thought");
+        harness.assertInGraveyard(player1, "Eerie Procession");
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new EerieProcession(), "{2}{U}");
     }

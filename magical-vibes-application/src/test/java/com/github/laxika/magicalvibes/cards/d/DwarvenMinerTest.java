@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.c.CrystalVein;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DwarvenMiner.class, CrystalVein.class, Forest.class, BayFalcon.class})
+@CardUsed({DwarvenMiner.class, CrystalVein.class, Forest.class, BayFalcon.class, Incinerate.class})
 class DwarvenMinerTest extends BaseCardTest {
 
     @Test
@@ -111,5 +112,63 @@ class DwarvenMinerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the red activation cost with only colorless mana")
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new DwarvenMiner());
+        harness.addToBattlefield(player2, new CrystalVein());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        UUID targetId = harness.getPermanentId(player2, "Crystal Vein");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability has no effect when its target is sacrificed in response")
+    void targetCanBeSacrificedInResponse() {
+        addCreatureReady(player1, new DwarvenMiner());
+        harness.addToBattlefield(player2, new CrystalVein());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Crystal Vein");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.assertInGraveyard(player2, "Crystal Vein");
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Dwarven Miner");
+        harness.assertInGraveyard(player2, "Crystal Vein");
+    }
+
+    @Test
+    @DisplayName("Ability still destroys its target after the Miner is destroyed")
+    void abilityResolvesAfterSourceIsDestroyed() {
+        addCreatureReady(player1, new DwarvenMiner());
+        harness.addToBattlefield(player2, new CrystalVein());
+        harness.setHand(player2, java.util.List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        UUID targetId = harness.getPermanentId(player2, "Crystal Vein");
+        UUID minerId = harness.getPermanentId(player1, "Dwarven Miner");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.castInstant(player2, 0, minerId);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Dwarven Miner");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Crystal Vein");
+        harness.assertInGraveyard(player2, "Crystal Vein");
+        assertThat(gd.stack).isEmpty();
     }
 }

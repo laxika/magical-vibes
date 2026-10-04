@@ -107,6 +107,56 @@ class FencersMagemarkTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Fencer's Magemark");
     }
 
+    @Test
+    @DisplayName("Can enchant an opponent's creature without granting it the bonus")
+    void canEnchantOpponentCreatureWithoutBoostingIt() {
+        Permanent ownCreature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent opponentCreature = addCreatureReady(player2, new IzzetGuildmage());
+        attach(new GuardiansMagemark(), ownCreature, player2);
+        harness.setHand(player1, List.of(new FencersMagemark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof FencersMagemark
+                        && opponentCreature.getId().equals(permanent.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple Magemarks stack their bonuses and track newly enchanted creatures")
+    void multipleMagemarksStackAndTrackEnchantedCreatures() {
+        Permanent firstCreature = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent secondCreature = addCreatureReady(player1, new IzzetGuildmage());
+        attach(new FencersMagemark(), firstCreature, player1);
+        attach(new FencersMagemark(), firstCreature, player1);
+
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.FIRST_STRIKE)).isFalse();
+
+        Permanent otherAura = attach(new GuardiansMagemark(), secondCreature, player2);
+
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.FIRST_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player2.getId()).remove(otherAura);
+
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
     private Permanent attach(Card auraCard, Permanent creature, Player controller) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, auraCard);
         aura.setAttachedTo(creature.getId());

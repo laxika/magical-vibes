@@ -158,7 +158,7 @@ class CabalInquisitorTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent inquisitor = addCreatureReady(player1, new CabalInquisitor());
-        inquisitor.setTapped(true);
+        inquisitor.tap();
         prepareThresholdActivation();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

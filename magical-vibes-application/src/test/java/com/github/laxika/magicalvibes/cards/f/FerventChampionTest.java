@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
+import com.github.laxika.magicalvibes.cards.c.CrystalSlipper;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.l.LizardBlades;
 import com.github.laxika.magicalvibes.cards.v.VenerableKnight;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FerventChampion.class, VenerableKnight.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({FerventChampion.class, VenerableKnight.class, GrizzlyBears.class, LeoninScimitar.class,
+        LizardBlades.class, Frogify.class, Gingerbrute.class, CrystalSlipper.class})
 class FerventChampionTest extends BaseCardTest {
 
     @Test
@@ -86,6 +91,81 @@ class FerventChampionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(scimitar), null,
                 otherCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void hasteAllowsAttackingAloneImmediatelyWithoutBoostingItself() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new FerventChampion());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(champion.isAttacking()).isTrue();
+        assertThat(champion.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void firstStrikeKillsABlockerBeforeItCanDealDamage() {
+        addCreatureReady(player1, new FerventChampion());
+        harness.addToBattlefield(player2, new Gingerbrute());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Fervent Champion");
+        harness.assertInGraveyard(player2, "Gingerbrute");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void attackTriggerResolvesAfterChampionLeavesTheBattlefield() {
+        Permanent champion = addCreatureReady(player1, new FerventChampion());
+        Permanent knight = addCreatureReady(player1, new VenerableKnight());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, knight.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(champion);
+        resolveAllTriggers();
+
+        assertThat(knight.getPowerModifier()).isEqualTo(1);
+        assertThat(knight.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void attackTriggerDoesNotBoostAKnightRemovedFromCombat() {
+        addCreatureReady(player1, new FerventChampion());
+        Permanent knight = addCreatureReady(player1, new VenerableKnight());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, knight.getId());
+        knight.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(knight.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void reconfigureTargetingChampionStillRequiresItsFullManaCost() {
+        Permanent champion = addCreatureReady(player1, new FerventChampion());
+        addCreatureReady(player1, new LizardBlades());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, champion.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void losingAllAbilitiesRemovesTheEquipDiscount() {
+        Permanent champion = addCreatureReady(player1, new FerventChampion());
+        Permanent frogify = harness.addToBattlefieldAndReturn(player1, new Frogify());
+        frogify.setAttachedTo(champion.getId());
+        harness.addToBattlefield(player1, new CrystalSlipper());
+
+        assertThat(gqs.hasLostAllAbilities(gd, champion)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 2, null, champion.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

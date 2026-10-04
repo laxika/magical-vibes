@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.t.TwoHeadedDragon;
 import com.github.laxika.magicalvibes.cards.w.WildJhovall;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Ferocity.class, WildJhovall.class})
+@CardUsed({Ferocity.class, WildJhovall.class, TwoHeadedDragon.class})
 class FerocityTest extends BaseCardTest {
 
     @Test
@@ -95,6 +96,42 @@ class FerocityTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Becoming blocked by multiple creatures triggers Ferocity only once")
+    void multipleBlockersProduceOneTrigger() {
+        Permanent creature = addCreatureReady(player1, new WildJhovall());
+        enchantFerocity(player1, creature);
+        creature.setAttacking(true);
+        addCreatureReady(player2, new WildJhovall());
+        addCreatureReady(player2, new WildJhovall());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveMay(true);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Blocking multiple attackers triggers Ferocity only once")
+    void blockingMultipleAttackersProducesOneTrigger() {
+        Permanent creature = addCreatureReady(player1, new TwoHeadedDragon());
+        enchantFerocity(player1, creature);
+        Permanent firstAttacker = addCreatureReady(player2, new WildJhovall());
+        Permanent secondAttacker = addCreatureReady(player2, new WildJhovall());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveMay(true);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
     private void enchantFerocity(Player caster, Permanent creature) {
         harness.setHand(caster, List.of(new Ferocity()));
         harness.addMana(caster, ManaColor.GREEN, 1);

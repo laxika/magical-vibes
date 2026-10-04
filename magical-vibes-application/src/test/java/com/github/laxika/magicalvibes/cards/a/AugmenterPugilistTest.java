@@ -59,6 +59,7 @@ class AugmenterPugilistTest extends BaseCardTest {
         assertThat(other.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
         assertThat(opponentCreature.getCard().getName()).isEqualTo("Hill Giant");
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
@@ -134,6 +135,7 @@ class AugmenterPugilistTest extends BaseCardTest {
 
         Permanent laterCreature = addCreatureReady(player1, new BayouGroff());
         assertThat(laterCreature.getCard().getName()).isEqualTo("Bayou Groff");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         assertThat(other.getCard().getName()).isEqualTo("Tanazir Quandrix");
         harness.passBothPriorities();

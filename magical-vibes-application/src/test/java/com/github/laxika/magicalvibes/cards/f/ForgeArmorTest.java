@@ -64,7 +64,7 @@ class ForgeArmorTest extends BaseCardTest {
     @DisplayName("Uses the selected artifact's mana value when multiple artifacts are available")
     void usesSelectedArtifactManaValueWhenMultipleArtifactsAreAvailable() {
         Permanent selectedArtifact = harness.addToBattlefieldAndReturn(player1, new CrystalShard());
-        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player1, new WeldingJar());
+        harness.addToBattlefield(player1, new WeldingJar());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
 
         harness.setHand(player1, List.of(new ForgeArmor()));
@@ -76,8 +76,7 @@ class ForgeArmorTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Crystal Shard");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(otherArtifact.getId()));
+        harness.assertOnBattlefield(player1, "Welding Jar");
     }
 
     @Test
@@ -107,5 +106,54 @@ class ForgeArmorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, target.getId(), artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CrystalShard());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.setHand(player1, List.of(new ForgeArmor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, target.getId(), artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Crystal Shard");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canSacrificeArtifactCreatureToBoostOwnCreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinStriker());
+        harness.setHand(player1, List.of(new ForgeArmor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), artifact.getId());
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Forge Armor");
+    }
+
+    @Test
+    void canSacrificeTargetArtifactCreatureAndSpellDoesNotResolve() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.setHand(player1, List.of(new ForgeArmor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), target.getId());
+        harness.assertNotOnBattlefield(player1, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forge Armor");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

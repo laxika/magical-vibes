@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EsperSojourners.class, FlameJavelin.class, Forest.class, GrizzlyBears.class})
 class EsperSojournersTest extends BaseCardTest {
-
-    // ===== Death trigger: you may tap or untap target permanent =====
 
     @Test
     @DisplayName("When it dies, taps an untapped target permanent")
@@ -64,8 +64,6 @@ class EsperSojournersTest extends BaseCardTest {
                 .contains(forest.getId(), bears.getId());
     }
 
-    // ===== Cycling reflexive trigger: you may tap or untap target permanent, then draw =====
-
     @Test
     @DisplayName("Cycling taps target permanent and draws a card")
     void cyclingTapsTargetAndDraws() {
@@ -84,6 +82,74 @@ class EsperSojournersTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Cycling is legal with no permanents on the battlefield")
+    void cyclingWithoutPermanentsStillDraws() {
+        harness.setHand(player1, List.of(new EsperSojourners()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Esper Sojourners");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cycling puts the triggered ability above the separate draw ability")
+    void cyclingCreatesSeparateStackEntries() {
+        harness.setHand(player1, List.of(new EsperSojourners()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, forest.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertInGraveyard(player1, "Esper Sojourners");
+        harness.assertNotInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Losing the cycling trigger's target does not prevent the draw")
+    void cyclingDrawsAfterTargetDies() {
+        harness.setHand(player1, List.of(new EsperSojourners()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateHandAbility(player1, 0, bears.getId());
+
+        harness.setHand(player2, List.of(new FlameJavelin()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The controller may decline to change the death trigger's target")
+    void deathTriggerMayBeDeclined() {
+        harness.addToBattlefield(player1, new EsperSojourners());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        killWithFlameJavelin();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(forest.isTapped()).isFalse();
+    }
+
     private void killWithFlameJavelin() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -92,7 +158,6 @@ class EsperSojournersTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 6);
 
         UUID esperId = harness.getPermanentId(player1, "Esper Sojourners");
-        harness.castInstant(player2, 0, esperId);
-        harness.passBothPriorities(); // Flame Javelin resolves → Esper dies → death trigger awaits target
+        harness.castAndResolveInstant(player2, 0, esperId);
     }
 }

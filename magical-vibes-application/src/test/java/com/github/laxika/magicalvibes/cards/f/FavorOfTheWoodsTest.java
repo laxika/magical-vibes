@@ -2,15 +2,17 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
+import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGateless;
+import com.github.laxika.magicalvibes.cards.h.HeavyMattock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,17 +21,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FavorOfTheWoods.class, DawntreaderElk.class, HeavyMattock.class, GuardianOfTheGateless.class})
 class FavorOfTheWoodsTest extends BaseCardTest {
-
-    // ===== Block trigger =====
 
     @Test
     @DisplayName("Enchanted creature blocking pushes Favor of the Woods trigger onto the stack")
     void blockTriggerPushesOntoStack() {
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new DawntreaderElk());
 
         // Add attacker before aura so attacker is at index 0 on player1's battlefield
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
         attacker.setAttacking(true);
         Permanent aura = attachFavorOfTheWoods(player2, creature);
 
@@ -50,9 +51,9 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new DawntreaderElk());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
         attacker.setAttacking(true);
         attachFavorOfTheWoods(player2, creature);
 
@@ -64,8 +65,6 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
     }
 
-    // ===== "You" is the aura's controller, not the creature's controller =====
-
     @Test
     @DisplayName("Aura's controller gains the life even when enchanting an opponent's creature")
     void auraControllerGainsLifeWhenOnOpponentCreature() {
@@ -73,9 +72,9 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // player2's creature blocks, but player1 controls the aura
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new DawntreaderElk());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
         attacker.setAttacking(true);
         attachFavorOfTheWoods(player1, creature);
 
@@ -87,15 +86,13 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== No trigger when enchanted creature doesn't block =====
-
     @Test
     @DisplayName("No trigger when a different creature blocks")
     void noTriggerWhenEnchantedCreatureDoesNotBlock() {
-        Permanent enchantedCreature = addReadyCreature(player2, new GrizzlyBears());
-        Permanent otherCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent enchantedCreature = addCreatureReady(player2, new DawntreaderElk());
+        addCreatureReady(player2, new DawntreaderElk());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
         attacker.setAttacking(true);
         attachFavorOfTheWoods(player2, enchantedCreature);
 
@@ -105,12 +102,10 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== No trigger on attack (block-only) =====
-
     @Test
     @DisplayName("No trigger when enchanted creature attacks")
     void noTriggerOnAttack() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new DawntreaderElk());
         attachFavorOfTheWoods(player1, creature);
 
         declareAttackers(player1, List.of(0));
@@ -118,14 +113,12 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Creature with no aura does not trigger =====
-
     @Test
     @DisplayName("Creature without Favor of the Woods does not push any aura trigger")
     void creatureWithoutAuraDoesNotTrigger() {
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DawntreaderElk());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
         attacker.setAttacking(true);
 
         declareBlockers(player2, List.of(new BlockerAssignment(0, 0)));
@@ -133,16 +126,14 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Trigger still resolves even if creature leaves battlefield =====
-
     @Test
     @DisplayName("Trigger still grants life even if enchanted creature leaves battlefield before resolution")
     void triggerStillResolvesIfCreatureRemoved() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new DawntreaderElk());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
         attacker.setAttacking(true);
         attachFavorOfTheWoods(player2, creature);
 
@@ -161,13 +152,10 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains") && log.contains("3") && log.contains("life"));
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Can target a creature with Favor of the Woods")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DawntreaderElk());
         harness.setHand(player1, List.of(new FavorOfTheWoods()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -179,28 +167,26 @@ class FavorOfTheWoodsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Favor of the Woods")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.FountainOfYouth());
+        harness.addToBattlefield(player2, new DawntreaderElk());
+        harness.addToBattlefield(player1, new HeavyMattock());
         harness.setHand(player1, List.of(new FavorOfTheWoods()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Heavy Mattock");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Game log =====
-
     @Test
     @DisplayName("Favor of the Woods trigger generates appropriate game log entries")
     void triggerGeneratesLogEntries() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new DawntreaderElk());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
         attacker.setAttacking(true);
         attachFavorOfTheWoods(player2, creature);
 
@@ -213,28 +199,69 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gain") && log.contains("3") && log.contains("life"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @CardUsed(GuardianOfTheGateless.class)
+    @DisplayName("Blocking multiple attackers grants only 3 life")
+    void gainsLifeOnlyOnceWhenBlockingMultipleAttackers() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new GuardianOfTheGateless());
+        addCreatureReady(player1, new DawntreaderElk()).setAttacking(true);
+        addCreatureReady(player1, new DawntreaderElk()).setAttacking(true);
+        attachFavorOfTheWoods(player2, blocker);
 
-    private Permanent addReadyCreature(Player player, GrizzlyBears card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        declareBlockers(player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("Life gain resolves after the Aura leaves the battlefield")
+    void triggerResolvesAfterAuraLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new DawntreaderElk());
+        addCreatureReady(player1, new DawntreaderElk()).setAttacking(true);
+        Permanent aura = attachFavorOfTheWoods(player2, blocker);
+
+        declareBlockers(player2, List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+        gd.playerGraveyards.get(player2.getId()).add(aura.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
+    }
+
+
+    @Test
+    @DisplayName("Resolved Aura enchants an opponent's creature and triggers for its controller")
+    void resolvedAuraTriggersWhenOpponentsCreatureBlocks() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new DawntreaderElk());
+        Permanent attacker = addCreatureReady(player1, new DawntreaderElk());
+        harness.setHand(player1, List.of(new FavorOfTheWoods()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Favor of the Woods").getAttachedTo()).isEqualTo(blocker.getId());
+        attacker.setAttacking(true);
+        declareBlockers(player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     private Permanent attachFavorOfTheWoods(Player controller, Permanent target) {
-        FavorOfTheWoods card = new FavorOfTheWoods();
-        Permanent aura = new Permanent(card);
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new FavorOfTheWoods());
         aura.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 
     private void declareBlockers(Player player, List<BlockerAssignment> assignments) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player, assignments);
     }
 }

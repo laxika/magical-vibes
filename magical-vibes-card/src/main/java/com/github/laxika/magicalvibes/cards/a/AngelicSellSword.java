@@ -27,7 +27,8 @@ import java.util.Set;
 public class AngelicSellSword extends Card {
 
     public AngelicSellSword() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mercenaryToken());
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()), mercenaryToken()));
 

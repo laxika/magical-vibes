@@ -22,15 +22,12 @@ class FoulFamiliarTest extends BaseCardTest {
     @Test
     @DisplayName("Foul Familiar cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent familiar = addCreatureReady(player2, new FoulFamiliar());
+        addCreatureReady(player2, new FoulFamiliar());
 
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -94,5 +91,64 @@ class FoulFamiliarTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertOnBattlefield(player1, "Foul Familiar");
+    }
+    @Test
+    @DisplayName("Life is paid on activation, before Foul Familiar returns on resolution")
+    void paysLifeBeforeResolution() {
+        harness.addToBattlefield(player1, new FoulFamiliar());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 19);
+        harness.assertOnBattlefield(player1, "Foul Familiar");
+        harness.assertNotInHand(player1, "Foul Familiar");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInHand(player1, "Foul Familiar");
+        harness.assertNotOnBattlefield(player1, "Foul Familiar");
+    }
+
+    @Test
+    @DisplayName("A tapped Foul Familiar can activate the turn it enters")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new FoulFamiliar());
+        familiar.setTapped(true);
+        familiar.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Foul Familiar");
+        harness.assertNotOnBattlefield(player1, "Foul Familiar");
+    }
+
+    @Test
+    @DisplayName("Two activations pay twice but return the source only once")
+    void multipleActivationsDoNotReturnAnAbsentSource() {
+        harness.addToBattlefield(player1, new FoulFamiliar());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertNotOnBattlefield(player1, "Foul Familiar");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card instanceof FoulFamiliar)
+                .hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

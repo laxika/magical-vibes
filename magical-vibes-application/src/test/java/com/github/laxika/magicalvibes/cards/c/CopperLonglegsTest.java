@@ -39,7 +39,7 @@ class CopperLonglegsTest extends BaseCardTest {
     void sacrificesImmediatelyAndCanActivateWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new CopperLonglegs());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent chosen = addCreatureWithCounter(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

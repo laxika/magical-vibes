@@ -53,7 +53,7 @@ class BloodfireDwarfTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick dwarf can activate and is sacrificed before damage resolves")
     void sacrificesImmediatelyWithoutTapOrSummoningRestrictions() {
         Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new BloodfireDwarf());
-        dwarf.setTapped(true);
+        dwarf.tap();
         dwarf.setSummoningSick(true);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DwarvenPatrol());
         harness.setLife(player1, 20);

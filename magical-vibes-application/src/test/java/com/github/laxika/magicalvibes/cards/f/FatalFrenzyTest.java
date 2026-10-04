@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BloodKnight;
 import com.github.laxika.magicalvibes.cards.b.BruteForce;
-import com.github.laxika.magicalvibes.cards.f.FrozenAether;
+import com.github.laxika.magicalvibes.cards.e.Enslave;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatalFrenzy.class, BloodKnight.class, FrozenAether.class, BruteForce.class})
+@CardUsed({FatalFrenzy.class, BloodKnight.class, FrozenAether.class, BruteForce.class, Enslave.class})
 class FatalFrenzyTest extends BaseCardTest {
 
     @Test
@@ -32,8 +32,7 @@ class FatalFrenzyTest extends BaseCardTest {
         int basePower = gqs.getEffectivePower(gd, bears);
         int baseToughness = gqs.getEffectiveToughness(gd, bears);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         Permanent after = gqs.findPermanentById(gd, bears.getId());
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(basePower * 2);
@@ -73,15 +72,57 @@ class FatalFrenzyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BloodKnight());
 
         Permanent bears = findPermanent(player1, "Blood Knight");
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertOnBattlefield(player1, "Blood Knight");
 
         harness.passBothPriorities();
 
+        harness.assertOnBattlefield(player1, "Blood Knight");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
         harness.assertNotOnBattlefield(player1, "Blood Knight");
         harness.assertInGraveyard(player1, "Blood Knight");
+    }
+
+    @Test
+    @DisplayName("The delayed sacrifice ability has Fatal Frenzy as its source")
+    void delayedAbilityKeepsSpellSource() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BloodKnight());
+        harness.setHand(player1, List.of(new FatalFrenzy()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(FatalFrenzy.class);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice the creature after an opponent gains control")
+    void doesNotSacrificeCreatureUnderOpponentControl() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BloodKnight());
+        harness.setHand(player1, List.of(new FatalFrenzy()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.setHand(player2, List.of(new Enslave()));
+        harness.addMana(player2, ManaColor.BLACK, 6);
+        harness.castEnchantment(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Blood Knight");
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Blood Knight");
     }
 
     @Test

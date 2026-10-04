@@ -72,7 +72,7 @@ class CrimestopperSpriteTest extends BaseCardTest {
     void alreadyTappedCreatureStillReceivesStunCounterAndSkipsOneUntap() {
         harness.setGraveyard(player1, List.of(new NervousGardener(), new NervousGardener(), new NervousGardener()));
         Permanent target = harness.addToBattlefieldAndReturn(player2, new NervousGardener());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new CrimestopperSprite()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HulkingCyclops;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FireImp.class, GrizzlyBears.class})
+@CardUsed({FireImp.class, GrizzlyBears.class, HulkingCyclops.class})
 class FireImpTest extends BaseCardTest {
 
     @Test
@@ -55,9 +56,7 @@ class FireImpTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         assertThat(gd.stack).isEmpty();
-        Permanent survivor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent survivor = findPermanent(player2, "Grizzly Bears");
         assertThat(survivor.getMarkedDamage()).isEqualTo(2);
     }
 
@@ -115,5 +114,44 @@ class FireImpTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Fire Imp must target itself when it enters an otherwise empty battlefield")
+    void mustTargetItselfWhenOnlyCreature() {
+        harness.setHand(player1, List.of(new FireImp()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        UUID impId = harness.getPermanentId(player1, "Fire Imp");
+        harness.handlePermanentChosen(player1, impId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Fire Imp");
+        harness.assertInGraveyard(player1, "Fire Imp");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fire Imp still deals its triggered damage after leaving the battlefield")
+    void damageResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new HulkingCyclops());
+        harness.setHand(player1, List.of(new FireImp()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID targetId = harness.getPermanentId(player2, "Hulking Cyclops");
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent imp = findPermanent(player1, "Fire Imp");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, imp));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fire Imp");
+        assertThat(findPermanent(player2, "Hulking Cyclops").getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 }

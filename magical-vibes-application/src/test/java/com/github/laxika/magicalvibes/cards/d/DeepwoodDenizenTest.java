@@ -123,7 +123,9 @@ class DeepwoodDenizenTest extends BaseCardTest {
     @ValueSource(booleans = {false, true})
     void cannotActivateWhileTappedOrSummoningSick(boolean summoningSick) {
         Permanent denizen = addCreatureReady(player1, new DeepwoodDenizen());
-        denizen.setTapped(!summoningSick);
+        if (!summoningSick) {
+            denizen.tap();
+        }
         denizen.setSummoningSick(summoningSick);
         denizen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
         harness.addMana(player1, ManaColor.GREEN, 1);

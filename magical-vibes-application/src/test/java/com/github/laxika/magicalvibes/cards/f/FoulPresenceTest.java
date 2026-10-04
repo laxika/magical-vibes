@@ -132,6 +132,66 @@ class FoulPresenceTest extends BaseCardTest {
         assertThat(enchantedCreature.isTapped()).isTrue();
     }
 
+    @Test
+    void summoningSickCreatureCannotUseGrantedTapAbility() {
+        Permanent enchantedCreature = harness.addToBattlefieldAndReturn(player1, new PutridWarrior());
+        enchantedCreature.setSummoningSick(true);
+        addAttachedAura(enchantedCreature);
+        Permanent targetCreature = addCreatureReady(player2, new PutridWarrior());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(enchantedCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    void enchantedCreatureCanTargetItselfAndDie() {
+        Permanent enchantedCreature = addCreatureReady(player1, new PutridWarrior());
+        addAttachedAura(enchantedCreature);
+
+        harness.activateAbility(player1, 0, null, enchantedCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Putrid Warrior");
+        harness.assertInGraveyard(player1, "Putrid Warrior");
+        harness.assertNotOnBattlefield(player1, "Foul Presence");
+        harness.assertInGraveyard(player1, "Foul Presence");
+    }
+
+    @Test
+    void staticPenaltyKillsOneToughnessCreatureAndAuraGoesToGraveyard() {
+        Permanent creature = addCreatureReady(player2, new DegaDisciple());
+        harness.setHand(player1, List.of(new FoulPresence()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dega Disciple");
+        harness.assertInGraveyard(player2, "Dega Disciple");
+        harness.assertNotOnBattlefield(player1, "Foul Presence");
+        harness.assertInGraveyard(player1, "Foul Presence");
+    }
+
+    @Test
+    void activatedAbilityStillResolvesAfterAuraLeaves() {
+        Permanent enchantedCreature = addCreatureReady(player1, new PutridWarrior());
+        Permanent aura = addAttachedAura(enchantedCreature);
+        Permanent targetCreature = addCreatureReady(player2, new PutridWarrior());
+
+        harness.activateAbility(player1, 0, null, targetCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, enchantedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enchantedCreature)).isEqualTo(2);
+    }
+
     private Permanent addAttachedAura(Permanent enchantedCreature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FoulPresence());
         aura.setAttachedTo(enchantedCreature.getId());

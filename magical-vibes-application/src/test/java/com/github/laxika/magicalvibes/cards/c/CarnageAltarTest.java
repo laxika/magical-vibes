@@ -94,8 +94,8 @@ class CarnageAltarTest extends BaseCardTest {
     void canActivateWithTappedPermanents() {
         harness.addToBattlefield(player1, new CarnageAltar());
         harness.addToBattlefield(player1, new StoneworkPuma());
-        findPermanent(player1, "Carnage Altar").setTapped(true);
-        findPermanent(player1, "Stonework Puma").setTapped(true);
+        findPermanent(player1, "Carnage Altar").tap();
+        findPermanent(player1, "Stonework Puma").tap();
         findPermanent(player1, "Stonework Puma").setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setHand(player1, List.of());

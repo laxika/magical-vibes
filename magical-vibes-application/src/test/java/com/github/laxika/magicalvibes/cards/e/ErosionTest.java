@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
-import com.github.laxika.magicalvibes.cards.m.MazeOfIth;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.o.Oasis;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,10 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Erosion.class, MazeOfIth.class, BogImp.class})
+@CardUsed({Erosion.class, Oasis.class, BogImp.class, Disenchant.class})
 class ErosionTest extends BaseCardTest {
-
-    // ===== Targeting =====
 
     @Test
     @DisplayName("Can enchant a land with Erosion")
@@ -66,8 +65,6 @@ class ErosionTest extends BaseCardTest {
                         && p.getAttachedTo().equals(land.getId()));
     }
 
-    // ===== Upkeep pay-or-destroy =====
-
     @Test
     @DisplayName("Enchanted land's controller may pay {1} to save the land")
     void paysManaToSaveLand() {
@@ -82,7 +79,7 @@ class ErosionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player2, "Pay {1}");
 
-        assertThat(landIsPresent(player2, land.getId())).isTrue();
+        harness.assertOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
     }
@@ -100,7 +97,7 @@ class ErosionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(landIsPresent(player2, land.getId())).isTrue();
+        harness.assertOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
@@ -118,7 +115,7 @@ class ErosionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player2, "Pay 1 life");
 
-        assertThat(landIsPresent(player2, land.getId())).isTrue();
+        harness.assertOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
@@ -134,7 +131,7 @@ class ErosionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger -> prompt
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(landIsPresent(player2, land.getId())).isFalse();
+        harness.assertNotOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
 
@@ -152,7 +149,7 @@ class ErosionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player2, "Pay 1 life");
 
-        assertThat(landIsPresent(player2, land.getId())).isTrue();
+        harness.assertOnBattlefield(player2, "Oasis");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
@@ -166,10 +163,65 @@ class ErosionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(landIsPresent(player2, land.getId())).isTrue();
+        harness.assertOnBattlefield(player2, "Oasis");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Removing Erosion in response does not stop its upkeep ability")
+    void removingAuraDoesNotStopUpkeepAbility() {
+        Permanent land = addLand(player2);
+        attachErosion(land);
+        UUID erosionId = harness.getPermanentId(player1, "Erosion");
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castInstant(player2, 0, erosionId);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Erosion");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Oasis");
+        harness.assertInGraveyard(player2, "Oasis");
+    }
+
+    @Test
+    @DisplayName("Controller may decline even when both payment alternatives are available")
+    void declinesWhenBothPaymentsAreAvailable() {
+        Permanent land = addLand(player2);
+        attachErosion(land);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Don't pay");
+
+        harness.assertNotOnBattlefield(player2, "Oasis");
+        harness.assertInGraveyard(player2, "Oasis");
+        harness.assertInGraveyard(player1, "Erosion");
+        harness.assertLife(player2, lifeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Erosion triggers on its controller's upkeep when enchanting their own land")
+    void triggersForOwnLand() {
+        Permanent land = addLand(player1);
+        attachErosion(land);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Oasis");
+        harness.assertLife(player1, lifeBefore - 1);
+    }
 
     private void attachErosion(Permanent land) {
         Permanent erosion = harness.addToBattlefieldAndReturn(player1, new Erosion());
@@ -177,11 +229,7 @@ class ErosionTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new MazeOfIth());
+        return harness.addToBattlefieldAndReturn(player, new Oasis());
     }
 
-    private boolean landIsPresent(Player player, UUID landId) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .anyMatch(p -> p.getId().equals(landId));
-    }
 }

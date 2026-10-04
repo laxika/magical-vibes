@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.e.Entangler;
 import com.github.laxika.magicalvibes.cards.s.SporeFrog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FickleEfreet.class, SporeFrog.class})
+@CardUsed({FickleEfreet.class, SporeFrog.class, Entangler.class})
 class FickleEfreetTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,10 @@ class FickleEfreetTest extends BaseCardTest {
     void attackingFlipsAtEndOfCombat() {
         Permanent efreet = addCreatureReady(player1, new FickleEfreet());
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(coinFlipLogs()).isEmpty();
 
@@ -71,8 +75,10 @@ class FickleEfreetTest extends BaseCardTest {
     void delayedFlipSurvivesSourceLeaving() {
         Permanent efreet = addCreatureReady(player1, new FickleEfreet());
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
         gd.playerBattlefields.get(player1.getId()).remove(efreet);
 
         prepareDeclareBlockers();
@@ -81,6 +87,65 @@ class FickleEfreetTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(coinFlipLogs()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Blocking multiple creatures creates only one delayed coin flip")
+    void blockingMultipleCreaturesFlipsOnlyOnce() {
+        Permanent firstAttacker = addCreatureReady(player1, new SporeFrog());
+        Permanent secondAttacker = addCreatureReady(player1, new SporeFrog());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+        Permanent efreet = addCreatureReady(player2, new FickleEfreet());
+        Permanent entangler = harness.addToBattlefieldAndReturn(player2, new Entangler());
+        entangler.setAttachedTo(efreet.getId());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(
+                    new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+            resolveAllTriggers();
+        });
+        assertThat(coinFlipLogs()).isEmpty();
+
+        gd.playerBattlefields.get(player2.getId()).remove(efreet);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(coinFlipLogs()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The delayed trigger uses the original controller after control changes")
+    void controlChangeDoesNotChangeWhoFlips() {
+        Permanent efreet = addCreatureReady(player1, new FickleEfreet());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        gd.playerBattlefields.get(player1.getId()).remove(efreet);
+        gd.playerBattlefields.get(player2.getId()).add(efreet);
+        gd.stolenCreatures.put(efreet.getId(), player1.getId());
+        efreet.setAttacking(false);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(coinFlipLogs()).hasSize(1);
+        assertThat(coinFlipLogs().getFirst()).startsWith(gd.playerIdToName.get(player1.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(efreet);
+    }
+
+    @Test
+    @DisplayName("Leaving before the attack trigger resolves still schedules a coin flip")
+    void sourceLeavesBeforeAttackTriggerResolves() {
+        Permanent efreet = addCreatureReady(player1, new FickleEfreet());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        gd.playerBattlefields.get(player1.getId()).remove(efreet);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(coinFlipLogs()).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(efreet);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(efreet);
     }
 
     private List<String> coinFlipLogs() {

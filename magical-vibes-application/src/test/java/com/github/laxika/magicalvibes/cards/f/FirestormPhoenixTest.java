@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(FirestormPhoenix.class)
+@CardUsed({FirestormPhoenix.class, Humility.class})
 class FirestormPhoenixTest extends BaseCardTest {
 
     @Test
@@ -96,6 +97,45 @@ class FirestormPhoenixTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phoenix);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(phoenixCard);
         assertThat(gd.playerHands.get(player2.getId())).contains(phoenixCard);
+    }
+
+    @Test
+    @DisplayName("A Phoenix that has lost its abilities dies normally")
+    void doesNotReturnToHandAfterLosingAbilities() {
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new FirestormPhoenix());
+        harness.addToBattlefield(player2, new Humility());
+
+        phoenix.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phoenix);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(phoenix.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(phoenix.getCard());
+    }
+
+    @Test
+    @DisplayName("The returned Phoenix stays revealed throughout the intervening opponent turn")
+    void revealEndsOnlyAtOwnersNextTurn() {
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new FirestormPhoenix());
+        Card returnedPhoenix = phoenix.getCard();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        killPhoenix(phoenix);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.clearMessages();
+        harness.publishState();
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\":[")
+                        && message.contains(returnedPhoenix.getId().toString()));
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.clearMessages();
+        harness.publishState();
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains(returnedPhoenix.getId().toString()));
+        assertThat(gd.playerHands.get(player1.getId())).contains(returnedPhoenix);
     }
 
     private void killPhoenix(Permanent phoenix) {

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,12 +67,7 @@ class ErrantryTest extends BaseCardTest {
         attachErrantry(bears);
         addCreatureReady(player1, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0, 2)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0, 2)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only attack alone");
     }
@@ -118,6 +112,45 @@ class ErrantryTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThatCode(() -> declareAttackers(List.of(0, 1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Other creatures can attack together while the enchanted creature stays back")
+    void otherCreaturesCanAttackWithoutEnchantedCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        attachErrantry(bears);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(2, 3));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted creature must also attack alone")
+    void opponentsCreatureCannotAttackWithAnother() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        attachErrantry(bears);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only attack alone");
+    }
+
+    @Test
+    @DisplayName("Multiple Errantry bonuses stack on the enchanted creature")
+    void multipleErrantryBonusesStack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        attachErrantry(bears);
+        attachErrantry(bears);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
 
     private Permanent attachErrantry(Permanent creature) {

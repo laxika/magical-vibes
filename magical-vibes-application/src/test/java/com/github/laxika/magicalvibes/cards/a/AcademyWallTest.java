@@ -100,13 +100,13 @@ class AcademyWallTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AcademyWall());
         harness.setHand(player1, List.of(new GrizzlyBears(), new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 

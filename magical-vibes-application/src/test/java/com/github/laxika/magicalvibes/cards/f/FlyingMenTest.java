@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlyingMen.class, Squire.class})
+@CardUsed({FlyingMen.class, Squire.class, GiantSpider.class})
 class FlyingMenTest extends BaseCardTest {
 
     @Test
@@ -34,6 +35,32 @@ class FlyingMenTest extends BaseCardTest {
     @DisplayName("Flying still allows a creature with flying to block Flying Men")
     void flyingAllowsFlyingCreatureToBlock() {
         addCreatureReady(player1, new FlyingMen());
+        Permanent blocker = addCreatureReady(player2, new FlyingMen());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach allows a non-flying creature to block Flying Men")
+    void reachAllowsCreatureToBlock() {
+        addCreatureReady(player1, new FlyingMen());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flying Men can block a creature without flying")
+    void flyingCreatureCanBlockGroundCreature() {
+        addCreatureReady(player1, new Squire());
         Permanent blocker = addCreatureReady(player2, new FlyingMen());
 
         declareAttackersAndPrepareBlockers(List.of(0));

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FaithfulDisciple.class, Shock.class, AnointedProcession.class, CatharsCrusade.class,
         AuthorityOfTheConsuls.class, SigilOfTheEmptyThrone.class, AllThatGlitters.class,
@@ -40,8 +41,7 @@ class FaithfulDiscipleTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, disciple.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, disciple.getId());
         harness.passBothPriorities();
 
         PendingInteraction.SpellbookDraftChoice choice =
@@ -54,5 +54,59 @@ class FaithfulDiscipleTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
         harness.assertInGraveyard(player1, "Faithful Disciple");
+    }
+
+    @Test
+    void opponentControlledDiscipleDraftsForItsControllerWithoutUsingTheirLibrary() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player2, new FaithfulDisciple());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new FaithfulDisciple()));
+        var libraryBefore = List.copyOf(gd.playerDecks.get(player2.getId()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, disciple.getId());
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards().stream().map(card -> card.getName()).toList()).doesNotHaveDuplicates();
+        var drafted = choice.cards().getLast();
+
+        harness.handleMultipleCardsChosen(player2, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drafted);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(libraryBefore);
+        harness.assertInGraveyard(player2, "Faithful Disciple");
+    }
+
+    @Test
+    void draftingRequiresExactlyOneOfTheOfferedCards() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new FaithfulDisciple());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, disciple.getId());
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(choice.cards().get(0).getId(), choice.cards().get(1).getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(choice.cards().getFirst().getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class))
+                .isEqualTo(choice);
+
+        var drafted = choice.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
     }
 }

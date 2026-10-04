@@ -68,7 +68,7 @@ class CatWarriorsTest extends BaseCardTest {
     @DisplayName("Forestwalk still prevents blocking when the defending Forest is tapped")
     void tappedForestStillPreventsBlocking() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent cat = addCreatureReady(player1, new CatWarriors());
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);

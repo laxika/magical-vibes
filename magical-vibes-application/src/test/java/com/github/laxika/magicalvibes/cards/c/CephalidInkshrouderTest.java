@@ -109,7 +109,7 @@ class CephalidInkshrouderTest extends BaseCardTest {
     void discardIsPaidBeforeResolution() {
         Permanent inkshrouder = harness.addToBattlefieldAndReturn(player1, new CephalidInkshrouder());
         inkshrouder.setSummoningSick(true);
-        inkshrouder.setTapped(true);
+        inkshrouder.tap();
         harness.setHand(player1, List.of(new GuidedStrike()));
 
         harness.activateAbility(player1, 0, null, null);

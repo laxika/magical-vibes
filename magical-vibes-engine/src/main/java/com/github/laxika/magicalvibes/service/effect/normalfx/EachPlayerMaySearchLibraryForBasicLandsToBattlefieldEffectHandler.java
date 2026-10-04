@@ -45,6 +45,9 @@ public class EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffectHandler i
                 .map(playerId -> new LibrarySearchFollowUp.BasicLandsPick(playerId, count, search.enterTapped()))
                 .toList();
 
-        basicLandSearchQueueSupport.advance(gameData, LibrarySearchFollowUp.basicLandSearches(picks, List.of()));
+        LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of());
+        followUp = followUp.withBasicLandSearchQueue(
+                followUp.basicLandSearchQueue().withOptionalSearch(search.optionalSearch()));
+        basicLandSearchQueueSupport.advance(gameData, followUp);
     }
 }

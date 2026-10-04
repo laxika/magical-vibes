@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JibbirikOmnivore;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FangDruidSummoner.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({FangDruidSummoner.class, GrizzlyBears.class, LlanowarElves.class, JibbirikOmnivore.class, Forest.class})
 class FangDruidSummonerTest extends BaseCardTest {
 
     @Test
@@ -86,6 +87,87 @@ class FangDruidSummonerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creatureWithAbility);
     }
 
+    @Test
+    @DisplayName("Declining the search leaves both zones untouched")
+    void decliningSearchLeavesBothZonesUntouched() {
+        Card libraryCreature = new JibbirikOmnivore();
+        Card graveyardCreature = new JibbirikOmnivore();
+        setLibrary(libraryCreature);
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        setupAndCast();
+
+        resolveMay(false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCreature);
+    }
+
+    @Test
+    @DisplayName("A library search may fail to find even when a matching card is available")
+    void mayFailToFindInLibrary() {
+        Card libraryCreature = new JibbirikOmnivore();
+        setLibrary(libraryCreature);
+        harness.setGraveyard(player1, List.of());
+        setupAndCast();
+
+        resolveMay(true);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCreature);
+    }
+
+    @Test
+    @DisplayName("The search excludes graveyard creatures with abilities and opponents' cards")
+    void excludesGraveyardAbilitiesAndOpponentsCards() {
+        Card ownCreature = new JibbirikOmnivore();
+        Card abilityCreature = new FangDruidSummoner();
+        Card opposingCreature = new JibbirikOmnivore();
+        setLibrary();
+        harness.setGraveyard(player1, List.of(abilityCreature, ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setLibrary(player2, List.of(new JibbirikOmnivore()));
+        setupAndCast();
+
+        resolveMay(true);
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(abilityCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    @DisplayName("Noncreature cards are excluded from both search zones")
+    void excludesNoncreaturesFromBothZones() {
+        Card libraryLand = new Forest();
+        Card graveyardLand = new Forest();
+        Card creature = new JibbirikOmnivore();
+        setLibrary(libraryLand, creature);
+        harness.setGraveyard(player1, List.of(graveyardLand));
+        setupAndCast();
+
+        resolveMay(true);
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryLand);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardLand);
+    }
+
     private void setupAndCast() {
         harness.setHand(player1, List.of(new FangDruidSummoner()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -103,7 +185,6 @@ class FangDruidSummonerTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }

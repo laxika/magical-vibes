@@ -18,11 +18,7 @@ class EmberethPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with a +1/+1 counter when at least three red mana is spent")
     void entersWithCounterWhenThreeRedManaIsSpent() {
-        harness.setHand(player1, List.of(new EmberethPaladin()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EmberethPaladin(), "{1}{R}{R}{R}");
         harness.passBothPriorities();
 
         Permanent paladin = findPermanent(player1, "Embereth Paladin");
@@ -32,14 +28,46 @@ class EmberethPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Does not enter with a counter when fewer than three red mana is spent")
     void doesNotEnterWithCounterWhenFewerThanThreeRedManaIsSpent() {
-        harness.setHand(player1, List.of(new EmberethPaladin()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EmberethPaladin(), "{2}{R}{R}");
         harness.passBothPriorities();
 
         Permanent paladin = findPermanent(player1, "Embereth Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Four red mana gives exactly one counter as it enters without a trigger")
+    void entersWithOneCounterWhenFourRedManaIsSpent() {
+        harness.castFromHand(player1, new EmberethPaladin(), "{R}{R}{R}{R}");
+        harness.passBothPriorities();
+
+        Permanent paladin = findPermanent(player1, "Embereth Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Red mana added after casting does not satisfy adamant")
+    void redManaInPoolDoesNotCountAsManaSpent() {
+        harness.castFromHand(player1, new EmberethPaladin(), "{3}{R}");
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.passBothPriorities();
+
+        Permanent paladin = findPermanent(player1, "Embereth Paladin");
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can attack on the turn it enters even without adamant")
+    void canAttackOnTheTurnItEntersWithoutAdamant() {
+        harness.castFromHand(player1, new EmberethPaladin(), "{3}{R}");
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        Permanent paladin = findPermanent(player1, "Embereth Paladin");
+        assertThat(paladin.isTapped()).isTrue();
+        assertThat(paladin.isAttacking()).isTrue();
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

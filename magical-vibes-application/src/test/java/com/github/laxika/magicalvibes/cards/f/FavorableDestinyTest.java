@@ -146,6 +146,54 @@ class FavorableDestinyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Nonwhite enchanted creature gains shroud independently of the white-only boost")
+    void nonWhiteCreatureGainsShroud() {
+        Permanent brushwagg = addCreatureReady(player1, new Brushwagg());
+        attach(player1, brushwagg);
+        addCreatureReady(player1, new EkunduGriffin());
+
+        assertThat(gqs.hasKeyword(gd, brushwagg, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, brushwagg)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, brushwagg)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolving Favorable Destiny grants shroud without making its attachment illegal")
+    void resolvingGrantsShroudAndAuraStaysAttached() {
+        Permanent griffin = addCreatureReady(player1, new EkunduGriffin());
+        Permanent other = addCreatureReady(player1, new Brushwagg());
+        harness.setHand(player1, List.of(new FavorableDestiny()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, griffin.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        Permanent aura = findPermanent(player1, "Favorable Destiny");
+        assertThat(aura.getAttachedTo()).isEqualTo(griffin.getId());
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Granted shroud prevents the creature's controller from targeting it")
+    void grantedShroudPreventsControllerTargeting() {
+        Permanent griffin = addCreatureReady(player1, new EkunduGriffin());
+        attach(player1, griffin);
+        addCreatureReady(player1, new Brushwagg());
+        harness.setHand(player1, List.of(new FavorableDestiny()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, griffin.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
     private Permanent attach(com.github.laxika.magicalvibes.model.Player controller, Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new FavorableDestiny());
         aura.setAttachedTo(creature.getId());

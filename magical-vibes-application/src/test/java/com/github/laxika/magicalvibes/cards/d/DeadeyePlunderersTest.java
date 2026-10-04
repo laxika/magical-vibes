@@ -97,7 +97,7 @@ class DeadeyePlunderersTest extends BaseCardTest {
         @Test
         void canActivateRepeatedlyWhileTappedOnOpponentsTurn() {
             Permanent plunderers = harness.addToBattlefieldAndReturn(player1, new DeadeyePlunderers());
-            plunderers.setTapped(true);
+            plunderers.tap();
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.addMana(player1, ManaColor.BLUE, 2);
@@ -173,7 +173,7 @@ class DeadeyePlunderersTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
             Permanent treasure = findPermanent(player1, "Treasure");
-            treasure.setTapped(true);
+            treasure.tap();
 
             assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
                     .isInstanceOf(IllegalStateException.class);

@@ -52,7 +52,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
 
         List<Card> matching = gameData.exiledCards.stream()
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId())
-                        && controllerId.equals(e.ownerId()))
+                        && (returnEffect.toOwnersHand() || controllerId.equals(e.ownerId())))
                 .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
                 .filter(c -> (requiredName == null || requiredName.equals(c.getName()))
                         && (filter == null || predicateEvaluationService.matchesCardPredicate(
@@ -68,15 +68,20 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
         // decision to make — take the first without prompting.
         if (matching.size() == 1 || requiredName != null) {
             Card card = matching.getFirst();
+            UUID destinationId = returnEffect.toOwnersHand() ? gameData.exiledCards.stream()
+                    .filter(exiled -> exiled.card().getId().equals(card.getId()))
+                    .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::ownerId).findFirst().orElse(controllerId)
+                    : controllerId;
             gameData.removeFromExile(card.getId());
-            gameData.addCardToHand(controllerId, card);
+            gameData.addCardToHand(destinationId, card);
             gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " from exile into their hand."));
             log.info("Game {} - {} returns {} from exile ({}) to hand",
                     gameData.id, controllerName, card.getName(), sourceName);
             return;
         }
 
-        gameData.queueInteraction(new PendingReturnExiledWithSourceCard());
+        gameData.queueInteraction(new PendingReturnExiledWithSourceCard(
+                false, null, null, false, false, false, null, returnEffect.toOwnersHand()));
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,

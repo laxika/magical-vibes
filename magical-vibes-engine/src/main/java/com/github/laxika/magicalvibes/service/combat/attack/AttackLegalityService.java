@@ -230,6 +230,9 @@ public class AttackLegalityService {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent grantor : bf) {
+                if (grantor.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, grantor)) {
+                    continue;
+                }
                 for (CardEffect effect : grantor.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof NoDefenderAttackPermissionEffect grant
                             && grant.noDefenderAttackMatcher() != null
@@ -572,9 +575,7 @@ public class AttackLegalityService {
         if (targetIsPlayer) {
             return attacker.getOriginalCard().getOwnerId().equals(targetId);
         }
-        return targetPermanent != null
-                && targetPermanent.getCard().hasType(CardType.PLANESWALKER)
-                && attacker.getOriginalCard().getOwnerId().equals(protectedPlayerId);
+        return false;
     }
 
     private boolean isAttackTargetRestricted(GameData gameData, Permanent target) {
@@ -740,6 +741,7 @@ public class AttackLegalityService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect) {
                         return true;

@@ -50,6 +50,7 @@ class FabricationFoundryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -80,7 +81,139 @@ class FabricationFoundryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(mindStone.getCard().getId(), ornithopter.getCard().getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(permanent -> permanent.getCard().getId().equals(target.getId()))).isTrue();
+        harness.assertOnBattlefield(player1, "Prophetic Prism");
+    }
+
+    @Test
+    void restrictedManaPaysForArtifactAbility() {
+        harness.addToBattlefield(player1, new FabricationFoundry());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mind Stone");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyMana(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    void zeroManaValueArtifactCanPayCostAndReturnZeroManaValueTarget() {
+        harness.addToBattlefield(player1, new FabricationFoundry());
+        Permanent material = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD);
+        harness.handleMultiplePermanentsChosen(player1, List.of(material.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactly(material.getCard().getId());
+    }
+
+    @Test
+    void selectedCostMustCoverTargetManaValue() {
+        harness.addToBattlefield(player1, new FabricationFoundry());
+        Permanent star = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        Card target = new MindStone();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(star.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(stone.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Chromatic Star");
+        harness.assertOnBattlefield(player1, "Mind Stone");
+    }
+
+    @Test
+    void cannotExileFoundryOrOpponentsArtifact() {
+        Permanent foundry = harness.addToBattlefieldAndReturn(player1, new FabricationFoundry());
+        Permanent material = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(foundry.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(opponentArtifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(material.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Fabrication Foundry");
+        harness.assertOnBattlefield(player2, "Mind Stone");
+    }
+
+    @Test
+    void returnAbilityCannotBeActivatedDuringCombat() {
+        harness.addToBattlefield(player1, new FabricationFoundry());
+        harness.addToBattlefield(player1, new MindStone());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Mind Stone");
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    void cannotReturnArtifactFromOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new FabricationFoundry());
+        harness.addToBattlefield(player1, new MindStone());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    void cannotReturnNonartifactCard() {
+        harness.addToBattlefield(player1, new FabricationFoundry());
+        harness.addToBattlefield(player1, new MindStone());
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }

@@ -97,7 +97,7 @@ class DeadlyDisputeTest extends BaseCardTest {
     @DisplayName("Draw and Treasure creation wait for resolution after sacrificing a tapped creature")
     void drawsAndCreatesTreasureOnlyOnResolution() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new DeadlyDispute()));
         harness.setLibrary(player1, List.of(new SpareDagger(), new PaladinClass()));
         addMana();

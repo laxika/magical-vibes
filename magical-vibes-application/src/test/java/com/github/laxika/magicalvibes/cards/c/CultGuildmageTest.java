@@ -195,7 +195,7 @@ class CultGuildmageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         guildmage.setSummoningSick(false);
-        guildmage.setTapped(true);
+        guildmage.tap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))

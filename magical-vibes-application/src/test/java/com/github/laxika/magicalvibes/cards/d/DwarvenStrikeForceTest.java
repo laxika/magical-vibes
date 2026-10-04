@@ -20,9 +20,8 @@ class DwarvenStrikeForceTest extends BaseCardTest {
     @Test
     @DisplayName("Ability discards a card at random and grants first strike and haste")
     void discardsAndGrantsKeywords() {
-        harness.addToBattlefield(player1, new DwarvenStrikeForce());
+        Permanent force = harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce());
         harness.setHand(player1, List.of(new Forest()));
-        Permanent force = findPermanent(player1, "Dwarven Strike Force");
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(force), null, null);
         harness.passBothPriorities();
@@ -36,9 +35,8 @@ class DwarvenStrikeForceTest extends BaseCardTest {
     @Test
     @DisplayName("Granted keywords wear off at end of turn")
     void keywordsWearOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new DwarvenStrikeForce());
+        Permanent force = harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce());
         harness.setHand(player1, List.of(new Forest()));
-        Permanent force = findPermanent(player1, "Dwarven Strike Force");
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(force), null, null);
         harness.passBothPriorities();
@@ -54,11 +52,11 @@ class DwarvenStrikeForceTest extends BaseCardTest {
     @Test
     @DisplayName("Ability grants keywords only to the creature it is activated from")
     void onlySourceCreatureGainsKeywords() {
-        harness.addToBattlefield(player1, new DwarvenStrikeForce());
-        harness.addToBattlefield(player1, new DwarvenStrikeForce());
+        List<Permanent> forces = List.of(
+                harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce()),
+                harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce()));
         harness.setHand(player1, List.of(new Forest()));
 
-        List<Permanent> forces = findPermanents(player1, "Dwarven Strike Force");
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forces.get(0)), null, null);
         harness.passBothPriorities();
 
@@ -71,12 +69,54 @@ class DwarvenStrikeForceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with an empty hand")
     void cannotActivateWithEmptyHand() {
-        harness.addToBattlefield(player1, new DwarvenStrikeForce());
+        Permanent force = harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce());
         harness.setHand(player1, List.of());
-        Permanent force = findPermanent(player1, "Dwarven Strike Force");
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(force), null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void discardIsPaidBeforeKeywordsAreGranted() {
+        Permanent force = harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setHand(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst()).isIn(first, second);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .doesNotContain(gd.playerGraveyards.get(player1.getId()).getFirst());
+        assertThat(gqs.hasKeyword(gd, force, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, force, Keyword.HASTE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, force, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, force, Keyword.HASTE)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void tappedCreatureCanActivateRepeatedlyByPayingEachTime() {
+        Permanent force = harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce());
+        force.setTapped(true);
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(force.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gqs.hasKeyword(gd, force, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, force, Keyword.HASTE)).isTrue();
     }
 }

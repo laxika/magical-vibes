@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.IntensifyNamedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -35,7 +36,7 @@ public class AwestruckCygnet extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
-                        new ConditionalEffect(new NotCondition(TRANSFORM_THRESHOLD),
+                        new ConditionalEffect(new SourceMatchesPermanentPredicate(new PermanentNamedPredicate(CARD_NAME)),
                                 new IntensifyNamedCardsEffect(CARD_NAME))));
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(TRANSFORM_THRESHOLD,

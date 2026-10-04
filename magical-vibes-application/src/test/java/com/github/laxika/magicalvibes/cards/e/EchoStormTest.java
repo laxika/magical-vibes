@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.ArcanisTheOmnipotent;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EchoStorm.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({EchoStorm.class, FountainOfYouth.class, GrizzlyBears.class, ArcanisTheOmnipotent.class})
 class EchoStormTest extends BaseCardTest {
 
     @Test
@@ -32,7 +33,7 @@ class EchoStormTest extends BaseCardTest {
     @Test
     void copiesSpellForEachCommanderCastFromCommandZone() {
         Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
-        Card commander = new GrizzlyBears();
+        Card commander = new ArcanisTheOmnipotent();
         gd.makeCommander(player1.getId(), commander);
         gd.commanderTaxByCardId.put(commander.getId(), 2);
 
@@ -47,7 +48,7 @@ class EchoStormTest extends BaseCardTest {
     void mayChooseNewTargetForCommanderCopy() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
-        Card commander = new GrizzlyBears();
+        Card commander = new ArcanisTheOmnipotent();
         gd.makeCommander(player1.getId(), commander);
         gd.commanderTaxByCardId.put(commander.getId(), 2);
 
@@ -75,6 +76,64 @@ class EchoStormTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact");
     }
 
+    @Test
+    void countsCommanderCastsWhenCastTriggerResolves() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Card commander = new ArcanisTheOmnipotent();
+        gd.makeCommander(player1.getId(), commander);
+        harness.setHand(player1, List.of(new EchoStorm()));
+        addMana();
+        harness.castSorcery(player1, 0, fountain.getId());
+
+        // Model a commander cast recorded while the cast trigger is still on the stack.
+        gd.commanderTaxByCardId.put(commander.getId(), 2);
+        resolveRemainingStack();
+
+        assertThat(findPermanents(player1, "Fountain of Youth")).filteredOn(p -> p.getCard().isToken())
+                .hasSize(2);
+    }
+
+    @Test
+    void createsOneCopyForEveryPriorCommanderCast() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Card commander = new ArcanisTheOmnipotent();
+        gd.makeCommander(player1.getId(), commander);
+        gd.commanderTaxByCardId.put(commander.getId(), 6);
+
+        cast(fountain.getId());
+
+        assertThat(findPermanents(player1, "Fountain of Youth")).filteredOn(p -> p.getCard().isToken())
+                .hasSize(4);
+    }
+
+    @Test
+    void copiesOpponentsTappedArtifactUnderSpellControllersControlUntapped() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        fountain.setTapped(true);
+
+        cast(fountain.getId());
+
+        assertThat(findPermanents(player1, "Fountain of Youth")).singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.isTapped()).isFalse();
+                });
+        assertThat(findPermanents(player2, "Fountain of Youth")).containsExactly(fountain);
+    }
+
+    @Test
+    void createsNoTokenIfTargetLeavesBeforeResolution() {
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new EchoStorm()));
+        addMana();
+        harness.castSorcery(player1, 0, fountain.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(fountain);
+        resolveRemainingStack();
+
+        assertThat(findPermanents(player1, "Fountain of Youth")).isEmpty();
+        harness.assertInGraveyard(player1, "Echo Storm");
+    }
+
     private void cast(UUID targetId) {
         harness.setHand(player1, List.of(new EchoStorm()));
         addMana();
@@ -92,7 +151,7 @@ class EchoStormTest extends BaseCardTest {
             if (gd.interaction.isAwaitingInput()) {
                 harness.handleMayAbilityChosen(player1, false);
             } else {
-                harness.passBothPriorities();
+                resolveAllTriggers();
             }
         }
     }

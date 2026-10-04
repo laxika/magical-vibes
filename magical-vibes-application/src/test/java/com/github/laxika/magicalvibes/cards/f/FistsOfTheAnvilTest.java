@@ -68,8 +68,7 @@ class FistsOfTheAnvilTest extends BaseCardTest {
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(0);
@@ -181,6 +180,39 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bearId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Cannot cast without red mana")
+    void cannotCastWithoutRedMana() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FistsOfTheAnvil()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bear.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("An end-step boost expires before the next turn's upkeep")
+    void endStepBoostExpiresAtCleanup() {
+        setupBearAndFists();
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.castAndResolveInstant(player1, 0, bearId);
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(6);
+        assertThat(otherBear.getEffectivePower()).isEqualTo(2);
+        assertThat(otherBear.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Fists of the Anvil");
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test

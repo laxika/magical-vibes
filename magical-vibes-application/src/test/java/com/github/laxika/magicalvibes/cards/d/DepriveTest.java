@@ -90,7 +90,7 @@ class DepriveTest extends BaseCardTest {
         Island land = new Island();
         land.setOwnerId(player1.getId());
         Permanent island = harness.addToBattlefieldAndReturn(player2, land);
-        island.setTapped(true);
+        island.tap();
         GrizzlyBears spell = new GrizzlyBears();
         harness.castFromHand(player1, spell, "{1}{G}");
         harness.setHand(player2, List.of(new Deprive()));

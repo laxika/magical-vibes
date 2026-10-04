@@ -372,11 +372,40 @@ public class GameQueryService {
             CardSubtype.PLAN,
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,
+            CardSubtype.INCUBATOR,
+            CardSubtype.MUTAGEN,
             CardSubtype.ASSASSIN_OR_FREERUNNING,
             CardSubtype.OUTLAW,
             CardSubtype.AJANI,
             CardSubtype.KOTH,
-            CardSubtype.BOLAS
+            CardSubtype.BOLAS,
+            CardSubtype.BLOOD,
+            CardSubtype.BOBBLEHEAD,
+            CardSubtype.BOOK,
+            CardSubtype.CLUE,
+            CardSubtype.FOOD,
+            CardSubtype.JUNK,
+            CardSubtype.LANDER,
+            CardSubtype.MAP,
+            CardSubtype.POWERSTONE,
+            CardSubtype.SPACECRAFT,
+            CardSubtype.TREASURE,
+            CardSubtype.VEHICLE,
+            CardSubtype.CARTOUCHE,
+            CardSubtype.CURSE,
+            CardSubtype.ROLE,
+            CardSubtype.ROOM,
+            CardSubtype.RUNE,
+            CardSubtype.SAGA,
+            CardSubtype.SHARD,
+            CardSubtype.SHRINE,
+            CardSubtype.LESSON,
+            CardSubtype.OMEN,
+            CardSubtype.TRAP,
+            CardSubtype.SIEGE,
+            CardSubtype.PLANET,
+            CardSubtype.MIRRODIN,
+            CardSubtype.SERRAS_REALM
     );
     public static final List<String> TEXT_CHANGE_CREATURE_TYPES = Arrays.stream(CardSubtype.values())
             .filter(subtype -> !NON_CREATURE_SUBTYPES.contains(subtype))
@@ -384,6 +413,7 @@ public class GameQueryService {
             .toList();
 
     static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());
         NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
     }
 
@@ -655,6 +685,7 @@ public class GameQueryService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         for (Permanent perm : bf) {
+            if (perm.isFaceDown() || hasLostPrintedAbilities(gameData, perm)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 GrantControllerKeywordEffect grant = null;
                 if (effect instanceof GrantControllerKeywordEffect directGrant) {
@@ -800,26 +831,18 @@ public class GameQueryService {
     /** Returns whether a permanent has a subtype after continuous effects are applied. */
     public boolean hasEffectiveSubtype(GameData gameData, Permanent permanent, CardSubtype subtype) {
         if (gameData == null) {
-            return permanent.getCard().getSubtypes().contains(subtype)
-                    || permanent.getTransientSubtypes().contains(subtype)
-                    || permanent.getGrantedSubtypes().contains(subtype);
+            return permanentHasSubtype(permanent, subtype);
         }
         CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
         if (activeState != null) {
-            return activeState.hasSubtype(subtype)
-                    || (isCreatureSubtype(subtype) && !permanent.isLosesAllCreatureTypesUntilEndOfTurn()
-                    && activeState.hasKeyword(Keyword.CHANGELING));
+            return activeState.hasSubtype(subtype);
         }
         LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
         try {
             CharacteristicState state = pass.board().states().get(permanent.getId());
             return state != null
                     ? state.hasSubtype(subtype)
-                    || (isCreatureSubtype(subtype) && !permanent.isLosesAllCreatureTypesUntilEndOfTurn()
-                    && hasKeyword(gameData, permanent, Keyword.CHANGELING))
-                    : permanent.getCard().getSubtypes().contains(subtype)
-                    || permanent.getTransientSubtypes().contains(subtype)
-                    || permanent.getGrantedSubtypes().contains(subtype);
+                    : permanentHasSubtype(permanent, subtype);
         } finally {
             layerSystemService.endPass(pass);
         }
@@ -2553,6 +2576,19 @@ public class GameQueryService {
                 && !anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class);
     }
 
+    /** Returns the mana value of a permanent, including its face-down and transformed state. */
+    public int getPermanentManaValue(Permanent permanent) {
+        if (permanent.isFaceDown()) {
+            return 0;
+        }
+        Card original = permanent.getOriginalCard();
+        if (permanent.isTransformed() && original.getBackFaceCard() != null
+                && original.getBackFaceCard().getClass().equals(permanent.getCard().getClass())) {
+            return original.getManaValue();
+        }
+        return permanent.getCard().getManaValue();
+    }
+
     /** Returns whether damage of the requested type can be prevented. */
     public boolean isDamagePreventable(GameData gameData, boolean isCombatDamage) {
         return isDamagePreventable(gameData)
@@ -2756,7 +2792,7 @@ public class GameQueryService {
         boolean controlsCreature = bf != null && bf.stream().anyMatch(p -> isCreature(gameData, p));
         if (bf != null) {
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof DamageLifeFloorEffect lifeFloor) {
                         floor = Math.max(floor, activeDamageLifeFloor(lifeFloor, controlsCreature, currentLife));
                     }
@@ -3462,7 +3498,13 @@ public class GameQueryService {
      * Every member must have the named quality, and at least one member must carry that ability.
      */
     public boolean canUseBandsWithOther(GameData gameData, Collection<Permanent> creatures) {
-        if (creatures == null || creatures.size() < 2) {
+        return canUseBandsWithOther(gameData, creatures, true);
+    }
+
+    /** A declared attacking band may consist only of its bands-with-other creature. */
+    public boolean canUseBandsWithOther(GameData gameData, Collection<Permanent> creatures,
+                                       boolean requireOtherCreature) {
+        if (creatures == null || creatures.isEmpty() || (requireOtherCreature && creatures.size() < 2)) {
             return false;
         }
         List<Permanent> band = creatures.stream().toList();
@@ -9106,7 +9148,7 @@ public class GameQueryService {
             return total;
         }
         UUID controllerId = findPermanentController(gameData, creature.getId());
-        List<CardEffect> effects = staticEffectsIncludingTemporary(gameData, creature, controllerId);
+        List<CardEffect> effects = new ArrayList<>(staticEffectsIncludingTemporary(gameData, creature, controllerId));
         effects.addAll(bonus.grantedEffects());
         for (CardEffect effect : effects) {
             if (effect instanceof AttackCostEffect attackCost) {
@@ -9165,7 +9207,7 @@ public class GameQueryService {
             return tax;
         }
         UUID controllerId = findPermanentController(gameData, blocker.getId());
-        List<CardEffect> effects = staticEffectsIncludingTemporary(gameData, blocker, controllerId);
+        List<CardEffect> effects = new ArrayList<>(staticEffectsIncludingTemporary(gameData, blocker, controllerId));
         effects.addAll(bonus.grantedEffects());
         for (CardEffect effect : effects) {
             if (effect instanceof BlockCostEffect blockCost) {
@@ -9287,6 +9329,9 @@ public class GameQueryService {
      * granted subtypes, and the intrinsic Changeling keyword.
      */
     public static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
+        if (permanent.getLastKnownSubtypes() != null) {
+            return permanent.getLastKnownSubtypes().contains(subtype);
+        }
         if (!NON_CREATURE_SUBTYPES.contains(subtype) && !permanent.getTransientCreatureTypeOverrides().isEmpty()) {
             return permanent.getTransientCreatureTypeOverrides().contains(subtype);
         }
@@ -9294,7 +9339,7 @@ public class GameQueryService {
             return permanent.getTransientCreatureTypeOverride() == subtype;
         }
         // "Loses all creature types" (e.g. Amoeboid Changeling): every creature subtype is treated as absent.
-        // hasKeyword already suppresses the Changeling grant while this flag is set.
+        // Removing creature types does not remove the changeling ability.
         if (permanent.isLosesAllCreatureTypesUntilEndOfTurn() && !NON_CREATURE_SUBTYPES.contains(subtype)) {
             return false;
         }
@@ -9469,32 +9514,31 @@ public class GameQueryService {
         return countsByType.values().stream().anyMatch(count -> count >= minimum);
     }
 
-    /** Effective creature subtypes of a permanent (named types only; Changeling handled separately). */
+    /** Returns the creature subtypes remaining after continuous effects are applied. */
     public Set<CardSubtype> effectiveCreatureSubtypes(GameData gameData, Permanent permanent) {
-        if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
-            return new HashSet<>(permanent.getTransientCreatureTypeOverrides());
+        CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+        if (state != null) {
+            Set<CardSubtype> result = new HashSet<>();
+            addCreatureSubtypes(result, state.getSubtypes());
+            return result;
         }
-        if (permanent.getTransientCreatureTypeOverride() != null) {
-            return Set.of(permanent.getTransientCreatureTypeOverride());
-        }
-        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
-            return Set.of();
-        }
-        Set<CardSubtype> result = new HashSet<>();
-        StaticBonus bonus = computeStaticBonus(gameData, permanent);
-        if (!bonus.subtypeOverriding()) {
-            if (permanent.isFaceDown()) {
-                addCreatureSubtypes(result, List.copyOf(permanent.getFaceDownSubtypes()));
-                addCreatureSubtypes(result, permanent.getFaceDownSubtypes());
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            state = pass.board().states().get(permanent.getId());
+            Set<CardSubtype> result = new HashSet<>();
+            if (state != null) {
+                addCreatureSubtypes(result, state.getSubtypes());
             } else {
-                addCreatureSubtypes(result, permanent.getCard().getSubtypes());
+                for (CardSubtype subtype : CardSubtype.values()) {
+                    if (isCreatureSubtype(subtype) && permanentHasSubtype(permanent, subtype)) {
+                        result.add(subtype);
+                    }
+                }
             }
+            return result;
+        } finally {
+            layerSystemService.endPass(pass);
         }
-        addCreatureSubtypes(result, permanent.getTransientSubtypes());
-        addCreatureSubtypes(result, permanent.getGrantedSubtypes());
-        addCreatureSubtypes(result, permanent.getUntilNextTurnSubtypes());
-        addCreatureSubtypes(result, bonus.grantedSubtypes());
-        return result;
     }
 
     /** Returns whether the permanent currently has the Flagbearer creature subtype. */
@@ -10799,6 +10843,12 @@ public class GameQueryService {
         if (isCombatDamage && gameData.combatDamageExemptPredicate != null
                 && !predicateEvaluationService.matchesPermanentPredicate(creature, gameData.combatDamageExemptPredicate,
                 FilterContext.of(gameData).withSourceControllerId(gameData.combatDamageExemptControllerId))) {
+            return true;
+        }
+        if (isCombatDamage && gameData.combatDamageExemptPredicatesByController.entrySet().stream()
+                .anyMatch(exemptions -> exemptions.getValue().stream().anyMatch(predicate ->
+                        !predicateEvaluationService.matchesPermanentPredicate(creature, predicate,
+                                FilterContext.of(gameData).withSourceControllerId(exemptions.getKey()))))) {
             return true;
         }
         return false;

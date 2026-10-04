@@ -22,11 +22,10 @@ class EraseTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving exiles target enchantment instead of destroying it")
     void resolvesAndExilesEnchantment() {
-        harness.addToBattlefield(player2, new Levitation());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Levitation()).getId();
         harness.setHand(player1, List.of(new Erase()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Levitation");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -39,11 +38,10 @@ class EraseTest extends BaseCardTest {
     @Test
     @DisplayName("Can exile an enchantment controlled by the caster")
     void canExileOwnEnchantment() {
-        harness.addToBattlefield(player1, new Levitation());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Levitation()).getId();
         harness.setHand(player1, List.of(new Erase()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Levitation");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -56,11 +54,10 @@ class EraseTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact")
     void cannotTargetArtifact() {
-        harness.addToBattlefield(player2, new GrimMonolith());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrimMonolith()).getId();
         harness.setHand(player1, List.of(new Erase()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Grim Monolith");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -68,12 +65,37 @@ class EraseTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new AngelicCurator());
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new AngelicCurator()).getId();
         harness.setHand(player1, List.of(new Erase()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID creatureId = harness.getPermanentId(player2, "Angelic Curator");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not exile another enchantment when its target leaves before resolution")
+    void targetLeavingBeforeResolutionDoesNotAffectOtherEnchantment() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Levitation()).getId();
+        UUID otherId = harness.addToBattlefieldAndReturn(player1, new Levitation()).getId();
+        harness.setHand(player1, List.of(new Erase(), new Erase()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.assertNotOnBattlefield(player2, "Levitation");
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(otherId));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Levitation"))
+                .hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Erase"))
+                .hasSize(2);
     }
 }

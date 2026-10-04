@@ -105,7 +105,7 @@ class CrovaxAscendantHeroTest extends BaseCardTest {
     @DisplayName("Life is paid immediately and a tapped Crovax returns only on resolution")
     void tappedCrovaxPaysLifeBeforeReturning() {
         Permanent crovax = harness.addToBattlefieldAndReturn(player1, new CrovaxAscendantHero());
-        crovax.setTapped(true);
+        crovax.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

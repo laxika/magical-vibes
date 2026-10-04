@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.i.IcehideGolem;
+import com.github.laxika.magicalvibes.cards.u.UniversalAutomaton;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EnduringSliver.class, MetallicSliver.class, GrizzlyBears.class})
+@CardUsed({EnduringSliver.class, UniversalAutomaton.class, IcehideGolem.class})
 class EnduringSliverTest extends BaseCardTest {
 
     @Test
@@ -35,9 +35,9 @@ class EnduringSliverTest extends BaseCardTest {
     @DisplayName("Other Sliver creatures you control gain outlast")
     void grantsOutlastToOtherSliversYouControl() {
         addCreatureReady(player1, new EnduringSliver());
-        Permanent ownSliver = addCreatureReady(player1, new MetallicSliver());
-        Permanent opposingSliver = addCreatureReady(player2, new MetallicSliver());
-        Permanent nonSliver = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownSliver = addCreatureReady(player1, new UniversalAutomaton());
+        Permanent opposingSliver = addCreatureReady(player2, new UniversalAutomaton());
+        Permanent nonSliver = addCreatureReady(player1, new IcehideGolem());
 
         assertThat(gs.getEffectiveActivatedAbilities(gd, ownSliver)).hasSize(1);
         assertThat(gs.getEffectiveActivatedAbilities(gd, opposingSliver)).isEmpty();
@@ -62,6 +62,111 @@ class EnduringSliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void outlastPaysItsTapCostBeforeTheCounterIsAdded() {
+        Permanent sliver = addCreatureReady(player1, new EnduringSliver());
+        prepareForSorceryAction();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(sliver.isTapped()).isTrue();
+        assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        prepareForSorceryAction();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void grantedOutlastRequiresTwoMana() {
+        addCreatureReady(player1, new EnduringSliver());
+        Permanent sliver = addCreatureReady(player1, new UniversalAutomaton());
+        prepareForSorceryAction();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sliver.isTapped()).isFalse();
+        assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void grantedOutlastCannotBeUsedWhileSummoningSick() {
+        addCreatureReady(player1, new EnduringSliver());
+        Permanent sliver = addCreatureReady(player1, new UniversalAutomaton());
+        sliver.setSummoningSick(true);
+        prepareForSorceryAction();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sliver.isTapped()).isFalse();
+    }
+
+    @Test
+    void grantedOutlastCannotBeUsedDuringOpponentsMainPhase() {
+        addCreatureReady(player1, new EnduringSliver());
+        Permanent sliver = addCreatureReady(player1, new UniversalAutomaton());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sliver.isTapped()).isFalse();
+    }
+
+    @Test
+    void grantedOutlastCannotBeUsedWithAnAbilityOnTheStack() {
+        addCreatureReady(player1, new EnduringSliver());
+        Permanent sliver = addCreatureReady(player1, new UniversalAutomaton());
+        prepareForSorceryAction();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sliver.isTapped()).isFalse();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void activatedOutlastResolvesAfterTheGrantingSliverLeaves() {
+        Permanent source = addCreatureReady(player1, new EnduringSliver());
+        Permanent sliver = addCreatureReady(player1, new UniversalAutomaton());
+        prepareForSorceryAction();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(sliver.isTapped()).isTrue();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, sliver)).isEmpty();
+    }
+
+    @Test
+    void anotherEnduringSliverCanUseTheGrantedOutlast() {
+        Permanent source = addCreatureReady(player1, new EnduringSliver());
+        Permanent recipient = addCreatureReady(player1, new EnduringSliver());
+        prepareForSorceryAction();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(recipient.isTapped()).isTrue();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(source.isTapped()).isFalse();
     }
 
     private void prepareForSorceryAction() {

@@ -132,7 +132,7 @@ class DisturbedSlumberTest extends BaseCardTest {
     void noBlockRequiredWhenOnlyPotentialBlockerIsTapped() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent blocker = readyCreature(player2, new ArmoredKincaller());
-        blocker.setTapped(true);
+        blocker.tap();
         castDisturbedSlumber(land);
         declareLandAsAttacker(land);
 

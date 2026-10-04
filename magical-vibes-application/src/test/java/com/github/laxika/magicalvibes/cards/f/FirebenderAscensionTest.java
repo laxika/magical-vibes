@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TeoSpiritedGlider;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FirebenderAscension.class, FireSages.class, GrizzlyBears.class})
+@CardUsed({FirebenderAscension.class, FireSages.class, FireNationRaider.class, TeoSpiritedGlider.class})
 class FirebenderAscensionTest extends BaseCardTest {
 
     @Test
@@ -27,7 +27,7 @@ class FirebenderAscensionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent soldier = findPermanents(player1, "Soldier").getFirst();
+        Permanent soldier = findPermanent(player1, "Soldier");
         soldier.setSummoningSick(false);
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(soldier)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -40,8 +40,7 @@ class FirebenderAscensionTest extends BaseCardTest {
     @Test
     void attackingTriggeredAbilityAddsQuestCounter() {
         Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
-        Permanent fireSages = harness.addToBattlefieldAndReturn(player1, new FireSages());
-        fireSages.setSummoningSick(false);
+        Permanent fireSages = addCreatureReady(player1, new FireSages());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(fireSages)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -53,8 +52,7 @@ class FirebenderAscensionTest extends BaseCardTest {
     void fourthQuestCounterOffersToCopyTheTriggeredAbility() {
         Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
         ascension.setCounterCount(CounterType.QUEST, 3);
-        Permanent fireSages = harness.addToBattlefieldAndReturn(player1, new FireSages());
-        fireSages.setSummoningSick(false);
+        Permanent fireSages = addCreatureReady(player1, new FireSages());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(fireSages)));
         harness.passBothPriorities();
@@ -72,12 +70,77 @@ class FirebenderAscensionTest extends BaseCardTest {
     @Test
     void attackingWithoutATriggeredAbilityDoesNotAddQuestCounter() {
         Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent raider = addCreatureReady(player1, new FireNationRaider());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(raider)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(ascension.getCounterCount(CounterType.QUEST)).isZero();
+    }
+
+    @Test
+    void copyingCanBeDeclinedWithoutLosingTheQuestCounter() {
+        Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
+        ascension.setCounterCount(CounterType.QUEST, 3);
+        addCreatureReady(player1, new FireSages());
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentAttackTriggersDoNotAddQuestCounters() {
+        Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
+        addCreatureReady(player2, new FireSages());
+
+        declareAttackers(player2, List.of(0));
+        harness.passUntil(player2, TurnStep.END_OF_COMBAT);
+
+        assertThat(ascension.getCounterCount(CounterType.QUEST)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void thirdQuestCounterDoesNotCopyTheAbility() {
+        Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
+        ascension.setCounterCount(CounterType.QUEST, 2);
+        addCreatureReady(player1, new FireSages());
+
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void eachAttackingCreaturesOwnAbilityAddsAQuestCounter() {
+        Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
+        addCreatureReady(player1, new FireSages());
+        addCreatureReady(player1, new FireSages());
+
+        declareAttackers(List.of(1, 2));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void attackingCreatureWithOneOrMoreAttackTriggerAddsQuestCounter() {
+        Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
+        Permanent teo = addCreatureReady(player1, new TeoSpiritedGlider());
+        harness.setLibrary(player1, List.of(new FireNationRaider()));
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, teo.getId());
+        harness.passBothPriorities();
+
+        assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(1);
     }
 }

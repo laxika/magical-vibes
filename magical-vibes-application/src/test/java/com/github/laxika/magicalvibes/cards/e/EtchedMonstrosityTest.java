@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,11 +14,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({EtchedMonstrosity.class})
 class EtchedMonstrosityTest extends BaseCardTest {
-
-    // ===== ETB: enters with five -1/-1 counters =====
 
     @Test
     @DisplayName("Enters the battlefield with five -1/-1 counters (10/10 becomes 5/5)")
@@ -28,21 +28,19 @@ class EtchedMonstrosityTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB effect
 
         Permanent monstrosity = findMonstrosity(player1);
 
         assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
         assertThat(monstrosity.getEffectivePower()).isEqualTo(5);
         assertThat(monstrosity.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Activated ability: target player draws three cards =====
 
     @Test
     @DisplayName("Activated ability makes target player draw three cards")
     void abilityTargetPlayerDrawsThreeCards() {
-        Permanent monstrosity = addReadyMonstrosity(player1);
+        addReadyMonstrosity(player1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -59,7 +57,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability can target self to draw three cards")
     void abilityCanTargetSelf() {
-        Permanent monstrosity = addReadyMonstrosity(player1);
+        addReadyMonstrosity(player1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -83,14 +81,11 @@ class EtchedMonstrosityTest extends BaseCardTest {
         addWUBRGMana(player1);
 
         harness.activateAbility(player1, 0, null, player1.getId());
-        harness.passBothPriorities();
-
         assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
         assertThat(monstrosity.getEffectivePower()).isEqualTo(10);
         assertThat(monstrosity.getEffectiveToughness()).isEqualTo(10);
+        harness.passBothPriorities();
     }
-
-    // ===== Cannot activate without enough counters =====
 
     @Test
     @DisplayName("Cannot activate ability when fewer than five counters remain")
@@ -138,14 +133,53 @@ class EtchedMonstrosityTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Enters with counters immediately when put onto the battlefield without casting")
+    void entersWithCountersWithoutCasting() {
+        Permanent monstrosity = harness.enterBattlefieldAndReturn(player1, new EtchedMonstrosity());
+
+        assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Monstrosity can activate and removes exactly five counters")
+    void canActivateWhileTappedAndSummoningSickWithExtraCounters() {
+        Permanent monstrosity = harness.addToBattlefieldAndReturn(player1, new EtchedMonstrosity());
+        monstrosity.setSummoningSick(true);
+        monstrosity.setTapped(true);
+        monstrosity.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addWUBRGMana(player1);
+        int handSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(monstrosity.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot replace the five required colors")
+    void cannotActivateWithOnlyColorlessMana() {
+        Permanent monstrosity = addReadyMonstrosity(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyMonstrosity(Player player) {
-        EtchedMonstrosity card = new EtchedMonstrosity();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new EtchedMonstrosity());
         perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 5);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

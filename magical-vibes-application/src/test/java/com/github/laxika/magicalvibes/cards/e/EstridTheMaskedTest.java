@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.BeastWithin;
+import com.github.laxika.magicalvibes.cards.c.CurseOfExhaustion;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PrismaticOmen;
 import com.github.laxika.magicalvibes.cards.r.RealityAcid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EstridTheMasked.class, Forest.class, GrizzlyBears.class, PrismaticOmen.class, RealityAcid.class})
+@CardUsed({EstridTheMasked.class, Forest.class, GrizzlyBears.class, PrismaticOmen.class,
+        RealityAcid.class, BeastWithin.class, CurseOfExhaustion.class, EidolonOfBlossoms.class})
 class EstridTheMaskedTest extends BaseCardTest {
 
     @Test
@@ -97,11 +101,103 @@ class EstridTheMaskedTest extends BaseCardTest {
                 .containsAll(library);
     }
 
+    @Test
+    void plusTwoIgnoresOpponentsEnchantedPermanentsAndUnenchantedEnchantments() {
+        addReadyEstrid(3);
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentsAura = harness.addToBattlefieldAndReturn(player2, new RealityAcid());
+        opponentsAura.setAttachedTo(ownLand.getId());
+        Permanent opponentsLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent ownAura = harness.addToBattlefieldAndReturn(player1, new RealityAcid());
+        ownAura.setAttachedTo(opponentsLand.getId());
+        Permanent omen = harness.addToBattlefieldAndReturn(player1, new PrismaticOmen());
+        ownLand.tap();
+        opponentsLand.tap();
+        omen.tap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ownLand.isTapped()).isFalse();
+        assertThat(opponentsLand.isTapped()).isTrue();
+        assertThat(omen.isTapped()).isTrue();
+    }
+
+    @Test
+    void maskProtectsOpponentsLandFromDestruction() {
+        addReadyEstrid(3);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.activateAbility(player1, 0, 1, null, land.getId());
+        harness.passBothPriorities();
+        Permanent mask = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new BeastWithin()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, land.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mask);
+    }
+
+    @Test
+    void ultimateReturnsMilledEnchantmentsAndAttachesAuraToReturnedEnchantment() {
+        addReadyEstrid(7);
+        Card omen = new PrismaticOmen();
+        Card aura = new RealityAcid();
+        harness.setGraveyard(player1, List.of(aura));
+        harness.setLibrary(player1, List.of(omen, new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent returnedOmen = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() == omen).findFirst().orElseThrow();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == aura
+                        && returnedOmen.getId().equals(permanent.getAttachedTo()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(omen, aura);
+    }
+
+    @Test
+    void ultimateReturnsPlayerEnchantingAuras() {
+        addReadyEstrid(7);
+        Card curse = new CurseOfExhaustion();
+        harness.setGraveyard(player1, List.of(curse));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == curse
+                        && gd.playerIds.contains(permanent.getAttachedTo()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(curse);
+    }
+
+    @Test
+    void ultimateReturnsNonAuraEnchantmentsSimultaneously() {
+        addReadyEstrid(7);
+        harness.setGraveyard(player1, List.of(new EidolonOfBlossoms(), new EidolonOfBlossoms()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest()));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(4);
+    }
+
     private Permanent addReadyEstrid(int loyalty) {
-        Permanent perm = new Permanent(new EstridTheMasked());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new EstridTheMasked());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

@@ -55,6 +55,46 @@ class EntanglerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Entangler does not let another creature block multiple attackers")
+    void otherCreatureCannotBlockMultipleAttackers() {
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addReadyAttacker(player1);
+        addReadyAttacker(player1);
+
+        harness.setHand(player1, List.of(new Entangler()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Entangler does not allow a tapped enchanted creature to block")
+    void tappedEnchantedCreatureCannotBlock() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addReadyAttacker(player1);
+
+        harness.setHand(player1, List.of(new Entangler()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, blocker.getId());
+        harness.passBothPriorities();
+        blocker.setTapped(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addReadyAttacker(Player player) {
         Permanent attacker = addCreatureReady(player, new GrizzlyBears());
         attacker.setAttacking(true);

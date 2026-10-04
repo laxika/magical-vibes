@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,8 +30,7 @@ class ForceVoidTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warrior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warrior.getId());
 
         harness.assertInGraveyard(player1, "Kjeldoran Warrior");
         harness.assertNotOnBattlefield(player1, "Kjeldoran Warrior");
@@ -53,8 +53,7 @@ class ForceVoidTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warrior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warrior.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -79,8 +78,7 @@ class ForceVoidTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warrior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warrior.getId());
 
         int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
         int controllerDeckBefore = gd.playerDecks.get(player2.getId()).size();
@@ -114,6 +112,34 @@ class ForceVoidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Force Void");
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining an affordable payment counters the spell and still draws next turn")
+    void decliningPaymentStillDrawsOnce() {
+        KjeldoranWarrior warrior = new KjeldoranWarrior();
+        harness.castFromHand(player1, warrior, "{W}");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new ForceVoid()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, warrior.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Kjeldoran Warrior");
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        int handAtLaterUpkeep = gd.playerHands.get(player2.getId()).size();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handAtLaterUpkeep);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }

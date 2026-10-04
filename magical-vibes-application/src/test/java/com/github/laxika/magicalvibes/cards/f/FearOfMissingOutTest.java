@@ -108,14 +108,100 @@ class FearOfMissingOutTest extends BaseCardTest {
         assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Entering with an empty hand still draws a card")
+    void drawsOnEntryWithEmptyHand() {
+        harness.setHand(player1, List.of(new FearOfMissingOut()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The extra combat does not allow the same creature to trigger again")
+    void doesNotTriggerOnSecondAttack() {
+        Permanent fear = addCreatureReady(player1, new FearOfMissingOut());
+        setDelirium();
+
+        declareAttack(fear);
+        harness.handlePermanentChosen(player1, fear.getId());
+        harness.passBothPriorities();
+
+        assertThat(fear.isTapped()).isFalse();
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(fear)));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(fear.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+    }
+
+    @Test
+    @DisplayName("Gaining delirium after the first attack does not enable a later attack trigger")
+    void firstAttackWithoutDeliriumStillConsumesFirstAttack() {
+        Permanent fear = addCreatureReady(player1, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of());
+
+        declareAttack(fear);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        setDelirium();
+        fear.untap();
+        gd.combatPhasesThisTurn = 2;
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(fear)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature is a legal untap target")
+    void canUntapOpponentsCreature() {
+        Permanent fear = addCreatureReady(player1, new FearOfMissingOut());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        setDelirium();
+
+        declareAttack(fear);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(fear.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A card with two card types contributes both types to delirium")
+    void countsBothTypesOfEnchantmentCreatureInGraveyard() {
+        Permanent fear = addCreatureReady(player1, new FearOfMissingOut());
+        harness.setGraveyard(player1, List.of(new FearOfMissingOut(), new Forest(), new Shock()));
+
+        declareAttack(fear);
+        harness.handlePermanentChosen(player1, fear.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(fear.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
     private void declareAttack(Permanent fear) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         gd.combatPhasesThisTurn = 1;
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1,
-                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(fear)));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(fear)));
     }
 
     private void setDelirium() {

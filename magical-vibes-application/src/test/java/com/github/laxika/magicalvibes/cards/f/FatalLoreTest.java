@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.DeadlyInsect;
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
 import com.github.laxika.magicalvibes.cards.g.GorillaChieftain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,13 +19,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FatalLore.class, ElvishRanger.class, GorillaChieftain.class})
+@CardUsed({FatalLore.class, ElvishRanger.class, GorillaChieftain.class, DeadlyInsect.class})
 class FatalLoreTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Casting prompts the opponent to choose a mode")
+    @DisplayName("The opponent chooses a mode during casting before priority is passed")
     void castingPromptsOpponentChoice() {
-        setupAndCast();
+        harness.castFromHand(player1, new FatalLore(), "{2}{B}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -78,14 +79,15 @@ class FatalLoreTest extends BaseCardTest {
     void declineDestroyIgnoresRegeneration() {
         Permanent chieftain = harness.addToBattlefieldAndReturn(player2, new GorillaChieftain());
         stockLibrary(player2);
-        setupAndCast();
-        GameData gd = harness.getGameData();
-
-        harness.handleMayAbilityChosen(player2, false);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 0, 0, null, null);
         harness.passBothPriorities();
+        assertThat(chieftain.getRegenerationShield()).isEqualTo(1);
+
+        setupAndCast();
+        GameData gd = harness.getGameData();
+        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(chieftain.getId()));
 
@@ -128,6 +130,43 @@ class FatalLoreTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("The destroy mode cannot select a creature with shroud")
+    void declineCannotTargetShroud() {
+        Permanent insect = harness.addToBattlefieldAndReturn(player2, new DeadlyInsect());
+        Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        setupAndCast();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice = harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).contains(ranger.getId()).doesNotContain(insect.getId());
+    }
+
+    @Test
+    @DisplayName("Destroying one creature lets the opponent choose to draw two cards")
+    void declineDestroysOneCreatureAndDrawsTwo() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        stockLibrary(player2);
+        setupAndCast();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(ranger.getId()));
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(ranger.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 2);
     }
 
     private void setupAndCast() {

@@ -109,4 +109,57 @@ class FoxfireOakTest extends BaseCardTest {
         assertThat(oak.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Summoning sickness does not prevent activating the ability")
+    void canActivateWhileSummoningSick() {
+        Permanent oak = harness.addToBattlefieldAndReturn(player1, new FoxfireOak());
+        oak.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(oak.getPowerModifier()).isEqualTo(3);
+        assertThat(oak.getToughnessModifier()).isEqualTo(0);
+        assertThat(oak.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Unrelated mana colors cannot pay the hybrid cost")
+    void cannotPayHybridCostWithBlueMana() {
+        Permanent oak = addCreatureReady(player1, new FoxfireOak());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Stacked activations boost only their source when they resolve")
+    void stackedActivationsOnlyBoostTheirSource() {
+        Permanent oak = addCreatureReady(player1, new FoxfireOak());
+        Permanent otherOak = addCreatureReady(player1, new FoxfireOak());
+        Permanent opposingOak = addCreatureReady(player2, new FoxfireOak());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(oak.getPowerModifier()).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(oak.getPowerModifier()).isEqualTo(6);
+        assertThat(oak.getToughnessModifier()).isEqualTo(0);
+        assertThat(otherOak.getPowerModifier()).isEqualTo(0);
+        assertThat(opposingOak.getPowerModifier()).isEqualTo(0);
+    }
 }

@@ -82,7 +82,7 @@ class FieldOfRealityTest extends BaseCardTest {
     void onlyEnchantedCreatureCannotBeBlockedBySpirits() {
         Permanent enchantedCreature = addCreatureReady(player1, new IsamaruHoundOfKonda());
         enchantedCreature.setAttacking(true);
-        Permanent otherAttacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        Permanent otherAttacker = addCreatureReady(player1, new LanternKami());
         otherAttacker.setAttacking(true);
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieldOfReality());
@@ -122,6 +122,51 @@ class FieldOfRealityTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Field of Reality");
         harness.assertInHand(player1, "Field of Reality");
+    }
+
+    @Test
+    @DisplayName("Returning the Aura allows Spirits to block the formerly enchanted creature")
+    void returningAuraRemovesBlockingRestriction() {
+        Permanent attacker = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        Permanent blocker = addCreatureReady(player2, new LanternKami());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FieldOfReality());
+        aura.setAttachedTo(attacker.getId());
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Field of Reality");
+        harness.assertOnBattlefield(player1, "Isamaru, Hound of Konda");
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Field of Reality can enchant an opponent's creature and return to its own owner's hand")
+    void enchantsOpponentCreatureAndReturnsAuraOnly() {
+        Permanent creature = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new FieldOfReality()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Field of Reality");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Field of Reality");
+        harness.assertInHand(player1, "Field of Reality");
+        harness.assertNotInHand(player2, "Field of Reality");
+        harness.assertOnBattlefield(player2, "Isamaru, Hound of Konda");
     }
 
     @Test

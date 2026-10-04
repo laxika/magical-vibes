@@ -112,7 +112,7 @@ class DeepfireElementalTest extends BaseCardTest {
     void canDestroyItself() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new DeepfireElemental());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.RED, 13);
 
         harness.activateAbility(player1, 0, 6, source.getId());

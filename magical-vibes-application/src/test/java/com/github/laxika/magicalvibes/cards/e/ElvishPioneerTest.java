@@ -50,8 +50,7 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → HandCardChoice inline
         harness.handleCardChosen(player1, 0);
 
@@ -67,8 +66,7 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → HandCardChoice inline
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
@@ -83,8 +81,7 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -101,8 +98,7 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInHand(player1, "Forest");
@@ -116,13 +112,39 @@ class ElvishPioneerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInHand(player1, "Elvish Warrior");
         harness.assertInHand(player1, "Barren Moor");
         harness.assertNotOnBattlefield(player1, "Barren Moor");
+    }
+
+    @Test
+    @DisplayName("The trigger puts only the chosen basic land onto the battlefield")
+    void choosingOneOfMultipleBasicLandsMovesOnlyThatCard() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest opponentsLand = new Forest();
+        harness.setHand(player1, List.of(new ElvishPioneer(), first, second));
+        harness.setHand(player2, List.of(opponentsLand));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(0, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentsLand);
+        assertThat(findPermanents(player1, "Forest")).hasSize(1);
+        assertThat(findPermanent(player1, "Forest").getCard()).isSameAs(second);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

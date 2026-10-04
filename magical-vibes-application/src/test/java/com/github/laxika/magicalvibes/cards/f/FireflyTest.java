@@ -11,8 +11,44 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Firefly.class)
+@CardUsed({Firefly.class})
 class FireflyTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Firefly can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent firefly = harness.addToBattlefieldAndReturn(player1, new Firefly());
+        firefly.setSummoningSick(true);
+        firefly.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firefly.getPowerModifier()).isEqualTo(1);
+        assertThat(firefly.getToughnessModifier()).isZero();
+        assertThat(firefly.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost applies on resolution and only to the activating Firefly")
+    void boostsOnlySourceOnResolution() {
+        Permanent other = addCreatureReady(player1, new Firefly());
+        Permanent source = addCreatureReady(player1, new Firefly());
+        Permanent opponent = addCreatureReady(player2, new Firefly());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+    }
 
     @Test
     @DisplayName("Activating the ability gives +1/+0 until end of turn")

@@ -42,7 +42,7 @@ class CathedralOfWarTest extends BaseCardTest {
     @Test
     void tappedCathedralBoostsLoneAttackerUntilEndOfTurn() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new CathedralOfWar());
-        land.setTapped(true);
+        land.tap();
         Permanent attacker = addCreatureReady(player1, new ElvishArchdruid());
         int power = gqs.getEffectivePower(gd, attacker);
         int toughness = gqs.getEffectiveToughness(gd, attacker);

@@ -137,7 +137,7 @@ class ChainbreakerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent chainbreaker = addCreatureReady(player1, new Chainbreaker());
-        chainbreaker.setTapped(true);
+        chainbreaker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, chainbreaker.getId()))

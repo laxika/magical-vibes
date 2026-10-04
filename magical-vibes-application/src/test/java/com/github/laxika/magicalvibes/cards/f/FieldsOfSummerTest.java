@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,12 +67,46 @@ class FieldsOfSummerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    void chaosLifeGainMayBeDeclined() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void planarControllerMayGainLifeForOwnSpell() {
+        castGrizzlyBears(player1);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void spellCastTriggerResolvesAfterPlaneLeaves() {
+        castGrizzlyBears(player2);
+        gd.planechase.faceUp.clear();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+    }
+
     private void castGrizzlyBears(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new GrizzlyBears(), "{1}{G}");
     }
 }

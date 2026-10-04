@@ -28,15 +28,14 @@ class ErtaisScornTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Costs {U}{U} after an opponent casts two spells")
-    void costsTwoBlueAfterOpponentCastsTwoSpells() {
+    @DisplayName("Costs {1}{U} after an opponent casts two spells")
+    void costsOneGenericAndOneBlueAfterOpponentCastsTwoSpells() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(new Ornithopter(), new Ornithopter(), bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -49,9 +48,9 @@ class ErtaisScornTest extends BaseCardTest {
         harness.passPriority(player1);
 
         harness.setHand(player2, List.of(new ErtaisScorn()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
@@ -70,6 +69,44 @@ class ErtaisScornTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The opponent's second spell counts while it is still on the stack")
+    void discountsResponseToOpponentsSecondSpell() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Ornithopter(), bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new ErtaisScorn()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Ertai's Scorn");
+    }
+
+    @Test
+    @DisplayName("Casting your own spells does not grant the cost reduction")
+    void ownSpellsDoNotGrantDiscount() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Ornithopter(), new Ornithopter(), bears, new ErtaisScorn()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

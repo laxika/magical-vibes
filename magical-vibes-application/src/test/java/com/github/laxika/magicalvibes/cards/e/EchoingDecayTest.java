@@ -21,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EchoingDecay.class, DarksteelGargoyle.class, CrazedGoblin.class, DarksteelIngot.class})
+@CardUsed({EchoingDecay.class, DarksteelGargoyle.class, CrazedGoblin.class, DarksteelIngot.class, WitnessProtection.class})
 class EchoingDecayTest extends BaseCardTest {
 
     @Test
@@ -104,7 +104,6 @@ class EchoingDecayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Uses current creature names when finding affected creatures")
-    @CardUsed(WitnessProtection.class)
     void usesEffectiveNamesWhenFindingSameNameCreatures() {
         Permanent target = addCreatureReady(player1, new DarksteelGargoyle());
         Permanent renamed = addCreatureReady(player2, new DarksteelGargoyle());
@@ -149,6 +148,53 @@ class EchoingDecayTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Same-name creatures entering after resolution are unaffected")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        Permanent target = addCreatureReady(player2, new DarksteelGargoyle());
+
+        castEchoingDecay(target.getId());
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player2, new DarksteelGargoyle());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Same-name creatures entering before resolution are affected")
+    void affectsCreaturesEnteringBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new DarksteelGargoyle());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated reductions kill indestructible creatures through zero toughness")
+    void repeatedReductionsKillIndestructibleCreatures() {
+        Permanent target = addCreatureReady(player2, new DarksteelGargoyle());
+        addCreatureReady(player1, new DarksteelGargoyle());
+
+        castEchoingDecay(target.getId());
+        castEchoingDecay(target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Darksteel Gargoyle");
+        harness.assertNotOnBattlefield(player2, "Darksteel Gargoyle");
+        harness.assertInGraveyard(player1, "Darksteel Gargoyle");
+        harness.assertInGraveyard(player2, "Darksteel Gargoyle");
     }
 
     private void castEchoingDecay(UUID targetId) {

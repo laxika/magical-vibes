@@ -104,8 +104,7 @@ class CrystalFragmentsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.getMarkedDamage()).isZero();
@@ -117,8 +116,7 @@ class CrystalFragmentsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
         assertThat(alexander.getCounterCount(CounterType.LORE)).isEqualTo(1);
@@ -138,6 +136,66 @@ class CrystalFragmentsTest extends BaseCardTest {
         assertThat(opposingCreature.isTapped()).isTrue();
     }
 
+    @Test
+    void equipAttachesAndBoostsCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent crystal = addCrystalReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, indexOf(player1, crystal), 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(crystal.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    void returnedAlexanderCannotAttackThisTurn() {
+        Permanent crystal = addCrystalReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, indexOf(player1, crystal), 0, null, null);
+        resolveAllTriggers();
+
+        Permanent alexander = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof SummonAlexander)
+                .findFirst().orElseThrow();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        assertThat(als.canAttack(gd, alexander, player1.getId())).isFalse();
+    }
+
+    @Test
+    void chapterIIPreventsDamageToAlexanderAndLaterCreaturesButNotOpponentsOrPlayers() {
+        Permanent alexander = addTransformedAlexander(player1, 1);
+        advanceToPrecombatMain();
+        resolveAllTriggers();
+        Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, alexander.getId());
+        harness.castAndResolveInstant(player1, 0, laterCreature.getId());
+        harness.castAndResolveInstant(player1, 0, opposingCreature.getId());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(alexander.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(alexander.getMarkedDamage()).isZero();
+        assertThat(laterCreature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(alexander, laterCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
+        harness.assertLife(player1, lifeBefore - 2);
+    }
+
     private void advanceToPrecombatMain() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -146,10 +204,7 @@ class CrystalFragmentsTest extends BaseCardTest {
     }
 
     private Permanent addCrystalReady(Player player) {
-        Permanent crystal = new Permanent(new CrystalFragments());
-        crystal.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(crystal);
-        return crystal;
+        return addCreatureReady(player, new CrystalFragments());
     }
 
     private Permanent addTransformedAlexander(Player player, int loreCounters) {

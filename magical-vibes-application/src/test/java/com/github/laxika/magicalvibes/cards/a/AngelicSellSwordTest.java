@@ -147,9 +147,8 @@ class AngelicSellSwordTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(initialPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(initialToughness);
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        declareAttackers(List.of());
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(initialPower);
     }

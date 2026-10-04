@@ -42,7 +42,7 @@ class CatalystElementalTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Catalyst Elemental can still be sacrificed for mana")
     void canActivateWhileTapped() {
-        harness.addToBattlefieldAndReturn(player1, new CatalystElemental()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new CatalystElemental()).tap();
 
         harness.activateAbility(player1, 0, null, null);
 

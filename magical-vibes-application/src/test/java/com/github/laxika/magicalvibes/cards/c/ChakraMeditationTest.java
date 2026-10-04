@@ -134,7 +134,7 @@ class ChakraMeditationTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.assertInHand(player1, "Forest");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         harness.handleCardChosen(player1, 0);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Waterbending Lesson");

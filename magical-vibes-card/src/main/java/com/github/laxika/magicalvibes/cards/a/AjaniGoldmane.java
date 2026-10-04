@@ -42,7 +42,7 @@ public class AjaniGoldmane extends Card {
                 -1,
                 List.of(
                         new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "\u22121: Put a +1/+1 counter on each creature you control. Those creatures gain vigilance until end of turn."
         ));

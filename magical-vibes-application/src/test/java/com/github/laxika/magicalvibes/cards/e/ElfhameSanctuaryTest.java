@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,6 @@ class ElfhameSanctuaryTest extends BaseCardTest {
 
         int handBeforeDraw = gd.playerHands.get(player1.getId()).size();
         int deckBeforeDraw = gd.playerDecks.get(player1.getId()).size();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw);
@@ -60,7 +60,6 @@ class ElfhameSanctuaryTest extends BaseCardTest {
 
         int handBeforeDraw = gd.playerHands.get(player1.getId()).size();
         int deckBeforeDraw = gd.playerDecks.get(player1.getId()).size();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw);
@@ -80,7 +79,6 @@ class ElfhameSanctuaryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         int handBeforeDraw = gd.playerHands.get(player1.getId()).size();
         int deckBeforeDraw = gd.playerDecks.get(player1.getId()).size();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw);
@@ -100,7 +98,6 @@ class ElfhameSanctuaryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         int handBeforeDraw = gd.playerHands.get(player1.getId()).size();
         int deckBeforeDraw = gd.playerDecks.get(player1.getId()).size();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw);
@@ -140,13 +137,67 @@ class ElfhameSanctuaryTest extends BaseCardTest {
 
         int handBeforeDraw = gd.playerHands.get(player1.getId()).size();
         int deckBeforeDraw = gd.playerDecks.get(player1.getId()).size();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBeforeDraw);
         assertThat(gd.skipDrawStepThisTurn).doesNotContainKey(player1.getId());
         assertThat(gd.skipNextDrawStepCount).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Skipping the draw step bypasses its priority window")
+    void skippedDrawStepHasNoPriorityWindow() {
+        harness.addToBattlefield(player1, new ElfhameSanctuary());
+        harness.setLibrary(player1, List.of(new ElfhamePalace()));
+
+        advanceToSanctuaryUpkeep();
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DRAW, () ->
+                harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+                    harness.handleMayAbilityChosen(player1, true);
+                    harness.passBothPriorities();
+                    assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+                }));
+    }
+
+    @Test
+    @DisplayName("Sanctuary does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new ElfhameSanctuary());
+        harness.setLibrary(player2, List.of(new Plains(), new Forest()));
+        gd.turnNumber = 2;
+        int handBeforeDraw = gd.playerHands.get(player2.getId()).size();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBeforeDraw + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Accepting a search does not skip a later turn's draw")
+    void acceptingSearchDoesNotSkipLaterTurnsDraw() {
+        harness.addToBattlefield(player1, new ElfhameSanctuary());
+        harness.setLibrary(player1, List.of(new ElfhamePalace(), new ElfhamePalace()));
+
+        advanceToSanctuaryUpkeep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        gd.turnNumber += 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        int handBeforeDraw = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void advanceToSanctuaryUpkeep() {

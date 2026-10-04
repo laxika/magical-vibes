@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.w.WarMammoth;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forcefield.class, GrizzlyBears.class, ProdigalSorcerer.class})
+@CardUsed({Forcefield.class, GrizzlyBears.class, ProdigalSorcerer.class, WarMammoth.class})
 class ForcefieldTest extends BaseCardTest {
 
     @Test
@@ -47,6 +49,51 @@ class ForcefieldTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
     }
 
+    @Test
+    void doesNotPreventTrampleDamageFromBlockedCreature() {
+        harness.setLife(player1, 20);
+        Permanent forcefield = addReadyPermanent(player1, new Forcefield());
+        Permanent mammoth = addReadyPermanent(player2, new WarMammoth());
+        addReadyPermanent(player1, new ProdigalSorcerer());
+
+        activateAndChooseSource(forcefield, mammoth);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void repeatedActivationsStillLeaveOneDamage() {
+        harness.setLife(player1, 20);
+        Permanent forcefield = addReadyPermanent(player1, new Forcefield());
+        Permanent mammoth = addReadyPermanent(player2, new WarMammoth());
+
+        activateAndChooseSource(forcefield, mammoth);
+        activateAndChooseSource(forcefield, mammoth);
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void doesNotPreventDamageToTheOtherPlayer() {
+        harness.setLife(player2, 20);
+        Permanent forcefield = addReadyPermanent(player1, new Forcefield());
+        Permanent mammoth = addReadyPermanent(player1, new WarMammoth());
+
+        activateAndChooseSource(forcefield, mammoth);
+
+        declareAttackers(player1, List.of(1));
+        resolveCombat(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
     private void activateAndChooseSource(Permanent forcefield, Permanent source) {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, indexOf(player1, forcefield), null, null);
@@ -60,9 +107,8 @@ class ForcefieldTest extends BaseCardTest {
     }
 
     private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

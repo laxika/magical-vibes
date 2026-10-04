@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -73,8 +74,7 @@ class FantasticElasticityTest extends BaseCardTest {
         harness.setHand(player1, List.of(card));
         addMana();
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
@@ -83,8 +83,88 @@ class FantasticElasticityTest extends BaseCardTest {
     private void cast(int mode, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new FantasticElasticity()));
         addMana();
-        harness.castSorcery(player1, 0, mode, targetId);
+        harness.castAndResolveSorcery(player1, 0, mode, targetId);
+    }
+
+    @Test
+    void returnsAnotherFantasticElasticityFromGraveyard() {
+        Card spell = new FantasticElasticity();
+        harness.setGraveyard(player1, List.of(spell));
+
+        cast(1, spell.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(spell);
+        harness.assertNotInGraveyard(player1, "Fantastic Elasticity");
+    }
+
+    @Test
+    void graveyardModeRejectsOpponentsInstant() {
+        Card spell = new DarkRitual();
+        harness.setGraveyard(player2, List.of(spell));
+        harness.setHand(player1, List.of(new FantasticElasticity()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void illegalGraveyardTargetPreventsResolutionAndRebound() {
+        Card spell = new DarkRitual();
+        FantasticElasticity card = new FantasticElasticity();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(card));
+        addMana();
+        harness.castSorcery(player1, 0, 1, spell.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(spell));
+
         harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fantastic Elasticity");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        harness.assertNotInHand(player1, "Dark Ritual");
+    }
+
+    @Test
+    void decliningReboundLeavesCardExiledWithoutAnotherOffer() {
+        Card spell = new DarkRitual();
+        FantasticElasticity card = new FantasticElasticity();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(card));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, 1, spell.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        harness.assertNotInGraveyard(player1, "Fantastic Elasticity");
+    }
+
+    @Test
+    void reboundChoosesModeBeforeSpellGoesOnStack() {
+        Card spell = new DarkRitual();
+        FantasticElasticity card = new FantasticElasticity();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(card));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, 1, spell.getId());
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == card);
     }
 
     private void addMana() {

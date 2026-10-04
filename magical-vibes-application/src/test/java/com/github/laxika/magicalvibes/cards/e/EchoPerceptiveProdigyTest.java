@@ -17,7 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EchoPerceptiveProdigy.class, ProdigalPyromancer.class, LlanowarElves.class, TrialOfZeal.class})
+@CardUsed({EchoPerceptiveProdigy.class, ProdigalPyromancer.class, LlanowarElves.class,
+        TrialOfZeal.class, ElvishVisionary.class})
 class EchoPerceptiveProdigyTest extends BaseCardTest {
 
     @Test
@@ -68,13 +69,76 @@ class EchoPerceptiveProdigyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void copiesCreatureTriggeredAbilityWithoutTargets() {
+        addReadyEcho(player1);
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ElvishVisionary()));
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        UUID triggerId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, triggerId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void decliningNewTargetsStillCopiesAbility() {
+        harness.setLife(player2, 20);
+        addReadyEcho(player1);
+        addReadyPyromancer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+
+        harness.activateAbility(player1, 0, null, abilityId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 18);
+        assertThat(findPermanent(player1, "Echo, Perceptive Prodigy").isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotCopyOpponentsCreatureAbility() {
+        addReadyEcho(player1);
+        addReadyPyromancer(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithoutPayingMana() {
+        addReadyEcho(player1);
+        addReadyPyromancer(player1);
+        harness.activateAbility(player1, 1, null, player2.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addReadyEcho(Player player) {
-        var echo = harness.addToBattlefieldAndReturn(player, new EchoPerceptiveProdigy());
-        echo.setSummoningSick(false);
+        addCreatureReady(player, new EchoPerceptiveProdigy());
     }
 
     private void addReadyPyromancer(Player player) {
-        var pyromancer = harness.addToBattlefieldAndReturn(player, new ProdigalPyromancer());
-        pyromancer.setSummoningSick(false);
+        addCreatureReady(player, new ProdigalPyromancer());
     }
 }

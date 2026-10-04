@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Fractalize.class, AirElemental.class, SerraAngel.class, FountainOfYouth.class, GrizzlyBears.class})
 class FractalizeTest extends BaseCardTest {
 
     @Test
@@ -57,7 +59,6 @@ class FractalizeTest extends BaseCardTest {
         castFractalize(elemental.getId(), 2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(elemental.getEffectivePower()).isEqualTo(4);
@@ -79,6 +80,56 @@ class FractalizeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, fountainId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("A later Fractalize replaces the earlier base power and toughness")
+    void laterFractalizeReplacesEarlierValue() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        castFractalize(elemental.getId(), 2);
+        castFractalize(elemental.getId(), 3);
+
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A later Fractalize with X zero replaces an earlier nonzero value")
+    void zeroXReplacesEarlierValue() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+
+        castFractalize(angel.getId(), 3);
+        castFractalize(angel.getId(), 0);
+
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X zero makes a creature 1/1 and replaces all its creature types")
+    void zeroXMakesOneOneFractal() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        castFractalize(elemental.getId(), 0);
+
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, elemental)).containsExactly(CardSubtype.FRACTAL);
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Existing counters still modify the new base power and toughness")
+    void retainsCounters() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castFractalize(bears.getId(), 3);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private void castFractalize(UUID targetId, int xValue) {

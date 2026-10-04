@@ -36,9 +36,11 @@ public class DrawUpToNCardsEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DrawUpToNCardsEffect) effect;
-        UUID playerId = e.recipient() == DrawUpToRecipient.OPPONENT
-                ? gameQueryService.getOpponentId(gameData, entry.getControllerId())
-                : entry.getControllerId();
+        UUID playerId = switch (e.recipient()) {
+            case OPPONENT -> gameQueryService.getOpponentId(gameData, entry.getControllerId());
+            case CONTROLLER -> entry.getControllerId();
+            case TARGET_PLAYER -> entry.getTargetId();
+        };
         if (playerId == null) {
             return;
         }

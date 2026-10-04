@@ -102,6 +102,67 @@ class FortitudeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A stolen Fortitude's last controller controls its return ability")
+    void stolenAuraReturnsToOwnerWithTriggerControlledByLastController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        Fortitude card = new Fortitude();
+        card.setOwnerId(player1.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, card);
+        aura.setAttachedTo(creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+
+        harness.assertInGraveyard(player1, "Fortitude");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fortitude");
+        harness.assertNotInHand(player2, "Fortitude");
+        harness.assertNotInGraveyard(player1, "Fortitude");
+    }
+
+    @Test
+    @DisplayName("Regeneration still resolves after Fortitude leaves the battlefield")
+    void regenerationResolvesAfterAuraLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Fortitude());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fortitude");
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fortitude returns when its enchanted creature dies and the unattached Aura goes to the graveyard")
+    void returnsAfterEnchantedCreatureDies() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Fortitude());
+        aura.setAttachedTo(creature.getId());
+
+        creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gorilla Warrior");
+        harness.assertInHand(player1, "Fortitude");
+        harness.assertNotInGraveyard(player1, "Fortitude");
+        harness.assertNotOnBattlefield(player1, "Fortitude");
+    }
+
+    @Test
     @DisplayName("Fortitude cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());

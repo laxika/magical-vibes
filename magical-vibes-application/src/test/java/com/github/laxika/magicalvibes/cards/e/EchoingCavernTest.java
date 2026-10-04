@@ -102,11 +102,59 @@ class EchoingCavernTest extends BaseCardTest {
                 .hasMessageContaining("only once");
     }
 
+    @Test
+    void exhaustStillSeeksAfterSourceLeavesBattlefield() {
+        harness.setHand(player1, List.of());
+        Permanent cavern = addCavern(CardSubtype.ELF);
+        ElvishElegy elegy = new ElvishElegy();
+        harness.setLibrary(player1, List.of(elegy));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(cavern);
+        harness.setGraveyard(player1, List.of(cavern.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elegy);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void exhaustLeavesNonmatchingCardsInLibraryInTheirOriginalOrder() {
+        harness.setHand(player1, List.of());
+        addCavern(CardSubtype.ELF);
+        EchoingCavern first = new EchoingCavern();
+        ElvishElegy elegy = new ElvishElegy();
+        EchoingCavern last = new EchoingCavern();
+        harness.setLibrary(player1, List.of(first, elegy, last));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elegy);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, last);
+    }
+
+    @Test
+    void exhaustDoesNotSeekWhenNoCardMatchesChosenType() {
+        harness.setHand(player1, List.of());
+        addCavern(CardSubtype.BEAR);
+        ElvishElegy elegy = new ElvishElegy();
+        harness.setLibrary(player1, List.of(elegy));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(elegy);
+    }
+
     private Permanent addCavern(CardSubtype chosenSubtype) {
-        Permanent cavern = new Permanent(new EchoingCavern());
+        Permanent cavern = harness.addToBattlefieldAndReturn(player1, new EchoingCavern());
         cavern.setChosenSubtype(chosenSubtype);
         cavern.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cavern);
         return cavern;
     }
 }

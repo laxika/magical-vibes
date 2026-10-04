@@ -25,9 +25,7 @@ class EchoingReturnTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(target, sameName, other));
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, target.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getId)
@@ -57,5 +55,70 @@ class EchoingReturnTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnsOnlyTargetWhenThereAreNoOtherCardsWithItsName() {
+        Card target = new GrizzlyBears();
+        EchoingReturn spell = new EchoingReturn();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    void leavesSameNameCardsInOpponentsGraveyard() {
+        Card target = new GrizzlyBears();
+        Card opponentCopy = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setGraveyard(player2, List.of(opponentCopy));
+        harness.setHand(player1, List.of(new EchoingReturn()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCopy);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(opponentCopy);
+    }
+
+    @Test
+    void returnsNothingWhenTargetLeavesGraveyardBeforeResolution() {
+        Card target = new GrizzlyBears();
+        Card sameName = new GrizzlyBears();
+        EchoingReturn spell = new EchoingReturn();
+        harness.setGraveyard(player1, List.of(target, sameName));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(sameName));
+        harness.setExile(player1, List.of(target));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(sameName, spell);
+    }
+
+    @Test
+    void returnsSameNameCardThatEntersGraveyardAfterCasting() {
+        Card target = new GrizzlyBears();
+        Card laterCopy = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new EchoingReturn()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(target, laterCopy));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(target, laterCopy);
     }
 }

@@ -95,4 +95,41 @@ class EbonDragonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Opponent chooses exactly one card to discard from a larger hand")
+    void opponentChoosesOneCardFromLargerHand() {
+        GrizzlyBears retained = new GrizzlyBears();
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player2, List.of(retained, discarded));
+        castEbonDragon();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still triggers the optional discard")
+    void enteringWithoutBeingCastTriggersDiscard() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        harness.enterBattlefieldAndReturn(player1, new EbonDragon());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player1, "Ebon Dragon");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

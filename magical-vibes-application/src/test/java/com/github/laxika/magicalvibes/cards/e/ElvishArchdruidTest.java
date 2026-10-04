@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElvishArchdruid.class, LlanowarElves.class, GrizzlyBears.class})
 class ElvishArchdruidTest extends BaseCardTest {
-
-    // ===== Static effect: buffs other Elves you control =====
 
     @Test
     @DisplayName("Other Elf creatures you control get +1/+1")
@@ -109,17 +109,12 @@ class ElvishArchdruidTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
     }
 
-    // ===== Tap ability: Add {G} for each Elf you control =====
-
     @Test
     @DisplayName("Tap ability adds G for each Elf you control including itself")
     void tapAbilityAddsGreenManaPerElf() {
-        harness.addToBattlefield(player1, new ElvishArchdruid());
+        Permanent archdruid = addCreatureReady(player1, new ElvishArchdruid());
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new LlanowarElves());
-
-        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
-        archdruid.setSummoningSick(false);
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);
         harness.activateAbility(player1, archdruidIdx, null, null);
@@ -131,10 +126,7 @@ class ElvishArchdruidTest extends BaseCardTest {
     @Test
     @DisplayName("Tap ability with only Archdruid on battlefield adds 1 G")
     void tapAbilityWithOnlyArchdruidAddsOneGreen() {
-        harness.addToBattlefield(player1, new ElvishArchdruid());
-
-        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
-        archdruid.setSummoningSick(false);
+        Permanent archdruid = addCreatureReady(player1, new ElvishArchdruid());
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);
         harness.activateAbility(player1, archdruidIdx, null, null);
@@ -146,12 +138,9 @@ class ElvishArchdruidTest extends BaseCardTest {
     @Test
     @DisplayName("Tap ability does not count opponent's Elves")
     void tapAbilityDoesNotCountOpponentElves() {
-        harness.addToBattlefield(player1, new ElvishArchdruid());
+        Permanent archdruid = addCreatureReady(player1, new ElvishArchdruid());
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.addToBattlefield(player2, new LlanowarElves());
-
-        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
-        archdruid.setSummoningSick(false);
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);
         harness.activateAbility(player1, archdruidIdx, null, null);
@@ -163,17 +152,44 @@ class ElvishArchdruidTest extends BaseCardTest {
     @Test
     @DisplayName("Tap ability does not count non-Elf creatures")
     void tapAbilityDoesNotCountNonElves() {
-        harness.addToBattlefield(player1, new ElvishArchdruid());
+        Permanent archdruid = addCreatureReady(player1, new ElvishArchdruid());
         harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
-        archdruid.setSummoningSick(false);
 
         int archdruidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(archdruid);
         harness.activateAbility(player1, archdruidIdx, null, null);
 
         // Mana ability resolves immediately. Only Archdruid itself = 1 green mana (Grizzly Bears not counted)
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Mana ability taps Archdruid and resolves without using the stack")
+    void manaAbilityPaysTapCostAndResolvesImmediately() {
+        Permanent archdruid = addCreatureReady(player1, new ElvishArchdruid());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(archdruid.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick Elves still count for mana and receive the bonus")
+    void countsTappedAndSummoningSickElves() {
+        addCreatureReady(player1, new ElvishArchdruid());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
+        elf.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
     }
 
     @Test

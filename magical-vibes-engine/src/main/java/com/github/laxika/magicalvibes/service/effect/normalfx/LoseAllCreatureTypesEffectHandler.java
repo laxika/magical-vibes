@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +45,7 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
                     if (!gameQueryService.isCreature(gameData, permanent)) {
                         continue;
                     }
-                    permanent.setLosesAllCreatureTypesUntilEndOfTurn(true);
+                    applyTypeLoss(gameData, entry, effect, permanent);
                     count++;
                 }
             }
@@ -55,7 +57,13 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
         if (target == null) {
             return;
         }
-        target.setLosesAllCreatureTypesUntilEndOfTurn(true);
+        applyTypeLoss(gameData, entry, effect, target);
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all creature types until end of turn."));
+    }
+
+    private void applyTypeLoss(GameData gameData, StackEntry entry, CardEffect effect, Permanent target) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), null, entry.getControllerId(), effect,
+                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
     }
 }

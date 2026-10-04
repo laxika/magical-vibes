@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,12 +16,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ExtinguishTheLight.class, GrizzlyBears.class, AirElemental.class, LilianaVess.class,
-        RodOfRuin.class})
+        RodOfRuin.class, LilianaOfTheVeil.class})
 class ExtinguishTheLightTest extends BaseCardTest {
 
     @Test
@@ -69,8 +73,63 @@ class ExtinguishTheLightTest extends BaseCardTest {
 
     private void cast(Permanent target) {
         prepareCard();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("Gains life when the destroyed planeswalker has mana value exactly three")
+    void gainsLifeAtManaValueThreshold() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LilianaOfTheVeil());
+        target.setCounterCount(CounterType.LOYALTY, 3);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        cast(target);
+
+        harness.assertInGraveyard(player2, "Liliana of the Veil");
+        harness.assertLife(player1, lifeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Gains life even when indestructible prevents destruction")
+    void gainsLifeForIndestructibleTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        cast(target);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, lifeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the target becomes illegal before resolution")
+    void illegalTargetPreventsLifeGain() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        prepareCard();
         harness.castInstant(player1, 0, target.getId());
+        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, lifeBefore);
+        harness.assertInGraveyard(player1, "Extinguish the Light");
+    }
+
+    @Test
+    @DisplayName("Uses the face-down creature's zero mana value rather than its printed cost")
+    void gainsLifeForFaceDownHighCostCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        cast(target);
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertLife(player1, lifeBefore + 3);
     }
 
     private void prepareCard() {

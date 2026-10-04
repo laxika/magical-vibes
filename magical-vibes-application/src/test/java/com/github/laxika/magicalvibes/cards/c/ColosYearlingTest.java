@@ -88,7 +88,7 @@ class ColosYearlingTest extends BaseCardTest {
     void pumpWorksWhileTappedAndSummoningSick() {
         Permanent yearling = harness.addToBattlefieldAndReturn(player1, new ColosYearling());
         yearling.setSummoningSick(true);
-        yearling.setTapped(true);
+        yearling.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

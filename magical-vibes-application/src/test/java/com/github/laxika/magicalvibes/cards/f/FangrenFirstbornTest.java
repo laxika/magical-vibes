@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FangrenFirstborn.class, DarksteelGargoyle.class})
+@CardUsed({FangrenFirstborn.class, DarksteelGargoyle.class, EchoingTruth.class})
 class FangrenFirstbornTest extends BaseCardTest {
 
     @Test
@@ -40,6 +43,66 @@ class FangrenFirstbornTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(firstborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacking Firstborn gives every attacker a counter")
+    void multipleFirstbornsEachTrigger() {
+        Permanent first = addCreatureReady(player1, new FangrenFirstborn());
+        Permanent second = addCreatureReady(player1, new FangrenFirstborn());
+        Permanent attacker = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent defender = addCreatureReady(player2, new DarksteelGargoyle());
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(defender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Attack trigger still gives other attackers counters after Firstborn leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent firstborn = addCreatureReady(player1, new FangrenFirstborn());
+        Permanent attacker = addCreatureReady(player1, new DarksteelGargoyle());
+        harness.setHand(player2, List.of(new EchoingTruth()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1));
+            assertThat(firstborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            harness.castAndResolveInstant(player2, 0, firstborn.getId());
+            harness.assertNotOnBattlefield(player1, "Fangren Firstborn");
+            harness.assertInHand(player1, "Fangren Firstborn");
+            resolveAllTriggers();
+        });
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only creatures still attacking when the trigger resolves receive counters")
+    void bouncedAttackerDoesNotReceiveCounter() {
+        Permanent firstborn = addCreatureReady(player1, new FangrenFirstborn());
+        Permanent attacker = addCreatureReady(player1, new DarksteelGargoyle());
+        harness.setHand(player2, List.of(new EchoingTruth()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1));
+            harness.castAndResolveInstant(player2, 0, attacker.getId());
+            harness.assertNotOnBattlefield(player1, "Darksteel Gargoyle");
+            harness.assertInHand(player1, "Darksteel Gargoyle");
+            resolveAllTriggers();
+        });
+
+        assertThat(firstborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

@@ -30,7 +30,7 @@ class ForsakenCityTest extends BaseCardTest {
     @Test
     @DisplayName("The land stays tapped through the controller's untap step")
     void doesNotUntapDuringUntapStep() {
-        Permanent city = addReadyCity();
+        Permanent city = addCreatureReady(player1, new ForsakenCity());
         city.tap();
 
         advanceToUpkeep(player1);
@@ -43,7 +43,7 @@ class ForsakenCityTest extends BaseCardTest {
     @Test
     @DisplayName("Exiling a card during upkeep untaps the land")
     void exilingCardUntapsLand() {
-        Permanent city = addReadyCity();
+        Permanent city = addCreatureReady(player1, new ForsakenCity());
         city.tap();
         harness.setHand(player1, List.of(new ForsakenCity()));
 
@@ -63,7 +63,7 @@ class ForsakenCityTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the upkeep ability with an empty hand does not untap the land")
     void emptyHandDoesNotUntapLand() {
-        Permanent city = addReadyCity();
+        Permanent city = addCreatureReady(player1, new ForsakenCity());
         city.tap();
         harness.setHand(player1, List.of());
 
@@ -74,10 +74,55 @@ class ForsakenCityTest extends BaseCardTest {
         assertThat(city.isTapped()).isTrue();
     }
 
-    private Permanent addReadyCity() {
-        Permanent city = harness.addToBattlefieldAndReturn(player1, new ForsakenCity());
-        city.setSummoningSick(false);
-        return city;
+    @Test
+    @DisplayName("Declining the upkeep ability preserves the hand and leaves the land tapped")
+    void decliningWithCardInHandDoesNotExileOrUntap() {
+        Permanent city = addCreatureReady(player1, new ForsakenCity());
+        city.tap();
+        ForsakenCity handCard = new ForsakenCity();
+        harness.setHand(player1, List.of(handCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(city.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped land still allows exiling a card during upkeep")
+    void untappedCityStillAllowsExilingCard() {
+        Permanent city = addCreatureReady(player1, new ForsakenCity());
+        ForsakenCity handCard = new ForsakenCity();
+        harness.setHand(player1, List.of(handCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(city.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == handCard);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent city = addCreatureReady(player1, new ForsakenCity());
+        city.tap();
+        ForsakenCity handCard = new ForsakenCity();
+        harness.setHand(player1, List.of(handCard));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(city.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.exiledCards).isEmpty();
     }
 
 }

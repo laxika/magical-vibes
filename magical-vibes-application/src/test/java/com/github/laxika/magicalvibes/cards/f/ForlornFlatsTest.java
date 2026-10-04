@@ -27,6 +27,8 @@ class ForlornFlatsTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -42,6 +44,9 @@ class ForlornFlatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -52,5 +57,28 @@ class ForlornFlatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entry trigger still deals damage after the land leaves the battlefield")
+    void entryTriggerResolvesAfterSourceLeaves() {
+        harness.setHand(player1, List.of(new ForlornFlats()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player1, "Forlorn Flats");
+        harness.assertInGraveyard(player1, "Forlorn Flats");
     }
 }

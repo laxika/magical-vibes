@@ -14,23 +14,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FinalFortune.class, Counterspell.class, PlatinumAngel.class, UginsNexus.class})
 class FinalFortuneTest extends BaseCardTest {
-
-    /** Stops auto-pass at PRECOMBAT_MAIN for both players so turns advance one at a time. */
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
-    }
 
     private void castFinalFortune() {
         harness.forceActivePlayer(player1);
@@ -41,7 +29,7 @@ class FinalFortuneTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
     }
 
     private void advanceToEndStep() {
@@ -66,22 +54,23 @@ class FinalFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("Casting during an opponent's turn gives you the extra turn after it")
     void castingDuringOpponentsTurnGivesControllerTheExtraTurn() {
-        enableAutoStop();
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castFromHand(player1, new FinalFortune(), "{R}{R}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.castFromHand(player1, new FinalFortune(), "{R}{R}");
+            harness.passBothPriorities();
 
-        assertThat(gd.extraTurns).containsExactly(player1.getId());
+            assertThat(gd.extraTurns).containsExactly(player1.getId());
 
-        advanceTurn();
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
-        advanceToEndStep();
-        assertThat(gd.stack).isNotEmpty();
-        harness.passBothPriorities();
+            advanceToEndStep();
+            assertThat(gd.stack).isNotEmpty();
+            harness.passBothPriorities();
 
-        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+            assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        });
     }
 
     @Test
@@ -123,86 +112,131 @@ class FinalFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("You lose the game at the beginning of the extra turn's end step")
     void extraTurnEndStepTriggersLoss() {
-        enableAutoStop();
-        castFinalFortune();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            castFinalFortune();
 
-        // End the current turn -> begin the extra turn (still player1, next turn number).
-        advanceTurn();
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            // End the current turn -> begin the extra turn (still player1, next turn number).
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
-        // Reach the extra turn's end step -> delayed loss fires onto the stack.
-        advanceToEndStep();
-        assertThat(gd.stack).isNotEmpty();
+            // Reach the extra turn's end step -> delayed loss fires onto the stack.
+            advanceToEndStep();
+            assertThat(gd.stack).isNotEmpty();
 
-        harness.passBothPriorities(); // resolve the loss
+            harness.passBothPriorities(); // resolve the loss
 
-        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("loses the game"));
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+            assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("loses the game"));
+            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        });
     }
 
     @Test
     @DisplayName("Platinum Angel keeps you from losing at the extra turn's end step")
     void platinumAngelPreventsLoss() {
-        enableAutoStop();
-        harness.addToBattlefield(player1, new PlatinumAngel());
-        castFinalFortune();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.addToBattlefield(player1, new PlatinumAngel());
+            castFinalFortune();
 
-        advanceTurn();
+            advanceTurn();
 
-        advanceToEndStep();
-        harness.passBothPriorities(); // resolve the loss trigger
+            advanceToEndStep();
+            harness.passBothPriorities(); // resolve the loss trigger
 
-        // Can't-lose: the trigger resolves but the player stays in the game.
-        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+            // Can't-lose: the trigger resolves but the player stays in the game.
+            assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        });
     }
 
     @Test
     @DisplayName("Skipping the gained extra turn prevents the delayed loss")
     void skippingGainedExtraTurnPreventsLoss() {
-        enableAutoStop();
-        harness.addToBattlefield(player1, new UginsNexus());
-        castFinalFortune();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.addToBattlefield(player1, new UginsNexus());
+            castFinalFortune();
 
-        advanceTurn();
+            advanceTurn();
 
-        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.extraTurns).isEmpty();
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
-        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+            assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+            assertThat(gd.extraTurns).isEmpty();
+            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+            assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        });
+    }
+
+    @Test
+    @DisplayName("Casting during an end step still grants an extra turn with its own loss")
+    void castingDuringEndStepSchedulesLossForExtraTurn() {
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.END_STEP);
+            harness.castFromHand(player1, new FinalFortune(), "{R}{R}");
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+
+            advanceToEndStep();
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
+            assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        });
+    }
+
+    @Test
+    @DisplayName("Another Final Fortune during the extra turn does not postpone its loss")
+    void anotherFinalFortuneDoesNotPostponeCurrentExtraTurnsLoss() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            castFinalFortune();
+            advanceTurn();
+
+            harness.castFromHand(player1, new FinalFortune(), "{R}{R}");
+            harness.passBothPriorities();
+            assertThat(gd.extraTurns).containsExactly(player1.getId());
+
+            advanceToEndStep();
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
+
+            assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        });
     }
 
     @Test
     @DisplayName("Each delayed loss waits for the extra turn that created it")
     void delayedLossesTrackTheirOwnExtraTurns() {
-        enableAutoStop();
-        harness.addToBattlefield(player1, new PlatinumAngel());
-        harness.setHand(player1, List.of(new FinalFortune(), new FinalFortune()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.addToBattlefield(player1, new PlatinumAngel());
+            harness.setHand(player1, List.of(new FinalFortune(), new FinalFortune()));
+            harness.addMana(player1, ManaColor.RED, 4);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+            harness.castInstant(player1, 0);
+            harness.passBothPriorities();
+            harness.castInstant(player1, 0);
+            harness.passBothPriorities();
 
-        assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(2);
+            assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
+            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(2);
 
-        advanceTurn();
-        advanceToEndStep();
+            advanceTurn();
+            advanceToEndStep();
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
-        harness.passBothPriorities();
-        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+            harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+            assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
-        advanceToEndStep();
+            advanceTurn();
+            advanceToEndStep();
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
-        harness.passBothPriorities();
-        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+            harness.passBothPriorities();
+            assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        });
     }
 }
