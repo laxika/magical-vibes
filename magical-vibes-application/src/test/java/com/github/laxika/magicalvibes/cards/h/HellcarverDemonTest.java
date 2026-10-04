@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OgreSentry;
+import com.github.laxika.magicalvibes.cards.p.PawnOfUlamog;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HellcarverDemon.class, Forest.class, GrizzlyBears.class, Shock.class,
+        OgreSentry.class, PawnOfUlamog.class})
 class HellcarverDemonTest extends BaseCardTest {
 
     @Test
@@ -62,5 +67,93 @@ class HellcarverDemonTest extends BaseCardTest {
                 && entry.getControllerId().equals(player1.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card()).doesNotContain(bears);
+    }
+
+    @Test
+    void mayDeclineAllSpellsWithFewerThanSixCardsInLibrary() {
+        OgreSentry spell = new OgreSentry();
+        Forest land = new Forest();
+        Permanent source = addCreatureReady(player1, new HellcarverDemon());
+        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Forest opponentHandCard = new Forest();
+        harness.setHand(player2, List.of(opponentHandCard));
+        harness.setLibrary(player1, List.of(spell, land));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell, land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentPermanent);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentHandCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayCastMultipleCreatureSpellsInChosenOrderDuringCombat() {
+        OgreSentry first = new OgreSentry();
+        OgreSentry second = new OgreSentry();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(first, second, land));
+        addCreatureReady(player1, new HellcarverDemon());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId(), first.getId()));
+
+        assertThat(gd.stack).extracting(entry -> entry.getCard()).containsExactly(second, first);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getOriginalCard).contains(first).doesNotContain(second);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getOriginalCard).contains(first, second);
+    }
+
+    @Test
+    void exilesOnlyLandsWithoutOfferingToPlayThem() {
+        Permanent source = addCreatureReady(player1, new HellcarverDemon());
+        Forest handCard = new Forest();
+        harness.setHand(player1, List.of(handCard));
+        List<Card> lands = List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest());
+        harness.setLibrary(player1, lands);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(lands);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(handCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void simultaneouslySacrificedPawnSeesOtherCreatureDie() {
+        addCreatureReady(player1, new HellcarverDemon());
+        harness.addToBattlefield(player1, new PawnOfUlamog());
+        harness.addToBattlefield(player1, new OgreSentry());
+        OgreSentry exiledSpell = new OgreSentry();
+        harness.setLibrary(player1, List.of(exiledSpell));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+        assertThat(gd.pendingMayAbilities).hasSize(2);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(2);
     }
 }
