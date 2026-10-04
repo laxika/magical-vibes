@@ -66,16 +66,73 @@ class IgneousElementalTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("A land in the opponent's graveyard does not reduce the cost")
+    void opponentLandDoesNotReduceCost() {
+        harness.setGraveyard(player2, List.of(new Mountain()));
+        harness.setHand(player1, List.of(new IgneousElemental()));
+        addReducedMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A nonland card in the graveyard does not reduce the cost")
+    void nonlandDoesNotReduceCost() {
+        harness.setGraveyard(player1, List.of(new IgneousElemental()));
+        harness.setHand(player1, List.of(new IgneousElemental()));
+        addReducedMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Multiple lands still reduce the generic cost by only two")
+    void multipleLandsDoNotIncreaseReduction() {
+        harness.setGraveyard(player1, List.of(new Mountain(), new Mountain()));
+        harness.castFromHand(player1, new IgneousElemental(), "{4}{R}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The reduced cost still requires two red mana")
+    void reductionDoesNotRemoveRedRequirement() {
+        harness.setGraveyard(player1, List.of(new Mountain()));
+        harness.setHand(player1, List.of(new IgneousElemental()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The ETB ability can target Igneous Elemental itself")
+    void etbCanDamageItself() {
+        castWithFullCost();
+        Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        selectEtbTarget(target);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Igneous Elemental");
+    }
+
     private void addReducedMana() {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
     private void castWithFullCost() {
-        harness.setHand(player1, List.of(new IgneousElemental()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IgneousElemental(), "{4}{R}{R}");
         harness.passBothPriorities();
     }
 
