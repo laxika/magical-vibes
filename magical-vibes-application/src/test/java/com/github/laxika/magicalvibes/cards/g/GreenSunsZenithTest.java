@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.LeadTheStampede;
+import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
+import com.github.laxika.magicalvibes.cards.r.Recoup;
+import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,6 +19,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +27,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GreenSunsZenith.class, LlanowarElves.class, GrizzlyBears.class, AirElemental.class,
+        Plains.class, Swamp.class, GlissaTheTraitor.class, LeadTheStampede.class})
 class GreenSunsZenithTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -100,6 +106,7 @@ class GreenSunsZenithTest extends BaseCardTest {
     void nonCreatureCardsAreExcluded() {
         castZenith(10);
         setupLibrary();
+        harness.getGameData().playerDecks.get(player1.getId()).add(new LeadTheStampede());
 
         harness.passBothPriorities();
 
@@ -113,10 +120,8 @@ class GreenSunsZenithTest extends BaseCardTest {
     void multicolorCreatureWithGreenIsIncluded() {
         castZenith(3);
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
         // GlissaTheTraitor: MV 3, black/green creature — should be eligible
-        deck.addAll(List.of(new GlissaTheTraitor(), new AirElemental()));
+        harness.setLibrary(player1, List.of(new GlissaTheTraitor(), new AirElemental()));
 
         harness.passBothPriorities();
 
@@ -153,7 +158,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Card is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -185,7 +190,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Zenith should NOT be in graveyard
         harness.assertNotInGraveyard(player1, "Green Sun's Zenith");
@@ -220,7 +225,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         // No card added to hand or battlefield
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
@@ -249,9 +254,7 @@ class GreenSunsZenithTest extends BaseCardTest {
     void onlyNonGreenCreaturesInLibrary() {
         castZenith(10);
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new AirElemental(), new Plains()));
+        harness.setLibrary(player1, List.of(new AirElemental(), new Plains()));
 
         harness.passBothPriorities();
 
@@ -276,7 +279,86 @@ class GreenSunsZenithTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Zenith stays out of the library until the search choice is completed")
+    void staysOutOfLibraryDuringSearch() {
+        GreenSunsZenith zenith = new GreenSunsZenith();
+        harness.setHand(player1, List.of(zenith));
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(zenith);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zenith);
+    }
+
+    @Test
+    @CardUsed({Twincast.class, CosisTrickster.class})
+    @DisplayName("A resolving copy performs both shuffles and does not put a copy in the library")
+    void copiedZenithTriggersTwoShuffles() {
+        GreenSunsZenith zenith = new GreenSunsZenith();
+        harness.setHand(player1, List.of(zenith, new Twincast(), new Twincast()));
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
+        harness.addToBattlefield(player2, new CosisTrickster());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.castAndResolveInstant(player1, 0, zenith.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getCard() instanceof CosisTrickster)).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @CardUsed(Recoup.class)
+    @DisplayName("Flashback exiles Zenith instead of putting it into its owner's library")
+    void flashbackExilesZenithWithoutLeavingItInLibrary() {
+        GreenSunsZenith zenith = new GreenSunsZenith();
+        harness.setGraveyard(player1, List.of(zenith));
+        harness.setHand(player1, List.of(new Recoup()));
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, zenith.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castFlashback(player1, 0, 1, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(zenith);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(zenith);
+        harness.assertNotInGraveyard(player1, "Green Sun's Zenith");
+    }
+
+    @Test
+    @CardUsed(CosisTrickster.class)
+    @DisplayName("A non-owner controller performs both shuffles, including the owner's library")
+    void nonOwnerControllerPerformsBothShuffles() {
+        GreenSunsZenith zenith = new GreenSunsZenith();
+        zenith.setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(zenith));
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new CosisTrickster());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zenith);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getCard() instanceof CosisTrickster)).hasSize(2);
+    }
 
     private void castZenith(int xValue) {
         harness.setHand(player1, List.of(new GreenSunsZenith()));
@@ -286,10 +368,8 @@ class GreenSunsZenithTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
         // LlanowarElves: MV 1 (green creature), GrizzlyBears: MV 2 (green creature),
         // AirElemental: MV 5 (blue creature), Plains: MV 0 (basic land), Swamp: MV 0 (basic land)
-        deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains(), new Swamp()));
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains(), new Swamp()));
     }
 }
