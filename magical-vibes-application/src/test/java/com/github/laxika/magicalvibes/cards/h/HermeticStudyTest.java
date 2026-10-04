@@ -32,9 +32,7 @@ class HermeticStudyTest extends BaseCardTest {
     @Test
     void enchantedCreatureCanTapToDealDamageToCreature() {
         addEnchantedCreature();
-        Permanent target = new Permanent(new LlanowarElves());
-        target.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = addCreatureReady(player2, new LlanowarElves());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -44,8 +42,7 @@ class HermeticStudyTest extends BaseCardTest {
 
     @Test
     void summoningSickEnchantedCreatureCannotActivateGrantedAbility() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         addAura(creature);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -102,6 +99,63 @@ class HermeticStudyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void castingAuraGrantsAbilityAndCreatureIsTheDamageSource() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HermeticStudy()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLife(player2, 20);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.damageDealtThisTurnBySource.get(creature.getId())).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedCreatureCannotPayTapCostAgain() {
+        Permanent creature = addEnchantedCreature();
+        creature.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void grantedAbilityCanDamageItsOwnController() {
+        harness.setLife(player1, 20);
+        addEnchantedCreature();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void activatedAbilityStillResolvesAfterAuraLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = addAura(creature);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        creature.setTapped(false);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
     }
 
     private Permanent addEnchantedCreature() {
