@@ -82,4 +82,54 @@ class HumblingElderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature an opponent controls");
     }
+
+    @Test
+    @DisplayName("Can enter when the opponent controls no creatures")
+    void canEnterWithoutLegalTargets() {
+        harness.setHand(player1, List.of(new HumblingElder()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Humbling Elder");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The debuff can reduce power below zero and only affects the target")
+    void canReducePowerBelowZero() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HumblingElder());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new HumblingElder());
+        harness.setHand(player1, List.of(new HumblingElder()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.getEffectivePower()).isEqualTo(1);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ETB ability resolves even after Humbling Elder leaves")
+    void triggerResolvesWithoutSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HumblingElder());
+        harness.setHand(player1, List.of(new HumblingElder()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
