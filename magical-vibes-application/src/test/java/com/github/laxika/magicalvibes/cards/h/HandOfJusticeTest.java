@@ -16,6 +16,73 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HandOfJusticeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Summoning-sick white creatures can pay the additional tap cost")
+    void summoningSickCreaturesCanPayAdditionalCost() {
+        Permanent hand = addCreatureReady(player1, new HandOfJustice());
+        Permanent first = addCreatureReady(player1, new IcatianInfantry());
+        Permanent second = addCreatureReady(player1, new IcatianInfantry());
+        Permanent third = addCreatureReady(player1, new IcatianInfantry());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+        third.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new RiverMerfolk());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, third.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
+        assertThat(hand.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Hand of Justice cannot activate while summoning sick")
+    void summoningSickHandCannotActivate() {
+        Permanent hand = addCreatureReady(player1, new HandOfJustice());
+        hand.setSummoningSick(true);
+        Permanent first = addCreatureReady(player1, new IcatianInfantry());
+        Permanent second = addCreatureReady(player1, new IcatianInfantry());
+        Permanent third = addCreatureReady(player1, new IcatianInfantry());
+        Permanent target = addCreatureReady(player2, new RiverMerfolk());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(hand.isTapped()).isFalse();
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature tapped to pay the cost can also be the target")
+    void canDestroyCreatureUsedToPayCost() {
+        addCreatureReady(player1, new HandOfJustice());
+        Permanent target = addCreatureReady(player1, new IcatianInfantry());
+        Permanent second = addCreatureReady(player1, new IcatianInfantry());
+        Permanent third = addCreatureReady(player1, new IcatianInfantry());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, third.getId());
+        assertThat(target.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
+    }
+
+
+    @Test
     @DisplayName("Tapping three white creatures destroys the target creature")
     void tapsThreeWhiteCreaturesAndDestroysTarget() {
         Permanent hand = addCreatureReady(player1, new HandOfJustice());
