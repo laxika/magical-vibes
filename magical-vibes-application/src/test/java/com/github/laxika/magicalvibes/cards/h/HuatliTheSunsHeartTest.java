@@ -44,20 +44,75 @@ class HuatliTheSunsHeartTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 4);
     }
 
+    @Test
+    void combatUsesModifiedToughnessWithoutSubtractingMarkedDamage() {
+        addReadyHuatli(player1, 7);
+        Permanent spider = addReadyCreature(player1, new GiantSpider());
+        spider.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        spider.setMarkedDamage(3);
+        spider.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 14);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+    }
+
+    @Test
+    void spendingLastLoyaltyStopsStaticEffectButLifeAbilityStillResolves() {
+        addReadyHuatli(player1, 3);
+        Permanent piker = addReadyCreature(player1, new GoblinPiker());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Huatli, the Sun's Heart");
+        assertThat(gqs.getEffectiveCombatDamage(gd, piker)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void minusThreeGainsNoLifeWithoutControlledCreatures() {
+        addReadyHuatli(player1, 7);
+        addReadyCreature(player2, new GiantSpider());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void minusThreeUsesCurrentToughnessAtResolution() {
+        addReadyHuatli(player1, 7);
+        Permanent spider = addReadyCreature(player1, new GiantSpider());
+        spider.setMarkedDamage(2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        spider.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 26);
+    }
+
     private Permanent addReadyHuatli(Player player, int loyalty) {
-        Permanent perm = new Permanent(new HuatliTheSunsHeart());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HuatliTheSunsHeart());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
