@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.m.Megrim;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
 import com.github.laxika.magicalvibes.cards.z.ZuranEnchanter;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,7 +27,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GuerrillaTactics.class, GrizzlyBears.class, Distress.class, MindRot.class, Sift.class})
+@CardUsed({GuerrillaTactics.class, GrizzlyBears.class, Distress.class, MindRot.class, Sift.class,
+        JaceBeleren.class, ChandraNalaar.class, ImprisonedInTheMoon.class, ZuranEnchanter.class, Megrim.class, TrollAscetic.class})
 class GuerrillaTacticsTest extends BaseCardTest {
 
     // ===== Casting as a spell =====
@@ -319,9 +321,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 casts Sift (draw 3, discard 1) — self-discard
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Sift(), new GuerrillaTactics()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -419,6 +419,88 @@ class GuerrillaTacticsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
         // Player2 took 2 damage from Megrim
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Discarding two copies to Mind Rot creates two independent damage triggers")
+    void twoDiscardedCopiesEachDealFourDamage() {
+        harness.setHand(player2, List.of(new GuerrillaTactics(), new GuerrillaTactics()));
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 12);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card instanceof GuerrillaTactics).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mind Rot controlled by the discarding player does not trigger Guerrilla Tactics")
+    void ownMindRotDoesNotTrigger() {
+        harness.setHand(player1, List.of(new MindRot(), new GuerrillaTactics(), new GrizzlyBears()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Guerrilla Tactics");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Discard trigger deals four damage to a planeswalker")
+    void discardTriggerDealsFourDamageToPlaneswalker() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player2, chandra.getId());
+        resolveAllTriggers();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Chandra Nalaar");
+    }
+
+    @Test
+    @DisplayName("Discard trigger excludes opposing hexproof creatures but allows its controller's hexproof creatures")
+    void discardTriggerRespectsHexproof() {
+        Permanent opposingTroll = harness.addToBattlefieldAndReturn(player1, new TrollAscetic());
+        Permanent ownTroll = harness.addToBattlefieldAndReturn(player2, new TrollAscetic());
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).contains(ownTroll.getId()).doesNotContain(opposingTroll.getId());
+
+        harness.handlePermanentChosen(player2, ownTroll.getId());
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Troll Ascetic");
+        harness.assertOnBattlefield(player1, "Troll Ascetic");
     }
 }
 
