@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IllustriousWanderglyph.class, BottleGnomes.class, GrizzlyBears.class})
+@CardUsed({IllustriousWanderglyph.class, BottleGnomes.class, GrizzlyBears.class, Forest.class})
 class IllustriousWanderglyphTest extends BaseCardTest {
 
     @Test
@@ -64,13 +63,76 @@ class IllustriousWanderglyphTest extends BaseCardTest {
         for (int i = 0; i < 9; i++) {
             harness.addToBattlefield(player1, new Forest());
         }
-        harness.setHand(player1, List.of(new IllustriousWanderglyph()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IllustriousWanderglyph(), "{4}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+    }
+
+    @Test
+    void noBoostWithoutControllersBlessing() {
+        harness.addToBattlefield(player1, new IllustriousWanderglyph());
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        gd.playersWithCityBlessing.add(player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, gnomes)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, gnomes)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleWanderglyphsBoostEachOtherButNotOpponents() {
+        Permanent first = addCreatureReady(player1, new IllustriousWanderglyph());
+        Permanent second = addCreatureReady(player1, new IllustriousWanderglyph());
+        Permanent ownGnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent opposingGnomes = addCreatureReady(player2, new BottleGnomes());
+        gd.playersWithCityBlessing.add(player1.getId());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownGnomes)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownGnomes)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, opposingGnomes)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingGnomes)).isEqualTo(3);
+    }
+
+    @Test
+    void upkeepTokenGrantsBlessingAsTenthPermanent() {
+        harness.addToBattlefield(player1, new IllustriousWanderglyph());
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+
+        advanceToUpkeep(player2);
+        assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
+        assertThat(countPermanents(player1, "Gnome")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+        Permanent token = findPermanent(player1, "Gnome");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+        assertThat(countPermanents(player2, "Gnome")).isZero();
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent.getCard() instanceof Forest);
+        assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+    }
+
+    @Test
+    void upkeepTriggerStillCreatesTokenAfterSourceLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new IllustriousWanderglyph());
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Gnome")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Gnome")).isZero();
+        Permanent token = findPermanent(player1, "Gnome");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 }
