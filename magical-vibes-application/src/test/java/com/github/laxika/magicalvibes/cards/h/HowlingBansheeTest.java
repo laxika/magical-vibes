@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,9 +12,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HowlingBanshee.class, Unsummon.class})
 class HowlingBansheeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Howling Banshee puts it on the stack as a creature spell")
@@ -20,14 +21,12 @@ class HowlingBansheeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HowlingBanshee()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Howling Banshee");
     }
-
-    // ===== ETB life loss =====
 
     @Test
     @DisplayName("Resolving puts Howling Banshee on battlefield with ETB trigger on stack")
@@ -77,11 +76,53 @@ class HowlingBansheeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Life loss waits for the single enter trigger to resolve")
+    void lifeLossWaitsForTriggerResolution() {
+        castHowlingBanshee();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enter trigger still causes life loss after Howling Banshee is returned to hand")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        castHowlingBanshee();
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Howling Banshee"));
+
+        harness.assertNotOnBattlefield(player1, "Howling Banshee");
+        harness.assertInHand(player1, "Howling Banshee");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void castHowlingBanshee() {
         harness.setHand(player1, List.of(new HowlingBanshee()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
     }
 }
