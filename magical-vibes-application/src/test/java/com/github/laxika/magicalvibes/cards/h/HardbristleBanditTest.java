@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +53,80 @@ class HardbristleBanditTest extends BaseCardTest {
         assertThat(bandit.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("The crime trigger is available again on the opponent's turn")
+    void crimeTriggerResetsOnNextTurn() {
+        Permanent bandit = addReadyBandit();
+        commitCrime();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        tapForMana(bandit, ManaColor.GREEN);
+
+        commitCrime();
+
+        assertThat(bandit.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Targeting yourself does not untap the bandit or consume its crime trigger")
+    void targetingSelfIsNotCrime() {
+        Permanent bandit = addReadyBandit();
+        tapForMana(bandit, ManaColor.GREEN);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(bandit.isTapped()).isTrue();
+        castCrimeSpell();
+        assertThat(bandit.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent committing a crime does not untap your bandit")
+    void opponentCrimeDoesNotUntapBandit() {
+        Permanent bandit = addReadyBandit();
+        tapForMana(bandit, ManaColor.GREEN);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(bandit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A crime while untapped still consumes the once-per-turn trigger")
+    void crimeWhileUntappedConsumesTrigger() {
+        Permanent bandit = addReadyBandit();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        castCrimeSpell();
+        tapForMana(bandit, ManaColor.GREEN);
+        castCrimeSpell();
+
+        assertThat(bandit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The crime trigger resolves before the spell that caused it")
+    void untapTriggerUsesStackAboveCrimeSpell() {
+        Permanent bandit = addReadyBandit();
+        tapForMana(bandit, ManaColor.GREEN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(bandit.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(bandit.isTapped()).isFalse();
+        harness.assertLife(player2, lifeBefore);
+        harness.passBothPriorities();
+        harness.assertLife(player2, lifeBefore - 2);
+    }
+
     private void tapForMana(Permanent bandit, ManaColor color) {
         int banditIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bandit);
         harness.activateAbility(player1, banditIndex, 0, null, null);
@@ -71,7 +146,6 @@ class HardbristleBanditTest extends BaseCardTest {
     }
 
     private void castCrimeSpell() {
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 }
