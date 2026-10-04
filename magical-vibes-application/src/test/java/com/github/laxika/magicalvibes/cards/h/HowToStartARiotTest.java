@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,9 +44,7 @@ class HowToStartARiotTest extends BaseCardTest {
 
         cast(targetCreature, player2.getId());
 
-        targetCreature.resetModifiers();
-        opponentCreature.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(targetCreature.hasKeyword(Keyword.MENACE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(2);
@@ -72,6 +71,66 @@ class HowToStartARiotTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(player2.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetOwnPlayerAndOpponentsCreatureIndependently() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+
+        cast(opponentCreature, player1.getId());
+
+        assertThat(opponentCreature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(ownCreature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(4);
+    }
+
+    @Test
+    void targetedCreatureAlsoReceivesBoostWhenItsControllerIsTargeted() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(creature, player1.getId());
+
+        assertThat(creature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void boostsCreaturesPresentAtResolutionButNotCreaturesEnteringLater() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HowToStartARiot()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(creature.getId(), player2.getId()));
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+    }
+
+    @Test
+    void stillBoostsCreaturesWhenCreatureTargetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new HowToStartARiot()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(creature.getId(), player2.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(4);
+        assertThat(creature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void cast(Permanent creature, UUID playerTarget) {
