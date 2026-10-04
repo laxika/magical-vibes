@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.m.MinamoSightbender;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -27,8 +28,7 @@ class HeedTheMistsTest extends BaseCardTest {
                 new GodsEyeGateToTheReikai()));
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Minamo Sightbender (mana value 2) is milled, then two cards are drawn.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2); // milled card + Heed the Mists
@@ -46,8 +46,7 @@ class HeedTheMistsTest extends BaseCardTest {
                 new GodsEyeGateToTheReikai()));
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize - 1);
@@ -60,8 +59,7 @@ class HeedTheMistsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize - 1);
@@ -76,8 +74,7 @@ class HeedTheMistsTest extends BaseCardTest {
                 new GodsEyeGateToTheReikai()));
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -97,8 +94,7 @@ class HeedTheMistsTest extends BaseCardTest {
                 new GodsEyeGateToTheReikai()));
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3); // two milled cards + Heed the Mists
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -117,12 +113,59 @@ class HeedTheMistsTest extends BaseCardTest {
                 new GodsEyeGateToTheReikai()));
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize - 1 + 2);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed(BruvacTheGrandiloquent.class)
+    @DisplayName("Draws the sum of two nonzero mana values when Bruvac doubles the mill")
+    void drawsForBothNonzeroManaValues() {
+        prepare();
+        harness.addToBattlefield(player2, new BruvacTheGrandiloquent());
+        harness.setLibrary(player1, List.of(
+                new MinamoSightbender(), new MinamoSightbender(),
+                new GodsEyeGateToTheReikai(), new GodsEyeGateToTheReikai(),
+                new GodsEyeGateToTheReikai(), new GodsEyeGateToTheReikai()));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Attempting more draws than the remaining library causes the controller to lose")
+    void insufficientLibraryCausesLoss() {
+        prepare();
+        GodsEyeGateToTheReikai drawn = new GodsEyeGateToTheReikai();
+        harness.setLibrary(player1, List.of(new MinamoSightbender(), drawn));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Milling the last card with zero mana value does not cause a loss")
+    void millingLastLandDoesNotCauseLoss() {
+        prepare();
+        GodsEyeGateToTheReikai milled = new GodsEyeGateToTheReikai();
+        harness.setLibrary(player1, List.of(milled));
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(milled);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
     private void prepare() {
