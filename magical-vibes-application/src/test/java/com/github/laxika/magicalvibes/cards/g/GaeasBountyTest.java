@@ -78,6 +78,58 @@ class GaeasBountyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("May choose zero Forests even when two are available")
+    void mayChooseZeroForests() {
+        setupAndCast();
+        List<Card> library = setupLibrary();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertInGraveyard(player1, "Gaea's Bounty");
+    }
+
+    @Test
+    @DisplayName("Finding the only Forest completes the search")
+    void onlyOneForestAvailable() {
+        setupAndCast();
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertInGraveyard(player1, "Gaea's Bounty");
+    }
+
+    @Test
+    @DisplayName("Search stops at two Forests even when more are available")
+    void cannotTakeMoreThanTwoForests() {
+        setupAndCast();
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new GaeasBounty(), "{2}{G}");
     }
