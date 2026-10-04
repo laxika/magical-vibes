@@ -29,8 +29,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertNotOnBattlefield(player2, "Forest Bear");
         harness.assertInGraveyard(player2, "Forest Bear");
@@ -45,8 +44,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -64,8 +62,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handlePermanentChosen(player2, bear.getId());
 
@@ -83,8 +80,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertOnBattlefield(player2, "Forest Bear");
     }
@@ -98,8 +94,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertOnBattlefield(player2, "Forest Bear");
         harness.assertNotInGraveyard(player2, "Forest Bear");
@@ -114,8 +109,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertNotOnBattlefield(player2, "Forest Bear");
@@ -128,8 +122,7 @@ class ImperialEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("no creatures to destroy")).isTrue();
@@ -143,5 +136,76 @@ class ImperialEdictTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Opponent may choose an indestructible creature even when another could be destroyed")
+    void opponentCanChooseIndestructibleCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+        bear.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.addToBattlefield(player2, new AlertShuInfantry());
+        harness.setHand(player1, List.of(new ImperialEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player2, bear.getId());
+
+        harness.assertOnBattlefield(player2, "Forest Bear");
+        harness.assertOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertNotInGraveyard(player2, "Forest Bear");
+        harness.assertInGraveyard(player1, "Imperial Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shroud and hexproof do not prevent choosing and destroying a creature")
+    void chosenCreatureIsNotTargeted() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+        bear.getGrantedKeywords().add(Keyword.SHROUD);
+        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.addToBattlefield(player2, new AlertShuInfantry());
+        harness.setHand(player1, List.of(new ImperialEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player2, bear.getId());
+
+        harness.assertInGraveyard(player2, "Forest Bear");
+        harness.assertOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertInGraveyard(player1, "Imperial Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the opponent can choose, and only among creatures they control")
+    void invalidChoicesPreserveOpponentChoice() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new ForestBear());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+        harness.addToBattlefield(player2, new AlertShuInfantry());
+        harness.setHand(player1, List.of(new ImperialEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentBear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player2, ownBear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player2, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player2, opponentBear.getId());
+
+        harness.assertOnBattlefield(player1, "Forest Bear");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertNotOnBattlefield(player2, "Forest Bear");
+        harness.assertInGraveyard(player2, "Forest Bear");
+        harness.assertInGraveyard(player1, "Imperial Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
