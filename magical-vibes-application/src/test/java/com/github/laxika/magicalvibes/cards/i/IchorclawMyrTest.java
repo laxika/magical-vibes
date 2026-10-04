@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.testutil.TestCards;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.w.WallOfTanglecord;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IchorclawMyr.class, CarapaceForger.class, WallOfTanglecord.class})
 class IchorclawMyrTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("When Ichorclaw Myr becomes blocked, a triggered ability is pushed onto the stack")
@@ -25,7 +27,7 @@ class IchorclawMyrTest extends BaseCardTest {
         Permanent myrPerm = addMyrReady(player1);
         myrPerm.setAttacking(true);
 
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new CarapaceForger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -42,7 +44,7 @@ class IchorclawMyrTest extends BaseCardTest {
         Permanent myrPerm = addMyrReady(player1);
         myrPerm.setAttacking(true);
 
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new CarapaceForger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -62,8 +64,8 @@ class IchorclawMyrTest extends BaseCardTest {
         TestCards.mutableCard(myrPerm).setToughness(4);
         myrPerm.setAttacking(true);
 
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new CarapaceForger());
+        addCreatureReady(player2, new CarapaceForger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -91,7 +93,7 @@ class IchorclawMyrTest extends BaseCardTest {
         TestCards.mutableCard(myrPerm).setToughness(4);
         myrPerm.setAttacking(true);
 
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new CarapaceForger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -109,10 +111,58 @@ class IchorclawMyrTest extends BaseCardTest {
         assertThat(myrPerm.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Unblocked Ichorclaw Myr deals poison without losing life or getting a boost")
+    void unblockedCombatDealsPoison() {
+        Permanent myr = addMyrReady(player1);
+        myr.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(myr.getPowerModifier()).isZero();
+        assertThat(myr.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocked Ichorclaw Myr deals three infect counters after its trigger resolves")
+    void boostedCombatDealsMinusCounters() {
+        Permanent myr = addMyrReady(player1);
+        myr.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new WallOfTanglecord());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(wall.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Wall of Tanglecord");
+        harness.assertOnBattlefield(player1, "Ichorclaw Myr");
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocking with Ichorclaw Myr does not trigger its boost")
+    void blockingDoesNotBoostMyr() {
+        Permanent attacker = addCreatureReady(player1, new CarapaceForger());
+        attacker.setAttacking(true);
+        Permanent myr = addMyrReady(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        resolveCombat();
+        assertThat(myr.getPowerModifier()).isZero();
+        assertThat(myr.getToughnessModifier()).isZero();
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Ichorclaw Myr");
+    }
+
     private Permanent addMyrReady(Player player) {
-        Permanent perm = new Permanent(new IchorclawMyr());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new IchorclawMyr());
     }
 }
