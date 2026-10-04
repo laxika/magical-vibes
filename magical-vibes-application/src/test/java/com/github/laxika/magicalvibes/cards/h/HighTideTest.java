@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,8 +24,7 @@ class HighTideTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addToBattlefield(player1, new Island());
 
-        harness.castInstant(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
@@ -40,8 +38,7 @@ class HighTideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player2, new Island());
 
-        harness.castInstant(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.tapPermanent(player1, 0);
         harness.tapPermanent(player2, 0);
 
@@ -57,8 +54,7 @@ class HighTideTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addToBattlefield(player1, new Island());
 
-        harness.castInstant(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -68,5 +64,67 @@ class HighTideTest extends BaseCardTest {
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Islands tapped before High Tide resolves receive no bonus")
+    void doesNotApplyBeforeResolution() {
+        harness.setHand(player1, List.of(new HighTide()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addToBattlefield(player2, new Island());
+
+        harness.castInstant(player1, 0);
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple resolved High Tides each add one blue mana")
+    void multipleCopiesAreCumulative() {
+        harness.setHand(player1, List.of(new HighTide(), new HighTide()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0);
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Islands entering after High Tide resolves also add extra mana")
+    void appliesToIslandsEnteringLater() {
+        harness.setHand(player1, List.of(new HighTide()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.addToBattlefield(player2, new Island());
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("High Tide still applies during the end step")
+    void remainsActiveDuringEndStep() {
+        harness.setHand(player1, List.of(new HighTide()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addToBattlefield(player1, new Island());
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
     }
 }
