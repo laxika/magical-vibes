@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.l.Levitation;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GravitySphere.class, AzureDrake.class, BarbaryApes.class})
+@CardUsed({GravitySphere.class, AzureDrake.class, BarbaryApes.class, Levitation.class, Opalescence.class})
 class GravitySphereTest extends BaseCardTest {
 
     @Test
@@ -55,6 +57,58 @@ class GravitySphereTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(gravitySphere);
 
         assertThat(gqs.hasKeyword(gd, drake, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later flying grant applies after Gravity Sphere")
+    void laterFlyingGrantRestoresFlying() {
+        Permanent drake = addCreatureReady(player1, new AzureDrake());
+        resolveGravitySphere();
+
+        harness.castFromHand(player1, new Levitation(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, drake, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gravity Sphere removes an earlier flying grant")
+    void earlierFlyingGrantIsRemoved() {
+        Permanent ape = addCreatureReady(player1, new BarbaryApes());
+        harness.castFromHand(player1, new Levitation(), "{2}{U}{U}");
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, ape, Keyword.FLYING)).isTrue();
+
+        resolveGravitySphere();
+
+        assertThat(gqs.hasKeyword(gd, ape, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gravity Sphere loses flying itself when it becomes a creature")
+    void animatedGravitySphereAlsoLosesFlying() {
+        harness.castFromHand(player1, new Opalescence(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new Levitation(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        Permanent sphere = resolveGravitySphere();
+
+        assertThat(gqs.isCreature(gd, sphere)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A newer Gravity Sphere replaces the older world enchantment")
+    void newerWorldReplacesOlderWorld() {
+        Permanent older = resolveGravitySphere();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new GravitySphere(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(older);
+        harness.assertInGraveyard(player1, "Gravity Sphere");
+        harness.assertOnBattlefield(player2, "Gravity Sphere");
     }
 
     private Permanent resolveGravitySphere() {
