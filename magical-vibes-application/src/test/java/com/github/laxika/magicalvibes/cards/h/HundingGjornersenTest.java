@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
 import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HundingGjornersen.class, ZephyrFalcon.class})
+@CardUsed({HundingGjornersen.class, ZephyrFalcon.class, DAvenantArcher.class})
 class HundingGjornersenTest extends BaseCardTest {
 
     @Test
@@ -81,6 +82,54 @@ class HundingGjornersenTest extends BaseCardTest {
 
         assertThat(hunding.getPowerModifier()).isZero();
         assertThat(hunding.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Rampage counts blockers when its trigger resolves")
+    void blockerDestroyedBeforeResolutionReducesBonus() {
+        Permanent hunding = addHunding();
+        addCreatureReady(player1, new DAvenantArcher());
+        addBlockers(2);
+        Permanent blocker = findPermanent(player2, "Zephyr Falcon");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(hunding.getPowerModifier()).isZero();
+        harness.activateAbility(player1, 1, null, blocker.getId());
+        harness.passBothPriorities();
+        assertThat(countPermanents(player2, "Zephyr Falcon")).isEqualTo(1);
+        resolveAllTriggers();
+
+        assertThat(hunding.getPowerModifier()).isZero();
+        assertThat(hunding.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing a blocker after rampage resolves does not change the bonus")
+    void blockerDestroyedAfterResolutionDoesNotReduceBonus() {
+        Permanent hunding = addHunding();
+        addCreatureReady(player1, new DAvenantArcher());
+        addBlockers(2);
+        Permanent blocker = findPermanent(player2, "Zephyr Falcon");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(hunding.getPowerModifier()).isEqualTo(1);
+        assertThat(hunding.getToughnessModifier()).isEqualTo(1);
+        harness.activateAbility(player1, 1, null, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Zephyr Falcon")).isEqualTo(1);
+        assertThat(hunding.getPowerModifier()).isEqualTo(1);
+        assertThat(hunding.getToughnessModifier()).isEqualTo(1);
     }
 
     private Permanent addHunding() {
