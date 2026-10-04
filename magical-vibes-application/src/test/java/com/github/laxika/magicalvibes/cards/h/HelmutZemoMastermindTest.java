@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -29,6 +30,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
         Card creature = new GrizzlyBears();
         helmut.setPowerModifier(2);
         harness.setGraveyard(player1, List.of(shock, counsel, creature));
+        harness.setGraveyard(player2, List.of(new Shock()));
 
         declareAttack();
 
@@ -39,7 +41,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casts the chosen card for free, exiles it, and puts a counter on Helmut")
+    @DisplayName("Casts the chosen card with mana payment, exiles it, and puts a counter on Helmut")
     void castsChosenCardAndPutsCounterOnHelmut() {
         Permanent helmut = addReadyHelmut();
         helmut.setPowerModifier(2);
@@ -50,6 +52,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
         declareAttack();
         harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -77,10 +80,64 @@ class HelmutZemoMastermindTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(counsel.getId()));
     }
 
+    @Test
+    @DisplayName("Cannot cast the chosen spell without enough mana")
+    void cannotCastWithoutMana() {
+        Permanent helmut = addReadyHelmut();
+        helmut.setPowerModifier(1);
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+
+        declareAttack();
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(counsel);
+        assertThat(gd.stack).isEmpty();
+        assertThat(helmut.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining the cast leaves the card in the graveyard and adds no counter")
+    void decliningCastAddsNoCounter() {
+        Permanent helmut = addReadyHelmut();
+        helmut.setPowerModifier(1);
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+
+        declareAttack();
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(counsel);
+        assertThat(gd.stack).isEmpty();
+        assertThat(helmut.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter is placed during the attack ability's resolution")
+    void counterIsPlacedBeforePlayersReceivePriority() {
+        Permanent helmut = addReadyHelmut();
+        helmut.setPowerModifier(1);
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+
+        declareAttack();
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(helmut.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(counsel);
+    }
+
     private Permanent addReadyHelmut() {
-        Permanent helmut = new Permanent(new HelmutZemoMastermind());
+        Permanent helmut = harness.addToBattlefieldAndReturn(player1, new HelmutZemoMastermind());
         helmut.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(helmut);
         return helmut;
     }
 
