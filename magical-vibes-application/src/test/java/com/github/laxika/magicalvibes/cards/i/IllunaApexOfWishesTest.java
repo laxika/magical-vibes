@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IllunaApexOfWishes.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({IllunaApexOfWishes.class, Forest.class, GrizzlyBears.class, Shock.class, Pacifism.class})
 class IllunaApexOfWishesTest extends BaseCardTest {
 
     @Test
@@ -74,6 +75,73 @@ class IllunaApexOfWishesTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(shock.getId(), forest.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library produces no destination choice")
+    void emptyLibraryDoesNothing() {
+        Permanent illuna = addCreatureReady(player1, new IllunaApexOfWishes());
+        harness.setLibrary(player1, List.of());
+
+        triggerMutation(illuna);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Illuna, Apex of Wishes");
+    }
+
+    @Test
+    @DisplayName("The first nonland permanent stops the exile sequence")
+    void stopsAtFirstNonlandPermanent() {
+        Permanent illuna = addCreatureReady(player1, new IllunaApexOfWishes());
+        Card pacifism = new Pacifism();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(pacifism, forest));
+
+        triggerMutation(illuna);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Pacifism");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("An Aura entering from exile requires a legal attachment choice")
+    void auraEntersAttachedToChosenCreature() {
+        Permanent illuna = addCreatureReady(player1, new IllunaApexOfWishes());
+        addCreatureReady(player2, new IllunaApexOfWishes());
+        harness.setLibrary(player1, List.of(new Pacifism()));
+
+        triggerMutation(illuna);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handlePermanentChosen(player1, illuna.getId());
+
+        assertThat(findPermanent(player1, "Pacifism").getAttachedTo()).isEqualTo(illuna.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Aura with no legal attachment remains in exile")
+    void auraWithoutLegalAttachmentRemainsExiled() {
+        Permanent illuna = addCreatureReady(player1, new IllunaApexOfWishes());
+        Card pacifism = new Pacifism();
+        harness.setLibrary(player1, List.of(pacifism));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+                gd, illuna, List.of(illuna.getCard()), player1.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).containsExactly(pacifism.getId());
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        harness.assertNotInGraveyard(player1, "Pacifism");
+        harness.assertNotInHand(player1, "Pacifism");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
