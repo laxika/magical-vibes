@@ -7,14 +7,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ImmolatingSouleater.class})
 class ImmolatingSouleaterTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -95,10 +96,73 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         assertThat(perm.getPowerModifier()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Cannot pay two life when only one life remains")
+    void cannotPayWithInsufficientLife() {
+        Permanent perm = addSouleaterReady(player1);
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(perm.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Red mana can pay the cost even with only one life remaining")
+    void canPayWithRedManaAtOneLife() {
+        Permanent perm = addSouleaterReady(player1);
+        harness.setLife(player1, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        assertThat(perm.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new ImmolatingSouleater());
+        perm.setSummoningSick(true);
+        perm.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(perm.getPowerModifier()).isEqualTo(1);
+        assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost affects only the source Souleater and waits for resolution")
+    void boostsOnlySourceOnResolution() {
+        Permanent source = addSouleaterReady(player1);
+        Permanent ally = addSouleaterReady(player1);
+        Permanent opponent = addSouleaterReady(player2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(source.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+    }
+
     private Permanent addSouleaterReady(Player player) {
-        Permanent perm = new Permanent(new ImmolatingSouleater());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ImmolatingSouleater());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
