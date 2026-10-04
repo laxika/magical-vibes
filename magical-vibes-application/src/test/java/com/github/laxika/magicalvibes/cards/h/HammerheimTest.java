@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.b.BarbarianGuides;
 import com.github.laxika.magicalvibes.cards.r.RimeDryad;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Hammerheim.class, SnowCoveredForest.class, BalduvianBears.class, RimeDryad.class})
+@CardUsed({Hammerheim.class, SnowCoveredForest.class, BalduvianBears.class, RimeDryad.class, BarbarianGuides.class})
 class HammerheimTest extends BaseCardTest {
 
     @Test
@@ -67,8 +68,7 @@ class HammerheimTest extends BaseCardTest {
         Permanent hammerheim = harness.addToBattlefieldAndReturn(player1, new Hammerheim());
         Permanent dryad = addCreatureReady(player1, new RimeDryad());
         dryad.setAttacking(true);
-        Permanent snowForest = new Permanent(new SnowCoveredForest());
-        gd.playerBattlefields.get(player2.getId()).add(snowForest);
+        harness.addToBattlefield(player2, new SnowCoveredForest());
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
         activateRemoval(hammerheim, dryad);
@@ -79,6 +79,88 @@ class HammerheimTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(dryad))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Snow landwalk granted after removal prevents blocking")
+    void laterSnowLandwalkGrantPreventsBlocking() {
+        Permanent hammerheim = harness.addToBattlefieldAndReturn(player1, new Hammerheim());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        Permanent guides = addCreatureReady(player1, new BarbarianGuides());
+        harness.addToBattlefield(player2, new SnowCoveredForest());
+        addCreatureReady(player2, new BalduvianBears());
+
+        activateRemoval(hammerheim, attacker);
+        grantSnowForestwalk(guides, attacker);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+
+        assertThat(harness.getCombatBlockService()
+                .getBlockableAttackerIndices(gd, player1.getId(), player2.getId()))
+                .doesNotContain(gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+    }
+
+    @Test
+    @DisplayName("Removal after a snow landwalk grant permits blocking")
+    void removesEarlierSnowLandwalkGrant() {
+        Permanent hammerheim = harness.addToBattlefieldAndReturn(player1, new Hammerheim());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        Permanent guides = addCreatureReady(player1, new BarbarianGuides());
+        harness.addToBattlefield(player2, new SnowCoveredForest());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        grantSnowForestwalk(guides, attacker);
+        activateRemoval(hammerheim, attacker);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Printed snow landwalk returns after cleanup and other creatures retain landwalk")
+    void restoresSnowLandwalkAfterCleanupAndOnlyAffectsTarget() {
+        Permanent hammerheim = harness.addToBattlefieldAndReturn(player1, new Hammerheim());
+        Permanent target = addCreatureReady(player1, new RimeDryad());
+        Permanent other = addCreatureReady(player1, new RimeDryad());
+        harness.addToBattlefield(player2, new SnowCoveredForest());
+        addCreatureReady(player2, new BalduvianBears());
+
+        activateRemoval(hammerheim, target);
+        target.setAttacking(true);
+        target.setAttackTarget(player2.getId());
+        other.setAttacking(true);
+        other.setAttackTarget(player2.getId());
+        assertThat(harness.getCombatBlockService()
+                .getBlockableAttackerIndices(gd, player1.getId(), player2.getId()))
+                .contains(gd.playerBattlefields.get(player1.getId()).indexOf(target))
+                .doesNotContain(gd.playerBattlefields.get(player1.getId()).indexOf(other));
+
+        endTurn();
+        target.setAttacking(true);
+        target.setAttackTarget(player2.getId());
+        other.setAttacking(true);
+        other.setAttackTarget(player2.getId());
+        assertThat(harness.getCombatBlockService()
+                .getBlockableAttackerIndices(gd, player1.getId(), player2.getId()))
+                .doesNotContain(gd.playerBattlefields.get(player1.getId()).indexOf(target))
+                .doesNotContain(gd.playerBattlefields.get(player1.getId()).indexOf(other));
+    }
+
+    private void grantSnowForestwalk(Permanent guides, Permanent target) {
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(guides), 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FOREST");
     }
 
     private void activateRemoval(Permanent hammerheim, Permanent target) {
