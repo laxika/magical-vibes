@@ -59,10 +59,48 @@ class HighStrideTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castHighStride(Permanent target) {
+    @Test
+    @DisplayName("An untapped creature you control still gets the boost and reach")
+    void boostsUntappedCreatureYouControlOnly() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        other.tap();
+
+        castHighStride(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when its target leaves before resolution")
+    void targetLeavingBeforeResolutionDoesNotRedirectEffects() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        other.tap();
         harness.setHand(player1, List.of(new HighStride()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "High Stride");
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
+    }
+
+    private void castHighStride(Permanent target) {
+        harness.setHand(player1, List.of(new HighStride()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
