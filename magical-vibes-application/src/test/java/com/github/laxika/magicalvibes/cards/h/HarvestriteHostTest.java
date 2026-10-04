@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.z.ZodiacRabbit;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BrambleguardCaptain;
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
+import com.github.laxika.magicalvibes.cards.s.SeasonedWarrenguard;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -14,14 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HarvestriteHost.class, GrizzlyBears.class, ZodiacRabbit.class})
+@CardUsed({HarvestriteHost.class, BrambleguardCaptain.class, SeasonedWarrenguard.class, Conspiracy.class})
 class HarvestriteHostTest extends BaseCardTest {
 
     @Test
     void ownEntryBoostsTargetWithoutDrawing() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        GrizzlyBears topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        BrambleguardCaptain topCard = new BrambleguardCaptain();
+        harness.setLibrary(player1, List.of(topCard));
 
         castHost();
         resolveTrigger(target);
@@ -33,9 +34,9 @@ class HarvestriteHostTest extends BaseCardTest {
 
     @Test
     void secondRabbitEntryDrawsCard() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        GrizzlyBears drawnCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(drawnCard);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        BrambleguardCaptain drawnCard = new BrambleguardCaptain();
+        harness.setLibrary(player1, List.of(drawnCard));
 
         castHost();
         resolveTrigger(target);
@@ -48,10 +49,10 @@ class HarvestriteHostTest extends BaseCardTest {
 
     @Test
     void fizzledTriggerDoesNotCountTowardSecondResolution() {
-        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        GrizzlyBears drawnCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(drawnCard);
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        BrambleguardCaptain drawnCard = new BrambleguardCaptain();
+        harness.setLibrary(player1, List.of(drawnCard));
 
         castHost();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -68,19 +69,107 @@ class HarvestriteHostTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 
+    @Test
+    void thirdResolutionBoostsWithoutDrawingAgain() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        BrambleguardCaptain drawnCard = new BrambleguardCaptain();
+        BrambleguardCaptain remainingCard = new BrambleguardCaptain();
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+
+        castHost();
+        resolveTrigger(target);
+        castRabbit();
+        resolveTrigger(target);
+        castRabbit();
+        resolveTrigger(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    void nonRabbitEntryDoesNotTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        castHost();
+        resolveTrigger(target);
+
+        harness.castFromHand(player1, new BrambleguardCaptain(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    void canTargetItselfOnEntry() {
+        castHost();
+        Permanent host = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        resolveTrigger(host);
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+    }
+
+    @Test
+    void opponentsRabbitDoesNotTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        castHost();
+        resolveTrigger(target);
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new SeasonedWarrenguard(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    void secondResolutionDrawsEvenIfHostHasLeftBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+        BrambleguardCaptain drawnCard = new BrambleguardCaptain();
+        harness.setLibrary(player1, List.of(drawnCard));
+        castHost();
+        resolveTrigger(target);
+        Permanent host = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof HarvestriteHost)
+                .findFirst().orElseThrow();
+
+        castRabbit();
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(host);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @CardUsed({Conspiracy.class})
+    void ownEntryStillTriggersWhenItIsNotARabbit() {
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BrambleguardCaptain());
+
+        castHost();
+        resolveTrigger(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void castHost() {
-        harness.setHand(player1, List.of(new HarvestriteHost()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HarvestriteHost(), "{2}{W}");
         harness.passBothPriorities();
     }
 
     private void castRabbit() {
-        harness.setHand(player1, List.of(new ZodiacRabbit()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SeasonedWarrenguard(), "{W}");
         harness.passBothPriorities();
     }
 
