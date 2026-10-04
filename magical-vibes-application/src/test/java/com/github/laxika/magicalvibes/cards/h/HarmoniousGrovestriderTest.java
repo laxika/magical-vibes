@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HarmoniousGrovestrider.class, Forest.class, Shock.class})
+@CardUsed({HarmoniousGrovestrider.class, Forest.class, Shock.class, RodOfRuin.class})
 class HarmoniousGrovestriderTest extends BaseCardTest {
 
     @Test
@@ -41,10 +42,9 @@ class HarmoniousGrovestriderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
         Permanent grovestrider = harness.addToBattlefieldAndReturn(player1, new HarmoniousGrovestrider());
-        prepareOpponentShock(grovestrider, 1);
+        prepareOpponentShock(1);
 
-        harness.castInstant(player2, 0, grovestrider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, grovestrider.getId());
 
         harness.assertInGraveyard(player2, "Shock");
         harness.assertOnBattlefield(player1, "Harmonious Grovestrider");
@@ -57,10 +57,9 @@ class HarmoniousGrovestriderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
         Permanent grovestrider = harness.addToBattlefieldAndReturn(player1, new HarmoniousGrovestrider());
-        prepareOpponentShock(grovestrider, 3);
+        prepareOpponentShock(3);
 
-        harness.castInstant(player2, 0, grovestrider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, grovestrider.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -68,7 +67,96 @@ class HarmoniousGrovestriderTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Shock");
     }
 
-    private void prepareOpponentShock(Permanent target, int redMana) {
+    @Test
+    void unpaidWardPreventsLethalDamage() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent grovestrider = harness.addToBattlefieldAndReturn(player1, new HarmoniousGrovestrider());
+        prepareOpponentShock(1);
+
+        harness.castAndResolveInstant(player2, 0, grovestrider.getId());
+
+        harness.assertOnBattlefield(player1, "Harmonious Grovestrider");
+        assertThat(grovestrider.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void paidWardAllowsLethalDamage() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent grovestrider = harness.addToBattlefieldAndReturn(player1, new HarmoniousGrovestrider());
+        prepareOpponentShock(3);
+
+        harness.castAndResolveInstant(player2, 0, grovestrider.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Harmonious Grovestrider");
+        harness.assertInGraveyard(player1, "Harmonious Grovestrider");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void controllerSpellDoesNotTriggerWard() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent grovestrider = harness.addToBattlefieldAndReturn(player1, new HarmoniousGrovestrider());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, grovestrider.getId());
+
+        harness.assertInGraveyard(player1, "Harmonious Grovestrider");
+        harness.assertNotOnBattlefield(player1, "Harmonious Grovestrider");
+    }
+
+    @Test
+    void noControlledLandsCausesDeathDespiteOpponentsLands() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new HarmoniousGrovestrider());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Harmonious Grovestrider");
+        harness.assertInGraveyard(player1, "Harmonious Grovestrider");
+    }
+
+    @Test
+    void wardCountersOpponentsActivatedAbility() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent grovestrider = harness.addToBattlefieldAndReturn(player1, new HarmoniousGrovestrider());
+        harness.addToBattlefield(player2, new RodOfRuin());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, grovestrider.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Harmonious Grovestrider");
+        assertThat(grovestrider.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void landCountDefinesPowerAndToughnessInGraveyard() {
+        HarmoniousGrovestrider grovestrider = new HarmoniousGrovestrider();
+        harness.setGraveyard(player1, List.of(grovestrider));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, grovestrider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, grovestrider)).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, grovestrider)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, grovestrider)).isEqualTo(3);
+    }
+
+    private void prepareOpponentShock(int redMana) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
