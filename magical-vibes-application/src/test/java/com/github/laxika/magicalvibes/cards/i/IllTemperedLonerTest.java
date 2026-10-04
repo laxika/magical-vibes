@@ -28,8 +28,7 @@ class IllTemperedLonerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player1, 20);
 
-        harness.castInstant(player1, 0, loner.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, loner.getId());
 
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
@@ -46,8 +45,7 @@ class IllTemperedLonerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player1, 20);
 
-        harness.castInstant(player1, 0, jace.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, jace.getId());
 
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
@@ -89,10 +87,105 @@ class IllTemperedLonerTest extends BaseCardTest {
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(loner.getCard()).isInstanceOf(HowlpackAvenger.class);
 
-        gd.recordSpellCast(player1.getId(), new Shock());
-        gd.recordSpellCast(player1.getId(), new Shock());
+        gd.recordSpellCast(player2.getId(), new Shock());
+        gd.recordSpellCast(player2.getId(), new Shock());
         advanceToNextTurn(player2);
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(loner.getCard()).isInstanceOf(IllTemperedLoner.class);
+    }
+
+    @Test
+    void entersDuringNightWithBackFaceUp() {
+        gd.dayNight = DayNight.NIGHT;
+
+        Permanent loner = harness.enterBattlefieldAndReturn(player1, new IllTemperedLoner());
+
+        assertThat(loner.getCard()).isInstanceOf(HowlpackAvenger.class);
+        assertThat(loner.isTransformed()).isTrue();
+    }
+
+    @Test
+    void enteringStartsDayWhenNeitherDayNorNight() {
+        gd.dayNight = DayNight.NEITHER;
+
+        Permanent loner = harness.enterBattlefieldAndReturn(player1, new IllTemperedLoner());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(loner.getCard()).isInstanceOf(IllTemperedLoner.class);
+    }
+
+    @Test
+    void nonactivePlayersSpellsDoNotCreateAnUpkeepTransformTrigger() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent loner = harness.enterBattlefieldAndReturn(player1, new IllTemperedLoner());
+        gd.recordSpellCast(player1.getId(), new Shock());
+        gd.recordSpellCast(player1.getId(), new Shock());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> advanceToNextTurn(player2));
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(loner.getCard()).isInstanceOf(HowlpackAvenger.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void frontFaceReflectsLethalDamageAfterLeavingBattlefield() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player2, new IllTemperedLoner());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, loner.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, loner.getId());
+        harness.assertInGraveyard(player2, "Ill-Tempered Loner");
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    void backFaceDoesNotReflectDamageToOpponentsPermanent() {
+        harness.addToBattlefield(player2, new HowlpackAvenger());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingInteractions).isEmpty();
+    }
+
+    @Test
+    void frontFaceCanReflectDamageToACreature() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player2, new IllTemperedLoner());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, loner.getId());
+        harness.handlePermanentChosen(player2, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void boostExpiresAtEndOfTurn() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player1, new IllTemperedLoner());
+        int originalPower = gqs.getEffectivePower(gd, loner);
+        activateBoost(loner);
+        assertThat(gqs.getEffectivePower(gd, loner)).isEqualTo(originalPower + 2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, loner)).isEqualTo(originalPower);
     }
 
     @Test
