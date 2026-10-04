@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,18 +15,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FleetSwallower.class})
 class FleetSwallowerTest extends BaseCardTest {
-
-    // ===== Attack trigger =====
 
     @Nested
     @DisplayName("Attack trigger")
+    @CardUsed({FleetSwallower.class})
     class AttackTrigger {
 
         @Test
         @DisplayName("Attacking with Fleet Swallower queues attack trigger for player target selection")
         void attackTriggerQueuesForTargetSelection() {
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
 
             declareAttackers(List.of(0));
 
@@ -38,10 +38,9 @@ class FleetSwallowerTest extends BaseCardTest {
         @Test
         @DisplayName("Attack trigger valid targets contain only player IDs, not permanents")
         void attackTriggerTargetsOnlyPlayers() {
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
             // Add an opponent creature — it should NOT appear as a valid target
-            Permanent opponentCreature = new Permanent(new FleetSwallower());
-            gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+            Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FleetSwallower());
 
             declareAttackers(List.of(0));
 
@@ -55,10 +54,9 @@ class FleetSwallowerTest extends BaseCardTest {
         void attackTriggerResolvesWithOpponentCreatures() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
             // Add an opponent creature to ensure it doesn't interfere
-            Permanent opponentCreature = new Permanent(new FleetSwallower());
-            gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+            Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FleetSwallower());
 
             List<Card> deck = gd.playerDecks.get(player2.getId());
             while (deck.size() > 10) {
@@ -79,7 +77,7 @@ class FleetSwallowerTest extends BaseCardTest {
         void millsHalfLibraryRoundedUpEvenCount() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
 
             List<Card> deck = gd.playerDecks.get(player2.getId());
             while (deck.size() > 20) {
@@ -100,7 +98,7 @@ class FleetSwallowerTest extends BaseCardTest {
         void millsHalfLibraryRoundedUpOddCount() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
 
             List<Card> deck = gd.playerDecks.get(player2.getId());
             while (deck.size() > 11) {
@@ -121,7 +119,7 @@ class FleetSwallowerTest extends BaseCardTest {
         void canTargetSelf() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
 
             List<Card> deck = gd.playerDecks.get(player1.getId());
             while (deck.size() > 10) {
@@ -141,7 +139,7 @@ class FleetSwallowerTest extends BaseCardTest {
         void millsOneCardWithOneCardLibrary() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
 
             List<Card> deck = gd.playerDecks.get(player2.getId());
             while (deck.size() > 1) {
@@ -162,7 +160,7 @@ class FleetSwallowerTest extends BaseCardTest {
         void millsNothingWithEmptyLibrary() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            addReadyFleetSwallower(player1);
+            addCreatureReady(player1, new FleetSwallower());
 
             gd.playerDecks.get(player2.getId()).clear();
 
@@ -173,14 +171,42 @@ class FleetSwallowerTest extends BaseCardTest {
             assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
             assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         }
+        @Test
+        @DisplayName("Uses the library size when the trigger resolves")
+        void usesLibrarySizeAtResolution() {
+            addCreatureReady(player1, new FleetSwallower());
+            harness.setLibrary(player2, List.of(new FleetSwallower(), new FleetSwallower(),
+                    new FleetSwallower(), new FleetSwallower(), new FleetSwallower()));
+
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, player2.getId());
+            Card drawnCard = gd.playerDecks.get(player2.getId()).removeFirst();
+            gd.playerHands.get(player2.getId()).add(drawnCard);
+            List<Card> remainingLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+            harness.passBothPriorities();
+
+            assertThat(gd.playerGraveyards.get(player2.getId()))
+                    .containsExactlyElementsOf(remainingLibrary.subList(0, 2));
+            assertThat(gd.playerDecks.get(player2.getId()))
+                    .containsExactlyElementsOf(remainingLibrary.subList(2, 4));
+        }
+
+        @Test
+        @DisplayName("Attack trigger resolves after its source leaves the battlefield")
+        void triggerResolvesAfterSourceLeavesBattlefield() {
+            Permanent swallower = addCreatureReady(player1, new FleetSwallower());
+            harness.setLibrary(player2, List.of(new FleetSwallower(), new FleetSwallower(),
+                    new FleetSwallower()));
+
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, player2.getId());
+            gd.playerBattlefields.get(player1.getId()).remove(swallower);
+            gd.playerGraveyards.get(player1.getId()).add(swallower.getCard());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+            assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        }
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyFleetSwallower(Player player) {
-        Permanent perm = new Permanent(new FleetSwallower());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }
