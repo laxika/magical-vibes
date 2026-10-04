@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SlipOutTheBack;
+import com.github.laxika.magicalvibes.cards.t.Threaten;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExtractionSpecialist.class, GrizzlyBears.class, HillGiant.class, Shock.class})
+@CardUsed({ExtractionSpecialist.class, GrizzlyBears.class, HillGiant.class, Shock.class,
+        SlipOutTheBack.class, Threaten.class})
 class ExtractionSpecialistTest extends BaseCardTest {
 
     @Test
@@ -57,12 +60,7 @@ class ExtractionSpecialistTest extends BaseCardTest {
         Permanent returned = castSpecialistAndReturn(new GrizzlyBears());
         returned.setSummoningSick(false);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(indexOf(player1, returned))))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(indexOf(player1, returned))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -71,13 +69,10 @@ class ExtractionSpecialistTest extends BaseCardTest {
     @DisplayName("The returned creature cannot block while its Specialist remains under your control")
     void returnedCreatureCannotBlockWhileSpecialistIsControlled() {
         Permanent returned = castSpecialistAndReturn(new GrizzlyBears());
-        Permanent attacker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(indexOf(player1, returned), indexOf(player2, attacker)))))
@@ -97,18 +92,161 @@ class ExtractionSpecialistTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, specialist.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, specialist.getId());
 
         harness.assertInGraveyard(player1, "Extraction Specialist");
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatCode(() -> gs.declareAttackers(gd, player1, List.of(indexOf(player1, returned))))
+        assertThatCode(() -> declareAttackers(player1, List.of(indexOf(player1, returned))))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void etbExcludesNoncreaturesAndOpponentsGraveyard() {
+        GrizzlyBears ownCreature = new GrizzlyBears();
+        GrizzlyBears opposingCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(new Shock(), ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+
+        castSpecialist();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void noLegalTargetDoesNotPreventSpecialistFromEntering() {
+        harness.setGraveyard(player1, List.of(new HillGiant(), new Shock()));
+
+        castSpecialist();
+
+        harness.assertOnBattlefield(player1, "Extraction Specialist");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void specialistLeavingBeforeTriggerResolvesDoesNotRestrictReturnedCreature() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        castSpecialist();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        Permanent specialist = findPermanent(player1, "Extraction Specialist");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, specialist.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanentByCardId(player1, bears.getId());
+        returned.setSummoningSick(false);
+        harness.assertInGraveyard(player1, "Extraction Specialist");
+        assertThatCode(() -> declareAttackers(player1, List.of(indexOf(player1, returned))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void restrictionDoesNotResumeWhenControlOfSpecialistIsRegained() {
+        Permanent returned = castSpecialistAndReturn(new GrizzlyBears());
+        Permanent specialist = findPermanent(player1, "Extraction Specialist");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Threaten()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player2, 0, specialist.getId());
+        harness.assertOnBattlefield(player2, "Extraction Specialist");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Extraction Specialist");
+        returned.setSummoningSick(false);
+        assertThatCode(() -> declareAttackers(player1, List.of(indexOf(player1, returned))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void restrictionDoesNotResumeWhenSpecialistPhasesBackIn() {
+        Permanent returned = castSpecialistAndReturn(new GrizzlyBears());
+        Permanent specialist = findPermanent(player1, "Extraction Specialist");
+        harness.setHand(player1, List.of(new SlipOutTheBack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, specialist.getId());
+        harness.assertNotOnBattlefield(player1, "Extraction Specialist");
+
+        harness.performUntapStep(player1);
+        harness.assertOnBattlefield(player1, "Extraction Specialist");
+        returned.setSummoningSick(false);
+        assertThatCode(() -> declareAttackers(player1, List.of(indexOf(player1, returned))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void returnedCreatureRemainsRestrictedAfterItsControllerChanges() {
+        Permanent returned = castSpecialistAndReturn(new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Threaten()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player2, 0, returned.getId());
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Extraction Specialist");
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(indexOf(player2, returned))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void returningALegalTargetIsMandatory() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        castSpecialist();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void triggerDoesNotReturnTargetThatHasLeftTheGraveyard() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        castSpecialist();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(bears));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Extraction Specialist");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void specialistGainsLifeWhenItDealsCombatDamage() {
+        castSpecialist();
+        Permanent specialist = findPermanent(player1, "Extraction Specialist");
+        specialist.setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(indexOf(player1, specialist)));
+        resolveCombat(player1);
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
     }
 
     private void castSpecialist() {
@@ -129,12 +267,6 @@ class ExtractionSpecialistTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
         return findPermanentByCardId(player1, bears.getId());
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
     }
 
     private int indexOf(Player player, Permanent permanent) {
