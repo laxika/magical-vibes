@@ -93,14 +93,54 @@ class HonestRutsteinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castHonestRutstein() {
-        harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new HonestRutstein()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+    @Test
+    @DisplayName("ETB does not return another creature when its target leaves the graveyard")
+    void doesNotRetargetWhenTargetLeavesGraveyard() {
+        Card target = new GrizzlyBears();
+        Card otherCreature = new HillGiant();
+        harness.setGraveyard(player1, List.of(target, otherCreature));
+
+        castHonestRutstein();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherCreature));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The reduction can remove the entire generic cost")
+    void reducesGenericCostToZero() {
+        harness.addToBattlefield(player1, new HonestRutstein());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The reduction cannot pay colored mana requirements")
+    void doesNotReduceColoredManaCost() {
+        harness.addToBattlefield(player1, new HonestRutstein());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castHonestRutstein() {
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new HonestRutstein(), "{1}{B}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
