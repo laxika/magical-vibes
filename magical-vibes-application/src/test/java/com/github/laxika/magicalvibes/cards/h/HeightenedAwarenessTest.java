@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.g.GulfSquid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +19,7 @@ class HeightenedAwarenessTest extends BaseCardTest {
     private void advanceToDraw(Player activePlayer) {
         gd.turnNumber = 2;
         advanceToUpkeep(activePlayer);
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     @Test
@@ -74,5 +75,43 @@ class HeightenedAwarenessTest extends BaseCardTest {
         advanceToDraw(player2);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+    @Test
+    @DisplayName("Entering with an empty hand leaves the opponent's hand intact")
+    void entersWithEmptyHandWithoutDiscardingOpponentHand() {
+        HazyHomunculus opponentCard = new HazyHomunculus();
+        harness.setHand(player1, List.of(new HeightenedAwareness()));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Heightened Awareness");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Additional draw waits for the draw-step trigger to resolve")
+    void additionalDrawUsesTheStack() {
+        harness.addToBattlefield(player1, new HeightenedAwareness());
+        harness.setHand(player1, List.of());
+        HazyHomunculus normalDraw = new HazyHomunculus();
+        GulfSquid additionalDraw = new GulfSquid();
+        harness.setLibrary(player1, List.of(normalDraw, additionalDraw));
+
+        advanceToDraw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(normalDraw);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(normalDraw, additionalDraw);
+        assertThat(gd.stack).isEmpty();
     }
 }
