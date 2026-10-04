@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfSourceAttackingOpponentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 
@@ -28,7 +28,7 @@ public class Belonging extends Card {
                 "{6}{W}{W}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new CreateTokenCopiesOfSourceAttackingOpponentsEffect()
+                        new EncoreEffect()
                 ),
                 "Encore {6}{W}{W} ({6}{W}{W}, Exile this card from your graveyard: For each opponent, create a token copy "
                         + "that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning "

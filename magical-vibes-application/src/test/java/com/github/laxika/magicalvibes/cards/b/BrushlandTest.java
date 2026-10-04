@@ -104,7 +104,7 @@ class BrushlandTest extends BaseCardTest {
         }
         harness.setHand(player1, List.of(new HealingSalve()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castModalInstant(player1, 0, 1, List.of(player1.getId()));
+        gs.playCard(gd, player1, 0, 1, player1.getId(), null);
         harness.passBothPriorities();
 
         harness.activateAbility(player1, 0, 1, null, null);

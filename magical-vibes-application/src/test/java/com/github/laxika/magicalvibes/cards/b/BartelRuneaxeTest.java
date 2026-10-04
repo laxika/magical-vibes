@@ -45,6 +45,7 @@ class BartelRuneaxeTest extends BaseCardTest {
     void auraCanMoveOntoBartelWithoutBeingCast() {
         Permanent ape = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
         Permanent bartel = harness.addToBattlefieldAndReturn(player2, new BartelRuneaxe());
+        int powerBefore = gqs.getEffectivePower(gd, bartel);
         harness.setHand(player1, List.of(new GiantStrength()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castEnchantment(player1, 0, ape.getId());
@@ -56,12 +57,13 @@ class BartelRuneaxeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThat(aura.getAttachedTo()).isEqualTo(bartel.getId());
-        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(powerBefore + 2);
     }
 
     @Test
     void auraReturningFromGraveyardCanEnchantBartel() {
         Permanent bartel = harness.addToBattlefieldAndReturn(player2, new BartelRuneaxe());
+        int powerBefore = gqs.getEffectivePower(gd, bartel);
         GiantStrength aura = new GiantStrength();
         harness.setGraveyard(player1, List.of(aura));
 
@@ -71,7 +73,7 @@ class BartelRuneaxeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Giant Strength");
         assertThat(findPermanent(player1, "Giant Strength").getAttachedTo()).isEqualTo(bartel.getId());
         harness.assertNotInGraveyard(player1, "Giant Strength");
-        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(powerBefore + 2);
     }
 
 

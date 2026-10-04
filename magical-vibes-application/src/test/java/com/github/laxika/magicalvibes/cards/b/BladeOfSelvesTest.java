@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,7 +55,6 @@ class BladeOfSelvesTest extends BaseCardTest {
             resolveAllTriggers();
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
         });
 
         Permanent copy = findPermanents(player1, "Grizzly Bears").stream()
@@ -68,9 +68,8 @@ class BladeOfSelvesTest extends BaseCardTest {
                 .anyMatch(action -> action.permanentId().equals(copy.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
     }
@@ -157,7 +156,8 @@ class BladeOfSelvesTest extends BaseCardTest {
         addThirdPlayer();
         Permanent creature = addCreatureReady(player1);
         addBladeReady(player1).setAttachedTo(creature.getId());
-        harness.addToBattlefield(player3, new GarrukWildspeaker());
+        harness.addToBattlefieldAndReturn(player3, new GarrukWildspeaker())
+                .setCounterCount(CounterType.LOYALTY, 3);
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0));

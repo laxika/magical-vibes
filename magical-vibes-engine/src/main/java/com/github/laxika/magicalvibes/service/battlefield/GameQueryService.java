@@ -882,8 +882,8 @@ public class GameQueryService {
     private boolean anyBattlefieldHasStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {
         return gameData.anyPermanentMatches(p ->
                 !p.isFaceDown()
-                        && !hasLostPrintedAbilities(gameData, p)
-                        && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)
+                        && !hasLostPrintedAbilities(gameData, p));
     }
 
     private boolean anyBattlefieldSpellsCantBeCountered(GameData gameData, Card card) {
@@ -1227,6 +1227,16 @@ public class GameQueryService {
     public Set<ManaColor> intrinsicBasicLandManaColors(GameData gameData, Permanent permanent) {
         if (permanent == null || !isLand(gameData, permanent)) {
             return Set.of();
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            CharacteristicState state = pass.board().states().get(permanent.getId());
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || state != null && state.isLosesAllAbilities()) {
+                return Set.of();
+            }
+        } finally {
+            layerSystemService.endPass(pass);
         }
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
         for (CardSubtype subtype : effectiveBasicLandTypes(gameData, permanent)) {
@@ -4476,12 +4486,25 @@ public class GameQueryService {
 
     public int replaceCounters(GameData gameData, Permanent permanent, CounterType counterType,
                                int count, UUID placingPlayerId, boolean modularAbility) {
+        int result = count;
+        for (var modifier : counterReplacementsFor(gameData, permanent, counterType, placingPlayerId, modularAbility)) {
+            result = MaroGoneNutsSupport.apply(gameData, modifier.effect(),
+                    ((CounterReplacementEffect) modifier.effect()).replace(counterType, result));
+        }
+        return limitCounters(gameData, permanent, findPermanentController(gameData, permanent.getId()),
+                counterType, result);
+    }
+
+    /** The individually applicable replacements for an impending placement on a live permanent. */
+    public List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> counterReplacementsFor(
+            GameData gameData, Permanent permanent, CounterType counterType,
+            UUID placingPlayerId, boolean modularAbility) {
         UUID affectedControllerId = findPermanentController(gameData, permanent.getId());
         boolean creature = permanent.getCard().hasType(CardType.CREATURE) || isCreature(gameData, permanent);
         boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
                 && effectiveCreatureSubtypes(gameData, permanent).contains(CardSubtype.VEHICLE);
         boolean artifact = isArtifact(gameData, permanent);
-        final int[] result = {count};
+        List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> modifiers = new ArrayList<>();
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
             boolean sourceControlsAffected = Objects.equals(sourceControllerId, affectedControllerId);
             boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
@@ -4508,15 +4531,25 @@ public class GameQueryService {
                                 counterType, creature, artifact, source, permanent);
                     }
                     if (applies) {
-                        result[0] = MaroGoneNutsSupport.apply(
-                                gameData, effect, replacement.replace(counterType, result[0]));
+                        modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
+                                source.getCard().getName() + " (" + (modifiers.size() + 1) + ")", effect));
                     }
                 }
             }
         });
-        result[0] = applyPlanarCounterReplacements(gameData, affectedControllerId, counterType,
-                result[0], creature, artifact);
-        return limitCounters(gameData, permanent, affectedControllerId, counterType, result[0]);
+        if (gameData.planechase != null && affectedControllerId != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CounterReplacementEffect replacement
+                            && replacement.appliesTo(counterType, creature,
+                            Objects.equals(gameData.planechase.controllerId, affectedControllerId), false, false)) {
+                        modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
+                                planar.getCard().getName() + " (" + (modifiers.size() + 1) + ")", effect));
+                    }
+                }
+            }
+        }
+        return List.copyOf(modifiers);
     }
 
     /** Applies proliferate replacement effects controlled by {@code controllerId}. */

@@ -2310,9 +2310,8 @@ public class MiscTriggerCollectorService {
                 match.permanent() == null ? null : cardPut.graveyardOwnerId(),
                 match.permanent() == null ? null : match.permanent().getId()
         );
-        if (match.permanent() == null) {
-            entry.setNonTargeting(true);
-        }
+        entry.setNonTargeting(conditional.targetSpec().declaredTarget() == null);
+        entry.setTriggeringPermanentControllerId(cardPut.graveyardOwnerId());
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));

@@ -105,7 +105,7 @@ class BroodhatchNantukoTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, nantuko.getId());
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(findPermanents(player1, "Insect")).isEmpty();
         harness.assertInGraveyard(player1, "Broodhatch Nantuko");
     }
@@ -128,7 +128,7 @@ class BroodhatchNantukoTest extends BaseCardTest {
         resolveCombat(player1);
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(findPermanents(player2, "Insect")).isEmpty();
         harness.assertInGraveyard(player2, "Broodhatch Nantuko");
     }

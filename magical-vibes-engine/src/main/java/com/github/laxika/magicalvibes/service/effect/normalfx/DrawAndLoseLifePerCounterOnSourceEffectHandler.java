@@ -35,6 +35,9 @@ public class DrawAndLoseLifePerCounterOnSourceEffectHandler implements NormalEff
         }
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        if (source == null) {
             return;
         }
 

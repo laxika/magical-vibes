@@ -63,7 +63,8 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
                     token.setMustAttackTargetId(opponentId);
                 }
                 gameData.queueDelayedAction(new DelayedPermanentAction(
-                        permanentId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                        permanentId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null, entry.getControllerId()));
             }
         }
     }

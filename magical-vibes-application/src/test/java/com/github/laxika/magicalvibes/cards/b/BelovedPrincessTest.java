@@ -107,7 +107,6 @@ class BelovedPrincessTest extends BaseCardTest {
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GarenbrigSquire());
         beginDeclareBlockers();
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> declareBlock(blocker, princess));
-        harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 20);

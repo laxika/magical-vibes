@@ -84,6 +84,7 @@ public class ExileTargetThenRevealUntilTypeToBattlefieldEffectHandler implements
             if (revealedCards.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(
                         targetControllerName + "'s library is empty — no cards are revealed."));
+                LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
                 continue;
             }
 

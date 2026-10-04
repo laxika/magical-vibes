@@ -2157,6 +2157,10 @@ public class PermanentChoiceTriggerHandlerService {
         entry.setTargetId(targetId);
         entry.setChosenPermanentId(efg.chosenPermanentId());
         entry.setChosenPermanentPowerAtLastKnown(efg.chosenPermanentPowerAtTrigger());
+        Permanent damageSource = gameQueryService.findPermanentById(gameData, efg.sourcePermanentId());
+        if (damageSource != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(damageSource));
+        }
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);

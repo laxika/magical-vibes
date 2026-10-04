@@ -27,6 +27,32 @@ public sealed interface ChoiceContext {
     /** Chooses between a card's shuffle replacement and an applicable graveyard exile replacement. */
     record GraveyardShuffleOrExileReplacementChoice(UUID ownerId, Card card) implements ChoiceContext {}
 
+    /** One independently applicable change to an impending spell-damage event. */
+    record SpellDamageModifier(String label, int amount, boolean multiply) {}
+
+    /** A separately applicable counter replacement, identified by its source. */
+    record CounterReplacement(String label, CardEffect effect) {}
+
+    /** Retains counter placement while the affected permanent's controller orders replacements. */
+    record CounterReplacementOrder(StackEntry entry, UUID targetId, int count,
+                                   List<CounterReplacement> remaining,
+                                   com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect effect,
+                                   List<UUID> subsequentTargets, int originalCount) implements ChoiceContext {
+        public CounterReplacementOrder {
+            remaining = List.copyOf(remaining);
+            subsequentTargets = List.copyOf(subsequentTargets);
+        }
+    }
+
+    /** The affected player orders global multiplication and spell-damage reduction. */
+    record SpellDamageModifierOrder(StackEntry entry, UUID recipientId, int damage,
+                                   List<SpellDamageModifier> remaining, boolean unpreventable)
+            implements ChoiceContext {
+        public SpellDamageModifierOrder {
+            remaining = List.copyOf(remaining);
+        }
+    }
+
     /** Chooses a legal front or Adventure spell face for a cast granted during resolution. */
     record ExileFreeCastFaceChoice(UUID exileCardId, Map<String, Integer> faces,
                                   boolean grantHaste, boolean returnToHandIfUnable,

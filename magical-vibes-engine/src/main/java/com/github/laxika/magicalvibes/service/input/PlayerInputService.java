@@ -1177,8 +1177,8 @@ public class PlayerInputService {
                         rememberLastChosenMode);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
                 .filter(option -> effect.modesMayRepeat() || !chosenModes.contains(option))
-                .filter(option -> triggerTargetCollector.hasLegalGraveyardTarget(
-                        gameData, option.targetFilter(), controllerId, sourceCard))
+                .filter(option -> triggerTargetCollector.hasLegalModeTargets(
+                        gameData, option, controllerId, sourceCard))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList());
         if (effect.optional() && chosenModes.isEmpty()) {

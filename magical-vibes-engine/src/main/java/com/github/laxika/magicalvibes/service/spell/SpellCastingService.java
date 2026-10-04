@@ -1018,6 +1018,11 @@ public class SpellCastingService {
                 List<ChooseOneEffect.ChooseOneOption> chosenModes = chosenModeIndices.stream()
                         .map(idx -> coe.options().get(idx))
                         .toList();
+                if (gameData != null && chosenModes.stream().anyMatch(ChooseOneEffect.ChooseOneOption::handOnly)
+                        && gameData.playerHands.getOrDefault(controllerId, List.of()).stream()
+                        .noneMatch(handCard -> handCard.getId().equals(card.getId()))) {
+                    throw new IllegalStateException("This mode can only be cast from hand");
+                }
                 List<List<CardEffect>> chosenModeEffects = chosenModes.stream()
                         .map(ChooseOneEffect.ChooseOneOption::effectsForSelection)
                         .toList();
@@ -3647,7 +3652,8 @@ public class SpellCastingService {
         //    target group with max > 1 (bound to a CounterEachTargetSpellEffect) and no permanent/player
         //    targets. In both cases the chosen targets ride in the flat targetIds list.
         boolean multipleSpellTargets = unwrappedNeedsSpellTarget && (wasModal
-                ? targetId == null && !targetIds.isEmpty() && !allSpellTargetsAlsoAllowPermanents
+                ? !unwrappedNeedsTarget && targetId == null && !targetIds.isEmpty()
+                        && !allSpellTargetsAlsoAllowPermanents
                 : !unwrappedNeedsTarget && card.getMaxTargets() > 1);
 
         // A "spell or permanent" single-target chooser (e.g. Glamerdye) can target either zone. Infer
@@ -4390,17 +4396,16 @@ public class SpellCastingService {
         List<Integer> modalTargetGroupSizes = List.of();
         List<SpellTarget> modalGroups = card.getSpellTargets();
         if (wasModal && targetId == null && modalGroups.size() > 1
-                && modalGroups.getFirst().getMinTargets() < modalGroups.getFirst().getMaxTargets()
-                && modalGroups.subList(1, modalGroups.size()).stream()
-                .allMatch(group -> group.getMinTargets() == group.getMaxTargets())) {
-            // A variable first mode followed by fixed-target modes needs its actual count
-            // recorded. Otherwise the first mode's maximum consumes later modes' targets.
-            int fixedTargets = modalGroups.subList(1, modalGroups.size()).stream()
+                && modalGroups.stream().filter(group ->
+                        group.getMinTargets() < group.getMaxTargets()).count() == 1) {
+            int fixedTargets = modalGroups.stream()
+                    .filter(group -> group.getMinTargets() == group.getMaxTargets())
                     .mapToInt(SpellTarget::getMinTargets).sum();
             List<Integer> sizes = new ArrayList<>();
-            sizes.add(targetIds.size() - fixedTargets);
-            modalGroups.subList(1, modalGroups.size()).stream()
-                    .map(SpellTarget::getMinTargets).forEach(sizes::add);
+            for (SpellTarget group : modalGroups) {
+                sizes.add(group.getMinTargets() == group.getMaxTargets()
+                        ? group.getMinTargets() : targetIds.size() - fixedTargets);
+            }
             modalTargetGroupSizes = List.copyOf(sizes);
         }
         if (!variableMixedTargetGroups && kicked && targetId != null && card.getSpellTargets().size() > 1

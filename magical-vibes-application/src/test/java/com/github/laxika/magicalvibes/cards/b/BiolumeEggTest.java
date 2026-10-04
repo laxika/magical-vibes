@@ -107,7 +107,7 @@ class BiolumeEggTest extends BaseCardTest {
         Permanent egg = harness.addToBattlefieldAndReturn(player1, new BiolumeEgg());
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> sacrificeEgg(egg));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passUntil(TurnStep.END_STEP));
 
         harness.assertInGraveyard(player1, "Biolume Egg");
         harness.assertNotOnBattlefield(player1, "Biolume Serpent");

@@ -171,7 +171,8 @@ class BriarhornTest extends BaseCardTest {
                 com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
         assertThat(order).isNotNull();
         assertThat(gd.stack).hasSize(2);
-        harness.handleListChoice(player1, order.options().getLast());
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.contains("sacrifice")).findFirst().orElseThrow());
         harness.passBothPriorities();
         assertThat(findPermanent(player2, "Woodland Changeling").getEffectivePower()).isEqualTo(5);
         harness.assertOnBattlefield(player1, "Briarhorn");

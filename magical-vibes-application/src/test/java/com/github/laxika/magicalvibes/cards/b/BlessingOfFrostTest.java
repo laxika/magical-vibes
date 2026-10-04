@@ -183,8 +183,8 @@ class BlessingOfFrostTest extends BaseCardTest {
 
     @Test
     void copyDrawsCardsButDoesNotInheritSnowManaSpentOnOriginal() {
-        harness.addToBattlefield(player1, new DoubleVision());
         addSnowManaSources(4);
+        harness.addToBattlefield(player1, new DoubleVision());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new RavenousLindwurm());
         harness.setHand(player1, List.of(new BlessingOfFrost()));
         harness.setLibrary(player1, List.of(new SculptorOfWinter(), new SculptorOfWinter()));

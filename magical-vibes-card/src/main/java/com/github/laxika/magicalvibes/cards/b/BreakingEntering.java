@@ -52,7 +52,7 @@ public class BreakingEntering extends Card {
                         "Fuse — Breaking and then Entering",
                         List.of(breaking, entering),
                         player
-                ).withManaCost("{4}{U}{B}{B}{R}")
+                ).withManaCost("{4}{U}{B}{B}{R}").onlyFromHand()
         )));
     }
 }

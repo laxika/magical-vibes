@@ -555,6 +555,7 @@ public class GraveyardService {
                 && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
                 || !battlefieldSnapshot.isFaceDown() && !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
             if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)
+                    || opponentHasExileReplacementEffect(gameData, ownerId) != null
                     || shouldExileOwnCardInsteadOfGraveyard(
                     gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
                 gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
@@ -572,7 +573,11 @@ public class GraveyardService {
             return false;
         }
 
-        if (appliesExileInsteadOfGraveyard(card, sourceZone)) {
+        Card replacementSource = sourceZone == Zone.BATTLEFIELD && battlefieldSnapshot != null
+                ? battlefieldSnapshot.getCard() : card;
+        if (appliesExileInsteadOfGraveyard(replacementSource, sourceZone)
+                && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
+                || !gameQueryService.hasLostPrintedAbilities(gameData, battlefieldSnapshot))) {
             exileService.exileCard(gameData, ownerId, card);
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
@@ -1561,6 +1566,9 @@ public class GraveyardService {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
+                if (p.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, p)) {
+                    continue;
+                }
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
                         return new OpponentExileReplacement(replacement, p.getId());
@@ -2469,6 +2477,7 @@ public class GraveyardService {
     }
 
     private boolean isToken(GameData gameData, Card card) {
-        return card != null && (card.isToken() || gameData.dynamicTokenCardIds.contains(card.getId()));
+        return card != null && !card.isTokenCard()
+                && (card.isToken() || gameData.dynamicTokenCardIds.contains(card.getId()));
     }
 }

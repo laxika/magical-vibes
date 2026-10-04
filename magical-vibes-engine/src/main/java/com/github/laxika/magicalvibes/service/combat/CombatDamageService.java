@@ -436,22 +436,20 @@ public class CombatDamageService {
         // All combat damage is simultaneous, so the infect check must use pre-damage life.
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
 
-        applyPlayerDamage(gameData, state, defenderId);
+        applyDamageToEachPlayer(gameData, state, defenderId);
         Map<UUID, Set<Permanent>> damagedPlayerSources = new LinkedHashMap<>();
         state.redirectedCombatDamageSourcesToPlayers.forEach((playerId, sources) ->
                 damagedPlayerSources.put(playerId, new LinkedHashSet<>(sources)));
         state.combatDamageDealtToPlayer.forEach((source, damage) -> {
-            if (damage > 0) damagedPlayerSources.computeIfAbsent(defenderId,
+            if (damage > 0) damagedPlayerSources.computeIfAbsent(
+                    state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
                     ignored -> new LinkedHashSet<>()).add(source);
         });
-        if (state.poisonDamageToDefendingPlayer > 0) {
-            damagedPlayerSources.computeIfAbsent(defenderId, ignored -> new LinkedHashSet<>());
-        }
         damagedPlayerSources.forEach((playerId, sources) -> {
             Map<UUID, Integer> toxicByController = new LinkedHashMap<>();
-            if (playerId.equals(defenderId) && state.poisonDamageToDefendingPlayer > 0) {
-                toxicByController.put(gameQueryService.getOpponentId(gameData, defenderId),
-                        state.poisonDamageToDefendingPlayer);
+            int infectDamage = state.infectDamageToPlayers.getOrDefault(playerId, 0);
+            if (infectDamage > 0) {
+                toxicByController.put(activeId, infectDamage);
             }
             for (Permanent source : sources) {
                 if (!gameQueryService.hasKeyword(gameData, source, Keyword.TOXIC)) continue;
@@ -470,7 +468,9 @@ public class CombatDamageService {
         updateMonarchFromCombatDamage(gameData, state, defenderId);
         state.combatDamageDealtToPlayer.forEach((source, damage) -> {
             if (damage > 0 && gameData.isCommander(source.getOriginalCard().getId())) {
-                gameData.commanderDamageReceived.computeIfAbsent(defenderId, id -> new java.util.HashMap<>())
+                gameData.commanderDamageReceived.computeIfAbsent(
+                        state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
+                        id -> new java.util.HashMap<>())
                         .merge(source.getOriginalCard().getId(), damage, Integer::sum);
             }
         });
@@ -664,19 +664,22 @@ public class CombatDamageService {
 
         // A blocker can also deal combat damage to the defending player (Butcher Orgg).
         // Attribute triggers and damage history to each source's controller.
-        Map<UUID, Map<Permanent, Integer>> playerDamageByController = new LinkedHashMap<>();
+        Map<UUID, Map<UUID, Map<Permanent, Integer>>> playerDamageByRecipientAndController = new LinkedHashMap<>();
         state.combatDamageDealtToPlayer.forEach((source, damage) ->
-                playerDamageByController.computeIfAbsent(
+                playerDamageByRecipientAndController.computeIfAbsent(
+                        state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
+                        ignored -> new LinkedHashMap<>()).computeIfAbsent(
                         state.combatDamageDealerControllers.getOrDefault(source, activeId),
                         ignored -> new LinkedHashMap<>()).put(source, damage));
-        playerDamageByController.forEach((controllerId, damageBySource) -> {
-            processCombatDamageToPlayerTriggers(gameData, damageBySource, controllerId, defenderId,
-                    attachedDamageSources, allyDamageWatchers.getOrDefault(controllerId, List.of()));
-            triggerCollectionService.checkEmblemCombatDamageTriggers(
-                    gameData, controllerId, defenderId, damageBySource);
-            processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
-            processDelayedCombatDamageTokenTriggers(gameData, damageBySource, controllerId, defenderId);
-        });
+        playerDamageByRecipientAndController.forEach((recipientId, damageByController) ->
+                damageByController.forEach((controllerId, damageBySource) -> {
+                    processCombatDamageToPlayerTriggers(gameData, damageBySource, controllerId, recipientId,
+                            attachedDamageSources, allyDamageWatchers.getOrDefault(controllerId, List.of()));
+                    triggerCollectionService.checkEmblemCombatDamageTriggers(
+                            gameData, controllerId, recipientId, damageBySource);
+                    processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
+                    processDelayedCombatDamageTokenTriggers(gameData, damageBySource, controllerId, recipientId);
+                }));
         processDelayedCombatDamageBecomeMonarchTriggers(gameData, state, activeId);
 
         processDelayedCombatDamageLookAtHandAndDrawTriggers(gameData, state);
@@ -686,37 +689,31 @@ public class CombatDamageService {
         // Process delayed combat damage draw triggers (e.g. Flitterwing Nuisance's ability)
         processDelayedCombatDamageDrawTriggers(gameData, state);
 
-        // Process combat damage reflection triggers (e.g. Harsh Justice)
-        processCombatDamageReflectionTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
-
-        Set<String> firedBatchedTriggerKeys = new HashSet<>();
-        Map<UUID, Integer> damageToDefenderByController = new LinkedHashMap<>();
-        for (var damage : state.combatDamageDealtToPlayer.entrySet()) {
-            if (damage.getValue() <= 0) continue;
-            triggerCollectionService.checkDamageDealtToControllerTriggers(
-                    gameData, defenderId, damage.getKey().getId(), true, firedBatchedTriggerKeys);
-            UUID controllerId = state.combatDamageDealerControllers.getOrDefault(damage.getKey(), activeId);
-            damageToDefenderByController.merge(controllerId, damage.getValue(), Integer::sum);
-        }
-        int totalDamageToDefender = damageToDefenderByController.values().stream().mapToInt(Integer::intValue).sum();
-        triggerCollectionService.checkControllerDealtDamageTriggers(
-                gameData, defenderId, null, totalDamageToDefender);
-        damageToDefenderByController.forEach((controllerId, damage) ->
-                triggerCollectionService.checkControllerDealtDamageTriggers(
-                        gameData, defenderId, controllerId, damage, false));
-
-        // Process defender-side damage triggers (e.g. Dissipation Field, Living Artifact)
-        for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
-            if (dmgEntry.getValue() > 0) {
-                triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, defenderId, dmgEntry.getKey().getId(), dmgEntry.getValue());
-                // Night Dealings: "whenever a source you control deals damage to another player".
+        playerDamageByRecipientAndController.forEach((recipientId, damageByController) -> {
+            Map<Permanent, Integer> damageBySource = new LinkedHashMap<>();
+            damageByController.values().forEach(damageBySource::putAll);
+            processCombatDamageReflectionTriggers(gameData, damageBySource, activeId, recipientId);
+            Set<String> firedBatchedTriggerKeys = new HashSet<>();
+            damageBySource.forEach((source, amount) -> {
+                if (amount <= 0) return;
+                triggerCollectionService.checkDamageDealtToControllerTriggers(
+                        gameData, recipientId, source.getId(), true, firedBatchedTriggerKeys);
+                triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(
+                        gameData, recipientId, source.getId(), amount);
+                UUID sourceController = state.combatDamageDealerControllers.getOrDefault(source, activeId);
                 triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
-                        gameData, defenderId, activeId, dmgEntry.getKey().getId(), dmgEntry.getValue());
-                // Mangara's Equity: "whenever a creature of the chosen color deals damage to you".
+                        gameData, recipientId, sourceController, source.getId(), amount);
                 triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
-                        gameData, defenderId, null, dmgEntry.getKey(), dmgEntry.getValue());
-            }
-        }
+                        gameData, recipientId, null, source, amount);
+            });
+            int totalDamage = damageBySource.values().stream().mapToInt(Integer::intValue).sum();
+            triggerCollectionService.checkControllerDealtDamageTriggers(
+                    gameData, recipientId, null, totalDamage);
+            damageByController.forEach((controllerId, sources) ->
+                    triggerCollectionService.checkControllerDealtDamageTriggers(
+                            gameData, recipientId, controllerId,
+                            sources.values().stream().mapToInt(Integer::intValue).sum(), false));
+        });
 
         recordCombatDamageBySource(gameData, state);
 
@@ -757,21 +754,23 @@ public class CombatDamageService {
 
     private void updateMonarchFromCombatDamage(GameData gameData, CombatDamageState state,
                                                 UUID defenderId) {
-        if (!Objects.equals(gameData.monarchPlayerId, defenderId)
+        if (gameData.monarchPlayerId == null
                 || (state.damageToDefendingPlayer <= 0 && state.poisonDamageToDefendingPlayer <= 0)) {
             return;
         }
         for (var damageEntry : state.combatDamageDealtToPlayer.entrySet()) {
-            if (damageEntry.getValue() <= 0) {
+            if (damageEntry.getValue() <= 0
+                    || !gameData.monarchPlayerId.equals(state.combatDamagePlayerRecipients
+                    .getOrDefault(damageEntry.getKey(), defenderId))) {
                 continue;
             }
             UUID controllerId = state.combatDamageDealerControllers.get(damageEntry.getKey());
             if (controllerId == null) {
                 controllerId = gameData.findControllerOf(damageEntry.getKey());
             }
-            if (controllerId != null && !controllerId.equals(defenderId)) {
+            if (controllerId != null && !controllerId.equals(gameData.monarchPlayerId)) {
                 StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, null,
-                        defenderId, "Combat damage causes a player to become the monarch",
+                        gameData.monarchPlayerId, "Combat damage causes a player to become the monarch",
                         List.of(new com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect()),
                         controllerId, (UUID) null);
                 trigger.setNonTargeting(true);
@@ -784,17 +783,18 @@ public class CombatDamageService {
                                                          UUID defenderId) {
         boolean combatDamageWasDealt = state.combatDamageDealtToPlayer.values().stream()
                 .anyMatch(damage -> damage > 0);
-        if (!defenderId.equals(gameData.initiativePlayerId) || !combatDamageWasDealt) {
+        if (gameData.initiativePlayerId == null || !combatDamageWasDealt) {
             return;
         }
 
         Set<UUID> controllers = new LinkedHashSet<>();
         for (var damageEntry : state.combatDamageDealtToPlayer.entrySet()) {
-            if (damageEntry.getValue() <= 0) {
+            if (damageEntry.getValue() <= 0 || !gameData.initiativePlayerId.equals(
+                    state.combatDamagePlayerRecipients.getOrDefault(damageEntry.getKey(), defenderId))) {
                 continue;
             }
             UUID controllerId = state.combatDamageDealerControllers.get(damageEntry.getKey());
-            if (controllerId != null && !controllerId.equals(defenderId)) {
+            if (controllerId != null && !controllerId.equals(gameData.initiativePlayerId)) {
                 controllers.add(controllerId);
             }
         }
@@ -1671,7 +1671,9 @@ public class CombatDamageService {
                     .forEach((permanentId, damage) -> damageToPermanents.merge(permanentId, damage, Integer::sum));
             triggerCollectionService.queueSourceDealsDamageReflections(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
-                    damageToDefender > 0 ? Map.of(defenderId, damageToDefender) : Map.of(),
+                    damageToDefender > 0 ? Map.of(
+                            state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
+                            damageToDefender) : Map.of(),
                     state.selfDealsDamageEffects.get(source), null, damageToPermanents, true,
                     damagedCreatureSnapshots);
         }
@@ -1703,7 +1705,7 @@ public class CombatDamageService {
             triggerCollectionService.queueSourceDealsCombatDamageTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0),
-                    defenderId,
+                    state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
                     state.selfDealsCombatDamageEffects.get(source));
         }
     }
@@ -2681,7 +2683,10 @@ public class CombatDamageService {
                                                                        UUID defenderId) {
         Set<UUID> damagedPlayerIds = new LinkedHashSet<>();
         if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
-            damagedPlayerIds.add(defenderId);
+            state.combatDamageDealtToPlayer.forEach((source, amount) -> {
+                if (amount > 0) damagedPlayerIds.add(
+                        state.combatDamagePlayerRecipients.getOrDefault(source, defenderId));
+            });
         }
         for (var entry : state.damageToPlaneswalkers.entrySet()) {
             if (entry.getValue() <= 0) continue;
@@ -3416,13 +3421,20 @@ public class CombatDamageService {
 
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
-                List<CardEffect> effects = new ArrayList<>(target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE));
+                boolean hasPrintedAbilities = !target.isFaceDown()
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, target);
+                List<CardEffect> effects = new ArrayList<>();
+                if (hasPrintedAbilities) {
+                    effects.addAll(target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE));
+                }
                 effects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
                 effects.addAll(target.getPersistentTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
                 effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                         gameData, target, EffectSlot.ON_DEALT_DAMAGE));
-                List<CardEffect> combatDamageReceivedEffects =
-                        new ArrayList<>(target.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
+                List<CardEffect> combatDamageReceivedEffects = new ArrayList<>();
+                if (hasPrintedAbilities) {
+                    combatDamageReceivedEffects.addAll(target.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
+                }
                 combatDamageReceivedEffects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
                 combatDamageReceivedEffects.addAll(target.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
                 UUID controllerId = gameData.findControllerOf(target);
@@ -3872,6 +3884,48 @@ public class CombatDamageService {
                 p.getBlockingTargets().clear();
             }
         }
+    }
+
+    /** Applies aggregate prevention independently to each player before lifelink and state-based actions. */
+    private void applyDamageToEachPlayer(GameData gameData, CombatDamageState state, UUID defaultDefenderId) {
+        Set<UUID> recipientIds = new LinkedHashSet<>(state.normalDamageToPlayers.keySet());
+        recipientIds.addAll(state.infectDamageToPlayers.keySet());
+        if (recipientIds.isEmpty()) {
+            applyPlayerDamage(gameData, state, defaultDefenderId);
+            state.infectDamageToPlayers.put(defaultDefenderId, state.poisonDamageToDefendingPlayer);
+            return;
+        }
+        Map<UUID, Boolean> damageAsInfect = new LinkedHashMap<>();
+        recipientIds.forEach(id -> damageAsInfect.put(id,
+                gameQueryService.shouldDamageBeDealtAsInfect(gameData, id)));
+        int totalNormal = 0;
+        int totalInfect = 0;
+        for (UUID recipientId : recipientIds) {
+            CombatDamageState recipientState = new CombatDamageState();
+            recipientState.damageToDefendingPlayer = state.normalDamageToPlayers.getOrDefault(recipientId, 0);
+            recipientState.poisonDamageToDefendingPlayer = state.infectDamageToPlayers.getOrDefault(recipientId, 0);
+            recipientState.unpreventableDamageToDefendingPlayer =
+                    state.unpreventableDamageToPlayers.getOrDefault(recipientId, 0);
+            recipientState.defenderDamageAsInfect = damageAsInfect.get(recipientId);
+            state.combatDamageDealtToPlayer.forEach((source, amount) -> {
+                if (recipientId.equals(state.combatDamagePlayerRecipients.getOrDefault(source, defaultDefenderId))) {
+                    recipientState.combatDamageDealtToPlayer.put(source, amount);
+                    recipientState.combatDamageDealt.put(source, state.combatDamageDealt.getOrDefault(source, amount));
+                }
+            });
+            applyPlayerDamage(gameData, recipientState, recipientId);
+            state.combatDamageDealtToPlayer.putAll(recipientState.combatDamageDealtToPlayer);
+            state.combatDamageDealt.putAll(recipientState.combatDamageDealt);
+            recipientState.combatDamageRecipientControllers.forEach((source, controllers) ->
+                    state.combatDamageRecipientControllers.computeIfAbsent(source, ignored -> new HashSet<>())
+                            .addAll(controllers));
+            state.normalDamageToPlayers.put(recipientId, recipientState.damageToDefendingPlayer);
+            state.infectDamageToPlayers.put(recipientId, recipientState.poisonDamageToDefendingPlayer);
+            totalNormal += recipientState.damageToDefendingPlayer;
+            totalInfect += recipientState.poisonDamageToDefendingPlayer;
+        }
+        state.damageToDefendingPlayer = totalNormal;
+        state.poisonDamageToDefendingPlayer = totalInfect;
     }
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
@@ -4345,6 +4399,13 @@ public class CombatDamageService {
                                                  int damage, UUID defenderId, Permanent redirectTarget,
                                                  CombatDamageState state, UUID forcedPlayerTarget,
                                                  boolean sourceUnblocked) {
+        UUID playerTarget = forcedPlayerTarget != null ? forcedPlayerTarget : atk.getAttackTarget();
+        if (playerTarget != null && gameData.playerIds.contains(playerTarget)
+                && !playerTarget.equals(defenderId)) {
+            accumulatePlayerDamageInternal(gameData, atk, atkStats, damage, playerTarget,
+                    redirectTarget, state, playerTarget, sourceUnblocked);
+            return;
+        }
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
         if (sourceControllerId != null) {
             state.combatDamageDealerControllers.putIfAbsent(atk, sourceControllerId);
@@ -4714,12 +4775,16 @@ public class CombatDamageService {
         }
         if (atkHasInfect) {
             state.poisonDamageToDefendingPlayer += damage;
+            state.infectDamageToPlayers.merge(defenderId, damage, Integer::sum);
         } else {
             state.damageToDefendingPlayer += damage;
+            state.normalDamageToPlayers.merge(defenderId, damage, Integer::sum);
             if (gameQueryService.damageCantBePreventedFromSource(gameData, atk, true)) {
                 state.unpreventableDamageToDefendingPlayer += damage;
+                state.unpreventableDamageToPlayers.merge(defenderId, damage, Integer::sum);
             }
         }
+        state.combatDamagePlayerRecipients.put(atk, defenderId);
         return damage;
     }
 

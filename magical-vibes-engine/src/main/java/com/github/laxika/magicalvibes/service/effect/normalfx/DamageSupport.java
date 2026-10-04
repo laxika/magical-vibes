@@ -1,4 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
+import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -60,6 +66,8 @@ import java.util.function.ToIntFunction;
 @Component
 @RequiredArgsConstructor
 public class DamageSupport {
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private InteractionHandlerRegistry interactionHandlerRegistry;
 
     private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
@@ -1419,7 +1427,107 @@ public class DamageSupport {
                 snapshot == null ? null : new Permanent(snapshot), sourceControllerId, null, amount));
     }
 
+    private boolean beginSpellDamageModifierOrder(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
+        if (rawDamage <= 0 || gameQueryService.getSpellDamageReduction(gameData, entry) <= 0) {
+            return false;
+        }
+        List<ChoiceContext.SpellDamageModifier> modifiers = new ArrayList<>();
+        gameData.forEachPermanent((controller, permanent) -> {
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) return;
+            collectSpellDamageModifiers(gameData, permanent.getCard(), modifiers);
+        });
+        if (gameData.planechase != null) {
+            for (var plane : gameData.planechase.faceUp) {
+                collectSpellDamageModifiers(gameData, plane.getCard(), modifiers);
+            }
+        }
+        int multiplier = modifiers.stream().filter(ChoiceContext.SpellDamageModifier::multiply)
+                .mapToInt(ChoiceContext.SpellDamageModifier::amount)
+                .reduce(1, (left, right) -> left * right);
+        if (multiplier <= 1 || modifiers.stream().allMatch(
+                ChoiceContext.SpellDamageModifier::multiply)) {
+            return false;
+        }
+        beginSpellDamageModifierChoice(gameData,
+                new ChoiceContext.SpellDamageModifierOrder(
+                        entry, playerId, rawDamage / multiplier, modifiers, gameData.unpreventableDamageInProgress));
+        return true;
+    }
+
+    private void collectSpellDamageModifiers(GameData gameData, Card card,
+            List<ChoiceContext.SpellDamageModifier> modifiers) {
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            int amount;
+            boolean multiply;
+            if (effect instanceof GlobalDamageMultiplyingEffect global) {
+                amount = MaroGoneNutsSupport.apply(
+                        gameData, effect, global.damageMultiplierFactor());
+                if (amount <= 1) continue;
+                multiply = true;
+            } else if (effect instanceof ReduceSpellDamageEffect reduction) {
+                amount = reduction.amount();
+                if (amount <= 0) continue;
+                multiply = false;
+            } else {
+                continue;
+            }
+            modifiers.add(new ChoiceContext.SpellDamageModifier(
+                    card.getName() + " (" + (modifiers.size() + 1) + "): "
+                            + (multiply ? "multiply damage by " : "subtract damage by ") + amount,
+                    amount, multiply));
+        }
+    }
+
+    private void beginSpellDamageModifierChoice(GameData gameData,
+            ChoiceContext.SpellDamageModifierOrder order) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                order.recipientId(), null, null, order,
+                order.remaining().stream().map(ChoiceContext.SpellDamageModifier::label).toList(),
+                "Choose the damage replacement effect to apply next."));
+    }
+
+    /** Applies a chosen modifier once, then continues the same impending damage event. */
+    public void resolveSpellDamageModifierOrder(GameData gameData,
+            ChoiceContext.SpellDamageModifierOrder order, String label) {
+        List<ChoiceContext.SpellDamageModifier> remaining =
+                new ArrayList<>(order.remaining());
+        var selected = remaining.stream().filter(modifier -> modifier.label().equals(label)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid damage replacement effect"));
+        remaining.remove(selected);
+        int damage = applySpellDamageModifier(order.damage(), selected);
+        boolean onlyMultiplication = remaining.stream().allMatch(
+                ChoiceContext.SpellDamageModifier::multiply);
+        boolean onlyReduction = remaining.stream().noneMatch(
+                ChoiceContext.SpellDamageModifier::multiply);
+        if (damage > 0 && !onlyMultiplication && !onlyReduction) {
+            beginSpellDamageModifierChoice(gameData,
+                    new ChoiceContext.SpellDamageModifierOrder(
+                            order.entry(), order.recipientId(), damage, remaining, order.unpreventable()));
+            return;
+        }
+        for (var modifier : remaining) {
+            damage = applySpellDamageModifier(damage, modifier);
+        }
+        boolean previousUnpreventable = gameData.unpreventableDamageInProgress;
+        gameData.unpreventableDamageInProgress = order.unpreventable();
+        try {
+            dealDamageToPlayerFromSource(gameData, order.entry(), order.recipientId(), damage, true);
+        } finally {
+            gameData.unpreventableDamageInProgress = previousUnpreventable;
+        }
+    }
+
+    private int applySpellDamageModifier(int damage,
+            ChoiceContext.SpellDamageModifier modifier) {
+        return modifier.multiply() ? damage * modifier.amount() : Math.max(0, damage - modifier.amount());
+    }
+
     private void dealDamageToPlayerFromSource(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
+        dealDamageToPlayerFromSource(gameData, entry, playerId, rawDamage, false);
+    }
+
+    private void dealDamageToPlayerFromSource(GameData gameData, StackEntry entry, UUID playerId, int rawDamage,
+                                              boolean spellDamageModifiersApplied) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
@@ -1458,6 +1566,9 @@ public class DamageSupport {
                 break;
             }
             playerId = redirectedPlayerId;
+        }
+        if (!spellDamageModifiersApplied && beginSpellDamageModifierOrder(gameData, entry, playerId, rawDamage)) {
+            return;
         }
         if (gameQueryService.playerHasFlying(gameData, playerId)
                 && gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent)
@@ -1502,7 +1613,9 @@ public class DamageSupport {
             return;
         }
         // Benevolent Unicorn: a spell dealing damage to a player deals that much damage minus N.
-        rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
+        if (!spellDamageModifiersApplied) {
+            rawDamage = Math.max(0, rawDamage - gameQueryService.getSpellDamageReduction(gameData, entry));
+        }
         Set<CardColor> sourceColors = sourcePermanent == null
                 ? gameQueryService.getEffectiveCardColors(gameData, source)
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);

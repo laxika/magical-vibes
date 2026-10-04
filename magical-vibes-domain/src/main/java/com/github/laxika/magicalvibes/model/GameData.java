@@ -6544,6 +6544,10 @@ public class GameData {
         source.damageToPlaneswalkers.forEach((key, value) -> copy.damageToPlaneswalkers.put(key, value));
         source.combatDamageDealt.forEach((key, value) -> copy.combatDamageDealt.put(permanentCopy.apply(key), value));
         source.combatDamageDealtToPlayer.forEach((key, value) -> copy.combatDamageDealtToPlayer.put(permanentCopy.apply(key), value));
+        source.combatDamagePlayerRecipients.forEach((key, value) -> copy.combatDamagePlayerRecipients.put(permanentCopy.apply(key), value));
+        copy.normalDamageToPlayers.putAll(source.normalDamageToPlayers);
+        copy.infectDamageToPlayers.putAll(source.infectDamageToPlayers);
+        copy.unpreventableDamageToPlayers.putAll(source.unpreventableDamageToPlayers);
         source.combatDamageDealtToPlaneswalker.forEach((key, value) -> copy.combatDamageDealtToPlaneswalker.put(permanentCopy.apply(key), value));
         source.combatDamageAmountsToBattles.forEach((key, value) -> copy.combatDamageAmountsToBattles.put(permanentCopy.apply(key), new HashMap<>(value)));
         source.combatDamageAmountsToPlaneswalkers.forEach((key, value) -> copy.combatDamageAmountsToPlaneswalkers.put(permanentCopy.apply(key), new HashMap<>(value)));

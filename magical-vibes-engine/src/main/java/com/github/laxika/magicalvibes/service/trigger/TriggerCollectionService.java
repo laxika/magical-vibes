@@ -6423,7 +6423,11 @@ public class TriggerCollectionService {
     private void checkDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt,
                                                UUID damageSourceControllerId, Card sourceCard,
                                                UUID sourcePermanentId, EffectSlot slot) {
-        List<CardEffect> effects = new ArrayList<>(damagedCreature.getCard().getEffects(slot));
+        List<CardEffect> effects = new ArrayList<>();
+        if (!damagedCreature.isFaceDown()
+                && !gameQueryService.hasLostPrintedAbilities(gameData, damagedCreature)) {
+            effects.addAll(damagedCreature.getCard().getEffects(slot));
+        }
         effects.addAll(damagedCreature.getTemporaryTriggeredEffects(slot));
         effects.addAll(damagedCreature.getPersistentTriggeredEffects(slot));
         effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
@@ -9693,6 +9697,10 @@ public class TriggerCollectionService {
 
     public void processNextSpellTargetTrigger(GameData gameData) {
         triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
+    }
+
+    public void beginSimultaneousTriggerOrder(GameData gameData) {
+        triggeredAbilityQueueService.beginSpellCastTriggerOrder(gameData);
     }
 
     public void processNextETBSpellTargetTrigger(GameData gameData) {

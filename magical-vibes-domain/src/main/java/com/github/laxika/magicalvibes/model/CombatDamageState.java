@@ -49,6 +49,11 @@ public class CombatDamageState {
 
     public final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     public final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
+    /** Player recipients and accumulated damage components before aggregate prevention. */
+    public final Map<Permanent, UUID> combatDamagePlayerRecipients = new HashMap<>();
+    public final Map<UUID, Integer> normalDamageToPlayers = new LinkedHashMap<>();
+    public final Map<UUID, Integer> infectDamageToPlayers = new LinkedHashMap<>();
+    public final Map<UUID, Integer> unpreventableDamageToPlayers = new LinkedHashMap<>();
     public final Map<Permanent, Integer> combatDamageDealtToPlaneswalker = new HashMap<>();
     public final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToBattles = new HashMap<>();
     public final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToPlaneswalkers = new HashMap<>();

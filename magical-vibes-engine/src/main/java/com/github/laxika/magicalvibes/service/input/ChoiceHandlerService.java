@@ -229,6 +229,10 @@ public class ChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport
             exileFreeCastQueueSupport;
 
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnTargetPermanentEffectHandler
+            counterPlacementHandler;
+
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
             throw new IllegalStateException("Not awaiting color choice");
@@ -249,6 +253,24 @@ public class ChoiceHandlerService {
         }
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SpellDamageModifierOrder order) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid damage replacement effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            damageSupport.resolveSpellDamageModifierOrder(gameData, order, colorName);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CounterReplacementOrder order) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid counter replacement effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            counterPlacementHandler.resolveReplacementOrder(gameData, order, colorName);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
@@ -2854,9 +2876,9 @@ public class ChoiceHandlerService {
                     .filter(o -> o.label().equals(chosenLabel))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
-            if (!triggerTargetCollector.hasLegalGraveyardTarget(
-                    gameData, chosen.targetFilter(), ctx.controllerId(), ctx.sourceCard())) {
-                throw new IllegalArgumentException("Mode has no legal graveyard target: " + chosenLabel);
+            if (!triggerTargetCollector.hasLegalModeTargets(
+                    gameData, chosen, ctx.controllerId(), ctx.sourceCard())) {
+                throw new IllegalArgumentException("Mode has no legal target: " + chosenLabel);
             }
             if (!ctx.effect().modesMayRepeat() && chosenModes.contains(chosen)) {
                 throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);

@@ -807,7 +807,9 @@ public class EtbTriggerService {
                             && divided.etbAssignments() && (divided.targetRestriction() == null
                             || divided.targetRestriction() instanceof com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate)
                             || effect instanceof com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect prevention
-                            && prevention.etbAssignments())
+                            && prevention.etbAssignments()
+                            || effect instanceof com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect distribution
+                            && distribution.etbAssignments())
                     ? new java.util.LinkedHashMap<>(gameData.pendingETBDamageAssignments) : Map.of();
             if (!dividedAssignments.isEmpty()) gameData.pendingETBDamageAssignments = Map.of();
             if (!dividedAssignments.isEmpty() && activeTargetIds.isEmpty()) {

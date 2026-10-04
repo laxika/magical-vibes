@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -160,7 +159,7 @@ public class ExileFreeCastSupport {
             if (face < 2) {
                 java.util.Map<String, Integer> modes = new java.util.LinkedHashMap<>();
                 for (int mode = 0; mode < splitModes.options().size(); mode++) {
-                    if (card.hasKeyword(Keyword.FUSE) && mode == splitModes.options().size() - 1) continue;
+                    if (splitModes.options().get(mode).handOnly()) continue;
                     modes.put(splitModes.options().get(mode).label(), mode + 2);
                 }
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

@@ -71,6 +71,9 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
                 || !attacker.isAttacking() || !gameQueryService.isCreature(gameData, attacker)) {
             return;
         }
+        if (!legalAttackerIds(gameData, blocker).contains(chosenAttackerId)) {
+            return;
+        }
 
         UUID defenderId = gameQueryService.findPermanentController(gameData, blocker.getId());
         if (defenderId == null || !attacks(gameData, defenderId, attacker)) {
@@ -132,6 +135,13 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
                 result.add(attacker.getId());
             }
         });
+        List<UUID> requiredAttackers = result.stream().filter(id -> {
+            Permanent attacker = gameQueryService.findPermanentById(gameData, id);
+            return attacker != null && gameQueryService.isRequiredToBlockByLure(gameData, attacker, blocker);
+        }).toList();
+        if (!requiredAttackers.isEmpty()) {
+            return requiredAttackers;
+        }
         return result;
     }
 

@@ -235,6 +235,10 @@ public class AutoPassService {
             stepTriggerService.processNextPhasesInTriggerTarget(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput() && gameData.pendingInteractions.isEmpty()) {
+            triggerCollectionService.beginSimultaneousTriggerOrder(gameData);
+        }
+
         boolean checkAfterStepAdvance = false;
         for (int safety = 0; safety < 100; safety++) {
             if (gameData.status != GameStatus.RUNNING || gameData.waitingForSubgame) return;

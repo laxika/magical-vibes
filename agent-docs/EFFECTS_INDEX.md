@@ -7049,3 +7049,9 @@ Delayed self-returns preserve the death controller for upkeep timing and trigger
 `BronzeTabletAnteExchangeEffect` applies the stated ownership changes to both exiled objects after payment is declined or unavailable, preserving identities with frozen runtime copies.
 
 Chosen counter distribution during an alternative cast reuses CounterDistribution and CounterDistributionAssignment with an optional HandCastSpellTarget context. Target counts and division are announced before stacking the spell; completion preserves spell type, source zone, madness, and cast triggers. Miracle checks legal targets before removing the card from hand or paying mana.
+
+When spell damage to a player has both global multiplication and ReduceSpellDamageEffect replacements, DamageSupport lets the affected player apply each source's modifier once in the chosen order. Remaining modifiers are retained in SpellDamageModifierOrder; completion resumes the original damage event and its trailing spell effects. ColorChoice copying isolates the retained stack entry for simulations.
+
+EtbEffectResolver snapshots ColorManaPairsSpentToCast into Fixed amounts for draw, discard, and self-boost effects, including sequence and conditional wrappers. Independent entering abilities retain the same casting payment even after another ability finishes resolving; other dynamic amounts remain live.
+
+PutCounterOnTargetPermanentEffect orders noncommuting replacements through CounterReplacementOrder before placing any counters. GameQueryService.counterReplacementsFor shares the ordinary applicability rules; the affected permanent's controller chooses each source once. Subsequent targets and the original stack entry are retained through the choice, and completion places the chosen count through PermanentCounterSupport without applying the same replacements again.

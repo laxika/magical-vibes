@@ -71,7 +71,8 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
 
     public void placeCountersAndQueueThen(GameData gameData, StackEntry entry, Permanent creature,
                                           BlightEffect blight) {
-        if (gameQueryService.cantHaveCounters(gameData, creature)) {
+        if (gameQueryService.cantHaveCounters(gameData, creature)
+                || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, creature)) {
             return;
         }
         permanentCounterSupport.placeCounterOnPermanent(
@@ -149,6 +150,7 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
         return battlefield.stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

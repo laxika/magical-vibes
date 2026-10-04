@@ -16,6 +16,6 @@ public class BloodbraidChallenger extends Card {
     public BloodbraidChallenger() {
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
         addCastingOption(new GraveyardCast(null, "{3}{R}{G}", List.of(
-                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3))));
+                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));
     }
 }

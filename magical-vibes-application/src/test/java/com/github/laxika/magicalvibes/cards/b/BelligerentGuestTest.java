@@ -53,10 +53,13 @@ class BelligerentGuestTest extends BaseCardTest {
         Permanent guest = addCreatureReady(player1, new BelligerentGuest());
         guest.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new DoomedDissenter());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2,
+                List.of(new com.github.laxika.magicalvibes.networking.message.BlockerAssignment(0, 0)));
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                java.util.Map.of(blocker.getId(), 1, player2.getId(), 2));
         resolveAllTriggers();
 
         harness.assertLife(player2, 18);

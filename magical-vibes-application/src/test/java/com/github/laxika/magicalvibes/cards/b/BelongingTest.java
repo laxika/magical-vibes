@@ -54,8 +54,10 @@ class BelongingTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Shapeshifter")).hasSize(3);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanents(player1, "Belonging")).isEmpty();
         assertThat(findPermanents(player1, "Shapeshifter")).hasSize(3);
@@ -134,8 +136,10 @@ class BelongingTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Belonging");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanent(player2, "Belonging").getId()).isEqualTo(token.getId());
         assertThat(findPermanents(player1, "Shapeshifter")).hasSize(3);

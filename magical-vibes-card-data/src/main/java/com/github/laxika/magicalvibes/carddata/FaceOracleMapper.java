@@ -129,6 +129,10 @@ public final class FaceOracleMapper {
                 keywords.add(keyword);
             }
         }
+        if (cardText != null && java.util.regex.Pattern.compile("(?m)^Nimble(?:[ (]|$)")
+                .matcher(cardText).find()) {
+            keywords.add(Keyword.NIMBLE);
+        }
         return keywords;
     }
 

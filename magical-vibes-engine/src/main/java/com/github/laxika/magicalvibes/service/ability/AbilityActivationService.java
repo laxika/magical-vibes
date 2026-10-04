@@ -6078,9 +6078,10 @@ public class AbilityActivationService {
         });
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
-        if (!gameQueryService.hasLostAllAbilities(gameData, permanent) && !permanent.isFaceDown()) {
+        if (!permanent.isFaceDown()) {
+            boolean printedAbilitiesRemain = !gameQueryService.hasLostPrintedAbilities(gameData, permanent);
             for (ManaColor color : gameQueryService.intrinsicBasicLandManaColors(gameData, permanent)) {
-                boolean printedLandType = permanent.getCard().getSubtypes().stream().anyMatch(subtype ->
+                boolean printedLandType = printedAbilitiesRemain && permanent.getCard().getSubtypes().stream().anyMatch(subtype ->
                         switch (subtype) {
                             case PLAINS -> color == ManaColor.WHITE;
                             case ISLAND -> color == ManaColor.BLUE;

@@ -19,6 +19,12 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -175,10 +181,12 @@ public class EtbEffectResolver {
                                 ? conditional.wrapped() : null;
                 // "if you cast it" is true for a spell cast from any zone, but not for a copy or
                 // a permanent put onto the battlefield by an effect.
-                case WasCast ignored ->
+                case WasCast wasCastCondition ->
                         ctx.sourcePermanent() != null
-                                ? (ctx.sourcePermanent().isCast() ? conditional.wrapped() : null)
-                                : (ctx.wasCastFromHand() ? conditional.wrapped() : null);
+                                ? (conditionEvaluationService.isMet(ctx.gameData(), wasCastCondition,
+                                conditionContext) ? conditional.wrapped() : null)
+                                : (ctx.wasCastFromHand() && !wasCastCondition.byController()
+                                ? conditional.wrapped() : null);
                 // Intervening-if gates (CR 603.4) — Metalcraft, Morbid, Raid, ControlsAnother: keep
                 // the conditional effect when met (re-checked at stack resolution), drop it when not.
                 case Condition gate when gate.isEtbTriggerGate() ->
@@ -201,7 +209,48 @@ public class EtbEffectResolver {
      */
     public CardEffect resolve(EtbEffectContext ctx, CardEffect effect) {
         EtbEffectHandler handler = handlers.get(effect.getClass());
-        return handler != null ? handler.resolve(ctx, effect) : effect;
+        CardEffect resolved = handler != null ? handler.resolve(ctx, effect) : effect;
+        return resolved == null ? null : snapshotManaPairs(ctx, resolved);
+    }
+
+    /** Retains the casting payment across the independent abilities of an entering permanent. */
+    private CardEffect snapshotManaPairs(EtbEffectContext ctx, CardEffect effect) {
+        if (effect instanceof DrawCardEffect draw && draw.amount() instanceof ColorManaPairsSpentToCast) {
+            return new DrawCardEffect(snapshotManaPairs(ctx, draw.amount()), draw.onlyIfSacrificed(),
+                    draw.castTimeXValue());
+        }
+        if (effect instanceof DiscardEffect discard && discard.amount() instanceof ColorManaPairsSpentToCast) {
+            return new DiscardEffect(snapshotManaPairs(ctx, discard.amount()), discard.recipient(),
+                    discard.random(), discard.stopAfterDiscardingType(), discard.onlyIfSacrificed(),
+                    discard.onlyCardsDrawnThisResolution(), discard.stopAfterDiscardingPredicate());
+        }
+        if (effect instanceof BoostSelfEffect boost
+                && (boost.powerBoost() instanceof ColorManaPairsSpentToCast
+                || boost.toughnessBoost() instanceof ColorManaPairsSpentToCast)) {
+            return new BoostSelfEffect(snapshotManaPairs(ctx, boost.powerBoost()),
+                    snapshotManaPairs(ctx, boost.toughnessBoost()), boost.duration());
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            var steps = sequence.steps().stream().map(child -> snapshotManaPairs(ctx, child)).toList();
+            return steps.equals(sequence.steps()) ? effect
+                    : new SequenceEffect(steps, sequence.controllerDrawCount(),
+                    sequence.onlyIfSacrificed(), sequence.optionalTarget());
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            CardEffect wrapped = snapshotManaPairs(ctx, conditional.wrapped());
+            return wrapped.equals(conditional.wrapped()) ? effect
+                    : new ConditionalEffect(conditional.condition(), wrapped,
+                    conditional.interveningIf(), conditional.triggerTimeOnly());
+        }
+        return effect;
+    }
+
+    /** Other dynamic values remain live and are evaluated when the ability resolves. */
+    private DynamicAmount snapshotManaPairs(EtbEffectContext ctx, DynamicAmount amount) {
+        if (amount instanceof ColorManaPairsSpentToCast pairs) {
+            return new Fixed(ctx.gameData().getSpellCastManaSpentByColor(ctx.card().getId(), pairs.color()) / 2);
+        }
+        return amount;
     }
 
     private static CardEffect selectedModeEffect(ChooseOneEffect.ChooseOneOption option) {

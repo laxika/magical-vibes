@@ -312,7 +312,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
             if (encoded != 0) {
                 throw new IllegalStateException("Invalid repeated mode encoding: " + xValue);
             }
-            java.util.Collections.reverse(chosen);
+            java.util.Collections.sort(chosen);
             return chosen;
         }
         int mask = -xValue;
@@ -424,7 +424,15 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     public record ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
                                   List<TargetFilter> targetFilters, int minTargets, int maxTargets,
                                   boolean xScaledTargets, String manaCost,
-                                  Supplier<List<CardEffect>> effectFactory) {
+                                  Supplier<List<CardEffect>> effectFactory, boolean handOnly) {
+        public ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
+                               List<TargetFilter> targetFilters, int minTargets, int maxTargets,
+                               boolean xScaledTargets, String manaCost,
+                               Supplier<List<CardEffect>> effectFactory) {
+            this(label, effects, targetFilter, targetFilters, minTargets, maxTargets,
+                    xScaledTargets, manaCost, effectFactory, false);
+        }
+
         public ChooseOneOption {
             if (minTargets < 0) {
                 throw new IllegalArgumentException("minTargets must be >= 0");
@@ -487,7 +495,13 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         /** This mode with its own total mana cost (split-card half / fuse mode). */
         public ChooseOneOption withManaCost(String manaCost) {
             return new ChooseOneOption(label, effects, targetFilter, targetFilters,
-                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory);
+                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, handOnly);
+        }
+
+        /** Restricts this mode to casting the card from hand, as with fuse. */
+        public ChooseOneOption onlyFromHand() {
+            return new ChooseOneOption(label, effects, targetFilter, targetFilters,
+                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, true);
         }
 
         /** Returns fresh effects when this mode supports repeated selection. */

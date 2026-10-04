@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ButcherGhoul.class, LightningBolt.class})
+@CardUsed({ButcherGhoul.class, LightningBolt.class, ControlMagic.class})
 class ButcherGhoulTest extends BaseCardTest {
 
     @Test
@@ -60,8 +61,10 @@ class ButcherGhoulTest extends BaseCardTest {
     @Test
     @DisplayName("The controller at death controls undying, but the creature returns to its owner")
     void stolenGhoulUndyingIsControlledByControllerAtDeath() {
-        Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new ButcherGhoul());
-        gd.stolenCreatures.put(ghoul.getId(), player1.getId());
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new ButcherGhoul());
+        Permanent control = harness.addToBattlefieldAndReturn(player2, new ControlMagic());
+        control.setAttachedTo(ghoul.getId());
+        harness.runStateBasedActions();
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 

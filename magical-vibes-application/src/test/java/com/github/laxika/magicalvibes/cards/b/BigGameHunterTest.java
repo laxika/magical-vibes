@@ -56,6 +56,7 @@ class BigGameHunterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());

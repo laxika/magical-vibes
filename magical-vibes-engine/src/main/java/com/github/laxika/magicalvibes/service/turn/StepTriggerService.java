@@ -1717,7 +1717,9 @@ public class StepTriggerService {
 
                 boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(effect -> effect instanceof RememberTargetPlayerEffect
-                                || effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect);
+                                || effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect)
+                        || perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(
+                                com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
                 if (playerId.equals(activePlayerId) && !hasChosenPlayer) continue;
                 UUID chosenPlayerId = perm.getChosenPlayerIds().isEmpty()
                         ? perm.getRememberedTargetPlayerId() : perm.getChosenPlayerIds().getFirst();
@@ -5242,8 +5244,19 @@ public class StepTriggerService {
             List<DelayedGraveyardToBattlefieldTransformedReturn> pendingReturns =
                     gameData.drainDelayedActions(DelayedGraveyardToBattlefieldTransformedReturn.class);
             for (DelayedGraveyardToBattlefieldTransformedReturn pending : pendingReturns) {
-                graveyardTransformedReturnService.returnTransformed(
-                        gameData, pending.cardId(), pending.ownerId(), pending.controllerId());
+                Card returningCard = gameData.playerGraveyards.getOrDefault(pending.ownerId(), List.of()).stream()
+                        .filter(card -> card.getId().equals(pending.cardId())).findFirst().orElse(null);
+                if (returningCard == null) {
+                    continue;
+                }
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        returningCard, pending.controllerId(), returningCard.getName() + "'s delayed return ability",
+                        List.of(new com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect()));
+                trigger.setTriggeringCardId(returningCard.getId());
+                trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(returningCard.getId()));
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardThen(returningCard, "'s delayed return ability triggers."));
             }
         }
 

@@ -815,3 +815,7 @@ belonging to the plane's other abilities.
 
 `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER` fires only when the equipped creature deals combat damage to a player. It uses the Equipment controller and the same targeting pipeline as `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, which also fires for damage to permanents.
 | `ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE` | `TriggerCollectionService.checkControllerDealtDamageTriggers` when the damage source controller matches the damaged player + `DamageTriggerCollectorService` | The source-control gate is checked at the damage event; the damage amount is carried in `eventValue`, and player-targeting effects use `SpellTargetTriggerAnyTarget` |
+
+Triggered modal choices check required graveyard and exile targets when offering a mode and again when accepting the choice. TriggerTargetCollector.hasLegalModeTargets reuses the normal exile target collector, including face-up visibility and the effect's card predicate, so an exile mode without an eligible card is omitted (Blade of the Swarm). Chosen-player upkeep watchers recognize static ChooseOpponentOnEnterEffect and retain the chosen player's identity through control changes (Black Vise).
+
+Independent ETB abilities retain their own declared target group and copy ETB counter distributions onto the queued stack entry. Simultaneous evoke abilities open the existing trigger-order choice before priority even when no additional target choice is required.

@@ -1297,6 +1297,11 @@ public class CombatAttackService {
                         } else if (needsTarget) {
                             List<CardEffect> bundledEffects = new ArrayList<>(otherEffects);
                             List<List<CardEffect>> abilities = new ArrayList<>();
+                            for (CardEffect granted : grantedAttackEffects) {
+                                if (bundledEffects.remove(granted)) {
+                                    abilities.add(List.of(granted));
+                                }
+                            }
                             for (CardEffect granted : temporaryAttackEffects) {
                                 if (bundledEffects.remove(granted)) {
                                     abilities.add(List.of(granted));
@@ -1367,6 +1372,11 @@ public class CombatAttackService {
                             // xValue locks the attacker count for MinimumAttackers (Odric / similar).
                             List<CardEffect> bundledEffects = new ArrayList<>(otherEffects);
                             List<List<CardEffect>> abilities = new ArrayList<>();
+                            for (CardEffect granted : grantedAttackEffects) {
+                                if (bundledEffects.remove(granted)) {
+                                    abilities.add(List.of(granted));
+                                }
+                            }
                             for (CardEffect granted : temporaryAttackEffects) {
                                 if (bundledEffects.remove(granted)) {
                                     abilities.add(List.of(granted));
@@ -2087,40 +2097,66 @@ public class CombatAttackService {
                     }
 
                     if (!mandatoryEffects.isEmpty()) {
-                        boolean needsTarget = mandatoryEffects.stream()
-                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                                        || perm.getCard().getEffectTargetIndex(e) >= 0);
-                        UUID attackedTargetId = attacker.getAttackTarget();
-                        if (needsTarget) {
-                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), playerId, mandatoryEffects, perm.getId(), playerId,
-                                    attackedTargetId, attacker.getId()));
-                        } else {
-                            StackEntry attackTrigger = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    perm.getCard(),
-                                    playerId,
-                                    perm.getCard().getName() + "'s attack trigger",
-                                    mandatoryEffects,
-                                    null,
-                                    perm.getId()
-                            );
-                            attackTrigger.setAttackedTargetId(attackedTargetId);
-                            attackTrigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
-                                    ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
-                            // Record the triggering attacker as a non-targeting reference so effects that
-                            // act on "that creature" can find it.
-                            attackTrigger.setTargetId(attacker.getId());
-                            attackTrigger.setNonTargeting(true);
-                            attackTrigger.setTriggeringPermanentId(attacker.getId());
-                            attackTrigger.setTriggeringPermanentOwnerId(
-                                    gameData.defaultControllerOf(attacker.getId()));
-                            if (mandatoryEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
-                                    && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect valueEffect
-                                    && valueEffect.usesTriggeringPermanentManaValue())) {
-                                attackTrigger.setEventValue(attacker.getCard().getManaValue());
+                        List<CardEffect> bundledEffects = new ArrayList<>(mandatoryEffects);
+                        List<List<CardEffect>> abilities = new ArrayList<>();
+                        for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_ALLY_CREATURE_ATTACKS)) {
+                            if (registration.triggerMode()
+                                    != com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
+                                continue;
                             }
-                            gameData.stack.add(attackTrigger);
+                            CardEffect registeredEffect = registration.effect();
+                            if (registeredEffect instanceof TriggeringCardConditionalEffect conditional) {
+                                registeredEffect = conditional.wrapped();
+                            } else if (registeredEffect instanceof TriggeringPermanentConditionalEffect conditional) {
+                                registeredEffect = conditional.wrapped();
+                            } else if (registeredEffect instanceof ConditionalEffect conditional
+                                    && (conditional.condition() instanceof AttacksAlone
+                                    || conditional.condition() instanceof AttacksPlayerAlone)) {
+                                registeredEffect = conditional.wrapped();
+                            }
+                            if (bundledEffects.remove(registeredEffect)) {
+                                abilities.add(List.of(registeredEffect));
+                            }
+                        }
+                        if (!bundledEffects.isEmpty()) {
+                            abilities.addFirst(bundledEffects);
+                        }
+                        for (List<CardEffect> abilityEffects : abilities) {
+                            boolean needsTarget = abilityEffects.stream()
+                                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                            || perm.getCard().getEffectTargetIndex(e) >= 0);
+                            UUID attackedTargetId = attacker.getAttackTarget();
+                            if (needsTarget) {
+                                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                        perm.getCard(), playerId, abilityEffects, perm.getId(), playerId,
+                                        attackedTargetId, attacker.getId()));
+                            } else {
+                                StackEntry attackTrigger = new StackEntry(
+                                        StackEntryType.TRIGGERED_ABILITY,
+                                        perm.getCard(),
+                                        playerId,
+                                        perm.getCard().getName() + "'s attack trigger",
+                                        abilityEffects,
+                                        null,
+                                        perm.getId()
+                                );
+                                attackTrigger.setAttackedTargetId(attackedTargetId);
+                                attackTrigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
+                                        ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
+                                // Record the triggering attacker as a non-targeting reference so effects that
+                                // act on "that creature" can find it.
+                                attackTrigger.setTargetId(attacker.getId());
+                                attackTrigger.setNonTargeting(true);
+                                attackTrigger.setTriggeringPermanentId(attacker.getId());
+                                attackTrigger.setTriggeringPermanentOwnerId(
+                                        gameData.defaultControllerOf(attacker.getId()));
+                                if (abilityEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
+                                        && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect valueEffect
+                                        && valueEffect.usesTriggeringPermanentManaValue())) {
+                                    attackTrigger.setEventValue(attacker.getCard().getManaValue());
+                                }
+                                gameData.stack.add(attackTrigger);
+                            }
                         }
                     }
 

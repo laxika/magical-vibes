@@ -2523,7 +2523,7 @@ public class EnterTriggerCollectorService {
 
     private void enqueue(TriggerMatchContext match, CardEffect effect, UUID targetPlayerId, int count,
                          UUID enteringPermanentId) {
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.sourceCard();
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < count; i++) {
@@ -2534,10 +2534,14 @@ public class EnterTriggerCollectorService {
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
                     targetPlayerId,
-                    match.permanent().getId()
+                    match.permanent() == null ? null : match.permanent().getId()
             );
             entry.setNonTargeting(!isTargeting(effect));
-            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            entry.setSourcePlanarObject(match.sourcePlanarObject() == null
+                    ? null : match.sourcePlanarObject().copy());
+            if (match.permanent() != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            }
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);
                 entry.setTriggeringCardId(enteringPermanent.getCard().getId());

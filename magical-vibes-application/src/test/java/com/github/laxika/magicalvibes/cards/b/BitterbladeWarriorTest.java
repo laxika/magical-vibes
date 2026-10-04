@@ -37,6 +37,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(gd.currentStep, this::resolveAllTriggers);
 
         assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);

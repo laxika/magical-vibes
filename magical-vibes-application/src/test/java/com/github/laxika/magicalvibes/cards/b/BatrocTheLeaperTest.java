@@ -31,7 +31,7 @@ class BatrocTheLeaperTest extends BaseCardTest {
     void oneMultikickerPayment() {
         castBatroc(List.of("{2}"));
 
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
         Permanent batroc = findPermanent(player1, "Batroc the Leaper");
@@ -45,8 +45,7 @@ class BatrocTheLeaperTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castBatroc(List.of("{2}", "{2}"));
 
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, bear.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId(), bear.getId()));
         harness.passBothPriorities();
 
         Permanent batroc = findPermanent(player1, "Batroc the Leaper");
@@ -60,7 +59,7 @@ class BatrocTheLeaperTest extends BaseCardTest {
     void kickedWithNoTargets() {
         castBatroc(List.of("{2}"));
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Batroc the Leaper")
@@ -75,8 +74,7 @@ class BatrocTheLeaperTest extends BaseCardTest {
     void fewerTargetsThanKicks() {
         castBatroc(List.of("{2}", "{2}"));
 
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
@@ -89,7 +87,7 @@ class BatrocTheLeaperTest extends BaseCardTest {
     void canTargetController() {
         castBatroc(List.of("{2}"));
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
@@ -100,7 +98,7 @@ class BatrocTheLeaperTest extends BaseCardTest {
     @DisplayName("Damage uses Batroc's power when the triggered ability resolves")
     void usesPowerAtResolution() {
         castBatroc(List.of("{2}"));
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
 
         Permanent batroc = findPermanent(player1, "Batroc the Leaper");
         batroc.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);

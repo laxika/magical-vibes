@@ -53,11 +53,17 @@ class BroodbirthViperTest extends BaseCardTest {
                 .anyMatch(action -> action.permanentId().equals(copy.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        gd.interaction.clearAwaitingInput();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            for (int attempts = 0; gd.currentStep != TurnStep.END_OF_COMBAT && attempts < 16; attempts++) {
+                if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                    harness.handleMayAbilityChosen(player1, false);
+                } else {
+                    harness.passBothPriorities();
+                }
+            }
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(viper);

@@ -129,8 +129,11 @@ class BelakorTheDarkMasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BelakorTheDarkMaster());
         var target = harness.addToBattlefieldAndReturn(player2, new VanguardSuppressor());
 
-        harness.enterBattlefieldAndReturn(player1, new PlagueDrone());
-        resolveAllTriggers();
+        harness.setHand(player1, List.of(new PlagueDrone()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
@@ -143,8 +146,12 @@ class BelakorTheDarkMasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BelakorTheDarkMaster());
         harness.setLife(player2, 20);
 
-        var demon = harness.enterBattlefieldAndReturn(player1, new PlagueDrone());
-        resolveAllTriggers();
+        harness.setHand(player1, List.of(new PlagueDrone()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        var demon = findPermanent(player1, "Plague Drone");
         harness.handlePermanentChosen(player1, player2.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, demon));
         resolveAllTriggers();

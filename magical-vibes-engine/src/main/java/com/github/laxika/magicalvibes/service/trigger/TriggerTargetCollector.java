@@ -55,6 +55,18 @@ import java.util.UUID;
 @Service
 public class TriggerTargetCollector {
 
+    /** Checks required graveyard and exile targets before a triggered mode can be selected. */
+    public boolean hasLegalModeTargets(GameData gameData,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption option,
+            UUID controllerId, Card sourceCard) {
+        if (option.minTargets() == 0) return true;
+        if (!hasLegalGraveyardTarget(gameData, option.targetFilter(), controllerId, sourceCard)) return false;
+        List<CardEffect> exileEffects = option.effectsForSelection().stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)).toList();
+        return exileEffects.isEmpty() || !collect(gameData, exileEffects, option.targetFilter(),
+                controllerId, sourceCard, Options.END_STEP).validTargets().isEmpty();
+    }
+
     /** Whether a modal graveyard target restriction currently has a legal card to select. */
     public boolean hasLegalGraveyardTarget(GameData gameData, TargetFilter filter,
                                            UUID controllerId, Card sourceCard) {

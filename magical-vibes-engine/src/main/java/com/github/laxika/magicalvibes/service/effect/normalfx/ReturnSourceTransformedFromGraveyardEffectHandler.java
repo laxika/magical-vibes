@@ -34,7 +34,9 @@ public class ReturnSourceTransformedFromGraveyardEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Card card = entry.getCard();
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
-        if (ownerId == null) {
+        if (ownerId == null || card.getId().equals(entry.getTriggeringCardId())
+                && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(card.getId()) != entry.getTriggeringCardGraveyardEntryVersion()) {
             gameLogService.append(gameData, GameLog.cardThen(card, " is no longer in a graveyard; it doesn't return."));
             log.info("Game {} - Transformed return for {} fizzles (not in a graveyard)", gameData.id, card.getName());
             return;

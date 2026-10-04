@@ -131,7 +131,8 @@ class BoneShredderTest extends BaseCardTest {
         });
         harness.assertOnBattlefield(player1, "Bone Shredder");
 
-        advanceToUpkeep(player1);
+        harness.passUntil(player2, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -158,7 +159,8 @@ class BoneShredderTest extends BaseCardTest {
         });
         harness.assertInHand(player2, "Bouncing Beebles");
 
-        advanceToUpkeep(player1);
+        harness.passUntil(player2, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);

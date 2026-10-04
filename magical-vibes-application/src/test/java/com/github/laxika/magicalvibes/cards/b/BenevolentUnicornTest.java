@@ -197,5 +197,55 @@ class BenevolentUnicornTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.assertLife(player2, 20);
+        var choice = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith("Benevolent Unicorn")).findFirst().orElseThrow());
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Incinerate");
+    }
+
+    @Test
+    void affectedPlayerCanDoubleBeforeApplyingReduction() {
+        harness.addToBattlefield(player1, new BenevolentUnicorn());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        var choice = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith("Furnace of Rath")).findFirst().orElseThrow());
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player1, "Incinerate");
+    }
+
+    @Test
+    void affectedPlayerCanMultiplyBetweenIndependentReductions() {
+        harness.addToBattlefield(player1, new BenevolentUnicorn());
+        harness.addToBattlefield(player2, new BenevolentUnicorn());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        var firstChoice = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, firstChoice.options().stream()
+                .filter(option -> option.startsWith("Benevolent Unicorn")).findFirst().orElseThrow());
+        harness.assertLife(player2, 20);
+        var secondChoice = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, secondChoice.options().stream()
+                .filter(option -> option.startsWith("Furnace of Rath")).findFirst().orElseThrow());
+
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Incinerate");
     }
 }

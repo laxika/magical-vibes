@@ -2788,7 +2788,7 @@ public class PredicateEvaluationService {
             }
             case PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate receivedPredicate ->
                     receivedPlusOneCountersThisTurn(gameData, permanent, receivedPredicate,
-                            context == null ? null : context.sourceControllerId());
+                            filterContext == null ? null : filterContext.sourceControllerId());
             case PermanentHasAtLeastCountersPredicate atLeastCountersPredicate ->
                     permanent.getCounterCount(atLeastCountersPredicate.counterType())
                             >= atLeastCountersPredicate.minimum();

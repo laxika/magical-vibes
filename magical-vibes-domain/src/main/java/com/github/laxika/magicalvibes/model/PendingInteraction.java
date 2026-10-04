@@ -2863,6 +2863,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         /** Isolates a prepared as-entry permanent when this choice is copied for simulation. */
         public ColorChoice copyCardTypeOnEnterPermanent() {
+            if (context instanceof ChoiceContext.SpellDamageModifierOrder order) {
+                return new ColorChoice(playerId, permanentId, etbTargetId,
+                        new ChoiceContext.SpellDamageModifierOrder(new StackEntry(order.entry()),
+                                order.recipientId(), order.damage(), order.remaining(), order.unpreventable()),
+                        options, prompt, disabledOptions);
+            }
+            if (context instanceof ChoiceContext.CounterReplacementOrder order) {
+                return new ColorChoice(playerId, permanentId, etbTargetId,
+                        new ChoiceContext.CounterReplacementOrder(new StackEntry(order.entry()),
+                                order.targetId(), order.count(), order.remaining(), order.effect(),
+                                order.subsequentTargets(), order.originalCount()), options, prompt, disabledOptions);
+            }
             if (context instanceof ChoiceContext.FreeCastAdditionalCostChoice costChoice) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
                         new ChoiceContext.FreeCastAdditionalCostChoice(costChoice.entry()), options, prompt, disabledOptions);

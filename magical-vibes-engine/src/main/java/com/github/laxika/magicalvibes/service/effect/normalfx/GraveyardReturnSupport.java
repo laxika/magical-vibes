@@ -1764,7 +1764,9 @@ public class GraveyardReturnSupport {
         applyPermanentGrants(permanent, grantColor, grantSubtype, grantIndestructible);
         permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
         if (enterWithCounter != null && enterWithCounterAmount > 0) {
-            permanent.setCounterCount(enterWithCounter, enterWithCounterAmount);
+            int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                    enterWithCounter, enterWithCounterAmount, controllerId);
+            permanent.setCounterCount(enterWithCounter, counters);
         }
         if (enterTapped) {
             permanent.tap();
@@ -1851,7 +1853,7 @@ public class GraveyardReturnSupport {
                 }
 
                 Permanent permanent = new Permanent(card);
-                        if (enterWithCounter != null) {
+                if (enterWithCounter != null) {
                     permanent.setCounterCount(enterWithCounter, 1);
                 }
                 if (enterTapped) {

@@ -1570,7 +1570,7 @@ public class TriggeredAbilityQueueService {
         beginSpellCastTriggerOrder(gameData);
     }
 
-    private void beginSpellCastTriggerOrder(GameData gameData) {
+    public void beginSpellCastTriggerOrder(GameData gameData) {
         if (gameData.interaction.isAwaitingInput()
                 || gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
                 || gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
@@ -1603,6 +1603,19 @@ public class TriggeredAbilityQueueService {
     }
 
     public static String spellCastTriggerOrderLabel(StackEntry entry) {
+        if (entry.getEffectsToResolve().stream().anyMatch(
+                com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect.class::isInstance)) {
+            return entry.getCard().getName() + " - sacrifice this creature";
+        }
+        if (entry.getEffectsToResolve().size() == 1
+                && entry.getEffectsToResolve().getFirst()
+                instanceof com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect boost
+                && boost.powerBoost() instanceof com.github.laxika.magicalvibes.model.amount.Fixed power
+                && boost.toughnessBoost() instanceof com.github.laxika.magicalvibes.model.amount.Fixed toughness) {
+            return entry.getCard().getName() + " - target creature gets "
+                    + (power.value() >= 0 ? "+" : "") + power.value() + "/"
+                    + (toughness.value() >= 0 ? "+" : "") + toughness.value();
+        }
         for (CardEffect effect : entry.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect trigger
                     && trigger.resolvedEffects().equals(entry.getEffectsToResolve())

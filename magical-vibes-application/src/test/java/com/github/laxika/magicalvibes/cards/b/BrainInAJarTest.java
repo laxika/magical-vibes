@@ -226,7 +226,7 @@ class BrainInAJarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BrainInAJar());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DevilthornFox());
         LightningAxe spell = new LightningAxe();
-        NaggingThoughts discarded = new NaggingThoughts();
+        GrizzlyBears discarded = new GrizzlyBears();
         harness.setHand(player1, List.of(spell, discarded));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

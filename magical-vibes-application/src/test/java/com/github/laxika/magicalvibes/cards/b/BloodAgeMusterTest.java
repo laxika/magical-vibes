@@ -131,6 +131,7 @@ class BloodAgeMusterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
     }
 

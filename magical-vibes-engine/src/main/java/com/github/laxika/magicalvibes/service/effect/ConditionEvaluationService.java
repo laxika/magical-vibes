@@ -1133,11 +1133,11 @@ public class ConditionEvaluationService {
                 yield castPermanent == null || !castPermanent.isCast()
                         || castPermanent.getManaSpentToCast() == 0;
             }
-            case WasCast condition -> {
+            case WasCast wasCastCondition -> {
                 if (ctx.copiedSpell()) yield false;
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
-                if (condition.byController()) {
+                if (wasCastCondition.byController()) {
                     Permanent castPermanent = triggeringPermanent != null
                             ? triggeringPermanent : ctx.sourcePermanent();
                     yield castPermanent != null && castPermanent.isCast()

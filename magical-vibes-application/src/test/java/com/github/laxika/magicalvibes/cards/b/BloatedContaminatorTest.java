@@ -106,8 +106,11 @@ class BloatedContaminatorTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(0), List.of(0));
+        gs.declareBlockers(gd, player2,
+                List.of(new com.github.laxika.magicalvibes.networking.message.BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                java.util.Map.of(blocker.getId(), 2, player2.getId(), 2));
         resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();

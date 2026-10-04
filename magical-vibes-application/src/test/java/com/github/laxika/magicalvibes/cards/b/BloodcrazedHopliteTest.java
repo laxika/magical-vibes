@@ -88,6 +88,7 @@ class BloodcrazedHopliteTest extends BaseCardTest {
 
         assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2 * counters);
         for (int i = 0; i < counters; i++) {
+            resolveAllTriggers();
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
             harness.handlePermanentChosen(player1, opponentCreature.getId());
             harness.passBothPriorities();

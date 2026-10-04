@@ -693,6 +693,19 @@ public class PermanentCounterSupport {
     private int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
                                         CounterType counterType, int count, boolean modularAbility,
                                         UUID placingPlayerIdOverride) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, modularAbility,
+                placingPlayerIdOverride, false);
+    }
+
+    /** Applies the chosen replacement result without applying those replacements a second time. */
+    public int placeCounterOnPermanentAfterReplacements(GameData gameData, StackEntry entry, Permanent target,
+                                                        CounterType counterType, int count) {
+        return placeCounterOnPermanent(gameData, entry, target, counterType, count, false, null, true);
+    }
+
+    private int placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
+                                        CounterType counterType, int count, boolean modularAbility,
+                                        UUID placingPlayerIdOverride, boolean replacementsApplied) {
         if (gameQueryService.cantHaveCounters(gameData, target)) return 0;
 
         int previousLoreCount = counterType == CounterType.LORE
@@ -700,7 +713,10 @@ public class PermanentCounterSupport {
         int previousCount = target.getCounterCount(counterType);
         UUID counterPlacingPlayerId = placingPlayerIdOverride != null
                 ? placingPlayerIdOverride : placingPlayerId(gameData, entry, target);
-        count = gameQueryService.replaceCounters(gameData, target, counterType, count,
+        count = replacementsApplied
+                ? gameQueryService.limitCounters(gameData, target,
+                gameQueryService.findPermanentController(gameData, target.getId()), counterType, count)
+                : gameQueryService.replaceCounters(gameData, target, counterType, count,
                 counterPlacingPlayerId, modularAbility);
 
         String counterName = switch (counterType) {
