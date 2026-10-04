@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GuardGomazoa.class, AirElemental.class, Shock.class})
 class GuardGomazoaTest extends BaseCardTest {
 
     @Test
@@ -23,10 +25,8 @@ class GuardGomazoaTest extends BaseCardTest {
         gomazoa.setBlocking(true);
         gomazoa.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new AirElemental());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new AirElemental());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -44,10 +44,8 @@ class GuardGomazoaTest extends BaseCardTest {
         gomazoa.setBlocking(true);
         gomazoa.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new AirElemental());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new AirElemental());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -69,5 +67,46 @@ class GuardGomazoaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gomazoa.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Combat prevention preserves previously marked noncombat damage")
+    void combatPreventionPreservesNoncombatDamage() {
+        Permanent gomazoa = addCreatureReady(player2, new GuardGomazoa());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, gomazoa.getId());
+        harness.passBothPriorities();
+        assertThat(gomazoa.getMarkedDamage()).isEqualTo(2);
+
+        Permanent attacker = addCreatureReady(player1, new AirElemental());
+        attacker.setAttacking(true);
+        gomazoa.setBlocking(true);
+        gomazoa.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Guard Gomazoa");
+        assertThat(gomazoa.getMarkedDamage()).isEqualTo(2);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Lethal noncombat damage destroys Guard Gomazoa")
+    void lethalNoncombatDamageDestroysGuardGomazoa() {
+        Permanent gomazoa = addCreatureReady(player2, new GuardGomazoa());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, gomazoa.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Guard Gomazoa");
+        harness.castInstant(player1, 0, gomazoa.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Guard Gomazoa");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(gomazoa);
     }
 }
