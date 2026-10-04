@@ -91,12 +91,44 @@ class HolyDayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Does not prevent lethal noncombat damage to creatures")
+    void doesNotPreventNoncombatDamageToCreatures() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HolyDay(), new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Combat damage is dealt normally on the following turn")
+    void combatDamageIsDealtOnFollowingTurn() {
+        harness.castFromHand(player1, new HolyDay(), "{W}");
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.setLife(player1, 20);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 18);
     }
 
     @Test
