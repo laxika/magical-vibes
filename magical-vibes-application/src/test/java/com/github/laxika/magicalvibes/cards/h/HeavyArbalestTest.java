@@ -1,11 +1,16 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.c.CorpseCur;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeavyArbalest.class, CarapaceForger.class, Memnite.class, CorpseCur.class, KothOfTheHammer.class})
 class HeavyArbalestTest extends BaseCardTest {
 
     // ===== Equip ability =====
@@ -22,7 +28,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Heavy Arbalest to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent arbalest = addArbalestReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new CarapaceForger());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -36,16 +42,16 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can tap to deal 2 damage to target creature")
     void grantedAbilityDeals2DamageToCreature() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new CarapaceForger());
         Permanent arbalest = addArbalestReady(player1);
         arbalest.setAttachedTo(creature.getId());
 
-        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent targetCreature = addCreatureReady(player2, new CarapaceForger());
 
         harness.activateAbility(player1, 0, null, targetCreature.getId());
         harness.passBothPriorities();
 
-        // Grizzly Bears has 2 toughness, 2 damage kills it
+        // Carapace Forger has 2 toughness without metalcraft, so 2 damage kills it
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(targetCreature.getId()));
         // The equipped creature should be tapped
@@ -59,7 +65,7 @@ class HeavyArbalestTest extends BaseCardTest {
     void grantedAbilityDeals2DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new CarapaceForger());
         Permanent arbalest = addArbalestReady(player1);
         arbalest.setAttachedTo(creature.getId());
 
@@ -75,9 +81,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Summoning sick creature cannot use granted tap ability")
     void summoningSickCreatureCannotUseGrantedAbility() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        // summoningSick defaults to true
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CarapaceForger());
 
         Permanent arbalest = addArbalestReady(player1);
         arbalest.setAttachedTo(creature.getId());
@@ -92,7 +96,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Already tapped creature cannot use granted tap ability")
     void tappedCreatureCannotUseGrantedAbility() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new CarapaceForger());
         creature.tap();
 
         Permanent arbalest = addArbalestReady(player1);
@@ -108,7 +112,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature does not untap during controller's untap step")
     void equippedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new CarapaceForger());
         creature.tap();
 
         Permanent arbalest = addArbalestReady(player2);
@@ -124,7 +128,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Untapped equipped creature remains untapped (doesn't tap it)")
     void untappedEquippedCreatureRemainsUntapped() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new CarapaceForger());
 
         Permanent arbalest = addArbalestReady(player2);
         arbalest.setAttachedTo(creature.getId());
@@ -139,10 +143,10 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Other permanents still untap normally when one creature has Heavy Arbalest")
     void otherPermanentsStillUntap() {
-        Permanent equippedCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent equippedCreature = addCreatureReady(player2, new CarapaceForger());
         equippedCreature.tap();
 
-        Permanent freeCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent freeCreature = addCreatureReady(player2, new CarapaceForger());
         freeCreature.tap();
 
         Permanent arbalest = addArbalestReady(player2);
@@ -159,7 +163,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can untap again after Heavy Arbalest is removed")
     void creatureUntapsAfterArbalestRemoved() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new CarapaceForger());
         creature.tap();
 
         Permanent arbalest = addArbalestReady(player2);
@@ -180,7 +184,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses granted ability when Heavy Arbalest is removed")
     void creatureLosesAbilityWhenRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new CarapaceForger());
 
         Permanent arbalest = addArbalestReady(player1);
         arbalest.setAttachedTo(creature.getId());
@@ -208,13 +212,139 @@ class HeavyArbalestTest extends BaseCardTest {
         assertThat(arbalest.isTapped()).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Granted damage ability still resolves after the equipment leaves")
+    void activatedAbilityResolvesAfterEquipmentLeaves() {
+        Permanent creature = addCreatureReady(player1, new Memnite());
+        Permanent arbalest = addArbalestReady(player1);
+        arbalest.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(arbalest);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The equipped creature's infect applies to the granted damage ability")
+    void equippedCreatureIsTheDamageSource() {
+        Permanent creature = addCreatureReady(player1, new CorpseCur());
+        Permanent arbalest = addArbalestReady(player1);
+        arbalest.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Equipment controlled by another player grants the creature its ability and untap restriction")
+    void differentControllersDoNotDisableEquipmentEffects() {
+        Permanent creature = addCreatureReady(player1, new Memnite());
+        Permanent arbalest = addArbalestReady(player2);
+        arbalest.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.performUntapStep(player1);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reequipping moves both the granted ability and the untap restriction")
+    void reequippingMovesBothEffects() {
+        Permanent arbalest = addArbalestReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new Memnite());
+        Permanent newCreature = addCreatureReady(player1, new Memnite());
+        arbalest.setAttachedTo(oldCreature.getId());
+        oldCreature.tap();
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(arbalest.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.performUntapStep(player1);
+        assertThat(oldCreature.isTapped()).isFalse();
+        assertThat(newCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipCannotTargetOpponentsCreature() {
+        addArbalestReady(player1);
+        Permanent creature = addCreatureReady(player2, new Memnite());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     private Permanent addArbalestReady(Player player) {
-        Permanent perm = new Permanent(new HeavyArbalest());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HeavyArbalest());
+    }
+
+    @Test
+    @DisplayName("The granted ability deals damage directly to a planeswalker")
+    void grantedAbilityDamagesPlaneswalker() {
+        Permanent creature = addCreatureReady(player1, new Memnite());
+        Permanent arbalest = addArbalestReady(player1);
+        arbalest.setAttachedTo(creature.getId());
+        Permanent koth = harness.addToBattlefieldAndReturn(player2, new KothOfTheHammer());
+        koth.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, koth.getId());
+        harness.passBothPriorities();
+
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip requires four mana")
+    void equipCannotBeActivatedWithOnlyThreeMana() {
+        Permanent arbalest = addArbalestReady(player1);
+        Permanent creature = addCreatureReady(player1, new Memnite());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(arbalest.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during the end step")
+    void equipRequiresSorceryTiming() {
+        Permanent arbalest = addArbalestReady(player1);
+        Permanent creature = addCreatureReady(player1, new Memnite());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(arbalest.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
