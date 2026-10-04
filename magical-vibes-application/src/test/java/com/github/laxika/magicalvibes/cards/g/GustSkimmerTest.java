@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GustSkimmer.class})
 class GustSkimmerTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Gust-Skimmer puts it on the stack")
@@ -45,8 +45,6 @@ class GustSkimmerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Gust-Skimmer");
     }
-
-    // ===== Flying ability =====
 
     @Test
     @DisplayName("Activating flying ability puts it on the stack")
@@ -94,8 +92,6 @@ class GustSkimmerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, skimmer, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Activation constraints =====
-
     @Test
     @DisplayName("Activating ability does NOT tap Gust-Skimmer")
     void activatingAbilityDoesNotTap() {
@@ -133,8 +129,7 @@ class GustSkimmerTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
-        Permanent skimmer = new Permanent(new GustSkimmer());
-        gd.playerBattlefields.get(player1.getId()).add(skimmer);
+        harness.addToBattlefield(player1, new GustSkimmer());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -143,11 +138,9 @@ class GustSkimmerTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Gust-Skimmer");
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Gust-Skimmer is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability has no effect if Gust-Skimmer is removed before resolution")
+    void abilityHasNoEffectIfSourceRemoved() {
         addSkimmerReady(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -160,12 +153,47 @@ class GustSkimmerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Flying is granted only to the Gust-Skimmer whose ability was activated")
+    void flyingIsGrantedOnlyToSource() {
+        Permanent source = addSkimmerReady(player1);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GustSkimmer());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GustSkimmer());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying ability can be activated repeatedly and each activation costs blue mana")
+    void repeatedActivationsEachRequireBlueMana() {
+        Permanent skimmer = addSkimmerReady(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, skimmer, Keyword.FLYING)).isTrue();
+        assertThat(skimmer.isTapped()).isFalse();
+    }
 
     private Permanent addSkimmerReady(Player player) {
-        Permanent perm = new Permanent(new GustSkimmer());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GustSkimmer());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
