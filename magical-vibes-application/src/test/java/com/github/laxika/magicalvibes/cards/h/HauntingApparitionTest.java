@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.b.Brushwagg;
 import com.github.laxika.magicalvibes.cards.e.EarlyHarvest;
 import com.github.laxika.magicalvibes.cards.m.MerfolkRaiders;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HauntingApparition.class, Brushwagg.class, EarlyHarvest.class, MerfolkRaiders.class})
+@CardUsed({HauntingApparition.class, Brushwagg.class, EarlyHarvest.class, MerfolkRaiders.class, RayOfCommand.class})
 class HauntingApparitionTest extends BaseCardTest {
 
     @Test
@@ -64,5 +66,38 @@ class HauntingApparitionTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new Brushwagg(), new Brushwagg()));
 
         assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
+    }
+    @Test
+    @DisplayName("Power decreases when green creature cards leave the chosen graveyard")
+    void powerDecreasesWhenCardsLeaveGraveyard() {
+        Permanent apparition = addCreatureReady(player1, new HauntingApparition());
+        harness.setGraveyard(player2, List.of(new Brushwagg(), new Brushwagg()));
+
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
+
+        harness.setGraveyard(player2, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Changing controllers does not change the opponent chosen on entry")
+    void retainsChosenPlayerAfterControlChange() {
+        harness.setGraveyard(player1, List.of(new Brushwagg()));
+        harness.setGraveyard(player2, List.of(new Brushwagg(), new Brushwagg()));
+        harness.castFromHand(player1, new HauntingApparition(), "{1}{U}{B}");
+        harness.passBothPriorities();
+        Permanent apparition = findPermanent(player1, "Haunting Apparition");
+
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
+
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player2, 0, apparition.getId());
+
+        harness.assertOnBattlefield(player2, "Haunting Apparition");
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(2);
     }
 }
