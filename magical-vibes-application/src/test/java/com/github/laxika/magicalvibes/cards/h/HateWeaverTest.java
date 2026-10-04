@@ -92,7 +92,6 @@ class HateWeaverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
@@ -132,5 +131,59 @@ class HateWeaverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick using colored mana")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HateWeaver());
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        Permanent target = addCreatureReady(player2, new SkyWeaver());
+        int basePower = gqs.getEffectivePower(gd, target);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 1);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Hate Weaver leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new HateWeaver());
+        Permanent target = addCreatureReady(player2, new SkyWeaver());
+        int basePower = gqs.getEffectivePower(gd, target);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 1);
+        harness.assertInGraveyard(player1, "Hate Weaver");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability does not boost a target that leaves before resolution")
+    void doesNotBoostRemovedTarget() {
+        addCreatureReady(player1, new HateWeaver());
+        Permanent target = addCreatureReady(player2, new SkyWeaver());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        harness.assertInGraveyard(player2, "Sky Weaver");
+        assertThat(gd.stack).isEmpty();
     }
 }
