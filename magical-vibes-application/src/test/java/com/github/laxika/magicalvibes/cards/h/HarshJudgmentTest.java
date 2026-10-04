@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.Chaoslace;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.l.LavaSpike;
+import com.github.laxika.magicalvibes.cards.m.Misfortune;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.p.PsionicBlast;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -18,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @CardUsed({HarshJudgment.class, Shock.class, LavaSpike.class, HornetSting.class, ProdigalSorcerer.class,
-        Chaoslace.class, PsionicBlast.class})
+        Chaoslace.class, PsionicBlast.class, Disenchant.class, Misfortune.class})
 class HarshJudgmentTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class HarshJudgmentTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
@@ -43,8 +44,7 @@ class HarshJudgmentTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
@@ -57,8 +57,7 @@ class HarshJudgmentTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HornetSting()));
         harness.addMana(player2, ManaColor.GREEN, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
@@ -77,8 +76,7 @@ class HarshJudgmentTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Chaoslace()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, psionicBlastId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, psionicBlastId);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -88,7 +86,7 @@ class HarshJudgmentTest extends BaseCardTest {
     @Test
     @DisplayName("Does not redirect damage from an activated ability")
     void doesNotRedirectActivatedAbilityDamage() {
-        castHarshJudgment(player1, CardColor.RED);
+        castHarshJudgment(player1, CardColor.BLUE);
         Permanent pinger = addCreatureReady(player2, new ProdigalSorcerer());
         harness.forceActivePlayer(player2);
 
@@ -107,10 +105,58 @@ class HarshJudgmentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Does not redirect matching spell damage dealt to a creature")
+    void doesNotRedirectDamageToCreature() {
+        castHarshJudgment(player1, CardColor.RED);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ProdigalSorcerer());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertInGraveyard(player1, "Prodigal Sorcerer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Stops redirecting when destroyed in response to a matching spell")
+    void stopsRedirectingAfterLeavingBattlefield() {
+        castHarshJudgment(player1, CardColor.RED);
+        UUID judgmentId = harness.getPermanentId(player1, "Harsh Judgment");
+        harness.setHand(player2, List.of(new Shock(), new Disenchant()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, judgmentId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Harsh Judgment");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Redirects multicolored sorcery damage after an opponent chooses its mode")
+    void redirectsMisfortuneDamageAfterModeChoice() {
+        castHarshJudgment(player1, CardColor.RED);
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Misfortune(), "{1}{B}{R}{G}");
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
     }
 
     private void castHarshJudgment(Player player, CardColor color) {
