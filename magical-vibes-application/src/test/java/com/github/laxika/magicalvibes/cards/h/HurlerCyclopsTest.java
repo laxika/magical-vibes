@@ -27,7 +27,7 @@ class HurlerCyclopsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(cyclops);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
@@ -68,5 +68,61 @@ class HurlerCyclopsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
                 harness.getPermanentId(player2, "Mountain")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Cyclops can activate and sacrifices the other Cyclops immediately")
+    void activatesWhileSummoningSick() {
+        Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new HurlerCyclops());
+        cyclops.setSummoningSick(true);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new HurlerCyclops());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cyclops).doesNotContain(sacrifice);
+        harness.assertInGraveyard(player1, "Hurler Cyclops");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cyclops can target itself while sacrificing another creature")
+    void canTargetItself() {
+        Permanent cyclops = addCreatureReady(player1, new HurlerCyclops());
+        harness.addToBattlefield(player1, new HurlerCyclops());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, cyclops.getId());
+        harness.passBothPriorities();
+
+        assertThat(cyclops.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(cyclops);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        addCreatureReady(player1, new HurlerCyclops());
+        harness.addToBattlefield(player2, new HurlerCyclops());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The activation requires one mana in addition to the sacrifice")
+    void cannotActivateWithoutMana() {
+        addCreatureReady(player1, new HurlerCyclops());
+        harness.addToBattlefield(player1, new HurlerCyclops());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 }
