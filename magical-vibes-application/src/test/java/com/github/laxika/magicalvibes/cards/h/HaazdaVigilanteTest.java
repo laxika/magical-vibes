@@ -25,8 +25,7 @@ class HaazdaVigilanteTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castVigilante(bears.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(3);
@@ -62,6 +61,57 @@ class HaazdaVigilanteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, hillGiantId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power 2 or less");
+    }
+
+    @Test
+    void enteringWithoutBeingCastStillPutsCounterOnTarget() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.enterBattlefieldAndReturn(player1, new HaazdaVigilante());
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canEnterWhenThereAreNoEligibleTargets() {
+        harness.setHand(player1, List.of(new HaazdaVigilante()));
+        addVigilanteMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Haazda Vigilante")).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void attackTargetBecomingTooPowerfulGetsNoCounter() {
+        addCreatureReady(player1, new HaazdaVigilante());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        bears.setPowerModifier(1);
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void attackTriggerResolvesAfterVigilanteLeavesBattlefield() {
+        Permanent vigilante = addCreatureReady(player1, new HaazdaVigilante());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(vigilante);
+        gd.playerGraveyards.get(player1.getId()).add(vigilante.getCard());
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void castVigilante(UUID targetId) {
