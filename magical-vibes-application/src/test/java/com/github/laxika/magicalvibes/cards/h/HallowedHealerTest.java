@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HallowedHealer.class, DuskImp.class})
+@CardUsed({HallowedHealer.class, DuskImp.class, Firebolt.class})
 class HallowedHealerTest extends BaseCardTest {
 
     @Test
@@ -35,9 +37,7 @@ class HallowedHealerTest extends BaseCardTest {
                 new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
                 new DuskImp(), new DuskImp(), new DuskImp()
         ));
-        harness.addToBattlefield(player2, new DuskImp());
-
-        Permanent target = findPermanent(player2, "Dusk Imp");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DuskImp());
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
@@ -85,8 +85,7 @@ class HallowedHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        declareAttackers(player1, List.of(1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
 
@@ -118,5 +117,91 @@ class HallowedHealerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void thresholdCannotBeActivatedWithExactlySixCards() {
+        Permanent healer = addCreatureReady(player1, new HallowedHealer());
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("seven or more cards");
+        assertThat(healer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void thresholdStillResolvesAfterGraveyardFallsBelowSevenCards() {
+        addCreatureReady(player1, new HallowedHealer());
+        addCreatureReady(player1, new DuskImp());
+        addCreatureReady(player1, new DuskImp());
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(1, 2));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+    }
+
+    @Test
+    void basicAbilityStillPreventsOnlyTwoWithThreshold() {
+        addCreatureReady(player1, new HallowedHealer());
+        addCreatureReady(player1, new DuskImp());
+        addCreatureReady(player1, new DuskImp());
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(1, 2));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void neitherAbilityCanBeActivatedWithSummoningSickness() {
+        harness.addToBattlefield(player1, new HallowedHealer());
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void basicAbilityPreventsNoncombatDamageToItself() {
+        Permanent healer = addCreatureReady(player1, new HallowedHealer());
+        harness.setHand(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, healer.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, healer.getId());
+
+        harness.assertOnBattlefield(player1, "Hallowed Healer");
+        assertThat(healer.getMarkedDamage()).isZero();
+        assertThat(healer.getDamagePreventionShield()).isZero();
     }
 }
