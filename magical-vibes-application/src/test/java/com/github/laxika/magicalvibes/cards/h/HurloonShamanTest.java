@@ -123,6 +123,96 @@ class HurloonShamanTest extends BaseCardTest {
         assertThat(countLands(player2)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Automatic sacrifices wait until the other player has chosen")
+    void automaticSacrificeWaitsForAllChoices() {
+        addCreatureReady(player1, new HurloonShaman());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
+        setupCombatWhereShamanDies();
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.assertOnBattlefield(player1, "Winding Canyons");
+        harness.assertNotInGraveyard(player1, "Winding Canyons");
+        assertThat(countLands(player2)).isEqualTo(2);
+
+        UUID chosenId = findPermanent(player2, "Winding Canyons").getId();
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosenId));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Winding Canyons");
+        harness.assertInGraveyard(player1, "Winding Canyons");
+        harness.assertInGraveyard(player2, "Winding Canyons");
+        assertThat(countLands(player2)).isEqualTo(1);
+        assertThat(findPermanents(player2, "Winding Canyons"))
+                .noneMatch(permanent -> permanent.getId().equals(chosenId));
+    }
+
+    @Test
+    @DisplayName("A landless controller does not prevent the opponent's sacrifice")
+    void landlessControllerDoesNotPreventOpponentsSacrifice() {
+        addCreatureReady(player1, new HurloonShaman());
+        harness.addToBattlefield(player2, new WindingCanyons());
+        setupCombatWhereShamanDies();
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Hurloon Shaman");
+        harness.assertInGraveyard(player2, "Winding Canyons");
+        harness.assertNotOnBattlefield(player2, "Winding Canyons");
+        harness.assertOnBattlefield(player2, "Redwood Treefolk");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The active player chooses first when the Shaman dies blocking")
+    void activePlayerChoosesBeforeNonactiveShamanController() {
+        Permanent shaman = addCreatureReady(player1, new HurloonShaman());
+        Permanent attacker = addCreatureReady(player2, new RedwoodTreefolk());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(shaman);
+        declareAttackersAndPrepareBlockers(player2, List.of(attackerIndex));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(firstChoice).isNotNull();
+        assertThat(firstChoice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2,
+                List.of(findPermanent(player2, "Winding Canyons").getId()));
+
+        PendingInteraction.MultiPermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(countLands(player1)).isEqualTo(2);
+        assertThat(countLands(player2)).isEqualTo(2);
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(findPermanent(player1, "Winding Canyons").getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countLands(player1)).isEqualTo(1);
+        assertThat(countLands(player2)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Hurloon Shaman");
+        harness.assertInGraveyard(player1, "Winding Canyons");
+        harness.assertInGraveyard(player2, "Winding Canyons");
+    }
+
     private long countLands(com.github.laxika.magicalvibes.model.Player player) {
         return harness.getGameData().playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().hasType(CardType.LAND))
@@ -137,8 +227,7 @@ class HurloonShamanTest extends BaseCardTest {
         int shamanIndex = gd.playerBattlefields.get(player1.getId()).indexOf(shaman);
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
 
-        declareAttackers(player1, List.of(shamanIndex));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(shamanIndex));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, shamanIndex)));
     }
 }
