@@ -67,4 +67,59 @@ class GridMonitorTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
+
+    @Test
+    @DisplayName("Artifact creature spells are also prohibited")
+    void controllerCannotCastAnotherGridMonitor() {
+        harness.addToBattlefield(player1, new GridMonitor());
+        harness.setHand(player1, List.of(new GridMonitor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Grid Monitor");
+    }
+
+    @Test
+    @DisplayName("Grid Monitor can be cast before its battlefield restriction applies")
+    void gridMonitorCanBeCastAndResolve() {
+        harness.setHand(player1, List.of(new GridMonitor(), new GoblinStriker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grid Monitor");
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Destroying Grid Monitor permits its controller to cast creatures again")
+    void restrictionEndsWhenGridMonitorLeaves() {
+        harness.addToBattlefield(player1, new GridMonitor());
+        harness.setHand(player1, List.of(new Shatter(), new GoblinStriker()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grid Monitor"));
+
+        harness.assertNotOnBattlefield(player1, "Grid Monitor");
+        harness.assertInGraveyard(player1, "Grid Monitor");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Goblin Striker");
+    }
 }
