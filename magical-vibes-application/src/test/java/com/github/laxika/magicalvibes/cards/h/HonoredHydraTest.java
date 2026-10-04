@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HonoredHydra.class})
 class HonoredHydraTest extends BaseCardTest {
 
     private void setUpEmbalm() {
@@ -69,5 +71,46 @@ class HonoredHydraTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Honored Hydra");
+    }
+
+    @Test
+    @DisplayName("Embalm cannot be activated during combat")
+    void embalmCannotBeActivatedDuringCombat() {
+        setUpEmbalm();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Honored Hydra");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Embalm requires green mana even when enough generic mana is available")
+    void embalmRequiresGreenMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new HonoredHydra()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Honored Hydra");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Embalm cannot be activated with a spell on the stack")
+    void embalmRequiresEmptyStack() {
+        setUpEmbalm();
+        harness.castFromHand(player1, new HonoredHydra(), "{5}{G}");
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Honored Hydra");
+        assertThat(gd.stack).hasSize(1);
     }
 }
