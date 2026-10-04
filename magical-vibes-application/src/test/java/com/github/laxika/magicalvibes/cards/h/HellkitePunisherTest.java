@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HellkitePunisher.class})
 class HellkitePunisherTest extends BaseCardTest {
 
     @Test
@@ -68,10 +70,41 @@ class HellkitePunisherTest extends BaseCardTest {
         assertThat(hellkite.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Hellkite can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent hellkite = harness.addToBattlefieldAndReturn(player1, new HellkitePunisher());
+        hellkite.setSummoningSick(true);
+        hellkite.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
+        assertThat(hellkite.getToughnessModifier()).isEqualTo(0);
+        assertThat(hellkite.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability boosts only its source and only after resolving")
+    void boostsOnlySourceOnResolution() {
+        Permanent hellkite = addReadyHellkite(player1);
+        Permanent other = addReadyHellkite(player1);
+        Permanent opposing = addReadyHellkite(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(hellkite.getPowerModifier()).isEqualTo(0);
+        harness.passBothPriorities();
+
+        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
+        assertThat(other.getPowerModifier()).isEqualTo(0);
+        assertThat(opposing.getPowerModifier()).isEqualTo(0);
+    }
+
     private Permanent addReadyHellkite(Player player) {
-        Permanent perm = new Permanent(new HellkitePunisher());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HellkitePunisher());
     }
 }
