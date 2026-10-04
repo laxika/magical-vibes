@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.k.KikusShadow;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,6 +40,55 @@ class HomuraHumanAscendantTest extends BaseCardTest {
         Permanent essence = findPermanent(player1, "Homura's Essence");
         assertThat(essence.isTransformed()).isTrue();
         harness.assertNotInGraveyard(player1, "Homura, Human Ascendant");
+    }
+
+    @Test
+    @DisplayName("The death trigger returns a new permanent and immediately benefits existing creatures")
+    void deathTriggerReturnsNewPermanentWithActiveEssenceAbilities() {
+        Permanent homura = harness.addToBattlefieldAndReturn(player1, new HomuraHumanAscendant());
+        Permanent honor = addCreatureReady(player1, new HandOfHonor());
+        harness.setHand(player1, List.of(new KikusShadow()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, homura.getId());
+
+        harness.assertInGraveyard(player1, "Homura, Human Ascendant");
+        harness.assertNotOnBattlefield(player1, "Homura's Essence");
+        assertThat(gqs.getEffectivePower(gd, honor)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        Permanent essence = findPermanent(player1, "Homura's Essence");
+        assertThat(essence.getId()).isNotEqualTo(homura.getId());
+        assertThat(essence.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, honor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, honor)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, honor, Keyword.FLYING)).isTrue();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(honor), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, honor)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The granted pump can be used repeatedly by a tapped creature with summoning sickness")
+    void grantedPumpStacksWithoutTapOrSummoningSicknessRestriction() {
+        addEssence();
+        Permanent honor = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+        honor.setSummoningSick(true);
+        honor.tap();
+        harness.addMana(player1, ManaColor.RED, 2);
+        int honorIndex = gd.playerBattlefields.get(player1.getId()).indexOf(honor);
+
+        harness.activateAbility(player1, honorIndex, null, null);
+        harness.activateAbility(player1, honorIndex, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, honor)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, honor)).isEqualTo(4);
     }
 
     @Test
@@ -91,6 +141,17 @@ class HomuraHumanAscendantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, honor)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, honor)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class})
+    @DisplayName("Homura's Essence grants flying to itself when it becomes a creature")
+    void animatedEssenceGrantsFlyingToItself() {
+        Permanent essence = addEssence();
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, essence)).isTrue();
+        assertThat(gqs.hasKeyword(gd, essence, Keyword.FLYING)).isTrue();
     }
 
     private Permanent addEssence() {
