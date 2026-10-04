@@ -9,9 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -43,9 +40,7 @@ class HiddenLairTest extends BaseCardTest {
     @Test
     @DisplayName("A Hidden Lair that entered this turn can produce blue or black mana")
     void newlyEnteredLairProducesChosenMana() {
-        Permanent lair = harness.addToBattlefieldAndReturn(player1, new HiddenLair());
-        gd.permanentsEnteredBattlefieldThisTurn.put(
-                player1.getId(), new ArrayList<>(List.of(lair.getCard())));
+        Permanent lair = harness.enterBattlefieldAndReturn(player1, new HiddenLair());
 
         harness.activateAbility(player1, 0, 1, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -71,9 +66,52 @@ class HiddenLairTest extends BaseCardTest {
     }
 
     private Permanent addReadyLair() {
-        Permanent lair = new Permanent(new HiddenLair());
-        lair.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(lair);
-        return lair;
+        return harness.addToBattlefieldAndReturn(player1, new HiddenLair());
+    }
+
+    @Test
+    void opponentsBasicLandDoesNotEnableColoredMana() {
+        Permanent lair = addReadyLair();
+        harness.addToBattlefield(player2, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+        assertThat(lair.isTapped()).isFalse();
+    }
+
+    @Test
+    void anotherNonbasicLandDoesNotEnableColoredMana() {
+        Permanent lair = addReadyLair();
+        harness.addToBattlefield(player1, new HiddenLair());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+        assertThat(lair.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedBasicLandStillEnablesColoredMana() {
+        Permanent lair = addReadyLair();
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).setTapped(true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(lair.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void previousTurnsEntryDoesNotEnableColoredMana() {
+        Permanent lair = harness.enterBattlefieldAndReturn(player1, new HiddenLair());
+        gd.permanentsEnteredBattlefieldThisTurn.clear();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+        assertThat(lair.isTapped()).isFalse();
     }
 }
