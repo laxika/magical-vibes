@@ -132,11 +132,47 @@ class HandOfHonorTest extends BaseCardTest {
         hand.setBlocking(true);
         hand.addBlockingTarget(0);
 
-        prepareDeclareBlockers();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(hand);
         assertThat(hand.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Bushido uses the stack and does not boost Hand of Honor before resolving")
+    void bushidoBonusWaitsForResolution() {
+        Permanent hand = addCreatureReady(player1, new HandOfHonor());
+        hand.setAttacking(true);
+        addCreatureReady(player2, new GodosIrregulars());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            prepareDeclareBlockers();
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gqs.getEffectivePower(gd, hand)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, hand)).isEqualTo(2);
+
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, hand)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, hand)).isEqualTo(3);
+        });
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent damage from a red spell")
+    void takesDamageFromRedSpell() {
+        Permanent hand = addCreatureReady(player2, new HandOfHonor());
+        harness.setHand(player1, List.of(new SpiralingEmbers(), new GodosIrregulars()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, hand.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(hand);
+        assertThat(hand.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
