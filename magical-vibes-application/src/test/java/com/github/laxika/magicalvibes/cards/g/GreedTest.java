@@ -87,4 +87,52 @@ class GreedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Life and mana are paid before the draw resolves")
+    void costsArePaidAtActivation() {
+        harness.addToBattlefield(player1, new Greed());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple activations can be stacked without tapping Greed")
+    void canActivateAgainBeforeFirstAbilityResolves() {
+        harness.addToBattlefield(player1, new Greed());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 16);
+        assertThat(gd.stack).isEmpty();
+    }
 }
