@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EnshroudingMist.class, GrizzlyBears.class, Shock.class})
 class EnshroudingMistTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class EnshroudingMistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(1);
@@ -48,11 +49,9 @@ class EnshroudingMistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear).isNotNull();
@@ -68,8 +67,7 @@ class EnshroudingMistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EnshroudingMist()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.isTapped()).isFalse();
     }
@@ -82,10 +80,60 @@ class EnshroudingMistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EnshroudingMist()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.isTapped()).isTrue();
         assertThat(bear.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Prevention applies to repeated damage events and expires at cleanup")
+    void preventionPersistsForMultipleEventsButExpires() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EnshroudingMist(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Grizzly Bears")).isSameAs(bear);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
+    }
+
+    @Test
+    @DisplayName("An opposing renowned creature gets all effects while other creatures remain unprotected")
+    void canProtectAndUntapOpposingRenownedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setRenowned(true);
+        target.tap();
+        harness.setHand(player1, List.of(new EnshroudingMist(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, other.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target).doesNotContain(other);
     }
 }
