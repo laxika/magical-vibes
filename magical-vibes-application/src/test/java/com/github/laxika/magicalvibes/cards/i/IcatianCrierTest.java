@@ -31,9 +31,7 @@ class IcatianCrierTest extends BaseCardTest {
 
         assertThat(crier.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Citizen");
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getEffectivePower()).isEqualTo(1);
@@ -88,5 +86,50 @@ class IcatianCrierTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void abilityCannotBeActivatedWithSummoningSickness() {
+        harness.addToBattlefield(player1, new IcatianCrier());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void abilityCannotBeActivatedWithoutWhiteMana() {
+        addCreatureReady(player1, new IcatianCrier());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void costsArePaidBeforeTokensAreCreated() {
+        Permanent crier = addCreatureReady(player1, new IcatianCrier());
+        Forest discardedCard = new Forest();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(crier.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discardedCard);
+        assertThat(findPermanents(player1, "Citizen")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(2);
+        assertThat(findPermanents(player2, "Citizen")).isEmpty();
     }
 }
