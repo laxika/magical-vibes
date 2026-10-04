@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.Chaoslace;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Thoughtlace;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,10 +16,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Hydroblast.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({Hydroblast.class, HillGiant.class, GrizzlyBears.class, Chaoslace.class, Thoughtlace.class})
 class HydroblastTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({Hydroblast.class, HillGiant.class, GrizzlyBears.class})
     @DisplayName("Mode 0: Counter target spell if it's red")
     class CounterMode {
 
@@ -80,8 +82,7 @@ class HydroblastTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 0, bears.getId());
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -90,6 +91,7 @@ class HydroblastTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({Hydroblast.class, HillGiant.class, GrizzlyBears.class})
     @DisplayName("Mode 1: Destroy target permanent if it's red")
     class DestroyMode {
 
@@ -136,13 +138,54 @@ class HydroblastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, 1, targetId);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Chaoslace");
+        harness.assertInGraveyard(player1, "Hydroblast");
+    }
+
+    @Test
+    @CardUsed(Thoughtlace.class)
+    @DisplayName("Counter mode does nothing if the red spell becomes blue in response")
+    void counterModeDoesNothingAfterTargetStopsBeingRed() {
+        HillGiant giant = new HillGiant();
+        harness.setHand(player1, List.of(giant, new Thoughtlace()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Hydroblast()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, giant.getId());
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertNotInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Thoughtlace");
+        harness.assertInGraveyard(player2, "Hydroblast");
+    }
+
+    @Test
+    @CardUsed(Thoughtlace.class)
+    @DisplayName("Destroy mode does nothing if the red permanent becomes blue in response")
+    void destroyModeDoesNothingAfterTargetStopsBeingRed() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId();
+        harness.setHand(player1, List.of(new Hydroblast(), new Thoughtlace()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, 1, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertNotInGraveyard(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Thoughtlace");
         harness.assertInGraveyard(player1, "Hydroblast");
     }
 }
