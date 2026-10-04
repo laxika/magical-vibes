@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -72,9 +70,7 @@ class IceFlanTest extends BaseCardTest {
     void islandcyclingSearchesForIsland() {
         harness.setHand(player1, List.of(new IceFlan()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Island(), new Forest(), new GrizzlyBears()));
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
@@ -85,8 +81,78 @@ class IceFlanTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Island");
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("ETB stuns an already-tapped creature and prevents its next untap")
+    void stunsAlreadyTappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setTapped(true);
+        harness.setHand(player1, List.of(new IceFlan()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isZero();
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB cannot target an opponent's nonartifact, noncreature land")
+    void cannotTargetOrdinaryLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new IceFlan()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Islandcycling discards as a cost even when no Island can be found")
+    void islandcyclingWithoutIsland() {
+        harness.setHand(player1, List.of(new IceFlan()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Ice Flan");
+        harness.assertNotInHand(player1, "Ice Flan");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest");
+    }
+
+    @Test
+    @DisplayName("Islandcycling may fail to find even when an Island is present")
+    void islandcyclingMayFailToFind() {
+        harness.setHand(player1, List.of(new IceFlan()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Ice Flan");
+        harness.assertNotInHand(player1, "Island");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Island");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
