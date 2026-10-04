@@ -54,8 +54,7 @@ class FranticSearchTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
-        List<UUID> landIds = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treetop Village"))
+        List<UUID> landIds = findPermanents(player1, "Treetop Village").stream()
                 .map(Permanent::getId)
                 .limit(3)
                 .toList();
@@ -95,8 +94,7 @@ class FranticSearchTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
-        List<UUID> landIds = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Treetop Village"))
+        List<UUID> landIds = findPermanents(player1, "Treetop Village").stream()
                 .map(Permanent::getId)
                 .limit(1)
                 .toList();
@@ -119,6 +117,49 @@ class FranticSearchTest extends BaseCardTest {
 
         assertThat(untappedLands(player1)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canDiscardTheCardsJustDrawn() {
+        TreetopVillage firstDraw = new TreetopVillage();
+        TreetopVillage secondDraw = new TreetopVillage();
+        TragicPoet originalCard = new TragicPoet();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new FranticSearch(), originalCard));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        addTappedLands(player1, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalCard, firstDraw, secondDraw);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Treetop Village")));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDraw, secondDraw);
+        assertThat(untappedLands(player1)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void resolvesDrawAndDiscardWhenThereAreNoLands() {
+        TreetopVillage firstDraw = new TreetopVillage();
+        TreetopVillage secondDraw = new TreetopVillage();
+        TragicPoet originalCard = new TragicPoet();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new FranticSearch(), originalCard));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDraw, secondDraw);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addTappedLands(Player player, int count) {
