@@ -80,10 +80,7 @@ class IcingdeathFrostTyrantTest extends BaseCardTest {
     }
 
     private Permanent frostTongue() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Icingdeath, Frost Tongue"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Icingdeath, Frost Tongue");
     }
 
     private void killWithDoomBlade(Player caster, Player targetController, String targetName) {
@@ -92,7 +89,6 @@ class IcingdeathFrostTyrantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new DoomBlade()));
         harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, harness.getPermanentId(targetController, targetName));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, harness.getPermanentId(targetController, targetName));
     }
 }
