@@ -129,10 +129,63 @@ class HelmOfPossessionTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(fodder.getCard().getId()));
     }
 
+    @Test
+    @DisplayName("Untapping and retapping the Helm before resolution does not restore its duration")
+    void doesNothingIfHelmUntapsAndRetapsBeforeResolution() {
+        Permanent helm = addHelm(player1);
+        Permanent fodder = addCreatureReady(player1, new CanopySpider());
+        Permanent target = addCreatureReady(player2, new CanopySpider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(helm),
+                null, target.getId());
+        helm.untap();
+        helm.setTapped(true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+        harness.assertInGraveyard(player1, fodder.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Ability has no effect if the Helm leaves before resolution")
+    void doesNothingIfHelmLeavesBeforeResolution() {
+        Permanent helm = addHelm(player1);
+        addCreatureReady(player1, new CanopySpider());
+        Permanent target = addCreatureReady(player2, new CanopySpider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(helm),
+                null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(helm);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotActivateWithoutControlledCreature() {
+        Permanent helm = addHelm(player1);
+        Permanent target = addCreatureReady(player2, new CanopySpider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(helm), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(helm.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addHelm(Player player) {
-        Permanent perm = new Permanent(new HelmOfPossession());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HelmOfPossession());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
