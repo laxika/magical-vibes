@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
+import com.github.laxika.magicalvibes.cards.w.WearAway;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GenjuOfTheFalls.class, Island.class, Forest.class, StoneRain.class})
+@CardUsed({GenjuOfTheFalls.class, Island.class, Forest.class, StoneRain.class, WearAway.class})
 class GenjuOfTheFallsTest extends BaseCardTest {
 
     @Test
@@ -78,10 +79,8 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the "may return" trigger
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Genju of the Falls"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Genju of the Falls"));
+        harness.assertInHand(player1, "Genju of the Falls");
+        harness.assertNotInGraveyard(player1, "Genju of the Falls");
     }
 
     @Test
@@ -93,8 +92,7 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Genju of the Falls"));
+        harness.assertInGraveyard(player1, "Genju of the Falls");
     }
 
     @Test
@@ -114,6 +112,73 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(otherGenju)
                 .noneMatch(card -> card.getId().equals(attachedGenjuId));
+    }
+
+    @Test
+    @DisplayName("Removing Genju in response does not stop its animation ability")
+    void animationResolvesAfterAuraIsDestroyed() {
+        Permanent island = addIslandWithGenju();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int genjuIndex = gd.playerBattlefields.get(player1.getId()).indexOf(
+                findPermanent(player1, "Genju of the Falls"));
+        harness.activateAbility(player1, genjuIndex, null, null);
+
+        harness.setHand(player2, List.of(new WearAway()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Genju of the Falls"));
+        harness.assertInGraveyard(player1, "Genju of the Falls");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, island)).isTrue();
+        assertThat(island.getEffectivePower()).isEqualTo(3);
+        assertThat(island.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, island, Keyword.FLYING)).isTrue();
+        assertThat(gqs.isLand(gd, island)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying Genju after animation does not end the animation or return the Aura")
+    void animationPersistsAfterAuraIsDestroyed() {
+        Permanent island = addIslandWithGenju();
+        activateGenju();
+
+        harness.setHand(player2, List.of(new WearAway()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Genju of the Falls"));
+
+        assertThat(gqs.isCreature(gd, island)).isTrue();
+        assertThat(island.getEffectivePower()).isEqualTo(3);
+        assertThat(island.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, island, Keyword.FLYING)).isTrue();
+        harness.assertInGraveyard(player1, "Genju of the Falls");
+        harness.assertNotInHand(player1, "Genju of the Falls");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Genju can enchant an opponent's Island and returns to the Aura controller's hand")
+    void canEnchantOpponentsIslandAndReturnToOwnHand() {
+        harness.addToBattlefield(player2, new Island());
+        UUID islandId = harness.getPermanentId(player2, "Island");
+        harness.setHand(player1, List.of(new GenjuOfTheFalls()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castEnchantment(player1, 0, islandId);
+        harness.passBothPriorities();
+
+        activateGenju();
+        Permanent island = findPermanent(player2, "Island");
+        assertThat(gqs.isCreature(gd, island)).isTrue();
+        assertThat(island.getEffectivePower()).isEqualTo(3);
+
+        destroyIsland(island);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Genju of the Falls");
+        harness.assertNotInHand(player2, "Genju of the Falls");
+        harness.assertInGraveyard(player2, "Island");
     }
 
     private Permanent addIslandWithGenju() {
@@ -144,7 +209,6 @@ class GenjuOfTheFallsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new StoneRain()));
         harness.addMana(player2, ManaColor.RED, 3);
-        harness.castSorcery(player2, 0, island.getId());
-        harness.passBothPriorities(); // resolve Stone Rain
+        harness.castAndResolveSorcery(player2, 0, island.getId());
     }
 }
