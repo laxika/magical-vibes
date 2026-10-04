@@ -136,6 +136,64 @@ class ImmolationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Immolation affects only the enchanted creature")
+    void affectsOnlyEnchantedCreature() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Immolation()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(1);
+        for (Permanent unaffected : List.of(friendly, opposing)) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(2);
+        }
+    }
+
+    @Test
+    @DisplayName("Multiple Immolations stack and both go to the graveyard when the creature dies")
+    void multipleCopiesStack() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Immolation first = new Immolation();
+        Immolation second = new Immolation();
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, giant.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
+
+        harness.castEnchantment(player1, 0, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(giant.getCard(), first, second);
+    }
+
+    @Test
+    @DisplayName("Killing an opponent's creature puts Immolation in its owner's graveyard")
+    void killedOpponentCreatureAndAuraGoToRespectiveGraveyards() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Immolation immolation = new Immolation();
+        harness.setHand(player1, List.of(immolation));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(immolation);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(bears.getCard());
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Immolation")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new HillGiant());
