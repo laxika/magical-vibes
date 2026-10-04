@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MomentaryBlink;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, GrizzlyBears.class, HiddenHorror.class, LlanowarElves.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HiddenHorror.class, LlanowarElves.class, MomentaryBlink.class})
 class HiddenHorrorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -282,7 +284,54 @@ class HiddenHorrorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Discarding a chosen creature leaves the other cards in a mixed hand untouched")
+    void discardsExactlyOneChosenCreatureFromMixedHand() {
+        harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
+        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new LlanowarElves()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 2);
+
+        harness.assertOnBattlefield(player1, "Hidden Horror");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining the original trigger cannot sacrifice Hidden Horror after it leaves and returns")
+    void originalTriggerCannotSacrificeReturnedHiddenHorror() {
+        harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
+        harness.passBothPriorities();
+        Permanent original = findPermanent(player1, "Hidden Horror");
+        harness.setHand(player1, List.of(new MomentaryBlink(), new GrizzlyBears(), new LlanowarElves()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, original.getId());
+
+        Permanent returned = findPermanent(player1, "Hidden Horror");
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Hidden Horror");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Hidden Horror");
+        harness.assertNotInGraveyard(player1, "Hidden Horror");
+        harness.assertInHand(player1, "Llanowar Elves");
+        assertThat(gd.stack).isEmpty();
+    }
 
     /**
      * Casts Hidden Horror with a creature (Grizzly Bears) in hand, resolves through
