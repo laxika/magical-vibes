@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.w.WearAway;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HondenOfLifesWeb.class, HondenOfSeeingWinds.class})
+@CardUsed({HondenOfLifesWeb.class, HondenOfSeeingWinds.class, WearAway.class})
 class HondenOfLifesWebTest extends BaseCardTest {
 
     @Test
@@ -69,6 +71,42 @@ class HondenOfLifesWebTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(spiritTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A pending trigger creates no tokens when no controlled Shrines remain")
+    void createsNoTokensAfterOnlyShrineIsDestroyed() {
+        harness.addToBattlefield(player1, new HondenOfLifesWeb());
+        harness.setHand(player1, List.of(new WearAway()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Honden of Life's Web"));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Honden of Life's Web");
+        assertThat(spiritTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A pending trigger survives its source and counts the remaining Shrines")
+    void createsTokensAfterSourceIsDestroyed() {
+        harness.addToBattlefield(player1, new HondenOfLifesWeb());
+        harness.setHand(player1, List.of(new WearAway()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player1, new HondenOfSeeingWinds());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Honden of Life's Web"));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Honden of Life's Web");
+        assertThat(spiritTokens()).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
     }
 
     private List<Permanent> spiritTokens() {
