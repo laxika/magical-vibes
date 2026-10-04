@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(GuadosalamFarplaneGateway.class)
 class GuadosalamFarplaneGatewayTest extends BaseCardTest {
@@ -26,7 +27,7 @@ class GuadosalamFarplaneGatewayTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gateway = findPermanent(player1, "Guadosalam, Farplane Gateway");
         assertThat(gateway.isTapped()).isTrue();
@@ -53,6 +54,7 @@ class GuadosalamFarplaneGatewayTest extends BaseCardTest {
         for (String color : new String[]{"GREEN", "BLUE"}) {
             harness = new GameTestHarness();
             player1 = harness.getPlayer1();
+            gd = harness.getGameData();
             harness.skipMulligan();
 
             Permanent gateway = addGatewayReady(player1);
@@ -69,9 +71,40 @@ class GuadosalamFarplaneGatewayTest extends BaseCardTest {
     }
 
     private Permanent addGatewayReady(Player player) {
-        Permanent perm = new Permanent(new GuadosalamFarplaneGateway());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GuadosalamFarplaneGateway());
+    }
+
+    @Test
+    @DisplayName("A newly played tapped Gateway cannot produce mana")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new GuadosalamFarplaneGateway()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Gateway can produce mana after untapping and cannot tap twice")
+    void producesManaAfterUntappingButCannotActivateTwice() {
+        harness.setHand(player1, List.of(new GuadosalamFarplaneGateway()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+        harness.performUntapStep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
     }
 }
