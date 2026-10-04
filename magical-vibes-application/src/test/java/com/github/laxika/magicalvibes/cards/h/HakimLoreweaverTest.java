@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.d.Decomposition;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
+import com.github.laxika.magicalvibes.cards.m.MomentaryBlink;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.w.WardOfLights;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,10 +17,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Decomposition.class, HakimLoreweaver.class, IronTuskElephant.class, Pacifism.class})
+@CardUsed({Decomposition.class, HakimLoreweaver.class, IronTuskElephant.class, Pacifism.class,
+        WardOfLights.class, MomentaryBlink.class})
 class HakimLoreweaverTest extends BaseCardTest {
 
     @Test
@@ -138,12 +144,111 @@ class HakimLoreweaverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, firstAura.getId(), Zone.GRAVEYARD);
         harness.activateAbility(player1, 0, 0, null, secondAura.getId(), Zone.GRAVEYARD);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Pacifism"))
                 .hasSize(2)
                 .allSatisfy(aura -> assertThat(aura.getAttachedTo()).isEqualTo(hakim.getId()));
+    }
+
+    @Test
+    void returningAuraDoesNotFollowHakimThroughBlink() {
+        Permanent hakim = addHakim(player1);
+        Card aura = new Pacifism();
+        harness.setGraveyard(player1, List.of(aura));
+        beginUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of(new MomentaryBlink()));
+
+        harness.activateAbility(player1, 0, 0, null, aura.getId(), Zone.GRAVEYARD);
+        harness.castInstant(player1, 0, hakim.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Hakim, Loreweaver").getId()).isNotEqualTo(hakim.getId());
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+    }
+
+    @Test
+    void destructionAbilityDoesNotFollowHakimThroughBlink() {
+        Permanent hakim = addHakim(player1);
+        beginUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of(new MomentaryBlink()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.castInstant(player1, 0, hakim.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        Permanent returnedHakim = findPermanent(player1, "Hakim, Loreweaver");
+        assertThat(returnedHakim.getId()).isNotEqualTo(hakim.getId());
+        Permanent newAura = attachAura(player1, new Pacifism(), returnedHakim);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Pacifism")).containsExactly(newAura);
+        harness.assertNotInGraveyard(player1, "Pacifism");
+    }
+
+    @Test
+    void returningAuraCannotEnterWhenHakimGainsProtection() {
+        Permanent hakim = addHakim(player1);
+        Card aura = new Pacifism();
+        harness.setGraveyard(player1, List.of(aura));
+        beginUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, aura.getId(), Zone.GRAVEYARD);
+        Permanent ward = attachAura(player1, new WardOfLights(), hakim);
+        ward.setChosenColor(CardColor.WHITE);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        assertThat(gd.permanentsEnteredBattlefieldThisTurn.getOrDefault(player1.getId(), List.of()))
+                .doesNotContain(aura);
+    }
+
+    @Test
+    void upkeepAbilityRejectsNonAuraCard() {
+        addHakim(player1);
+        Card creature = new IronTuskElephant();
+        harness.setGraveyard(player1, List.of(creature));
+        beginUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null,
+                creature.getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void upkeepAbilityRejectsOpponentsGraveyard() {
+        addHakim(player1);
+        Card aura = new Pacifism();
+        harness.setGraveyard(player2, List.of(aura));
+        beginUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null,
+                aura.getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void upkeepAbilityDoesNothingWhenTargetLeavesGraveyard() {
+        addHakim(player1);
+        Card aura = new Pacifism();
+        harness.setGraveyard(player1, List.of(aura));
+        beginUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, aura.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(aura));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        assertThat(gd.findExiledCard(aura.getId())).isNotNull();
     }
 
     private Permanent addHakim(Player player) {
@@ -151,9 +256,8 @@ class HakimLoreweaverTest extends BaseCardTest {
     }
 
     private Permanent attachAura(Player player, Card auraCard, Permanent host) {
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(player, auraCard);
         aura.setAttachedTo(host.getId());
-        harness.getGameData().playerBattlefields.get(player.getId()).add(aura);
         return aura;
     }
 
