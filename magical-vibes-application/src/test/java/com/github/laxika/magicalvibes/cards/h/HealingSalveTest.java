@@ -22,7 +22,21 @@ class HealingSalveTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Target player gains 3 life")
+    @CardUsed({HealingSalve.class, GrizzlyBears.class})
     class GainLifeMode {
+
+        @Test
+        @DisplayName("The caster can gain life without creating a prevention shield")
+        void casterGainsLifeWithoutPrevention() {
+            harness.setLife(player1, 20);
+            harness.setHand(player1, List.of(new HealingSalve()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+
+            harness.castAndResolveInstant(player1, 0, player1.getId());
+
+            harness.assertLife(player1, 23);
+            assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        }
 
         @Test
         @DisplayName("Target player gains 3 life")
@@ -50,6 +64,7 @@ class HealingSalveTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Prevent the next 3 damage to any target")
+    @CardUsed({HealingSalve.class, GrizzlyBears.class, Shock.class})
     class PreventDamageMode {
 
         @Test
@@ -88,8 +103,8 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, blocker.getId());
             harness.passBothPriorities();
 
-            declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
-            prepareDeclareBlockers(player2);
+            declareAttackersAndPrepareBlockers(player2,
+                    List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
             int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blocker);
             int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
             gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
@@ -161,7 +176,64 @@ class HealingSalveTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Prevent the next 3 damage to any target")
+    @CardUsed({HealingSalve.class, Forest.class, GoblinRaider.class, GrizzlyBears.class, Shock.class})
     class AdditionalPreventDamageCoverage {
+
+        @Test
+        @DisplayName("The remaining shield is consumed by a later damage event")
+        void shieldSpansMultipleDamageEvents() {
+            harness.setLife(player2, 20);
+            harness.setHand(player1, List.of(new HealingSalve()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.castInstant(player1, 0, 1, player2.getId());
+            harness.passBothPriorities();
+
+            harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+            harness.addMana(player1, ManaColor.RED, 3);
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            harness.assertLife(player2, 20);
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            harness.assertLife(player2, 19);
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            harness.assertLife(player2, 17);
+        }
+
+        @Test
+        @DisplayName("A creature's prevention shield expires before damage on the next turn")
+        void creatureShieldExpiresBeforeNextTurnDamage() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            harness.setHand(player1, List.of(new HealingSalve()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.castInstant(player1, 0, 1, bears.getId());
+            harness.passBothPriorities();
+
+            harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+            harness.setHand(player2, List.of(new Shock()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castAndResolveInstant(player2, 0, bears.getId());
+
+            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Grizzly Bears");
+        }
+
+        @Test
+        @DisplayName("Prevention does not save a creature killed before the spell resolves")
+        void targetDiesBeforePreventionResolves() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new HealingSalve()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.castInstant(player1, 0, 1, bears.getId());
+
+            harness.setHand(player2, List.of(new Shock()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castAndResolveInstant(player2, 0, bears.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Healing Salve");
+            assertThat(gd.stack).isEmpty();
+        }
 
         @Test
         @DisplayName("Adds a 3-damage prevention shield to a target creature")
@@ -220,8 +292,8 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, blocker.getId());
             harness.passBothPriorities();
 
-            declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
-            prepareDeclareBlockers(player2);
+            declareAttackersAndPrepareBlockers(player2,
+                    List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
             int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blocker);
             int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
             gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
