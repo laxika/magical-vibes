@@ -29,8 +29,7 @@ class EscapeDetectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertInHand(player1, "Forest");
@@ -72,6 +71,93 @@ class EscapeDetectionTest extends BaseCardTest {
     void freerunningRequiresQualifyingCombatDamage() {
         Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EscapeDetection()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, target.getId(), List.of(blueCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
+    }
+
+    @Test
+    @DisplayName("Freerunning pays the return cost before the spell resolves")
+    void returnCostIsPaidImmediately() {
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        markAssassinCombatDamage();
+        harness.setHand(player1, List.of(new EscapeDetection()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(blueCreature.getId()));
+
+        harness.assertInHand(player1, "Air Elemental");
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Returning the target to pay freerunning prevents the draw")
+    void targetReturnedAsCostMakesSpellNotResolve() {
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        markAssassinCombatDamage();
+        harness.setHand(player1, List.of(new EscapeDetection()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castInstantWithAlternateCost(player1, 0, blueCreature.getId(), List.of(blueCreature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Air Elemental");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Escape Detection");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Freerunning cannot return an opponent's blue creature as its cost")
+    void freerunningRejectsOpponentsCreature() {
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        markAssassinCombatDamage();
+        harness.setHand(player1, List.of(new EscapeDetection()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, target.getId(), List.of(blueCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInHand(player1, "Escape Detection");
+    }
+
+    @Test
+    @DisplayName("The normal mana cost can return your own creature without freerunning")
+    void normalCostCanReturnOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EscapeDetection()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An opponent's qualifying combat damage does not enable your freerunning")
+    void opponentsAssassinDamageDoesNotEnableFreerunning() {
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.combatDamageToPlayerControllerSubtypesThisTurn
+                .computeIfAbsent(player2.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(CardSubtype.ASSASSIN);
         harness.setHand(player1, List.of(new EscapeDetection()));
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
