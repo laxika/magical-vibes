@@ -18,6 +18,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HillcomberGiantTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped Mountain still makes Hillcomber Giant unblockable")
+    void cannotBeBlockedWhenDefendersMountainIsTapped() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new GoldmeadowStalwart());
+        Permanent attacker = addCreatureReady(player1, new HillcomberGiant());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Hillcomber Giant cannot be blocked when defending player controls a Mountain")
     void cannotBeBlockedWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new Mountain());
