@@ -176,6 +176,45 @@ class HorseshoeCrabTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot pay the blue activation cost with red mana")
+    void cannotActivateWithWrongColorMana() {
+        Permanent crab = addCreatureReady(player1, new HorseshoeCrab());
+        crab.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(crab.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple activations can be stacked before the creature untaps")
+    void canActivateAgainBeforeFirstAbilityResolves() {
+        Permanent crab = addCreatureReady(player1, new HorseshoeCrab());
+        crab.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(crab.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(crab.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(crab.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Ability has no effect if Horseshoe Crab is removed before resolution")
     void abilityDoesNothingIfSourceRemoved() {
         Permanent crab = addCreatureReady(player1, new HorseshoeCrab());
