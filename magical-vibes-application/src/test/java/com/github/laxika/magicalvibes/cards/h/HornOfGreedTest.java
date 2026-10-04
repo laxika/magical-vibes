@@ -78,4 +78,42 @@ class HornOfGreedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Horns controlled by both players each draw for the player who played the land")
+    void hornsWithDifferentControllersDrawForSamePlayer() {
+        harness.addToBattlefield(player1, new HornOfGreed());
+        harness.addToBattlefield(player2, new HornOfGreed());
+        harness.setHand(player1, List.of(new VolrathsStronghold()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new VolrathsStronghold(), new VolrathsStronghold()));
+        harness.setLibrary(player2, List.of(new VolrathsStronghold()));
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Horn still triggers and draws only when its ability resolves")
+    void tappedHornDrawsOnResolution() {
+        harness.addToBattlefieldAndReturn(player2, new HornOfGreed()).setTapped(true);
+        harness.setHand(player1, List.of(new VolrathsStronghold()));
+        harness.setLibrary(player1, List.of(new VolrathsStronghold()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
