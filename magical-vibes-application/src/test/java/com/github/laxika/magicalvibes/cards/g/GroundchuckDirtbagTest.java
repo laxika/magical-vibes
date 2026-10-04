@@ -43,4 +43,33 @@ class GroundchuckDirtbagTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
+
+    @Test
+    void eachLandTapAddsManaImmediatelyWithoutUsingTheStack() {
+        harness.addToBattlefield(player1, new GroundchuckDirtbag());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Mountain());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedSourceStillAddsManaWhenItsControllerTapsALand() {
+        harness.addToBattlefieldAndReturn(player1, new GroundchuckDirtbag()).setTapped(true);
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
 }
