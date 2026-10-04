@@ -30,8 +30,7 @@ class HauntingHymnTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         discardCards(player2, 4);
 
@@ -50,8 +49,7 @@ class HauntingHymnTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         discardCards(player2, 2);
 
@@ -70,8 +68,7 @@ class HauntingHymnTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         discardCards(player2, 2);
 
@@ -89,8 +86,7 @@ class HauntingHymnTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         discardCards(player1, 4);
 
@@ -108,6 +104,63 @@ class HauntingHymnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
                 harness.getPermanentId(player2, "Ashcoat Bear")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("During the controller's second main phase, target player discards four cards")
+    void postcombatMainPhaseDiscardsFour() {
+        harness.setHand(player2, List.of(
+                new AshcoatBear(), new AshcoatBear(), new AshcoatBear(), new AshcoatBear(), new AshcoatBear()));
+        harness.setHand(player1, List.of(new HauntingHymn()));
+        addBlackMana(6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        discardCards(player2, 4);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A player with fewer than four cards discards their entire hand")
+    void shortHandDiscardsAsMuchAsPossible() {
+        harness.setHand(player2, List.of(new AshcoatBear(), new AshcoatBear(), new AshcoatBear()));
+        harness.setHand(player1, List.of(new HauntingHymn()));
+        addBlackMana(6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        discardCards(player2, 3);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targeting a player with an empty hand resolves without a discard choice")
+    void emptyHandDoesNotRequireChoice() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new HauntingHymn()));
+        addBlackMana(6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Haunting Hymn");
     }
 
     private void addBlackMana(int amount) {
