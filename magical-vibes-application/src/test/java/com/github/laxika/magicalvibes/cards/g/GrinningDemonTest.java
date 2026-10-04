@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(GrinningDemon.class)
+@CardUsed({GrinningDemon.class})
 class GrinningDemonTest extends BaseCardTest {
 
     @Test
@@ -62,6 +62,58 @@ class GrinningDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(demon.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability becomes active after turning face up")
+    void triggersAtUpkeepAfterTurningFaceUp() {
+        harness.setLife(player1, 20);
+        Permanent demon = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(demon));
+
+        assertThat(demon.isFaceDown()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Turning face up during upkeep does not retroactively trigger life loss")
+    void turningFaceUpDuringUpkeepDoesNotTriggerLifeLoss() {
+        harness.setLife(player1, 20);
+        Permanent demon = castFaceDown();
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(demon));
+        harness.passBothPriorities();
+
+        assertThat(demon.isFaceDown()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each face-up Demon triggers independently during its controller's upkeep")
+    void multipleDemonsEachCauseLifeLoss() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GrinningDemon());
+        harness.addToBattlefield(player1, new GrinningDemon());
+        harness.addToBattlefield(player2, new GrinningDemon());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     private Permanent castFaceDown() {
