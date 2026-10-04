@@ -3,13 +3,15 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
+import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,18 +19,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrowingRitesOfItlimoc.class, JungleDelver.class, Opt.class, RaptorCompanion.class})
 class GrowingRitesOfItlimocTest extends BaseCardTest {
-
-    // ===== ETB: look at top 4, may reveal creature =====
 
     @Test
     @DisplayName("ETB offers creature cards among top 4 for selection")
     void etbOffersCreatureCards() {
         setupTopCards(List.of(
-                createCreature("Bear", 2, 2),
-                createNonCreature("Bolt"),
-                createCreature("Elf", 1, 1),
-                createNonCreature("Enchant")
+                new JungleDelver(),
+                new Opt(),
+                new RaptorCompanion(),
+                new Opt()
         ));
         harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -44,16 +45,16 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Bear", "Elf");
+                .containsExactlyInAnyOrder("Jungle Delver", "Raptor Companion");
     }
 
     @Test
     @DisplayName("ETB allows choosing a creature to put in hand")
     void etbChooseCreatureToHand() {
-        Card bear = createCreature("Bear", 2, 2);
-        Card bolt = createNonCreature("Bolt");
-        Card elf = createCreature("Elf", 1, 1);
-        Card enchant = createNonCreature("Enchant");
+        Card bear = new JungleDelver();
+        Card bolt = new Opt();
+        Card elf = new RaptorCompanion();
+        Card enchant = new Opt();
         setupTopCards(List.of(bear, bolt, elf, enchant));
         harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -62,10 +63,10 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment
         harness.passBothPriorities(); // resolve ETB
 
-        // Choose the first creature (Bear)
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        // Choose the first creature (Jungle Delver)
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertInHand(player1, "Bear");
+        harness.assertInHand(player1, "Jungle Delver");
         // Remaining 3 cards should be offered for reorder
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
@@ -75,10 +76,10 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
     @DisplayName("ETB allows declining to choose a creature")
     void etbDeclineCreature() {
         setupTopCards(List.of(
-                createCreature("Bear", 2, 2),
-                createNonCreature("Bolt"),
-                createCreature("Elf", 1, 1),
-                createNonCreature("Enchant")
+                new JungleDelver(),
+                new Opt(),
+                new RaptorCompanion(),
+                new Opt()
         ));
         harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -90,7 +91,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         // Decline to choose (-1 = fail to find)
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         // All 4 cards should be offered for reorder
@@ -102,10 +103,10 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
     @DisplayName("ETB with no creatures among top 4 skips to reorder")
     void etbNoCreaturesSkipsToReorder() {
         setupTopCards(List.of(
-                createNonCreature("Bolt"),
-                createNonCreature("Enchant"),
-                createNonCreature("Artifact"),
-                createNonCreature("Sorcery")
+                new Opt(),
+                new Opt(),
+                new Opt(),
+                new Opt()
         ));
         harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -118,8 +119,6 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
-
-    // ===== End step transform =====
 
     @Test
     @DisplayName("Transforms at end step with exactly 4 creatures")
@@ -208,8 +207,6 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         assertThat(enchantment.isTransformed()).isFalse();
     }
 
-    // ===== Back face: Itlimoc mana abilities =====
-
     @Test
     @DisplayName("Itlimoc basic tap adds one green mana")
     void itlimocBasicTapAddsGreen() {
@@ -218,9 +215,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         int itlimocIdx = indexOf(player1, itlimoc);
         harness.activateAbility(player1, itlimocIdx, 0, null, null);
 
-        // Mana abilities resolve immediately without using the stack (CR 605.3a),
-        // so no passBothPriorities() needed — and doing so would drain the pool.
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isGreaterThanOrEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test
@@ -234,8 +229,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         int itlimocIdx = indexOf(player1, itlimoc);
         harness.activateAbility(player1, itlimocIdx, 1, null, null);
 
-        // Mana abilities resolve immediately without using the stack (CR 605.3a).
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isGreaterThanOrEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
     }
 
     @Test
@@ -246,63 +240,183 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         int greenBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
         int itlimocIdx = indexOf(player1, itlimoc);
         harness.activateAbility(player1, itlimocIdx, 1, null, null);
-        harness.passBothPriorities();
+        assertThat(itlimoc.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(greenBefore);
     }
 
-    // ===== Helpers =====
+    @Test
+    void doesNotTransformWhenCreatureCountDropsBeforeResolution() {
+        Permanent enchantment = addEnchantmentReady(player1);
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player1);
+        }
+        Permanent fourth = addCreatureReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(fourth);
+        harness.setGraveyard(player1, List.of(fourth.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(enchantment.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentCreaturesDoNotMeetTransformThreshold() {
+        Permanent enchantment = addEnchantmentReady(player1);
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player1);
+        }
+        addCreatureReady(player2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(enchantment.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void transformedLandCanProduceManaImmediatelyAndIgnoresOpponentCreatures() {
+        Permanent enchantment = addEnchantmentReady(player1);
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player1);
+        }
+        addCreatureReady(player2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(player1, enchantment), 1, null, null);
+
+        assertThat(enchantment.isTransformed()).isTrue();
+        assertThat(enchantment.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void selectedCreatureGoesToHandAndRestGoToBottomInChosenOrder() {
+        Card creature = new JungleDelver();
+        Card first = new Opt();
+        Card second = new Opt();
+        Card third = new Opt();
+        Card untouched = new RaptorCompanion();
+        setupTopCards(List.of(creature, first, second, third, untouched));
+        harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, third, first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void singleCreatureLibraryStillAllowsDeclining() {
+        Card creature = new JungleDelver();
+        setupTopCards(List.of(creature));
+        harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventEnchantmentResolving() {
+        setupTopCards(List.of());
+        harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Growing Rites of Itlimoc");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void decliningCreaturePutsAllViewedCardsOnBottomInChosenOrder() {
+        Card creature = new JungleDelver();
+        Card first = new Opt();
+        Card second = new Opt();
+        Card third = new Opt();
+        Card untouched = new RaptorCompanion();
+        setupTopCards(List.of(creature, first, second, third, untouched));
+        harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, third, second, first, creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void shortLibraryAllowsChoosingCreatureAndReturnsRemainingCard() {
+        Card creature = new JungleDelver();
+        Card other = new Opt();
+        setupTopCards(List.of(other, creature));
+        harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private Permanent addEnchantmentReady(Player player) {
-        GrowingRitesOfItlimoc card = new GrowingRitesOfItlimoc();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GrowingRitesOfItlimoc());
     }
 
     private Permanent addTransformedItlimoc(Player player) {
-        GrowingRitesOfItlimoc card = new GrowingRitesOfItlimoc();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        perm.setCard(card.getBackFaceCard());
+        Permanent perm = addEnchantmentReady(player);
+        perm.setCard(perm.getOriginalCard().getBackFaceCard());
         perm.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addCreatureReady(Player player) {
-        Card creature = createCreature("Test Creature", 2, 2);
-        Permanent perm = new Permanent(creature);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Card createCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{G}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private Card createNonCreature(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{R}");
-        card.setColor(CardColor.RED);
-        return card;
+        return addCreatureReady(player, new JungleDelver());
     }
 
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     private int indexOf(Player player, Permanent perm) {
