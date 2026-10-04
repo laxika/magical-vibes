@@ -13,8 +13,4 @@ public record AirbendAllOtherCreaturesEffect() implements RemovalEffect {
         return RemovalKind.EXILE;
     }
 
-    @Override
-    public boolean resolvesWhenTargetIllegal() {
-        return true;
-    }
 }

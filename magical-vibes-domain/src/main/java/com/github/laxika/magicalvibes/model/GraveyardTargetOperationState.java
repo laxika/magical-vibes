@@ -280,9 +280,10 @@ public class GraveyardTargetOperationState {
 
     public record EachPlayerExilesCardFromGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardEffect thenEffect,
-            List<UUID> remainingPlayerIds, UUID currentPlayerId, int nonlandCardsExiled) {
+            List<UUID> remainingPlayerIds, UUID currentPlayerId, Map<UUID, UUID> chosenCardIds) {
         public EachPlayerExilesCardFromGraveyardContext {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenCardIds = Map.copyOf(chosenCardIds);
         }
     }
 

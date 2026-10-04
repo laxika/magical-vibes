@@ -96,15 +96,19 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
         for (int i = 0; i < exiledCount; i++) {
             Card card = library.removeLast();
             if (effect.faceDown()) {
-                exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
+                exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId,
+                        sourceControllerId);
             } else {
                 exileService.exileCard(gameData, playerId, card, sourcePermanentId);
             }
             for (AllowCastFromCardsExiledWithSourceEffect permission : persistentPermissions) {
+                UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
+                        ? playerId : sourceControllerId;
+                if (effect.faceDown()) {
+                    gameData.exileLookPermissions.put(card.getId(), permittedPlayer);
+                }
                 if (permission.filter() == null || predicateEvaluationService.matchesCardPredicate(
                         card, permission.filter(), null)) {
-                    UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
-                            ? playerId : sourceControllerId;
                     gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
                     if (permission.anyManaType()) {
                         gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());

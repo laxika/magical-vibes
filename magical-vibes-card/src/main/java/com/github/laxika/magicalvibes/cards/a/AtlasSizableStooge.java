@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -23,6 +24,6 @@ public class AtlasSizableStooge extends Card {
         var qualifyingCreatures = new PermanentCount(powerFourOrGreaterCreature, CountScope.CONTROLLER);
 
         addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(qualifyingCreatures));
-        addEffect(EffectSlot.ON_BLOCK, new GainLifeEffect(qualifyingCreatures));
+        addEffect(EffectSlot.ON_BLOCK, new GainLifeEffect(qualifyingCreatures), TriggerMode.ONCE_PER_BLOCK);
     }
 }

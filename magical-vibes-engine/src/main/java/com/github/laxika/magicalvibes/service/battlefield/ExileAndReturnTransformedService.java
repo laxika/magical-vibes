@@ -107,7 +107,7 @@ public class ExileAndReturnTransformedService {
         Permanent newPerm = new Permanent(originalCard);
         newPerm.setCard(returningCard);
         newPerm.setTransformed(returningTransformed);
-        newPerm.setSummoningSick(false);
+        newPerm.setSummoningSick(true);
         newPerm.setEnteredFromExile(true);
         // A back face can be a planeswalker (Kytheon, Hero of Akros; Jace, Vryn's Prodigy): it
         // enters with its starting loyalty, otherwise the state-based check kills it immediately.

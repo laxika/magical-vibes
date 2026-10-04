@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsUntilPermanentCountToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -29,6 +30,7 @@ public class ExileTopCardsUntilPermanentCountToBattlefieldEffectHandler
     private final ExileService exileService;
     private final AuspiciousStarrixSupport auspiciousStarrixSupport;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +43,8 @@ public class ExileTopCardsUntilPermanentCountToBattlefieldEffectHandler
         UUID controllerId = entry.getControllerId();
         List<Card> library = gameData.playerDecks.get(controllerId);
         int permanentCount = amountEvaluationService.evaluate(
-                gameData, typedEffect.permanentCount(), AmountContext.forStackEntry(entry, null));
+                gameData, typedEffect.permanentCount(), AmountContext.forStackEntry(entry,
+                        gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())));
 
         if (permanentCount <= 0 || library == null || library.isEmpty()) {
             return;

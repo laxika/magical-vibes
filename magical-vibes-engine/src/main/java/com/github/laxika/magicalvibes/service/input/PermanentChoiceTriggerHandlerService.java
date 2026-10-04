@@ -195,6 +195,11 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        triggerCollectionService.processNextSpellTargetTrigger(gameData);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;

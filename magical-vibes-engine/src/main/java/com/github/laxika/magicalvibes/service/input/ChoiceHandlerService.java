@@ -236,6 +236,41 @@ public class ChoiceHandlerService {
 
         recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
+        if (colorChoice.context() instanceof ChoiceContext.SpellCastTriggerOrder order) {
+            int index = colorChoice.options().indexOf(colorName);
+            if (index < 0) {
+                throw new IllegalArgumentException("Invalid trigger order choice");
+            }
+            List<UUID> remaining = new ArrayList<>(order.remainingIds());
+            List<UUID> ordered = new ArrayList<>(order.orderedIds());
+            ordered.add(remaining.remove(index));
+            gameData.interaction.clearAwaitingInput();
+            if (remaining.size() > 1) {
+                List<String> options = java.util.stream.IntStream.range(0, remaining.size())
+                        .mapToObj(i -> (i + 1) + ": " + gameData.stack.stream()
+                                .filter(entry -> entry.getTargetableId().equals(remaining.get(i)))
+                                .map(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService::spellCastTriggerOrderLabel)
+                                .findFirst().orElseThrow()).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        player.getId(), null, null,
+                        new ChoiceContext.SpellCastTriggerOrder(remaining, ordered), options,
+                        "Choose the next trigger to put on the stack."));
+                return;
+            }
+            ordered.addAll(remaining);
+            Map<UUID, StackEntry> entries = gameData.stack.stream()
+                    .filter(entry -> ordered.contains(entry.getTargetableId()))
+                    .collect(java.util.stream.Collectors.toMap(StackEntry::getTargetableId, entry -> entry));
+            int stackIndex = 0;
+            for (int i = 0; i < gameData.stack.size(); i++) {
+                if (entries.containsKey(gameData.stack.get(i).getTargetableId())) {
+                    gameData.stack.set(i, entries.get(ordered.get(stackIndex++)));
+                }
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.DrawLookReplacementOrder choice) {
             if (!colorChoice.options().contains(colorName)) {
                 throw new IllegalArgumentException("Invalid choice: " + colorName);
@@ -2708,7 +2743,7 @@ public class ChoiceHandlerService {
         }
         gameData.interaction.clearAwaitingInput();
 
-        Permanent perm = new Permanent(ctx.card());
+        Permanent perm = ctx.preparedPermanent() == null ? new Permanent(ctx.card()) : ctx.preparedPermanent();
         perm.setChosenCardType(cardType);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ctx.controllerId(), perm);
 
@@ -5937,13 +5972,13 @@ public class ChoiceHandlerService {
 
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
-            perm.setBasePowerOverriddenPermanently(true);
-            perm.setPermanentBasePowerOverride(form.power());
-            perm.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
-            perm.setBaseToughnessOverriddenPermanently(true);
-            perm.setPermanentBaseToughnessOverride(form.toughness());
-            perm.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
-            perm.getPersistentGrantedKeywords().addAll(form.keywords());
+            Card formCard = perm.getCard().createRuntimeCopy();
+            formCard.setPower(form.power());
+            formCard.setToughness(form.toughness());
+            Set<Keyword> formKeywords = new LinkedHashSet<>(formCard.getKeywords());
+            formKeywords.addAll(form.keywords());
+            formCard.setKeywords(formKeywords);
+            perm.setCard(formCard);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses a "
                     + form.label() + " form for ", perm.getCard(), "."));

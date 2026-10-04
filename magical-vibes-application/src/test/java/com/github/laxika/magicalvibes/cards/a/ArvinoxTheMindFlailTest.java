@@ -197,7 +197,7 @@ class ArvinoxTheMindFlailTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, arvinox));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -276,6 +276,6 @@ class ArvinoxTheMindFlailTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 }

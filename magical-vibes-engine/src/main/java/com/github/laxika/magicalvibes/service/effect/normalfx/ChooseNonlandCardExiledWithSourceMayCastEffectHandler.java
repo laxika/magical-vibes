@@ -35,6 +35,7 @@ public class ChooseNonlandCardExiledWithSourceMayCastEffectHandler
         }
 
         List<UUID> eligibleCardIds = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
+                .filter(card -> entry.getResolutionExiledCardIds().contains(card.getId()))
                 .filter(card -> !card.hasType(CardType.LAND))
                 .map(card -> card.getId())
                 .toList();

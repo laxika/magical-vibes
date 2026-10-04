@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -29,7 +30,7 @@ import java.util.Set;
 public class ArbalestEngineers extends Card {
 
     public ArbalestEngineers() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "This creature deals 1 damage to any target",
                         new DealDamageToAnyTargetEffect(1),
@@ -49,6 +50,6 @@ public class ArbalestEngineers extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a tapped Powerstone token",
                         CreateTokenEffect.ofPowerstoneToken(new Fixed(1)))
-        )));
+        ))));
     }
 }

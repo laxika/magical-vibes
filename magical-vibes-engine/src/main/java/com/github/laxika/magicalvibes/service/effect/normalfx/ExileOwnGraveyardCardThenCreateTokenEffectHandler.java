@@ -78,7 +78,6 @@ public class ExileOwnGraveyardCardThenCreateTokenEffectHandler implements Normal
         }
         UUID sourceCardId = entry.getCard().getId();
         return graveyard.stream()
-                .filter(card -> !card.getId().equals(sourceCardId))
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, effect.filter(), sourceCardId, gameData, entry.getControllerId()))
                 .toList();

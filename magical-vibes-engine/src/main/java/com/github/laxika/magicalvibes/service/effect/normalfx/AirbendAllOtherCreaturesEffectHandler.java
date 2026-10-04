@@ -46,6 +46,8 @@ public class AirbendAllOtherCreaturesEffectHandler implements NormalEffectHandle
         for (Permanent creature : creatures) {
             airbendSupport.airbend(gameData, entry, creature);
         }
-        triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.AIRBEND);
+        if (!creatures.isEmpty()) {
+            triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.AIRBEND);
+        }
     }
 }

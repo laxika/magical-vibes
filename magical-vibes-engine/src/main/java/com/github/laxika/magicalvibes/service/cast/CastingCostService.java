@@ -335,8 +335,13 @@ public class CastingCostService {
 
     /** Returns the generic cast-cost adjustment for a spell cast face down from hand. */
     public int getCastCostModifierForFaceDownSpell(GameData gameData, UUID playerId, Card card) {
+        return getCastCostModifierForFaceDownSpell(gameData, playerId, card, Zone.HAND);
+    }
+
+    /** Returns the generic cast-cost adjustment for a face-down spell from the specified zone. */
+    public int getCastCostModifierForFaceDownSpell(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
         return getCastCostModifier(gameData, playerId, card,
-                buildCostModifierSnapshot(gameData, playerId), false, 0, false, Zone.HAND, true);
+                buildCostModifierSnapshot(gameData, playerId), false, 0, false, sourceZone, true);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue) {
@@ -2135,6 +2140,11 @@ public class CastingCostService {
         if (gameData.cardsGrantedWarpUntilEndOfTurn.contains(card.getId())) {
             return true;
         }
+        var grantedEvokeCast = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
+        if (grantedEvokeCast.isPresent()
+                && canPayAlternateHandCast(gameData, playerId, card, grantedEvokeCast.get())) {
+            return true;
+        }
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
             var grantedBlitz = gameQueryService.findGrantedBlitzAlternateCast(gameData, playerId, card);
@@ -2149,13 +2159,7 @@ public class CastingCostService {
             }
             var grantedEvoke = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
             if (grantedEvoke.isPresent()) {
-                AlternateHandCast altCast = grantedEvoke.get();
-                return altCast.getCost(ManaCastingCost.class)
-                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, card,
-                                new ManaCost(cost.manaCost())).canPay(
-                                gameData.playerManaPools.get(playerId),
-                                getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz())))
-                        .orElse(false);
+                return canPayAlternateHandCast(gameData, playerId, card, grantedEvoke.get());
             }
             var grantedProwl = gameQueryService.findGrantedProwlAlternateCast(gameData, playerId, card);
             if (grantedProwl.isPresent()) {
@@ -2202,7 +2206,11 @@ public class CastingCostService {
                             gameData.playerManaPools.get(playerId), getCastCostModifier(gameData, playerId, card)))
                     .orElse(false);
         }
-        AlternateHandCast altCast = altCastOpt.get();
+        return canPayAlternateHandCast(gameData, playerId, card, altCastOpt.get());
+    }
+
+    private boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card,
+                                             AlternateHandCast altCast) {
         if (altCast.sneak() && (gameData.currentStep != TurnStep.DECLARE_BLOCKERS
                 || !playerId.equals(gameData.activePlayerId))) {
             return false;
@@ -2623,6 +2631,9 @@ public class CastingCostService {
         UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defenderBattlefield == null) return 0;
+
+        Permanent attackTarget = gameQueryService.findPermanentById(gameData, attackTargetId);
+        if (attackTarget != null && gameQueryService.isBattle(gameData, attackTarget)) return 0;
 
         boolean attackingPlaneswalker = defenderBattlefield.stream()
                 .filter(perm -> perm.getId().equals(attackTargetId))

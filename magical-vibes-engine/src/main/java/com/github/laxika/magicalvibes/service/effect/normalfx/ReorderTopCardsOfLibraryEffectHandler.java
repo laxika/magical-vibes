@@ -64,12 +64,6 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
             return;
         }
 
-        if (count == 1) {
-            gameLogService.append(gameData,
-                    GameLog.text(decisionMakerName + " looks at the top card of " + libraryOf + "."));
-            return;
-        }
-
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         deck.subList(0, count).clear();
 

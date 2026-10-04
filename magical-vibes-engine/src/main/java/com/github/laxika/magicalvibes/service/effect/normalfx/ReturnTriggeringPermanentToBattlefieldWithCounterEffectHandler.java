@@ -71,13 +71,23 @@ public class ReturnTriggeringPermanentToBattlefieldWithCounterEffectHandler
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-        graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, card);
+        Permanent permanent = graveyardReturnSupport.putCardOntoBattlefield(
+                gameData, controllerId, card, null, null, false, false, null);
+        if (permanent != null && !controllerId.equals(ownerId)) {
+            gameData.stolenCreatures.put(permanent.getId(), ownerId);
+            creatureControlService.applyControlEffect(gameData, controllerId, permanent,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    EffectDuration.PERMANENT, null, entry.getCard().getName());
+        }
     }
 
     private void returnFromExile(GameData gameData, StackEntry entry, UUID cardId,
                                  UUID controllerId) {
         ExiledCardEntry exiled = gameData.findExiledCard(cardId);
-        if (exiled == null || !gameData.removeFromExile(cardId)) {
+        long expectedVersion = entry.getTriggeringCardExileEntryVersion();
+        if (exiled == null || (expectedVersion >= 0
+                && gameData.exileEntryVersions.getOrDefault(cardId, 0L) != expectedVersion)
+                || !gameData.removeFromExile(cardId)) {
             return;
         }
 

@@ -78,7 +78,7 @@ class ArcboundTrackerTest extends BaseCardTest {
         Permanent tracker = harness.enterBattlefieldAndReturn(player1, new ArcboundTracker());
         for (int spell = 1; spell <= 3; spell++) {
             harness.castFromHand(player1, new Ornithopter(), "{0}");
-            harness.passBothPriorities();
+            resolveAllTriggers();
             assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                     .isEqualTo(2 + Math.max(0, spell - 1));
         }

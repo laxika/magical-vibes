@@ -29,7 +29,7 @@ public class ArdynTheUsurper extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DEMON)));
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(0, 1).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         false,

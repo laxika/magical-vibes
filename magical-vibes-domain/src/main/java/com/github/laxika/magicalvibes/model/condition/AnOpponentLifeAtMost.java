@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** At least one opponent of the controller has a life total at or below the threshold. */
-public record AnOpponentLifeAtMost(int threshold) implements Condition {
+public record AnOpponentLifeAtMost(int threshold, boolean belowHalfStartingLife) implements Condition {
+
+    public AnOpponentLifeAtMost(int threshold) {
+        this(threshold, false);
+    }
 
     @Override
     public String conditionName() {
