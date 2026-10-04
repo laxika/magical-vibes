@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BurningFistMinotaur;
+import com.github.laxika.magicalvibes.cards.f.FrilledSandwalla;
 import com.github.laxika.magicalvibes.cards.r.RampagingHippo;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HollowOne.class, RampagingHippo.class, FrilledSandwalla.class, BurningFistMinotaur.class})
 class HollowOneTest extends BaseCardTest {
 
     private void cycleFromHand(int times) {
@@ -27,6 +31,7 @@ class HollowOneTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Cost reduction")
+    @CardUsed({HollowOne.class, RampagingHippo.class, FrilledSandwalla.class, BurningFistMinotaur.class})
     class CostReduction {
 
         @Test
@@ -58,7 +63,7 @@ class HollowOneTest extends BaseCardTest {
         @DisplayName("Costs {3} after cycling one card")
         void costReducedByOneCycle() {
             harness.setHand(player1, List.of(new RampagingHippo()));
-            harness.setLibrary(player1, List.of(new GrizzlyBears()));
+            harness.setLibrary(player1, List.of(new FrilledSandwalla()));
             cycleFromHand(1);
 
             harness.setHand(player1, List.of(new HollowOne()));
@@ -74,7 +79,7 @@ class HollowOneTest extends BaseCardTest {
         @DisplayName("Costs {1} after cycling two cards")
         void costReducedByTwoCycles() {
             harness.setHand(player1, List.of(new RampagingHippo(), new RampagingHippo()));
-            harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+            harness.setLibrary(player1, List.of(new FrilledSandwalla(), new FrilledSandwalla()));
             cycleFromHand(2);
 
             harness.setHand(player1, List.of(new HollowOne()));
@@ -90,7 +95,7 @@ class HollowOneTest extends BaseCardTest {
         @DisplayName("Costs {0} after cycling three or more cards")
         void costFloorsAtZero() {
             harness.setHand(player1, List.of(new RampagingHippo(), new RampagingHippo(), new RampagingHippo()));
-            harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+            harness.setLibrary(player1, List.of(new FrilledSandwalla(), new FrilledSandwalla(), new FrilledSandwalla()));
             cycleFromHand(3);
 
             harness.setHand(player1, List.of(new HollowOne()));
@@ -105,7 +110,7 @@ class HollowOneTest extends BaseCardTest {
         @DisplayName("Opponent's discards do not reduce the cost")
         void opponentDiscardsDoNotReduceCost() {
             harness.setHand(player2, List.of(new RampagingHippo()));
-            harness.setLibrary(player2, List.of(new GrizzlyBears()));
+            harness.setLibrary(player2, List.of(new FrilledSandwalla()));
             harness.addMana(player2, ManaColor.COLORLESS, 2);
             harness.activateHandAbility(player2, 0, null);
             harness.passBothPriorities();
@@ -117,13 +122,93 @@ class HollowOneTest extends BaseCardTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("not playable");
         }
+
+        @Test
+        void ordinaryDiscardReducesCost() {
+            harness.addToBattlefield(player1, new BurningFistMinotaur());
+            harness.setHand(player1, List.of(new FrilledSandwalla(), new HollowOne()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.castArtifact(player1, 0);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+            harness.passBothPriorities();
+            harness.assertOnBattlefield(player1, "Hollow One");
+        }
+
+        @Test
+        void cyclingAndOrdinaryDiscardCombine() {
+            harness.addToBattlefield(player1, new BurningFistMinotaur());
+            harness.setHand(player1, List.of(new RampagingHippo(), new HollowOne()));
+            harness.setLibrary(player1, List.of(new FrilledSandwalla()));
+            cycleFromHand(1);
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleCardChosen(player1, 1);
+            harness.passBothPriorities();
+
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castArtifact(player1, 0);
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+            harness.passBothPriorities();
+            harness.assertOnBattlefield(player1, "Hollow One");
+        }
+
+        @Test
+        void reductionExpiresOnNextTurn() {
+            harness.setHand(player1, List.of(new RampagingHippo()));
+            harness.setLibrary(player1, List.of(new FrilledSandwalla(), new FrilledSandwalla()));
+            harness.setLibrary(player2, List.of(new FrilledSandwalla(), new FrilledSandwalla()));
+            cycleFromHand(1);
+
+            harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+            harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+            harness.setHand(player1, List.of(new HollowOne()));
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+            assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not playable");
+
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castArtifact(player1, 0);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+    }
+
+    @Test
+    void castCostReductionDoesNotReduceCyclingCost() {
+        harness.setHand(player1, List.of(new RampagingHippo(), new HollowOne()));
+        harness.setLibrary(player1, List.of(new FrilledSandwalla(), new FrilledSandwalla()));
+        cycleFromHand(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Hollow One");
+        harness.assertNotInGraveyard(player1, "Hollow One");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateHandAbility(player1, 0, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Hollow One");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     @Test
     @DisplayName("Cycling discards Hollow One and draws a card")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new HollowOne()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new FrilledSandwalla()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
@@ -131,6 +216,6 @@ class HollowOneTest extends BaseCardTest {
 
         assertThat(harness.getGameData().stack).isEmpty();
         harness.assertInGraveyard(player1, "Hollow One");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Frilled Sandwalla");
     }
 }
