@@ -76,4 +76,39 @@ class GarenbrigCarverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
+    @Test
+    @DisplayName("Shield's Might goes to the graveyard when its target leaves before resolution")
+    void adventureDoesNotExileWhenItsTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GarenbrigCarver());
+        GarenbrigCarver card = new GarenbrigCarver();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Garenbrig Carver");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    @DisplayName("Garenbrig Carver can be cast directly without going on an Adventure")
+    void creatureCanBeCastDirectlyFromHand() {
+        GarenbrigCarver card = new GarenbrigCarver();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Garenbrig Carver");
+        harness.assertNotInGraveyard(player1, "Garenbrig Carver");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }

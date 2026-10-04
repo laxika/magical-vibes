@@ -63,6 +63,63 @@ class GamePreserveTest extends BaseCardTest {
     }
 
     @Test
+    void putsOnlyTheTopCreatureFromEachLibraryOntoTheBattlefield() {
+        harness.addToBattlefield(player1, new GamePreserve());
+        Card firstCreature = new DeadlyInsect();
+        Card secondCreature = new DeadlyInsect();
+        Card firstRemainingCard = new LandGrant();
+        Card secondRemainingCard = new LandGrant();
+        harness.setLibrary(player1, List.of(firstCreature, firstRemainingCard));
+        harness.setLibrary(player2, List.of(secondCreature, secondRemainingCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Deadly Insect")).hasSize(1);
+        assertThat(findPermanents(player2, "Deadly Insect")).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstRemainingCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondRemainingCard);
+    }
+
+    @Test
+    void usesTheTopCardsAtResolutionEvenIfTheSourceHasLeftTheBattlefield() {
+        harness.addToBattlefield(player1, new GamePreserve());
+        harness.setLibrary(player1, List.of(new LandGrant()));
+        harness.setLibrary(player2, List.of(new LandGrant()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        Card firstCreature = new DeadlyInsect();
+        Card secondCreature = new DeadlyInsect();
+        harness.setLibrary(player1, List.of(firstCreature));
+        harness.setLibrary(player2, List.of(secondCreature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Game Preserve");
+        assertThat(findPermanents(player1, "Deadly Insect")).hasSize(1);
+        assertThat(findPermanents(player2, "Deadly Insect")).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void leavesANoncreatureOnTopWhenTheOtherLibraryIsEmpty() {
+        harness.addToBattlefield(player1, new GamePreserve());
+        Card noncreature = new LandGrant();
+        harness.setLibrary(player1, List.of(noncreature));
+        harness.setLibrary(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(noncreature);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Land Grant");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void doesNotTriggerOnAnOpponentsUpkeep() {
         harness.addToBattlefield(player1, new GamePreserve());
         Card creature = new DeadlyInsect();
