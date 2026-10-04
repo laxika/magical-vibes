@@ -18,6 +18,77 @@ import static org.assertj.core.api.Assertions.assertThat;
 class IgnobleHierarchTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Exalted boosts the Hierarch itself when it attacks alone")
+    void boostsItselfWhenAttackingAlone() {
+        Permanent hierarch = addCreatureReady(player1, new IgnobleHierarch());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, hierarch)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hierarch)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Hierarch independently boosts a lone attacker")
+    void multipleExaltedAbilitiesStack() {
+        addCreatureReady(player1, new IgnobleHierarch());
+        Permanent attacker = addCreatureReady(player1, new IgnobleHierarch());
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped Hierarch still grants exalted to another attacker")
+    void tappedHierarchStillGrantsExalted() {
+        Permanent source = addCreatureReady(player1, new IgnobleHierarch());
+        Permanent attacker = addCreatureReady(player1, new IgnobleHierarch());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(source.isTapped()).isTrue();
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's Hierarch does not boost your lone attacker")
+    void opponentsExaltedDoesNotApply() {
+        addCreatureReady(player2, new IgnobleHierarch());
+        Permanent attacker = addCreatureReady(player1, new IgnobleHierarch());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exalted resolves even after its source leaves the battlefield")
+    void exaltedResolvesWithoutItsSource() {
+        Permanent source = addCreatureReady(player1, new IgnobleHierarch());
+        Permanent attacker = addCreatureReady(player1, new IgnobleHierarch());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
+        assertThat(gd.stack).hasSize(2);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Exalted — another creature attacking alone gets +1/+1")
     void allyAttackingAloneBoosted() {
         addCreatureReady(player1, new IgnobleHierarch());
