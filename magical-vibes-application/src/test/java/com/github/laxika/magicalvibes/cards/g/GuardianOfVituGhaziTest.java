@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GuardianOfVituGhazi.class, ElvesOfDeepShadow.class, CourierHawk.class})
 class GuardianOfVituGhaziTest extends BaseCardTest {
@@ -33,9 +34,7 @@ class GuardianOfVituGhaziTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard() instanceof GuardianOfVituGhazi)
-                .hasSize(1);
+        assertThat(countPermanents(player1, "Guardian of Vitu-Ghazi")).isEqualTo(1);
     }
 
     @Test
@@ -54,9 +53,7 @@ class GuardianOfVituGhaziTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard() instanceof GuardianOfVituGhazi)
-                .hasSize(1);
+        assertThat(countPermanents(player1, "Guardian of Vitu-Ghazi")).isEqualTo(1);
     }
 
     @Test
@@ -67,5 +64,84 @@ class GuardianOfVituGhaziTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(guardian.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Guardian can be cast without using convoke")
+    void castsWithoutConvoke() {
+        harness.setHand(player1, List.of(new GuardianOfVituGhazi()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Guardian of Vitu-Ghazi");
+    }
+
+    @Test
+    @DisplayName("Summoning-sick creatures can convoke without activating their mana abilities")
+    void summoningSickCreaturesCanConvoke() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new CourierHawk());
+        elf.setSummoningSick(true);
+        hawk.setSummoningSick(true);
+        harness.setHand(player1, List.of(new GuardianOfVituGhazi()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(elf.getId(), hawk.getId()));
+        harness.passBothPriorities();
+
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(hawk.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Guardian of Vitu-Ghazi");
+    }
+
+    @Test
+    @DisplayName("A tapped creature cannot convoke Guardian")
+    void rejectsTappedConvokeCreature() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
+        elf.tap();
+        harness.setHand(player1, List.of(new GuardianOfVituGhazi()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                List.of(elf.getId()))).isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Guardian of Vitu-Ghazi");
+        harness.assertNotOnBattlefield(player1, "Guardian of Vitu-Ghazi");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot convoke Guardian")
+    void rejectsOpponentsConvokeCreature() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new ElvesOfDeepShadow());
+        harness.setHand(player1, List.of(new GuardianOfVituGhazi()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                List.of(elf.getId()))).isInstanceOf(IllegalStateException.class);
+
+        assertThat(elf.isTapped()).isFalse();
+        harness.assertInHand(player1, "Guardian of Vitu-Ghazi");
+    }
+
+    @Test
+    @DisplayName("A green creature cannot convoke Guardian's white mana requirement")
+    void rejectsWrongColorForWhiteCost() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
+        harness.setHand(player1, List.of(new GuardianOfVituGhazi()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                List.of(elf.getId()))).isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Guardian of Vitu-Ghazi");
+        harness.assertNotOnBattlefield(player1, "Guardian of Vitu-Ghazi");
     }
 }
