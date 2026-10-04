@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HuntingDrake.class, MoggJailer.class, QuirionExplorer.class, StormscapeFamiliar.class,
+@CardUsed({HuntingDrake.class, HornedKavu.class, MoggJailer.class, QuirionExplorer.class, StormscapeFamiliar.class,
         TerminalMoraine.class})
 class HuntingDrakeTest extends BaseCardTest {
 
@@ -103,15 +103,76 @@ class HuntingDrakeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HuntingDrake()));
         addHuntingDrakeMana();
         harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gameData.gameLog.stream().map(entry -> entry.plainText()))
                 .anyMatch(log -> log.contains("fizzles"));
+        harness.assertOnBattlefield(player1, "Hunting Drake");
+    }
+
+    @Test
+    @DisplayName("Enters when no red or green creature can be targeted")
+    void entersWithoutLegalTarget() {
+        harness.addToBattlefield(player2, new StormscapeFamiliar());
+        harness.castFromHand(player1, new HuntingDrake(), "{4}{U}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hunting Drake");
+        harness.assertOnBattlefield(player2, "Stormscape Familiar");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A borrowed creature goes to its owner's library rather than its controller's")
+    void borrowedCreatureGoesToOwnersLibrary() {
+        MoggJailer borrowed = new MoggJailer();
+        borrowed.setOwnerId(player2.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, borrowed).getId();
+        int controllerDeckSize = gd.playerDecks.get(player1.getId()).size();
+        int ownerDeckSize = gd.playerDecks.get(player2.getId()).size();
+
+        castHuntingDrake(targetId);
+
+        harness.assertNotOnBattlefield(player1, "Mogg Jailer");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(controllerDeckSize);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(ownerDeckSize + 1);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(borrowed);
+    }
+
+    @Test
+    @DisplayName("Can target a creature that is both red and green")
+    void canTargetMulticoloredCreature() {
+        HornedKavu target = new HornedKavu();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, target).getId();
+
+        castHuntingDrake(targetId);
+
+        harness.assertNotOnBattlefield(player2, "Horned Kavu");
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(target);
+    }
+
+    @Test
+    @DisplayName("The ETB trigger resolves even if Hunting Drake leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        MoggJailer target = new MoggJailer();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, target).getId();
+        harness.setHand(player1, List.of(new HuntingDrake()));
+        addHuntingDrakeMana();
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mogg Jailer");
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(target);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castHuntingDrake(UUID targetId) {
