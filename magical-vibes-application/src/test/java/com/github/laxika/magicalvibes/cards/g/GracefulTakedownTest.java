@@ -12,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,9 +30,8 @@ class GracefulTakedownTest extends BaseCardTest {
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         prepareSpell();
 
-        harness.castSorcery(player1, 0,
+        harness.castAndResolveSorcery(player1, 0,
                 List.of(victim.getId(), other.getId(), firstEnchanted.getId(), secondEnchanted.getId()));
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Air Elemental");
     }
@@ -42,8 +43,7 @@ class GracefulTakedownTest extends BaseCardTest {
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         prepareSpell();
 
-        harness.castSorcery(player1, 0, List.of(victim.getId(), other.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(victim.getId(), other.getId()));
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
     }
@@ -60,6 +60,93 @@ class GracefulTakedownTest extends BaseCardTest {
                 List.of(victim.getId(), firstOther.getId(), secondOther.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("enchanted creature");
+    }
+
+    @Test
+    void allowsNoDamageDealingCreatures() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareSpell();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(victim.getId()));
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Graceful Takedown");
+    }
+
+    @Test
+    void allowsAnEnchantedCreatureAsTheOtherCreature() {
+        Permanent other = addEnchantedBear();
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareSpell();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(victim.getId(), other.getId()));
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        assertThat(other.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void rejectsChoosingTheSameCreatureInBothSourceGroups() {
+        Permanent source = addEnchantedBear();
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(victim.getId(), source.getId(), source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsAVictimYouControl() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(victim.getId(), source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void aSourceThatStopsBeingEnchantedDoesNotDealDamage() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent enchanted = addEnchantedBear();
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareSpell();
+        harness.castSorcery(player1, 0, List.of(victim.getId(), other.getId(), enchanted.getId()));
+
+        gd.battlefield.get(player1.getId()).removeIf(p -> enchanted.getId().equals(p.getAttachedTo()));
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void aVictimThatBecomesControlledByYouIsNotDealtDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareSpell();
+        harness.castSorcery(player1, 0, List.of(victim.getId(), source.getId()));
+
+        gd.battlefield.get(player2.getId()).remove(victim);
+        gd.battlefield.get(player1.getId()).add(victim);
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void allowsMoreThanOneHundredEnchantedSources() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        List<UUID> targets = new ArrayList<>();
+        targets.add(victim.getId());
+        for (int i = 0; i < 101; i++) {
+            targets.add(addEnchantedBear().getId());
+        }
+        prepareSpell();
+
+        harness.castAndResolveSorcery(player1, 0, targets);
+
+        harness.assertInGraveyard(player2, "Air Elemental");
     }
 
     private Permanent addEnchantedBear() {
