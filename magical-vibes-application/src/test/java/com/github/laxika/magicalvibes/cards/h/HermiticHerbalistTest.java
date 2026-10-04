@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AirbendingLesson;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -18,7 +17,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HermiticHerbalist.class, AirbendingLesson.class, GrizzlyBears.class})
+@CardUsed({HermiticHerbalist.class, AirbendingLesson.class})
 class HermiticHerbalistTest extends BaseCardTest {
 
     @Test
@@ -59,7 +58,7 @@ class HermiticHerbalistTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HermiticHerbalist());
         harness.setHand(player1, List.of(new AirbendingLesson()));
         harness.castInstant(player1, 0, target.getId());
 
@@ -73,16 +72,77 @@ class HermiticHerbalistTest extends BaseCardTest {
     void lessonOnlyManaCannotCastNonLessonSpell() {
         addReadyHerbalist();
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        pool.addSubtypeSpellOnlyMana(Set.of(CardSubtype.LESSON), ManaColor.GREEN, 2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        pool.addSubtypeSpellOnlyMana(Set.of(CardSubtype.LESSON), ManaColor.GREEN, 1);
+        pool.addSubtypeSpellOnlyMana(Set.of(CardSubtype.LESSON), ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new HermiticHerbalist()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(pool.getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.LESSON))).isEqualTo(2);
     }
 
+    @Test
+    void firstAbilityManaCanCastNonLessonSpell() {
+        addReadyHerbalist();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new HermiticHerbalist()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void producedLessonManaCannotCastNonLessonSpell() {
+        addReadyHerbalist();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "BLUE");
+        harness.setHand(player1, List.of(new HermiticHerbalist()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.LESSON))).isEqualTo(2);
+    }
+
+    @Test
+    void bothAbilitiesRequireCreatureToBeReady() {
+        harness.addToBattlefield(player1, new HermiticHerbalist());
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void eitherAbilityTapsHerbalistAndPreventsActivatingTheOther() {
+        Permanent first = addCreatureReady(player1, new HermiticHerbalist());
+        Permanent second = addCreatureReady(player1, new HermiticHerbalist());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(first.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(second.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addReadyHerbalist() {
-        Permanent herbalist = harness.addToBattlefieldAndReturn(player1, new HermiticHerbalist());
-        herbalist.setSummoningSick(false);
+        addCreatureReady(player1, new HermiticHerbalist());
     }
 }
