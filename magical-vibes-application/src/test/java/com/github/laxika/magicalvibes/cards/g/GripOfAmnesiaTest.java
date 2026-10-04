@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RootSliver;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BorderPatrol.class, Forest.class, GripOfAmnesia.class, GrizzlyBears.class})
+@CardUsed({BorderPatrol.class, GripOfAmnesia.class, RootSliver.class})
 class GripOfAmnesiaTest extends BaseCardTest {
 
     @Test
@@ -103,8 +102,7 @@ class GripOfAmnesiaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -114,10 +112,10 @@ class GripOfAmnesiaTest extends BaseCardTest {
 
     @Test
     void exilesEveryCardFromTargetSpellControllersGraveyard() {
-        Card firstGraveyardCard = new Forest();
-        Card secondGraveyardCard = new Forest();
-        Card drawCard = new Forest();
-        castAgainstOpponentForJudReview(List.of(firstGraveyardCard, secondGraveyardCard), drawCard);
+        Card firstGraveyardCard = new BorderPatrol();
+        Card secondGraveyardCard = new BorderPatrol();
+        Card drawCard = new BorderPatrol();
+        castAgainstOpponent(List.of(firstGraveyardCard, secondGraveyardCard), drawCard);
 
         harness.handleMayAbilityChosen(player2, true);
 
@@ -127,28 +125,32 @@ class GripOfAmnesiaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
     }
 
-    private GrizzlyBears castAgainstOpponentForJudReview(List<Card> graveyard, Card drawCard) {
-        GrizzlyBears spell = new GrizzlyBears();
-
+    @Test
+    @CardUsed({BorderPatrol.class, GripOfAmnesia.class, RootSliver.class})
+    void controllerMayExileGraveyardEvenWhenTargetSpellCannotBeCountered() {
+        RootSliver spell = new RootSliver();
+        Card graveyardCard = new BorderPatrol();
+        Card drawCard = new BorderPatrol();
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setGraveyard(player2, graveyard);
+        harness.setGraveyard(player2, List.of(graveyardCard));
         harness.setLibrary(player1, List.of(drawCard));
+        harness.castFromHand(player2, spell, "{3}{G}");
+        harness.passPriority(player2);
         harness.setHand(player1, List.of(new GripOfAmnesia()));
-
-        harness.castFromHand(player2, spell, "{1}{G}");
-
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.passPriority(player2);
-        harness.castInstant(player1, 0, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player2.getId());
-        return spell;
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(graveyardCard);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawCard);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == spell);
     }
 }
