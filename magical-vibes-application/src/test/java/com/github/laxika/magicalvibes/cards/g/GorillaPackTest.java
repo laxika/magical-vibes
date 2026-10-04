@@ -21,8 +21,7 @@ class GorillaPackTest extends BaseCardTest {
     @DisplayName("Sacrificed when controller controls no Forests")
     void sacrificedWhenNoForests() {
         harness.castFromHand(player1, new GorillaPack(), "{2}{G}");
-        harness.passBothPriorities(); // resolve creature → state trigger fires
-        harness.passBothPriorities(); // resolve state trigger → sacrificed
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Gorilla Pack");
         harness.assertInGraveyard(player1, "Gorilla Pack");
@@ -111,5 +110,54 @@ class GorillaPackTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(pack);
         harness.assertInGraveyard(player1, "Gorilla Pack");
+    }
+
+    @Test
+    @DisplayName("A pending sacrifice trigger still resolves after a Forest returns")
+    void forestReturningDoesNotStopPendingSacrifice() {
+        harness.addToBattlefield(player1, new GorillaPack());
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Gorilla Pack");
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gorilla Pack");
+        harness.assertInGraveyard(player1, "Gorilla Pack");
+    }
+
+    @Test
+    @DisplayName("The state trigger does not duplicate while already on the stack")
+    void pendingStateTriggerDoesNotDuplicate() {
+        harness.addToBattlefield(player1, new GorillaPack());
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Gorilla Pack");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Gorilla Pack");
+    }
+
+    @Test
+    @DisplayName("Losing one Forest does not trigger sacrifice while another remains")
+    void survivesLosingOneOfTwoForests() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new GorillaPack());
+
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Gorilla Pack");
+        harness.assertNotInGraveyard(player1, "Gorilla Pack");
     }
 }
