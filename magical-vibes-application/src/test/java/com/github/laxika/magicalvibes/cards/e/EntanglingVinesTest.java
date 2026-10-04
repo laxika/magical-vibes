@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DragonsClaw;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,17 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EntanglingVines.class, RuneclawBear.class, DragonsClaw.class})
 class EntanglingVinesTest extends BaseCardTest {
-
-    // ===== Targeting restriction: must target tapped creature =====
 
     @Test
     @DisplayName("Can target a tapped creature with Entangling Vines")
     void canTargetTappedCreature() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -40,14 +38,10 @@ class EntanglingVinesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an untapped creature with Entangling Vines")
     void cannotTargetUntappedCreature() {
-        Permanent tappedBears = new Permanent(new GrizzlyBears());
-        tappedBears.setSummoningSick(false);
+        Permanent tappedBears = addCreatureReady(player2, new RuneclawBear());
         tappedBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tappedBears);
 
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
 
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -60,16 +54,13 @@ class EntanglingVinesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Entangling Vines")
     void cannotTargetNonCreature() {
-        Permanent tappedBears = new Permanent(new GrizzlyBears());
-        tappedBears.setSummoningSick(false);
+        Permanent tappedBears = addCreatureReady(player2, new RuneclawBear());
         tappedBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tappedBears);
 
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DragonsClaw());
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
         artifact.tap();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
@@ -77,20 +68,16 @@ class EntanglingVinesTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a tapped creature");
     }
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Entangling Vines puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -101,15 +88,13 @@ class EntanglingVinesTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Entangling Vines attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -119,19 +104,14 @@ class EntanglingVinesTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Prevents untapping =====
-
     @Test
     @DisplayName("Tapped creature with Entangling Vines does not untap during controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent vinesPerm = new Permanent(new EntanglingVines());
+        Permanent vinesPerm = harness.addToBattlefieldAndReturn(player1, new EntanglingVines());
         vinesPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(vinesPerm);
 
         advanceToNextTurn(player1);
 
@@ -141,19 +121,14 @@ class EntanglingVinesTest extends BaseCardTest {
     @Test
     @DisplayName("Other permanents owned by the same player still untap normally")
     void otherPermanentsStillUntap() {
-        Permanent enchantedBears = new Permanent(new GrizzlyBears());
-        enchantedBears.setSummoningSick(false);
+        Permanent enchantedBears = addCreatureReady(player2, new RuneclawBear());
         enchantedBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(enchantedBears);
 
-        Permanent freeBears = new Permanent(new GrizzlyBears());
-        freeBears.setSummoningSick(false);
+        Permanent freeBears = addCreatureReady(player2, new RuneclawBear());
         freeBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(freeBears);
 
-        Permanent vinesPerm = new Permanent(new EntanglingVines());
+        Permanent vinesPerm = harness.addToBattlefieldAndReturn(player1, new EntanglingVines());
         vinesPerm.setAttachedTo(enchantedBears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(vinesPerm);
 
         advanceToNextTurn(player1);
 
@@ -161,19 +136,14 @@ class EntanglingVinesTest extends BaseCardTest {
         assertThat(freeBears.isTapped()).isFalse();
     }
 
-    // ===== Removal restores untapping =====
-
     @Test
     @DisplayName("Creature can untap again after Entangling Vines is removed")
     void creatureUntapsAfterVinesRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent vinesPerm = new Permanent(new EntanglingVines());
+        Permanent vinesPerm = harness.addToBattlefieldAndReturn(player1, new EntanglingVines());
         vinesPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(vinesPerm);
 
         gd.playerBattlefields.get(player1.getId()).remove(vinesPerm);
 
@@ -182,20 +152,16 @@ class EntanglingVinesTest extends BaseCardTest {
         assertThat(bearsPerm.isTapped()).isFalse();
     }
 
-    // ===== Full integration =====
-
     @Test
     @DisplayName("Full integration: cast Entangling Vines on tapped creature, advance turn, creature stays tapped")
     void fullIntegrationCastAndPreventUntap() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player2, new RuneclawBear());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -208,7 +174,59 @@ class EntanglingVinesTest extends BaseCardTest {
         assertThat(bearsPerm.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An untapped target is illegal when Entangling Vines resolves")
+    void targetUntappingBeforeResolutionPreventsAttachment() {
+        Permanent creature = addCreatureReady(player2, new RuneclawBear());
+        creature.tap();
+        harness.setHand(player1, List.of(new EntanglingVines()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        creature.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Entangling Vines");
+        harness.assertInGraveyard(player1, "Entangling Vines");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entangling Vines goes to the graveyard when its host becomes untapped")
+    void untappedHostMakesAttachmentIllegal() {
+        Permanent creature = addCreatureReady(player2, new RuneclawBear());
+        creature.tap();
+        harness.setHand(player1, List.of(new EntanglingVines()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Entangling Vines");
+
+        creature.untap();
+        harness.runStateBasedActions();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Entangling Vines");
+        harness.assertInGraveyard(player1, "Entangling Vines");
+    }
+
+    @Test
+    @DisplayName("Entangling Vines can enchant its controller's tapped creature")
+    void canEnchantOwnCreatureAndPreventItsUntap() {
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        creature.tap();
+        harness.setHand(player1, List.of(new EntanglingVines()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Entangling Vines").getAttachedTo())
+                .isEqualTo(creature.getId());
+        harness.performUntapStep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+    }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
