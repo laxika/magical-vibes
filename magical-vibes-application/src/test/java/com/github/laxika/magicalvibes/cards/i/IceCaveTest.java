@@ -129,4 +129,57 @@ class IceCaveTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
+
+    @Test
+    @DisplayName("A second Ice Cave trigger still offers payment after the spell is countered")
+    void paymentIsStillOfferedAfterSpellLeavesStack() {
+        harness.addToBattlefield(player1, new IceCave());
+        harness.addToBattlefield(player2, new IceCave());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new GaeasSkyfolk(), "{G}{U}");
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInGraveyard(player2, "Gaea's Skyfolk");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Payment excludes kicker costs even when the spell was kicked")
+    void paymentExcludesKickerCost() {
+        harness.addToBattlefield(player1, new IceCave());
+        var target = harness.addToBattlefieldAndReturn(player1, new GaeasSkyfolk());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Illuminate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.ensurePriority(player2);
+        gs.playCard(gd, player2, 0, 2, target.getId(), null, List.of(), List.of(), false,
+                null, null, null, null, null, true, null, null, null, null,
+                List.of(), false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Illuminate");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
 }
