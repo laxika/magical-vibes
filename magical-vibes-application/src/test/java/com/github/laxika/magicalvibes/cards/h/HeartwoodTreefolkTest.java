@@ -54,6 +54,27 @@ class HeartwoodTreefolkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped Forest still prevents Heartwood Treefolk from being blocked")
+    void cannotBeBlockedWhenDefendersForestIsTapped() {
+        harness.addToBattlefield(player2, new Forest());
+        findPermanent(player2, "Forest").setTapped(true);
+
+        Permanent blocker = addCreatureReady(player2, new HeartwoodTreefolk());
+        Permanent attacker = addCreatureReady(player1, new HeartwoodTreefolk());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Heartwood Treefolk can be blocked when only the attacking player controls a Forest")
     void canBeBlockedWhenOnlyAttackerControlsForest() {
         harness.addToBattlefield(player1, new Forest());
