@@ -46,7 +46,6 @@ class HamatoGuardianStanceTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isZero();
@@ -64,6 +63,69 @@ class HamatoGuardianStanceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature while the caster scries their own library")
+    void targetsOpposingCreatureAndScriesCastersLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears topCard = new GrizzlyBears();
+        FountainOfYouth nextCard = new FountainOfYouth();
+        GrizzlyBears opponentsTopCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentsTopCard));
+
+        castHamatoGuardianStance(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(topCard);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard, topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsTopCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Hamato Guardian Stance");
+    }
+
+    @Test
+    @DisplayName("Still boosts the creature when the caster's library is empty")
+    void resolvesWithEmptyLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+
+        castHamatoGuardianStance(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Hamato Guardian Stance");
+    }
+
+    @Test
+    @DisplayName("Does not scry when its only target leaves the battlefield before resolution")
+    void doesNotScryWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new HamatoGuardianStance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        target.setToughnessModifier(-2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Hamato Guardian Stance");
     }
 
     private void castHamatoGuardianStance(Permanent target) {
