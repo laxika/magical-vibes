@@ -32,7 +32,7 @@ public class BudokaPupil extends Card {
 
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.KI),
-                new MayEffect(new TransformToBackFaceEffect(), "Flip Budoka Pupil?")));
+                new MayEffect(new TransformToBackFaceEffect(true), "Flip Budoka Pupil?")));
     }
 
     @Override

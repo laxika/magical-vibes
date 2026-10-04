@@ -91,6 +91,7 @@ class BurlyBreakerTest extends BaseCardTest {
         Permanent breaker = addReadyBreaker(DayNight.DAY);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
@@ -103,6 +104,7 @@ class BurlyBreakerTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player2.getId(), 1);
         gd.spellsCastLastTurn.put(player1.getId(), 2);
 
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
@@ -163,6 +165,7 @@ class BurlyBreakerTest extends BaseCardTest {
     }
 
     private void advanceToUntap(Player activePlayer) {
+        gd.previousTurnActivePlayerId = activePlayer.equals(player1) ? player2.getId() : player1.getId();
         harness.performUntapStep(activePlayer);
     }
 }

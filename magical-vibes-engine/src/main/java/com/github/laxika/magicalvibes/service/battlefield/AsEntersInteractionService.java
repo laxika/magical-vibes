@@ -341,7 +341,9 @@ public class AsEntersInteractionService {
             List<UUID> validOpponentIds = gameData.orderedPlayerIds.stream()
                     .filter(playerId -> !playerId.equals(choiceControllerId))
                     .toList();
-            if (!validOpponentIds.isEmpty()) {
+            if (justEntered.getChosenPlayerIds().isEmpty() && validOpponentIds.size() == 1) {
+                justEntered.getChosenPlayerIds().add(validOpponentIds.getFirst());
+            } else if (justEntered.getChosenPlayerIds().isEmpty() && !validOpponentIds.isEmpty()) {
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChoosePlayerAsEnter(
                         justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
                         etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,

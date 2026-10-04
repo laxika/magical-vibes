@@ -57,6 +57,7 @@ class BrutalCatharTest extends BaseCardTest {
         Permanent cathar = addCathar();
         gd.spellsCastLastTurn.clear();
 
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(cathar.isTransformed()).isTrue();
@@ -68,6 +69,7 @@ class BrutalCatharTest extends BaseCardTest {
         Permanent cathar = addCathar();
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(cathar.isTransformed()).isFalse();
@@ -78,11 +80,13 @@ class BrutalCatharTest extends BaseCardTest {
     void transformsBackAndExilesCreature() {
         Permanent cathar = addCathar();
         gd.spellsCastLastTurn.clear();
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new CandlegroveWitch());
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(cathar.isTransformed()).isFalse();
@@ -126,6 +130,7 @@ class BrutalCatharTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
@@ -139,6 +144,7 @@ class BrutalCatharTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
@@ -218,6 +224,7 @@ class BrutalCatharTest extends BaseCardTest {
         Permanent cathar = castCathar(witch.getId());
         gd.spellsCastLastTurn.clear();
 
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(cathar.isTransformed()).isTrue();
@@ -247,6 +254,7 @@ class BrutalCatharTest extends BaseCardTest {
         Permanent witch = harness.addToBattlefieldAndReturn(player2, new CandlegroveWitch());
         Permanent cathar = castCathar(witch.getId());
         gd.spellsCastLastTurn.clear();
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
         assertThat(cathar.isTransformed()).isTrue();
         resetForFollowUpSpell();

@@ -36,6 +36,7 @@ class BirdAdmirerTest extends BaseCardTest {
         Permanent admirer = harness.enterBattlefieldAndReturn(player1, new BirdAdmirer());
 
         gd.spellsCastLastTurn.clear();
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
@@ -43,6 +44,7 @@ class BirdAdmirerTest extends BaseCardTest {
         assertThat(admirer.getCard()).isInstanceOf(WingShredder.class);
 
         gd.spellsCastLastTurn.put(player2.getId(), 2);
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
@@ -57,6 +59,7 @@ class BirdAdmirerTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
@@ -71,6 +74,7 @@ class BirdAdmirerTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 2);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);

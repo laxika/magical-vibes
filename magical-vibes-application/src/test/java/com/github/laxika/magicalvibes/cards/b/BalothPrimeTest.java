@@ -44,7 +44,6 @@ class BalothPrimeTest extends BaseCardTest {
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(baloth),
                 0, null, null);
-        harness.handlePermanentChosen(player1, forest.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);

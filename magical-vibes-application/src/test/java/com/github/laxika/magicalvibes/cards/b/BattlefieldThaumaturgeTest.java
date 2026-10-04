@@ -140,6 +140,7 @@ class BattlefieldThaumaturgeTest extends BaseCardTest {
 
     @Test
     void twoCreatureTargetsReduceCostToOneGenericAndOneBlue() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new BattlefieldThaumaturge());
         Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -167,6 +168,7 @@ class BattlefieldThaumaturgeTest extends BaseCardTest {
 
     @Test
     void multipleThaumaturgesReduceOnlyGenericMana() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new BattlefieldThaumaturge());
         harness.addToBattlefield(player1, new BattlefieldThaumaturge());
         Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

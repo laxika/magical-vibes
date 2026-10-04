@@ -95,7 +95,8 @@ class BorrowedHostilityTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
-        harness.passUntil(TurnStep.UNTAP);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();

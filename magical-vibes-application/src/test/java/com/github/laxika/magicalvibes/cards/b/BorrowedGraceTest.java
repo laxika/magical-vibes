@@ -74,7 +74,8 @@ class BorrowedGraceTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(TurnStep.UNTAP);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
@@ -106,7 +107,7 @@ class BorrowedGraceTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof BorrowedGrace);
+                .anyMatch(card -> "Borrowed Grace".equals(card.getName()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 

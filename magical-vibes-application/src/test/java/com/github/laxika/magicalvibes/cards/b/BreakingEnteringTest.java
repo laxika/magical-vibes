@@ -62,7 +62,9 @@ class BreakingEnteringTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player2, "Kraul Warrior");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
     }
 

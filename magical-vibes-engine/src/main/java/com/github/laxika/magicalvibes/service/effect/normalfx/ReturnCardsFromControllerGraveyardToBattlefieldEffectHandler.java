@@ -101,7 +101,7 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
             return;
         }
 
-        if (matching.size() <= maxCount) {
+        if (matching.size() <= maxCount && (e.mandatory() || e.manaValueEqualsX())) {
             // Auto-return all matching cards — no choice needed
             List<Card> cardsToReturn = new ArrayList<>();
             graveyardService.beginGraveyardLeaveBatch(gameData);

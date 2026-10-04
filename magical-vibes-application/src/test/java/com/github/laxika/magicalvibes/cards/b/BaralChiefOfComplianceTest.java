@@ -232,7 +232,9 @@ class BaralChiefOfComplianceTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
         harness.activateAbility(player2, 0, null, shock.getId());
-        harness.passPriority(player2);
+        if (player2.getId().equals(gqs.getPriorityPlayerId(gd))) {
+            harness.passPriority(player2);
+        }
         harness.castInstant(player1, 0, gd.stack.getLast().getTargetableId());
 
         harness.passBothPriorities();
@@ -257,8 +259,10 @@ class BaralChiefOfComplianceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, player2.getId());
         harness.castInstant(player1, 0, shock.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);

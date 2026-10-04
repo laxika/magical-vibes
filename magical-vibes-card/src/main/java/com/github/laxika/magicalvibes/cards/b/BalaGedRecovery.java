@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 import java.util.List;
 
@@ -23,7 +25,9 @@ public class BalaGedRecovery extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .targetGraveyard(true)
-                                .build()),
+                                .build(),
+                        new GraveyardCardPredicateTargetFilter(null,
+                                GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
                 new ChooseOneEffect.ChooseOneOption("Bala Ged Sanctuary", List.of())
         )));
     }

@@ -27,7 +27,7 @@ public class BowOfNylea extends Card {
 
     public BowOfNylea() {
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsAttackingPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

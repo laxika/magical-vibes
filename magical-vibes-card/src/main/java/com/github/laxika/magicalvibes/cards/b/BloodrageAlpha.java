@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -52,9 +51,7 @@ public class BloodrageAlpha extends Card {
                 WOLF_OR_WEREWOLF,
                 List.of(new GrantTriggeredAbilityToCastSpellEffect(
                         EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new MayEffect(
-                                new EnteringCreatureFightsTargetCreatureEffect(CREATURE_YOU_DONT_CONTROL),
-                                "Have it fight up to one target creature you don't control?"))));
+                        new EnteringCreatureFightsTargetCreatureEffect(CREATURE_YOU_DONT_CONTROL, true))));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

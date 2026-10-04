@@ -84,7 +84,7 @@ public class PutCounterOnChosenOwnPermanentEffectHandler implements NormalEffect
 
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, 1,
                 new MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference(
-                        e.counterType(), count, e.recordPlacement()),
+                        e.counterType(), count, e.recordPlacement(), e.mandatory()),
                 "Choose a permanent to put counters on.");
     }
 }

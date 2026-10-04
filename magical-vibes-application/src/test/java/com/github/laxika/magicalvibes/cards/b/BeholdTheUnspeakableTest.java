@@ -129,6 +129,7 @@ class BeholdTheUnspeakableTest extends BaseCardTest {
 
     @Test
     void chapterIAffectsOnlyCreaturesPresentAtResolutionAndExpiresNextTurn() {
+        harness.setHand(player2, List.of());
         Permanent affected = harness.addToBattlefieldAndReturn(player2, new JukaiTrainee());
         harness.setLibrary(player2, List.of(new ClawingTorment(), new ClawingTorment()));
         Permanent saga = addSagaWithLore(0);
@@ -140,7 +141,7 @@ class BeholdTheUnspeakableTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, affected)).isZero();
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(2);
     }
 

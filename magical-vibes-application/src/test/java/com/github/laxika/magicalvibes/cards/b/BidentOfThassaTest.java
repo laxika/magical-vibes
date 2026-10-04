@@ -57,8 +57,8 @@ class BidentOfThassaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bident.isTapped()).isTrue();
-        assertThat(ownBear.isMustAttackThisTurn()).isFalse();
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(harness.getAttackLegalityService().getMustAttackRequirementCount(gd, ownBear)).isZero();
+        assertThat(harness.getAttackLegalityService().getMustAttackRequirementCount(gd, enemyBear)).isEqualTo(1);
     }
 
     @Test

@@ -160,6 +160,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         assertThat(berserkers.getPowerModifier()).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, berserkers, Keyword.HASTE)).isTrue();
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(berserkers.getPowerModifier()).isZero();

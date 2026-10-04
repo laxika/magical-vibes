@@ -16,12 +16,13 @@ public class BalinLoremaster extends Card {
 
     public BalinLoremaster() {
         addEffect(EffectSlot.STATIC, new StoriedEffect());
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        MayEffect ability = new MayEffect(
+                new DiscardOwnHandThenDrawThatManyAndDealDamageEffect(new ControllerHasEnduringStory()),
+                "Discard your hand and draw that many cards?");
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ability);
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DWARF),
-                        new MayEffect(
-                                new DiscardOwnHandThenDrawThatManyAndDealDamageEffect(
-                                        new ControllerHasEnduringStory()),
-                                "Discard your hand and draw that many cards?")));
+                        ability));
     }
 }

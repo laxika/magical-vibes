@@ -128,6 +128,7 @@ class BennieBracksZoologistTest extends BaseCardTest {
 
     @Test
     void tokenCreatedOnPreviousTurnDoesNotQualify() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new BennieBracksZoologist());
         harness.addToBattlefield(player1, new NuisanceEngine());
         harness.setLibrary(player1, List.of(new BennieBracksZoologist(), new BennieBracksZoologist()));
@@ -165,7 +166,9 @@ class BennieBracksZoologistTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(activePlayer, TurnStep.END_STEP);
+            harness.passBothPriorities();
+        });
     }
 }

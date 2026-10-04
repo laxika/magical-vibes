@@ -19,9 +19,6 @@ public class Bamboozle extends Card {
         ))
                 .addEffect(EffectSlot.SPELL,
                         new LookAtTopCardsOfTargetLibraryEffect(4,
-                                TargetLibraryAction.REVEAL_AND_PUT_ONE_INTO_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL,
-                        new LookAtTopCardsOfTargetLibraryEffect(3,
-                                TargetLibraryAction.REVEAL_AND_PUT_ONE_INTO_GRAVEYARD));
+                                TargetLibraryAction.REVEAL_AND_PUT_ONE_INTO_GRAVEYARD, 2));
     }
 }

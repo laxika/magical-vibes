@@ -123,8 +123,11 @@ class BroughtBackTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(first.getCard().getId(), second.getCard().getId()));
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().addCardToHandFromGraveyard(
-                gd, player1.getId(), player1.getId(), first.getCard()));
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, first.getCard().getId());
+            harness.getPermanentRemovalService().addCardToHandFromGraveyard(
+                    gd, player1.getId(), player1.getId(), first.getCard());
+        });
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(permanent -> {

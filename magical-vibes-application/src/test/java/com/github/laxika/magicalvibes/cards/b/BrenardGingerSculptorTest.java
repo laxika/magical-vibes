@@ -40,6 +40,7 @@ class BrenardGingerSculptorTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, copy, Keyword.TRAMPLE)).isTrue();
 
+        copy.setSummoningSick(false);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(copy), 0, null, null);
         resolveAllTriggers();

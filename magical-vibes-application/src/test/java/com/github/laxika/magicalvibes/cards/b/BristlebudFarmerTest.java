@@ -76,11 +76,13 @@ class BristlebudFarmerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Food"));
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(card -> card.getName().equals("Bristlebud Farmer"))
+                .hasSize(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(card -> card.getName().equals("Bristlebud Farmer"))
+                .hasSize(2);
     }
 
     @Test

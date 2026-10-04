@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,6 +108,9 @@ class BolracClanBasherTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 1));
+        harness.passBothPriorities();
 
         harness.assertLife(player2, 16);
         harness.assertInGraveyard(player2, "Bolrac-Clan Basher");

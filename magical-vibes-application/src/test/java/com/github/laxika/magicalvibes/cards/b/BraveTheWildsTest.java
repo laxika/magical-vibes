@@ -72,7 +72,9 @@ class BraveTheWildsTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);

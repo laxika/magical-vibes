@@ -87,6 +87,19 @@ public class StackEntry {
     private UUID primaryTargetBeforeEffectResolution;
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
+    private UUID resolutionSourcePermanentId;
+
+    /** Uses a permanent returned during this resolution as the source of subsequent effects. */
+    public void useReturnedPermanentAsSource(Permanent permanent, UUID controllerId) {
+        resolutionSourcePermanentId = permanent.getId();
+        sourcePermanentSnapshot = new Permanent(permanent);
+        damageSourceCard = permanent.getCard();
+        damageSourceControllerId = controllerId;
+    }
+
+    public UUID getSourcePermanentId() {
+        return resolutionSourcePermanentId != null ? resolutionSourcePermanentId : sourcePermanentId;
+    }
     /** Controller of the source permanent when an activated ability was put on the stack. */
     @Setter private UUID sourcePermanentControllerId;
     @Setter private com.github.laxika.magicalvibes.model.planar.PlanarObject sourcePlanarObject;
@@ -133,6 +146,9 @@ public class StackEntry {
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean spellMovedDuringResolution;
     @Setter private boolean castWithFlashback;
+
+    /** Flashforward replaces every destination when this spell leaves the stack. */
+    @Setter private boolean castWithFlashforward;
     /** Whether this spell was cast using an escape permission. */
     @Setter private boolean castWithEscape;
     /** Cards exiled from the graveyard to pay an escape cost, linked when the permanent enters. */
@@ -762,6 +778,7 @@ public class StackEntry {
         this.targetId = source.targetId;
         this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
+        this.resolutionSourcePermanentId = source.resolutionSourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
         source.lastKnownPermanentCounters.forEach((id, counts) ->
@@ -790,6 +807,7 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.spellMovedDuringResolution = source.spellMovedDuringResolution;
         this.castWithFlashback = source.castWithFlashback;
+        this.castWithFlashforward = source.castWithFlashforward;
         this.castWithEscape = source.castWithEscape;
         this.escapeExiledCardIds = source.escapeExiledCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.escapeExiledCardIds);
@@ -1101,6 +1119,7 @@ public class StackEntry {
         this.kicked = false;
         this.giftPromised = false;
         this.castWithFlashback = false;
+        this.castWithFlashforward = false;
         this.castWithEscape = false;
         this.castWithAdventure = false;
         this.castWithOmen = false;
@@ -1199,6 +1218,8 @@ public class StackEntry {
         }
         entryType = StackEntryType.SORCERY_SPELL;
         effectsToResolve = List.copyOf(missileEffects);
+        targetId = null;
+        targetIds = List.of();
     }
 
     public void restoreBombardmentSpellState() {

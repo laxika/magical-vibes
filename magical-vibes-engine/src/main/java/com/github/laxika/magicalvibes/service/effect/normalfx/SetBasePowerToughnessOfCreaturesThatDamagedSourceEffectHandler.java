@@ -44,8 +44,10 @@ public class SetBasePowerToughnessOfCreaturesThatDamagedSourceEffectHandler impl
             for (Permanent permanent : List.copyOf(battlefield)) {
                 Set<UUID> damaged = gameData.creatureCardsDamagedBySourceThatDiedThisTurn
                         .get(permanent.getId());
-                if (damaged == null || !damaged.contains(sourceCardId)
-                        || !gameQueryService.isCreature(gameData, permanent)) {
+                boolean dealtDamage = e.damagingPermanentIds() != null
+                        ? e.damagingPermanentIds().contains(permanent.getId())
+                        : damaged != null && damaged.contains(sourceCardId);
+                if (!dealtDamage || !gameQueryService.isCreature(gameData, permanent)) {
                     continue;
                 }
                 StackEntry targetEntry = new StackEntry(entry);

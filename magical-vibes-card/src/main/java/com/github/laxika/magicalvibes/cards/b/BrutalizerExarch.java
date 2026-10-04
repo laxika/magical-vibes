@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,11 +22,7 @@ import java.util.List;
 public class BrutalizerExarch extends Card {
 
     public BrutalizerExarch() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
-                "Target must be a noncreature permanent"
-        ))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Search your library for a creature card, reveal it, then shuffle and put that card on top",
                                 new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
@@ -33,8 +30,11 @@ public class BrutalizerExarch extends Card {
                         ),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put target noncreature permanent on the bottom of its owner's library",
-                                new PutTargetOnBottomOfLibraryEffect()
+                                new PutTargetOnBottomOfLibraryEffect(),
+                                new PermanentPredicateTargetFilter(
+                                        new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
+                                        "Target must be a noncreature permanent")
                         )
-                )));
+                ))));
     }
 }

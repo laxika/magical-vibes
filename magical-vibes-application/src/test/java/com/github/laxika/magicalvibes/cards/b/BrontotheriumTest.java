@@ -38,7 +38,7 @@ class BrontotheriumTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIds()).containsExactly(brontotherium.getId());
+        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).containsExactly(brontotherium.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -62,7 +62,7 @@ class BrontotheriumTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).isEmpty();
     }
 
     @Test
@@ -103,7 +103,7 @@ class BrontotheriumTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of())).doesNotThrowAnyException();
-        assertThat(blocker.getMustBlockIds()).containsExactly(brontotherium.getId());
+        assertThat(blocker.getMustBlockIdsUntilEndOfCombat()).containsExactly(brontotherium.getId());
     }
 
     @Test

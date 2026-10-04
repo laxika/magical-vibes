@@ -113,7 +113,7 @@ class BolgEreborsReckoningTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);

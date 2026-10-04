@@ -359,6 +359,10 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
+        if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice
+                && permanentIds.size() != maxCount) {
+            throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
+        }
         boolean mandatoryCounterChoice = context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement own
                 && own.mandatory()
                 || context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference reference

@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -24,10 +24,8 @@ public class BuccaneersBravado extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature.");
         var pirateTarget = new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE))),
-                "Target must be a Pirate creature.");
+                new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
+                "Target must be a Pirate.");
 
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
@@ -39,7 +37,7 @@ public class BuccaneersBravado extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target Pirate gets +1/+1 and gains double strike until end of turn",
                         List.of(
-                                new BoostTargetCreatureEffect(1, 1),
+                                new BoostTargetPermanentEffect(1, 1, new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
                                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)),
                         pirateTarget)
         )));

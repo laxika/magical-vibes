@@ -48,6 +48,7 @@ class BoseijuWhoEnduresTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Boseiju, Who Endures");
         harness.assertInGraveyard(player2, "Breeding Pool");
 
+        harness.handleMayAbilityChosen(player2, true);
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards())
@@ -90,6 +91,7 @@ class BoseijuWhoEnduresTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertInGraveyard(player2, "Mirror Box");
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
         harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -109,6 +111,7 @@ class BoseijuWhoEnduresTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Jukai Naturalist");
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
         harness.assertOnBattlefield(player2, "Forest");
     }
@@ -173,6 +176,7 @@ class BoseijuWhoEnduresTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        harness.handleMayAbilityChosen(player2, true);
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Forest");

@@ -66,6 +66,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private final GrantKeywordEffectHandler grantKeywordEffectHandler;
     private final PlayerInputService playerInputService;
     private final CloneService cloneService;
+    private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -512,6 +513,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
     private void returnAfterImmediateExile(
             GameData gameData, StackEntry entry, FlickerEffect e, FlickeredPermanent flickered) {
+        if (e.equals(FlickerEffect.flickerTarget()) && flickered.card().isAura()) {
+            returnAuraBatch(gameData, List.of(flickered));
+            return;
+        }
         Runnable afterEntry = placeAfterImmediateExile(gameData, entry, e, flickered,
                 new Permanent(flickered.card()), battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
         afterEntry.run();
@@ -525,6 +530,11 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                         || flickered.card().getAdditionalTypes().stream().anyMatch(CardType::isPermanentType))
                         && gameData.findExiledCard(flickered.card().getId()) != null)
                 .toList();
+        if (effect.equals(FlickerEffect.flickerTarget())
+                && returning.stream().anyMatch(flickered -> flickered.card().isAura())) {
+            returnAuraBatch(gameData, returning);
+            return;
+        }
         List<Permanent> simultaneous = returning.stream().map(flickered -> new Permanent(flickered.card())).toList();
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Runnable> afterEntry = new ArrayList<>();
@@ -533,6 +543,16 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     simultaneous.get(i), enterTappedTypes, simultaneous));
         }
         afterEntry.forEach(Runnable::run);
+    }
+
+    private void returnAuraBatch(GameData gameData, List<FlickeredPermanent> returning) {
+        List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> cards = returning.stream()
+                .filter(flickered -> !flickered.card().isToken())
+                .map(flickered -> new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                        flickered.returnControllerId(), flickered.ownerId(), flickered.card(),
+                        com.github.laxika.magicalvibes.model.Zone.EXILE, null))
+                .toList();
+        battlefieldEntryBatchSupport.begin(gameData, cards);
     }
 
     private Runnable placeAfterImmediateExile(

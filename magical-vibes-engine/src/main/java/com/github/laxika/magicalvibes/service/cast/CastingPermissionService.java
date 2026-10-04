@@ -634,7 +634,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof OpponentsCantCastSpellsWithManaValueGreaterThanEffect restriction
                             && (restriction.spellFilter() == null
                             || predicateEvaluationService.matchesCardPredicate(card,
@@ -2159,10 +2159,15 @@ public class CastingPermissionService {
      * an instant or sorcery (normal mana cost; exile instead of graveyard on resolution).
      */
     public boolean canCastTopInstantOrSorceryFromGraveyard(GameData gameData, UUID playerId, Card card) {
+        return canCastTopInstantOrSorceryFromGraveyard(gameData, playerId, card, card);
+    }
+
+    public boolean canCastTopInstantOrSorceryFromGraveyard(GameData gameData, UUID playerId,
+                                                         Card card, Card castingFace) {
         if (!gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.contains(playerId)) {
             return false;
         }
-        if (!card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY)) {
+        if (!castingFace.hasType(CardType.INSTANT) && !castingFace.hasType(CardType.SORCERY)) {
             return false;
         }
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);

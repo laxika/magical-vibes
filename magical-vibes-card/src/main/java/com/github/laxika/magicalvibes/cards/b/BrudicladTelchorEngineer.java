@@ -30,7 +30,7 @@ public class BrudicladTelchorEngineer extends Card {
 
     public BrudicladTelchorEngineer() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.HASTE, GrantScope.OWN_CREATURES, new PermanentIsTokenPredicate()));
+                Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsTokenPredicate()));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
                 new CreateTokenEffect(
                         1, "Phyrexian Myr", 2, 1, CardColor.BLUE,

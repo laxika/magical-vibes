@@ -89,19 +89,33 @@ public class AnyPlayerMayTakeDamageOrTargetPlayerDrawEffectHandler implements No
     public void advance(GameData gameData, PendingMayAbility ability,
                         AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect effect,
                         UUID playerId) {
+        advance(gameData, ability, effect, playerId, false);
+    }
+
+    public void advance(GameData gameData, PendingMayAbility ability,
+                        AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect effect,
+                        UUID playerId, boolean accepted) {
+        List<UUID> acceptedPlayers = new ArrayList<>(effect.acceptedPlayerIds());
+        if (accepted) acceptedPlayers.add(playerId);
         List<UUID> remaining = new ArrayList<>(effect.remainingPlayerIds());
         remaining.remove(playerId);
         remaining.removeIf(id -> !gameData.playerIds.contains(id));
 
         if (remaining.isEmpty()) {
-            drawCards(gameData, ability.sourceCard(), effect.sourceControllerId(),
-                    effect.targetPlayerId(), effect);
+            if (acceptedPlayers.isEmpty()) {
+                drawCards(gameData, ability.sourceCard(), effect.sourceControllerId(),
+                        effect.targetPlayerId(), effect);
+            } else {
+                for (UUID acceptedPlayerId : acceptedPlayers) {
+                    dealDamage(gameData, ability, effect, acceptedPlayerId);
+                }
+            }
             return;
         }
 
         promptNext(gameData, ability.sourceCard(), new AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect(
                 effect.damage(), effect.drawCount(), effect.targetPlayerId(),
-                List.copyOf(remaining), effect.sourceControllerId()));
+                List.copyOf(remaining), effect.sourceControllerId(), acceptedPlayers));
     }
 
     private void drawCards(GameData gameData, Card sourceCard, UUID sourceControllerId,

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -667,7 +668,14 @@ public class ActivatedAbilityExecutionService {
         if (shouldSacrificeEquipment && ability.getGrantSourcePermanentId() != null) {
             Permanent equipment = gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
             if (equipment != null) {
-                sacrificedEquipmentCard = equipment.getCard();
+                sacrificedEquipmentCard = equipment.getCard().createRuntimeCopy();
+                EnumSet<Keyword> equipmentKeywords = EnumSet.noneOf(Keyword.class);
+                for (Keyword keyword : Keyword.values()) {
+                    if (gameQueryService.hasKeyword(gameData, equipment, keyword)) {
+                        equipmentKeywords.add(keyword);
+                    }
+                }
+                sacrificedEquipmentCard.setKeywords(equipmentKeywords);
                 permanentRemovalService.sacrificePermanentToGraveyard(gameData, equipment);
             }
         }
@@ -1535,7 +1543,9 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 ahg.applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
-                aug.applyTo(gameData.playerManaPools.get(playerId));
+                new AwardUncounterableGrantingManaEffect(
+                        ManaProductionSupport.effectiveColor(gameData, playerId, permanent, aug.color()),
+                        aug.amount() * manaMultiplier).applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
                 addNotedManaForLastExiledCard(gameData, player, permanent);
             } else if (effect instanceof AddNotedManaEffect) {

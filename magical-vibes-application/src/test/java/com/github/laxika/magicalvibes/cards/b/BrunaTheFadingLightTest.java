@@ -28,6 +28,8 @@ class BrunaTheFadingLightTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(human.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Bruna, the Fading Light");
@@ -53,6 +55,8 @@ class BrunaTheFadingLightTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(angel.getId(), human.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(angel.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Bruna, the Fading Light");

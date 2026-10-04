@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BeatrixLoyalGeneral extends Card {
 
     public BeatrixLoyalGeneral() {
-        target(TargetFilters.creatureYouControl(), 0, 1)
+        target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                         new MayEffect(
                                 new AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect(),

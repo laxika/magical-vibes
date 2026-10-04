@@ -38,7 +38,6 @@ class BrutalizerExarchTest extends BaseCardTest {
         void mode1TriggersLibrarySearch() {
             setupLibraryWithCreatures();
             castWithMode1();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
@@ -54,7 +53,6 @@ class BrutalizerExarchTest extends BaseCardTest {
         void choosingCreaturePutsOnTop() {
             setupLibraryWithCreatures();
             castWithMode1();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
@@ -74,7 +72,6 @@ class BrutalizerExarchTest extends BaseCardTest {
         void failToFindIsAllowed() {
             setupLibraryWithCreatures();
             castWithMode1();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
@@ -94,7 +91,6 @@ class BrutalizerExarchTest extends BaseCardTest {
             harness.setLibrary(player1, List.of(new Plains(), new Island(), new Forest()));
 
             castWithMode1();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             // No creatures in library, so search finds nothing
@@ -116,7 +112,6 @@ class BrutalizerExarchTest extends BaseCardTest {
             UUID targetId = harness.getPermanentId(player2, "Plains");
 
             castWithMode2(targetId);
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
@@ -134,7 +129,6 @@ class BrutalizerExarchTest extends BaseCardTest {
             UUID targetId = harness.getPermanentId(player2, "Shrine of Burning Rage");
 
             castWithMode2(targetId);
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             harness.assertNotOnBattlefield(player2, "Shrine of Burning Rage");
@@ -147,7 +141,6 @@ class BrutalizerExarchTest extends BaseCardTest {
             UUID targetId = harness.getPermanentId(player2, "Plains");
 
             castWithMode2(targetId);
-            harness.passBothPriorities(); // resolve creature
 
             harness.assertOnBattlefield(player1, "Brutalizer Exarch");
         }
@@ -175,7 +168,6 @@ class BrutalizerExarchTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         castWithMode1();
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -189,7 +181,6 @@ class BrutalizerExarchTest extends BaseCardTest {
         harness.addToBattlefield(player1, plains);
         castWithMode2(harness.getPermanentId(player1, "Plains"));
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Plains");
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isSameAs(plains);
@@ -201,7 +192,6 @@ class BrutalizerExarchTest extends BaseCardTest {
         GlistenerElf creature = new GlistenerElf();
         harness.setLibrary(player1, List.of(creature));
         castWithMode1();
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
@@ -219,7 +209,6 @@ class BrutalizerExarchTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Island());
         UUID targetId = harness.getPermanentId(player2, "Plains");
         castWithMode2(targetId);
-        harness.passBothPriorities();
         var target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(permanent -> permanent.getId().equals(targetId)).findFirst().orElseThrow();
         harness.getPermanentRemovalService().removePermanentToLibraryBottom(gd, target);
@@ -234,13 +223,20 @@ class BrutalizerExarchTest extends BaseCardTest {
     private void castWithMode1() {
         harness.setHand(player1, List.of(new BrutalizerExarch()));
         harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0, 0); // mode 0 = search library
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1,
+                "Search your library for a creature card, reveal it, then shuffle and put that card on top");
     }
 
     private void castWithMode2(UUID targetId) {
         harness.setHand(player1, List.of(new BrutalizerExarch()));
         harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0, 1, targetId); // mode 1 = put on bottom
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1,
+                "Put target noncreature permanent on the bottom of its owner's library");
+        harness.handlePermanentChosen(player1, targetId);
     }
 
     private void setupLibraryWithCreatures() {

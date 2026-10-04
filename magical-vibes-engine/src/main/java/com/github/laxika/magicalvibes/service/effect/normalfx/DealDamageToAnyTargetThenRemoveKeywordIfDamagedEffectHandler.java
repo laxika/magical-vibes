@@ -57,15 +57,27 @@ public class DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffectHandler
                     && damageSupport.isSourcePermanentPreventedFromDealingDamage(gameData, entry))
                     || damageSupport.isDamagePreventedForCreature(gameData, entry, target);
             if (!damagePrevented) {
-                int actualDamage = damageSupport.dealCreatureDamage(gameData, entry, target, damage);
-                if (actualDamage > 0) {
+                UUID damageSourceId = entry.getSourcePermanentId() != null
+                        ? entry.getSourcePermanentId() : entry.getCard().getId();
+                java.util.Map<UUID, Integer> damageBefore = new java.util.HashMap<>();
+                gameData.damageDealtToPermanentsBySourceThisTurn.forEach((permanentId, sources) ->
+                        damageBefore.put(permanentId, sources.getOrDefault(damageSourceId, 0)));
+                damageSupport.dealCreatureDamage(gameData, entry, target, damage);
+                gameData.forEachPermanent((ignored, recipient) -> {
+                    int actualDamage = gameData.damageDealtToPermanentsBySourceThisTurn
+                            .getOrDefault(recipient.getId(), java.util.Map.of())
+                            .getOrDefault(damageSourceId, 0) - damageBefore.getOrDefault(recipient.getId(), 0);
+                    if (actualDamage <= 0 || !gameQueryService.isCreature(gameData, recipient)) return;
                     if (damageEffect.exileInsteadOfDie()) {
-                        target.setExileInsteadOfDieThisTurn(true);
+                        recipient.setExileInsteadOfDieThisTurn(true);
                     }
-                    removeKeywordEffectHandler.resolve(gameData, entry,
+                    StackEntry recipientEntry = new StackEntry(entry.getEntryType(), entry.getCard(),
+                            entry.getControllerId(), entry.getDescription(), java.util.List.of(),
+                            recipient.getId(), entry.getSourcePermanentId());
+                    removeKeywordEffectHandler.resolve(gameData, recipientEntry,
                             new RemoveKeywordEffect(damageEffect.keyword(), GrantScope.TARGET,
                                     EffectDuration.UNTIL_END_OF_TURN));
-                }
+                });
             }
         } else {
             damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, damage, false);

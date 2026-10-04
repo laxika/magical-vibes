@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.o.OakgnarlWarrior;
 import com.github.laxika.magicalvibes.cards.s.SpellbreakerBehemoth;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -51,6 +52,7 @@ class BrokenAmbitionsTest extends BaseCardTest {
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         // Spell was countered (player1 could not pay {1}).
         harness.assertNotOnBattlefield(player1, "Woodland Changeling");
@@ -73,6 +75,7 @@ class BrokenAmbitionsTest extends BaseCardTest {
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore); // no mill
@@ -92,6 +95,7 @@ class BrokenAmbitionsTest extends BaseCardTest {
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
@@ -109,14 +113,17 @@ class BrokenAmbitionsTest extends BaseCardTest {
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         // Payment is decided before the clash reveals any cards or mills.
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true); // pay {1}
+        harness.handleMayAbilityChosen(player1, true);
+        keepClashCardsOnTop(); // pay {1}
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 4);
-        harness.passBothPriorities(); // resolve Woodland Changeling
+        harness.passBothPriorities();
+        keepClashCardsOnTop(); // resolve Woodland Changeling
 
         harness.assertOnBattlefield(player1, "Woodland Changeling");
     }
@@ -142,7 +149,9 @@ class BrokenAmbitionsTest extends BaseCardTest {
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
+        keepClashCardsOnTop();
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         harness.assertOnBattlefield(player1, "Oakgnarl Warrior");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 4);
@@ -158,9 +167,11 @@ class BrokenAmbitionsTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, target.getId());
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
+        keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -175,8 +186,11 @@ class BrokenAmbitionsTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 0, target.getId());
         harness.passBothPriorities();
+        keepClashCardsOnTop();
         harness.handleMayAbilityChosen(player1, true);
+        keepClashCardsOnTop();
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         harness.assertOnBattlefield(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -192,6 +206,7 @@ class BrokenAmbitionsTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, target.getId());
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -208,6 +223,7 @@ class BrokenAmbitionsTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, target.getId());
         harness.passBothPriorities();
+        keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
@@ -226,5 +242,12 @@ class BrokenAmbitionsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+    private void keepClashCardsOnTop() {
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.Scry scry) {
+            gs.handleInteractionAnswer(gd,
+                    scry.playerId().equals(player1.getId()) ? player1 : player2,
+                    new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        }
     }
 }

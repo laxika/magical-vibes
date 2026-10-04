@@ -2570,6 +2570,7 @@ public class DamageTriggerCollectorService {
                 damagedCreature.getId()
         );
         triggerEntry.setEventValue(damageDealt);
+        triggerEntry.setSourcePermanentSnapshot(new Permanent(damagedCreature));
         gameData.stack.add(triggerEntry);
         gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());

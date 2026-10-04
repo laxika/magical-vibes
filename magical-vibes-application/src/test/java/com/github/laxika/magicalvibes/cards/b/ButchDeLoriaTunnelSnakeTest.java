@@ -121,6 +121,8 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         assertThat(butch.getToughnessModifier()).isEqualTo(1);
 
         harness.ensurePriority(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, secondBear.getId());
         resolveAllTriggers();
 

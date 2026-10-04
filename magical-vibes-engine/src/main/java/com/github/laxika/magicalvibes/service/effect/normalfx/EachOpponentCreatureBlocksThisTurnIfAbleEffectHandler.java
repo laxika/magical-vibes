@@ -29,6 +29,9 @@ public class EachOpponentCreatureBlocksThisTurnIfAbleEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
+        gameData.playerStaticEffectsUntilEndOfTurn
+                .computeIfAbsent(controllerId, ignored -> new ArrayList<>())
+                .add(effect);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {

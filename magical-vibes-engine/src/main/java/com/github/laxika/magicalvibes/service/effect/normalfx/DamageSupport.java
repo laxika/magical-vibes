@@ -2168,17 +2168,34 @@ public class DamageSupport {
                                                      StackEntry sourceEntry) {
         if (damage <= 0 || sourceCard == null || sourceControllerId == null) return;
         UUID singleCreatureSpellTargetId = singleCreatureSpellTargetId(gameData, sourceEntry);
-        PendingSourceDamage batch = gameData.pendingSourceDamageForReflection.get(sourceCard.getId());
+        boolean spellDamage = sourceEntry != null && (sourceEntry.getEntryType() == StackEntryType.INSTANT_SPELL
+                || sourceEntry.getEntryType() == StackEntryType.SORCERY_SPELL);
+        UUID damageEventKey = spellDamage
+                ? UUID.nameUUIDFromBytes((sourceEntry.getTargetableId() + ":" + sourceCard.getId()
+                        + ":" + sourceEntry.getResolvingEffectIndex()).getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                : sourceCard.getId();
+        PendingSourceDamage batch = gameData.pendingSourceDamageForReflection.get(damageEventKey);
         if (batch == null) {
-            gameData.pendingSourceDamageForReflection.put(sourceCard.getId(),
-                    new PendingSourceDamage(sourceCard, sourceControllerId, sourcePermanentId, damage,
+            batch = new PendingSourceDamage(sourceCard, sourceControllerId, sourcePermanentId, damage,
                             damagedPlayerId, damagedPermanentControllerId,
                             damagedPermanentId,
                             snapshotSelfDealsDamageEffects(gameData, sourceCard, sourcePermanentId),
-                            singleCreatureSpellTargetId));
+                            singleCreatureSpellTargetId);
+            gameData.pendingSourceDamageForReflection.put(damageEventKey, batch);
         } else {
             batch.rememberSingleCreatureSpellTarget(singleCreatureSpellTargetId);
             batch.add(damage, damagedPlayerId, damagedPermanentControllerId, damagedPermanentId);
+        }
+        if (sourceEntry != null && (sourceEntry.getEntryType() == StackEntryType.INSTANT_SPELL
+                || sourceEntry.getEntryType() == StackEntryType.SORCERY_SPELL)) {
+            if (damagedPlayerId != null && !damagedPlayerId.equals(sourceControllerId)) {
+                batch.recordInstantOrSorceryDamageRecipient(damagedPlayerId);
+            } else if (damagedPermanentId != null) {
+                Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, damagedPermanentId);
+                if (damagedPermanent != null && damagedPermanent.getCard().hasType(CardType.BATTLE)) {
+                    batch.recordInstantOrSorceryDamageRecipient(damagedPermanentId);
+                }
+            }
         }
     }
 
@@ -2206,9 +2223,13 @@ public class DamageSupport {
      */
     public void flushSourceDamageReflections(GameData gameData) {
         if (gameData.pendingSourceDamageForReflection.isEmpty()) return;
-        List<PendingSourceDamage> batches = new ArrayList<>(gameData.pendingSourceDamageForReflection.values());
+        Map<UUID, PendingSourceDamage> batches = new LinkedHashMap<>(gameData.pendingSourceDamageForReflection);
         gameData.pendingSourceDamageForReflection.clear();
-        for (PendingSourceDamage batch : batches) {
+        for (Map.Entry<UUID, PendingSourceDamage> event : batches.entrySet()) {
+            PendingSourceDamage batch = event.getValue();
+            if (!event.getKey().equals(batch.getSourceCard().getId())) {
+                triggerCollectionService.checkAllyInstantOrSorcerySpellDealsDamageTriggers(gameData, batch);
+            }
             triggerCollectionService.queueSourceDealsDamageReflections(gameData,
                     batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount(),
                     batch.getDamageToPlayers(), batch.getSelfDealsDamageEffects(),
@@ -2221,14 +2242,10 @@ public class DamageSupport {
             triggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers(
                     gameData, batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(),
                     damageRecipients);
-            boolean damagedOpponentOrBattle = damageRecipients.stream().anyMatch(recipient ->
-                    recipient.damagedPermanentId() == null
-                            ? !recipient.damagedPlayerId().equals(batch.getControllerId())
-                            : gameQueryService.findPermanentById(gameData, recipient.damagedPermanentId()) != null
-                                    && gameQueryService.findPermanentById(gameData, recipient.damagedPermanentId())
-                                            .getCard().hasType(CardType.BATTLE));
-            triggerCollectionService.checkInstantOrSorceryDamageToOpponentOrBattleTriggers(
-                    gameData, batch.getSourceCard(), batch.getControllerId(), damagedOpponentOrBattle);
+            for (int i = 0; i < batch.getInstantOrSorceryDamageRecipientCount(); i++) {
+                triggerCollectionService.checkInstantOrSorceryDamageToOpponentOrBattleTriggers(
+                        gameData, batch.getSourceCard(), batch.getControllerId(), true);
+            }
         }
     }
 

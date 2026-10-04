@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -37,7 +38,8 @@ public class BidentOfThassa extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{U}",
-                List.of(new MatchingCreaturesMustAttackThisTurnEffect(opponentCreatures)),
+                List.of(new GrantPlayerStaticEffectsUntilEndOfTurnEffect(
+                        List.of(new MatchingCreaturesMustAttackEffect(opponentCreatures)))),
                 "{1}{U}, {T}: Creatures your opponents control attack this turn if able."
         ));
     }

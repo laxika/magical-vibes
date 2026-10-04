@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMysticReflection;
 import com.github.laxika.magicalvibes.model.TextReplacement;
@@ -311,6 +312,17 @@ public class BattlefieldPlacementService {
                         CounterType.LOYALTY, permanent.getCard().getLoyalty(), controllerId);
                 permanent.setCounterCount(CounterType.LOYALTY, loyalty);
             }
+            if (!permanent.isFaceDown() && permanent.getCard().hasType(CardType.BATTLE)
+                    && permanent.getCard().getDefense() != null
+                    && permanent.getCounterCount(CounterType.DEFENSE) == 0) {
+                int defense = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                        CounterType.DEFENSE, permanent.getCard().getDefense(), controllerId);
+                permanent.setCounterCount(CounterType.DEFENSE, defense);
+                if (permanent.getProtectorPlayerId() == null
+                        && permanent.getCard().getSubtypes().contains(CardSubtype.SIEGE)) {
+                    permanent.setProtectorPlayerId(gameQueryService.getOpponentId(gameData, controllerId));
+                }
+            }
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
                     repeatedAdditionalCosts, request.convokeCreatureCount(), request.enterWithCounters(),
                     request.sourceStackEntry());
@@ -359,6 +371,14 @@ public class BattlefieldPlacementService {
             permanent.setPersistentPowerModifier(perpetualPowerModifier);
         }
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        synchronized (gameData.targetSpellDamagePreventionShields) {
+            gameData.targetSpellDamagePreventionShields.replaceAll(shield ->
+                    shield.sourcePermanentId() == null && !shield.requiredColors().isEmpty()
+                            && permanent.getCard().getId().equals(shield.spellCardId())
+                            ? new TargetSpellDamagePreventionShield(null, shield.lifeGainPlayerId(),
+                                    permanent.getId(), shield.requiredColors())
+                            : shield);
+        }
         if (echoHandler != null) echoHandler.registerOnEntry(gameData, permanent);
         if (permanent.getCard().isToken()) {
             gameData.playersWhoCreatedTokensThisTurn.add(puttingPlayerId);
@@ -415,9 +435,21 @@ public class BattlefieldPlacementService {
                         gameData, permanent, added, controllerId);
         }
         Card enteredCharacteristics = permanent.getCard().createRuntimeCopy();
+        java.util.Set<CardType> entryTypes = gameQueryService.getEffectiveCardTypes(gameData, permanent);
+        enteredCharacteristics.setType(entryTypes.stream().findFirst().orElse(null));
+        enteredCharacteristics.setAdditionalTypes(entryTypes.stream()
+                .filter(type -> type != enteredCharacteristics.getType())
+                .collect(java.util.stream.Collectors.toSet()));
         enteredCharacteristics.setSubtypes(java.util.Arrays.stream(CardSubtype.values())
                 .filter(subtype -> gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype))
                 .toList());
+        enteredCharacteristics.freeze();
+        for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
+            if (counter.getValue() > 0) {
+                permanentCounterSupport.fireOpponentPutsCountersOnControlledCreatureTriggers(
+                        gameData, permanent, counter.getKey(), counter.getValue(), controllerId);
+            }
+        }
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(enteredCharacteristics);

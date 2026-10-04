@@ -2620,11 +2620,19 @@ public class TriggeredAbilityQueueService {
 
     private int declaredMinimumTargetCount(Card card, List<CardEffect> effects) {
         for (CardEffect effect : effects) {
+            if (effect instanceof SequenceEffect sequence) {
+                int nestedMinimum = declaredMinimumTargetCount(card, sequence.steps());
+                if (nestedMinimum >= 0) return nestedMinimum;
+            }
             int targetIndex = card.getEffectTargetIndex(effect);
             if (targetIndex >= 0 && targetIndex < card.getSpellTargets().size()) {
                 SpellTarget target = card.getSpellTargets().get(targetIndex);
                 return target.getMinTargets();
             }
+        }
+        if (card.getSpellTargets().size() == 1
+                && card.getSpellTargets().getFirst().getFilter() instanceof GraveyardCardPredicateTargetFilter) {
+            return card.getSpellTargets().getFirst().getMinTargets();
         }
         return -1;
     }

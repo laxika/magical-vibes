@@ -98,6 +98,10 @@ class BreezekeeperTest extends BaseCardTest {
     }
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(TurnStep.UNTAP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        var nextPlayer = gd.activePlayerId.equals(player1.getId()) ? player2 : player1;
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.passUntilWithNoAttackers(nextPlayer, TurnStep.UPKEEP));
     }
 }

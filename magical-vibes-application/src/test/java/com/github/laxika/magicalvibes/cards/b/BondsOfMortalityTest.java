@@ -47,7 +47,7 @@ class BondsOfMortalityTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentIndestructible, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, opponentHexproof, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentIndestructible, Keyword.INDESTRUCTIBLE)).isTrue();

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffect;
@@ -24,6 +26,7 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffectHandler
         implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     @Override
@@ -40,15 +43,9 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffectHandler
 
         List<Card> library = gameData.playerDecks.get(damagedPlayerId);
         String damagedPlayerName = gameData.playerIdToName.get(damagedPlayerId);
-        if (library == null || library.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.text(damagedPlayerName + "'s library is empty — nothing to exile."));
-            return;
-        }
-
         Card nonland = null;
         int exiledCount = 0;
-        while (!library.isEmpty()) {
+        while (library != null && !library.isEmpty()) {
             Card top = library.removeFirst();
             exileService.exileCard(gameData, damagedPlayerId, top);
             exiledCount++;
@@ -58,27 +55,20 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffectHandler
             }
         }
 
-        if (nonland == null) {
-            gameLogService.append(gameData, GameLog.text(
-                    damagedPlayerName + " exiles " + exiledCount
-                            + " card(s) from the top of their library — no nonland card found."));
-            return;
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), entry.getControllerId(), List.of(effect),
+                    "Put a +1/+1 counter on " + entry.getCard().getName() + "?",
+                    nonland == null ? null : nonland.getId(), null, entry.getSourcePermanentId()));
+        } else if (nonland != null) {
+            UUID cardId = nonland.getId();
+            gameData.exilePlayPermissions.put(cardId, entry.getControllerId());
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+            gameData.exilePlayAnyManaType.add(cardId);
         }
-
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(),
-                entry.getControllerId(),
-                List.of(effect),
-                "Put a +1/+1 counter on " + entry.getCard().getName() + "?",
-                nonland.getId(),
-                null,
-                entry.getSourcePermanentId()));
-        gameLogService.append(gameData, GameLog.builder()
-                .text(damagedPlayerName + " exiles cards until ")
-                .card(nonland)
-                .text(". The source controller may put a +1/+1 counter on the source.")
-                .build());
-        log.info("Game {} - {} exiles {} card(s) until {} for {}'s choice",
-                gameData.id, damagedPlayerName, exiledCount, nonland.getName(), entry.getCard().getName());
+        gameLogService.append(gameData, GameLog.text(
+                damagedPlayerName + " exiles " + exiledCount + " card(s) from the top of their library."));
     }
 }

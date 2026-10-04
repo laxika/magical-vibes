@@ -25,13 +25,13 @@ public class BringerOfTheRedDawn extends Card {
     public BringerOfTheRedDawn() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}{U}{B}{R}{G}"))));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
-                ),
-                "Untap target creature and gain control of it until end of turn?"
-        ));
+        target(TargetFilters.creature()).addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                SequenceEffect.of(new MayEffect(
+                        SequenceEffect.of(
+                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN)
+                        ),
+                        "Untap target creature and gain control of it until end of turn?"
+                ), new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
     }
 }

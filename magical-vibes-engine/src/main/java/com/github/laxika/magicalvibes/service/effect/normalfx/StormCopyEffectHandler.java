@@ -34,7 +34,10 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (StormCopyEffect) effect;
-        if (e.spellSnapshot() == null || e.copies() <= 0) return;
+        if (e.spellSnapshot() == null) return;
+        int copies = e.resolutionCount() != null
+                ? e.resolutionCount().copyCount(gameData, e.castingPlayerId()) : e.copies();
+        if (copies <= 0) return;
 
         StackEntry spellSnapshot = e.spellSnapshot();
         UUID castingPlayerId = e.castingPlayerId();
@@ -46,7 +49,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        int copyCount = copySupport.adjustedSpellCopyCount(gameData, e.copies());
+        int copyCount = copySupport.adjustedSpellCopyCount(gameData, copies);
         for (int i = 0; i < copyCount; i++) {
             Card copyCard = copySupport.createCopyCard(spellCard);
             if (e.tokenCopy()) {

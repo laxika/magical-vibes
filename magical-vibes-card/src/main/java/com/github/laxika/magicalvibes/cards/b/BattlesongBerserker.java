@@ -14,7 +14,7 @@ public class BattlesongBerserker extends Card {
 
     public BattlesongBerserker() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ATTACK, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new BoostTargetCreatureEffect(1, 0))
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
     }
 }

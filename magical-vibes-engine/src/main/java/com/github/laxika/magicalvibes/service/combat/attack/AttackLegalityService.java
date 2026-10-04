@@ -878,6 +878,16 @@ public class AttackLegalityService {
                     .count();
         });
 
+        gameData.playerStaticEffectsUntilEndOfTurn.forEach((effectControllerId, effects) -> {
+            FilterContext context = FilterContext.of(gameData).withSourceControllerId(effectControllerId);
+            count[0] += (int) effects.stream()
+                    .filter(com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect.class::cast)
+                    .filter(requirement -> predicateEvaluationService.matchesPermanentPredicate(
+                            creature, requirement.matcher(), context))
+                    .count();
+        });
+
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement
                     && floatingRequirementMatches(gameData, creature, floatingEffect, requirement)) {

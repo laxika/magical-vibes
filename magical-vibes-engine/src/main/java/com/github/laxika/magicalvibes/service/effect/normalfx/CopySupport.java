@@ -206,6 +206,9 @@ public class CopySupport {
         }
 
         copy.copyTargetingFrom(original);
+        for (var ability : original.getActivatedAbilities()) {
+            copy.addActivatedAbility(ability);
+        }
 
         return copy;
     }

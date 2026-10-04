@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -23,14 +26,12 @@ import java.util.List;
 public class BladewingTheRisen extends Card {
 
     public BladewingTheRisen() {
-        // When Bladewing enters, you may return target Dragon permanent card from your
-        // graveyard to the battlefield. (Modeled as up-to-one graveyard target.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardSubtypePredicate(CardSubtype.DRAGON))
+                .filter(new CardAllOfPredicate(List.of(new CardSubtypePredicate(CardSubtype.DRAGON),
+                        new CardIsPermanentPredicate())))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return target Dragon permanent card from your graveyard to the battlefield?"));
 
         // {B}{R}: Dragon creatures get +1/+1 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{B}{R}",

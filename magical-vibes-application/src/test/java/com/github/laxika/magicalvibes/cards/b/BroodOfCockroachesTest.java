@@ -134,13 +134,13 @@ class BroodOfCockroachesTest extends BaseCardTest {
 
         reanimateWithPlayer2(brood.getCard().getId());
         resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Brood of Cockroaches");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         resolveAllTriggers();
 
         harness.assertLife(player1, lifeBefore - 1);
-        harness.assertOnBattlefield(player2, "Brood of Cockroaches");
         harness.assertNotInHand(player1, "Brood of Cockroaches");
     }
 

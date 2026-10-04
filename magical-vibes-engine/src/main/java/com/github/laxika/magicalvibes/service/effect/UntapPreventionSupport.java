@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.UUID;
 import java.util.List;
@@ -20,6 +22,8 @@ import java.util.List;
 public class UntapPreventionSupport {
 
     private final ConditionEvaluationService conditionEvaluationService;
+    @Autowired
+    private GameQueryService gameQueryService;
 
     public boolean hasActiveSelfDoesntUntap(GameData gameData, Permanent permanent) {
         UUID controllerId = gameData.findControllerOf(permanent);
@@ -29,7 +33,10 @@ public class UntapPreventionSupport {
                         && lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
                         && gameData.playerBattlefields.getOrDefault(floating.controllerId(), List.of())
                         .stream().anyMatch(source -> source.getId().equals(floating.sourcePermanentId())))
-                || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                || !(gameQueryService == null
+                        ? permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        : gameQueryService.hasLostPrintedAbilities(gameData, permanent))
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> hasActiveSelfDoesntUntap(gameData, permanent, controllerId, effect));
     }
 

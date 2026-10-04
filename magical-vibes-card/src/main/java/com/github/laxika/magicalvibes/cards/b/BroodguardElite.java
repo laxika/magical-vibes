@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class BroodguardElite extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new PutCounterOnTargetForEachLeavingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                new PutCountersOnTargetForEachLeavingSourceCountersEffect());
 
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{X}{G}"))));
     }

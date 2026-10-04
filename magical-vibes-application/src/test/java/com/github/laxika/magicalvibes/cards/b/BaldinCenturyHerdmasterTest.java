@@ -44,7 +44,7 @@ class BaldinCenturyHerdmasterTest extends BaseCardTest {
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(ownTarget.getToughnessModifier()).isEqualTo(0);
         assertThat(opposingTarget.getToughnessModifier()).isEqualTo(0);

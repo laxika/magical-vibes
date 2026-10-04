@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -87,8 +88,10 @@ class BalduvianBerserkerTest extends BaseCardTest {
         Permanent berserker = addCreatureReady(player1, new BalduvianBerserker());
         Permanent supporter = addCreatureReady(player1, new BalduvianBerserker());
 
-        declareAttackers(List.of(0));
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handleMultiplePermanentsChosen(player1, List.of());
+        });
 
         assertThat(supporter.isTapped()).isFalse();
         assertThat(berserker.isAttacking()).isTrue();
@@ -123,9 +126,11 @@ class BalduvianBerserkerTest extends BaseCardTest {
         supporter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setLife(player2, 20);
 
-        declareAttackers(List.of(0));
-        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+            harness.passBothPriorities();
+        });
         harness.setHand(player1, List.of(new ExtinguishTheLight()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);

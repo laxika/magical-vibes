@@ -50,6 +50,7 @@ class BondOfRevivalTest extends BaseCardTest {
     @Test
     @DisplayName("Haste survives the opponent's turn and expires when your next turn begins")
     void hasteExpiresOnCastersNextTurn() {
+        harness.setHand(player2, List.of());
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setLibrary(player1, List.of(new HolyDay(), new HolyDay()));
@@ -58,10 +59,12 @@ class BondOfRevivalTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, creature.getId());
         Permanent returned = findPermanent(player1, "Grizzly Bears");
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -69,6 +72,7 @@ class BondOfRevivalTest extends BaseCardTest {
     @Test
     @DisplayName("Changing control does not extend haste beyond the caster's next turn")
     void hasteExpiresEvenAfterOpponentGainsControl() {
+        harness.setHand(player2, List.of());
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setLibrary(player1, List.of(new HolyDay(), new HolyDay()));
@@ -77,7 +81,8 @@ class BondOfRevivalTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, creature.getId());
         Permanent returned = findPermanent(player1, "Grizzly Bears");
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Persuasion()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
@@ -86,7 +91,8 @@ class BondOfRevivalTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
     }
 

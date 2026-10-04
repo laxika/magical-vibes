@@ -28,6 +28,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
         castHeavyweights();
         setupOpponentLibrary(player2);
         resolveEtb();
+        harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
         PendingInteraction.LibrarySearch search =
@@ -46,6 +47,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
         castHeavyweights();
         setupOpponentLibrary(player2);
         resolveEtb();
+        harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
         int before = gd.playerBattlefields.get(player2.getId()).size();
@@ -71,7 +73,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int before = gd.playerBattlefields.get(player2.getId()).size();
 
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -118,6 +120,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
         castHeavyweights();
         setupOpponentLibrary(player2);
         resolveEtb();
+        harness.handleMayAbilityChosen(player2, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);

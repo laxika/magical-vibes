@@ -165,7 +165,6 @@ class BurnoutTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bolt.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, bolt.getId());
         harness.passBothPriorities();
 

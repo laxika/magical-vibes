@@ -20,8 +20,19 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
  * check — so those cards must use {@link #unless}. Both forms re-check the condition on
  * resolution, so only trigger-time behaviour differs.
  */
-public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean interveningIf)
+public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean interveningIf,
+                                boolean triggerTimeOnly)
         implements CombatDamageTriggerContextEffect {
+
+    /** Preserves the usual condition checks when callers choose only the trigger-time gate. */
+    public ConditionalEffect(Condition condition, CardEffect wrapped, boolean interveningIf) {
+        this(condition, wrapped, interveningIf, false);
+    }
+
+    /** Matches an event qualified by a condition, without checking it again on resolution. */
+    public static ConditionalEffect atTriggerTime(Condition condition, CardEffect wrapped) {
+        return new ConditionalEffect(condition, wrapped, true, true);
+    }
 
     /** The common intervening-"if" form (CR 603.4); see {@link #unless} for the other template. */
     public ConditionalEffect(Condition condition, CardEffect wrapped) {

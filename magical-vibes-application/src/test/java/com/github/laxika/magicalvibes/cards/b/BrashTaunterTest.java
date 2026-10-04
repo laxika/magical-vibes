@@ -28,6 +28,7 @@ class BrashTaunterTest extends BaseCardTest {
         UUID taunterId = harness.getPermanentId(player2, "Brash Taunter");
         harness.castInstant(player1, 0, taunterId);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -44,6 +45,7 @@ class BrashTaunterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

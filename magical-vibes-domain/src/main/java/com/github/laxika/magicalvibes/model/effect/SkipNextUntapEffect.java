@@ -69,7 +69,8 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
     }
 
     public SkipNextUntapEffect {
-        if (matchAtUntap && scope != TapUntapScope.TARGET_PLAYERS_PERMANENTS) {
+        if (matchAtUntap && scope != TapUntapScope.TARGET_PLAYERS_PERMANENTS
+                && scope != TapUntapScope.CONTROLLED) {
             throw new IllegalArgumentException("Matching at untap requires a target player");
         }
         if (allPlayersAtUntap && !matchAtUntap) {

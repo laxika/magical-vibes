@@ -22,16 +22,25 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * @param overriddenCardTypes non-empty to replace the returned permanent's card types indefinitely
  * @param perpetuallyLosesThisAbility {@code true} to make this triggered ability stop triggering
  *                                    for this card identity after resolution
+ * @param useReturnedPermanentAsSource whether subsequent effects use the returned permanent as their source
  */
 public record ReturnSourceCardFromGraveyardToBattlefieldEffect(
         boolean tapped,
         boolean losesAllAbilities,
         Set<CardType> overriddenCardTypes, CounterType enterWithCounter,
-        boolean perpetuallyLosesThisAbility)
+        boolean perpetuallyLosesThisAbility, boolean useReturnedPermanentAsSource)
         implements CardEffect {
 
     public ReturnSourceCardFromGraveyardToBattlefieldEffect {
         overriddenCardTypes = Set.copyOf(overriddenCardTypes);
+    }
+
+    public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, boolean losesAllAbilities,
+                                                          Set<CardType> overriddenCardTypes,
+                                                          CounterType enterWithCounter,
+                                                          boolean perpetuallyLosesThisAbility) {
+        this(tapped, losesAllAbilities, overriddenCardTypes, enterWithCounter,
+                perpetuallyLosesThisAbility, false);
     }
 
     public ReturnSourceCardFromGraveyardToBattlefieldEffect(boolean tapped, boolean losesAllAbilities,

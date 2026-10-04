@@ -89,6 +89,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -191,6 +193,7 @@ public class AdditionalSpellCostService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final ObjectProvider<CastingCostService> castingCostService;
 
     /** Returns the spell's optional counter-removal cost reduction, if it has one. */
     public RemoveCountersForCostReductionEffect findRemoveCountersForCostReductionEffect(Card card) {
@@ -2032,7 +2035,14 @@ public class AdditionalSpellCostService {
                 }
             }
         }
-        return baseCost.increasedBy(new ManaCost(optionManaCost)).canPay(pool);
+        ManaCost totalCost = baseCost.increasedBy(new ManaCost(optionManaCost));
+        int genericAdjustment = castingCostService.getObject().getCastCostModifier(gameData, playerId, card);
+        if (genericAdjustment < 0) {
+            totalCost = totalCost.reducedBy(new ManaCost("{" + -genericAdjustment + "}"));
+        } else if (genericAdjustment > 0) {
+            totalCost = totalCost.increasedBy(new ManaCost("{" + genericAdjustment + "}"));
+        }
+        return totalCost.canPay(pool);
     }
 
     /**

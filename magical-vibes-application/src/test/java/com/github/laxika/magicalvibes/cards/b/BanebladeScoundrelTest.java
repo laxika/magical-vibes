@@ -54,6 +54,7 @@ class BanebladeScoundrelTest extends BaseCardTest {
     @Test
     @DisplayName("Baneclaw Marauder transforms back when the previous active player cast two spells")
     void transformsBack() {
+        gd.previousTurnActivePlayerId = player1.getId();
         Permanent scoundrel = addCreatureReady(player1, new BanebladeScoundrel());
         transformToBack(scoundrel);
         gd.spellsCastLastTurn.clear();
@@ -146,6 +147,7 @@ class BanebladeScoundrelTest extends BaseCardTest {
     @Test
     @DisplayName("Daybound checks the previous turn's active player, not the incoming player")
     void staysDayWhenPreviousActivePlayerCastOneSpell() {
+        gd.previousTurnActivePlayerId = player1.getId();
         Permanent scoundrel = addCreatureReady(player1, new BanebladeScoundrel());
         gd.dayNight = DayNight.DAY;
         gd.spellsCastLastTurn.clear();
@@ -160,6 +162,7 @@ class BanebladeScoundrelTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's two spells do not make it day after the active player cast one")
     void staysNightWhenOnlyNonactivePlayerCastTwoSpells() {
+        gd.previousTurnActivePlayerId = player1.getId();
         Permanent marauder = addBackFace(player1);
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player1.getId(), 1);

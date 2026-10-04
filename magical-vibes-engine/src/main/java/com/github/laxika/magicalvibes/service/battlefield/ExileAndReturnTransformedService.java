@@ -69,12 +69,23 @@ public class ExileAndReturnTransformedService {
         return exileAndReturn(gameData, permanentId, true, underControllerControl);
     }
 
+    /** Returns under the ability controller's control when the effect specifies "your control". */
+    public boolean exileAndReturnTransformed(GameData gameData, UUID permanentId,
+                                             boolean underControllerControl, UUID abilityControllerId) {
+        return exileAndReturn(gameData, permanentId, true, underControllerControl, abilityControllerId);
+    }
+
     public boolean exileAndReturnFront(GameData gameData, UUID permanentId) {
         return exileAndReturn(gameData, permanentId, false, false);
     }
 
     private boolean exileAndReturn(GameData gameData, UUID permanentId, boolean transformed,
                                    boolean underControllerControl) {
+        return exileAndReturn(gameData, permanentId, transformed, underControllerControl, null);
+    }
+
+    private boolean exileAndReturn(GameData gameData, UUID permanentId, boolean transformed,
+                                   boolean underControllerControl, UUID abilityControllerId) {
         Permanent perm = null;
         UUID controllerId = null;
         for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
@@ -94,8 +105,9 @@ public class ExileAndReturnTransformedService {
         if (transformedFace == null) return false;
         Card returnedCard = transformed ? originalCard.getBackFaceCard() : originalCard;
         if (returnedCard == null) return false;
-        UUID returnControllerId = underControllerControl || originalCard.getOwnerId() == null
-                ? controllerId : originalCard.getOwnerId();
+        UUID returnControllerId = underControllerControl
+                ? abilityControllerId != null ? abilityControllerId : controllerId
+                : originalCard.getOwnerId() != null ? originalCard.getOwnerId() : controllerId;
 
         boolean returningTransformed = !perm.isTransformed();
         Card returningCard = returningTransformed ? transformedFace : originalCard;

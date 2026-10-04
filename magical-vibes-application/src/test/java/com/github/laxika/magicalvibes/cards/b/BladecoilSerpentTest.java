@@ -146,6 +146,8 @@ class BladecoilSerpentTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.HASTE)).isTrue();
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(serpent.getEffectivePower()).isEqualTo(5);

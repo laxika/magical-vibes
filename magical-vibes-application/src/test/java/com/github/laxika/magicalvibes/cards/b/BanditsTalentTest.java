@@ -220,7 +220,7 @@ class BanditsTalentTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         gd.turnNumber = 2;
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.DRAW);
     }
@@ -240,6 +240,6 @@ class BanditsTalentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, genericMana);
         int talentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(talent);
         harness.activateAbility(player1, talentIndex, abilityIndex, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
     }
 }

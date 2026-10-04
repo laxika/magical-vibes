@@ -18,6 +18,7 @@ public class BontusLastReckoning extends Card {
         addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
 
         // Lands you control don't untap during your next untap step.
-        addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
+        addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(
+                TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
     }
 }

@@ -1347,6 +1347,9 @@ public class GameData {
     public final Set<UUID> creaturesWithCombatDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
     public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
+
+    /** Creatures that assign no combat damage this turn, even if damage cannot be prevented. */
+    public final Set<UUID> creaturesAssigningNoCombatDamageThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage dealt to them is prevented during the current combat. */
     public final Set<UUID> creaturesWithCombatDamagePreventedThisCombat = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented during the current combat. */
@@ -5361,6 +5364,7 @@ public class GameData {
      * Adds a card to the given player's hand.
      */
     public void addCardToHand(UUID playerId, Card card) {
+        card = restoreBombardmentCardForZoneChange(card);
         if (deferCommanderZoneMove(card, Zone.HAND, -1)) return;
         cardsRevealedInHandUntilOwnerNextTurn.remove(card.getId());
         cardsCantBePlayedInHandUntilOwnerNextTurn.remove(card.getId());
@@ -5606,6 +5610,21 @@ public class GameData {
                 ? null : bombardmentOriginalCardsUntilEndOfTurn.get(permanent.getCard().getId());
         if (original != null) {
             permanent.restoreBombardmentCard(original);
+        }
+    }
+
+    /** Ends Bombardment's characteristic replacement when the card changes zones. */
+    public Card restoreBombardmentCardForZoneChange(Card card) {
+        Card original = bombardmentOriginalCardsUntilEndOfTurn.remove(card.getId());
+        return original != null ? original : card;
+    }
+
+    /** Randomized library cards become new objects and lose their Missile characteristics. */
+    public void restoreBombardmentLibraryCards(UUID playerId) {
+        List<Card> deck = playerDecks.get(playerId);
+        if (deck == null) return;
+        for (int i = 0; i < deck.size(); i++) {
+            deck.set(i, restoreBombardmentCardForZoneChange(deck.get(i)));
         }
     }
 
@@ -7001,6 +7020,7 @@ public class GameData {
                         .addAll(predicates));
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
+        copy.creaturesAssigningNoCombatDamageThisTurn.addAll(this.creaturesAssigningNoCombatDamageThisTurn);
         copy.creaturesWithCombatDamagePreventedThisCombat.addAll(
                 this.creaturesWithCombatDamagePreventedThisCombat);
         copy.creaturesPreventedFromDealingCombatDamageThisCombat.addAll(
@@ -7883,9 +7903,12 @@ public class GameData {
         copy.warpWorldOperation.needsLegendChecks = this.warpWorldOperation.needsLegendChecks;
         copy.warpWorldOperation.sourceName = this.warpWorldOperation.sourceName;
 
-        copy.retetherOperation.pendingAuraChoices.addAll(this.retetherOperation.pendingAuraChoices);
-        copy.retetherOperation.pendingPlacements.addAll(this.retetherOperation.pendingPlacements);
-        copy.retetherOperation.activeChoice = this.retetherOperation.activeChoice;
+        this.retetherOperation.pendingAuraChoices.stream().map(RetetherAuraChoiceRequest::deepCopy)
+                .forEach(copy.retetherOperation.pendingAuraChoices::addLast);
+        this.retetherOperation.pendingPlacements.stream().map(RetetherAuraPlacement::deepCopy)
+                .forEach(copy.retetherOperation.pendingPlacements::add);
+        copy.retetherOperation.activeChoice = this.retetherOperation.activeChoice == null ? null
+                : this.retetherOperation.activeChoice.deepCopy();
 
         copy.auspiciousStarrixOperation.permanentCards.addAll(
                 this.auspiciousStarrixOperation.permanentCards);

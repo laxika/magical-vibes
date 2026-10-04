@@ -15,7 +15,7 @@ public class BlackerLotus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new ExileSelfEffect(), new AwardAnyColorManaEffect(4)),
+                List.of(new ExileSelfEffect(true), new AwardAnyColorManaEffect(4)),
                 "{T}: Tear this artifact into pieces. Add four mana of any one color. Remove the pieces from the game."
         ));
     }

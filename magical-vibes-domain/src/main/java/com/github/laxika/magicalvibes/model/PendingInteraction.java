@@ -3916,12 +3916,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Chooses a creature card in hand to receive perpetual modifications. */
     record PerpetualCreatureCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt,
-                                       int powerBoost, Set<Keyword> keywords, boolean grantBlitz)
+                                       int powerBoost, int toughnessBoost, Set<Keyword> keywords, boolean grantBlitz)
             implements PendingInteraction, HandChoice {
 
         public PerpetualCreatureCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt,
                                             int powerBoost, Set<Keyword> keywords) {
-            this(playerId, validIndices, prompt, powerBoost, keywords, false);
+            this(playerId, validIndices, prompt, powerBoost, 0, keywords, false);
+        }
+
+        public PerpetualCreatureCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt,
+                                            int powerBoost, Set<Keyword> keywords, boolean grantBlitz) {
+            this(playerId, validIndices, prompt, powerBoost, 0, keywords, grantBlitz);
         }
 
         public PerpetualCreatureCardChoice {

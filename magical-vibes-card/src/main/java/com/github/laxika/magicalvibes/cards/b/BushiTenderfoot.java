@@ -11,7 +11,7 @@ public class BushiTenderfoot extends Card {
 
     public BushiTenderfoot() {
         setBackFaceCard(new KenzoTheHardhearted());
-        addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES, new TransformToBackFaceEffect());
+        addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES, new TransformToBackFaceEffect(true));
     }
 
     @Override

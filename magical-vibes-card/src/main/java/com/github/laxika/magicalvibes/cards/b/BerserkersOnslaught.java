@@ -15,7 +15,7 @@ public class BerserkersOnslaught extends Card {
     public BerserkersOnslaught() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE,
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsAttackingPredicate()));
     }
 }

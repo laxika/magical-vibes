@@ -121,6 +121,8 @@ class BloodAgeMusterTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(new SummonedDromedary()));

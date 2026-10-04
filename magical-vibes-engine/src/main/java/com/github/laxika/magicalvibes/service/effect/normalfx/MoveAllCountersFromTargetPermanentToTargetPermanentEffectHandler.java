@@ -36,7 +36,7 @@ public class MoveAllCountersFromTargetPermanentToTargetPermanentEffectHandler
 
         Permanent source = gameQueryService.findPermanentById(gameData, targets.get(0));
         Permanent destination = gameQueryService.findPermanentById(gameData, targets.get(1));
-        if (source == null || destination == null) {
+        if (source == null || destination == null || source == destination) {
             entry.setEventValue(0);
             return;
         }
@@ -50,10 +50,11 @@ public class MoveAllCountersFromTargetPermanentToTargetPermanentEffectHandler
 
         int moved = permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, destination, move.counterType(), available);
-        if (moved > 0) {
+        int removed = moved > 0 ? available : 0;
+        if (removed > 0) {
             permanentCounterSupport.removeCounterFromPermanent(
-                    gameData, source, move.counterType(), moved);
+                    gameData, source, move.counterType(), removed);
         }
-        entry.setEventValue(moved);
+        entry.setEventValue(removed);
     }
 }

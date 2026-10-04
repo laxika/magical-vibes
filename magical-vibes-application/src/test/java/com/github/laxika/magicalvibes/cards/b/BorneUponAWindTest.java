@@ -92,11 +92,12 @@ class BorneUponAWindTest extends BaseCardTest {
     void grantsFlashDuringOpponentsTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        resolveBorneUponAWind();
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            resolveBorneUponAWind();
+            harness.addMana(player1, ManaColor.GREEN, 2);
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+        });
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }

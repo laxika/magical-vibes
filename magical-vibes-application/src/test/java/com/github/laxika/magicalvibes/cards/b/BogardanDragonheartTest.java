@@ -45,6 +45,7 @@ class BogardanDragonheartTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, dragonheart))
@@ -131,6 +132,7 @@ class BogardanDragonheartTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, dragonheart)).isEqualTo(5);
         assertThat(gqs.effectiveCreatureSubtypes(gd, dragonheart)).containsExactly(CardSubtype.DRAGON);
 
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, dragonheart)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, dragonheart)).isEqualTo(3);

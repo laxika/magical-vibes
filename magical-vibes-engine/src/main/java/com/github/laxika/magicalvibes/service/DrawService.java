@@ -893,7 +893,7 @@ public class DrawService {
         return true;
     }
 
-    private boolean isDrawPrevented(GameData gameData, UUID playerId) {
+    public boolean isDrawPrevented(GameData gameData, UUID playerId) {
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
@@ -1978,6 +1978,7 @@ public class DrawService {
     }
 
     private void completeDrawCard(GameData gameData, UUID playerId, Card drawn) {
+        drawn = gameData.restoreBombardmentCardForZoneChange(drawn);
         boolean basicLandInLibrary = drawn.hasType(CardType.LAND)
                 && gameQueryService.cardHasSupertype(drawn, CardSupertype.BASIC, gameData, playerId);
         if (playerId.equals(gameData.activePlayerId) && gameData.currentStep == TurnStep.DRAW) {
@@ -2087,12 +2088,12 @@ public class DrawService {
      */
     private void checkBoobyTraps(GameData gameData, UUID drawingPlayerId, Card drawn) {
         gameData.forEachBattlefield((controllerId, battlefield) -> {
-            if (controllerId.equals(drawingPlayerId)) return;
-
             for (Permanent perm : new ArrayList<>(battlefield)) {
                 boolean isBoobyTrap = perm.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof BoobyTrapEffect);
                 if (!isBoobyTrap) continue;
+                if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
+                if (!perm.getChosenPlayerIds().contains(drawingPlayerId)) continue;
 
                 String drawerName = gameData.playerIdToName.get(drawingPlayerId);
                 gameLogService.append(gameData, GameLog.builder()

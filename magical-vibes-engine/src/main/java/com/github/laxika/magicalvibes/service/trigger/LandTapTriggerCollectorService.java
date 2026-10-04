@@ -126,14 +126,30 @@ public class LandTapTriggerCollectorService {
                 || !(sequence.steps().get(1) instanceof DealDamageOnLandTapEffect damage)) {
             return false;
         }
-        handleAddOneOfEachManaType(match, mana, ctx);
-
         TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
         StackEntry entry = createLandTapDamageEntry(
-                match, damage, landTap.tappingPlayerId(), landTap.tappedLandId());
+                match, damage, landTap.tappingPlayerId(), landTap.tappedLandId(), true);
         if (entry == null) {
+            handleAddOneOfEachManaType(match, mana, ctx);
             return true;
         }
+        if (landTap.producedColors().size() > 1) {
+            List<ManaColor> choices = landTap.producedColors().stream().sorted().toList();
+            ChoiceContext.FixedManaColorThenEffectsChoice followUp =
+                    new ChoiceContext.FixedManaColorThenEffectsChoice(
+                            landTap.tappingPlayerId(), choices, 1, entry);
+            AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, match.gameData(),
+                    new PendingInteraction.ColorChoice(landTap.tappingPlayerId(), null, null, followUp,
+                            choices.stream().map(Enum::name).toList(), "Choose a type of mana the land produced."));
+            return true;
+        }
+        if (landTap.producedColors().isEmpty()
+                && match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            entry.getEffectsToResolve().addFirst(new AddManaOfTypeProducedByTappedPermanentEffect());
+            match.gameData().pendingManaAbilityTriggers.add(entry);
+            return true;
+        }
+        handleAddOneOfEachManaType(match, mana, ctx);
         dealDamageHandlerProvider.getObject().resolve(
                 match.gameData(), entry, new DealDamageToPlayersEffect(
                         damage.damage(), DamageRecipient.TARGET_PLAYER));
@@ -199,6 +215,12 @@ public class LandTapTriggerCollectorService {
 
     private StackEntry createLandTapDamageEntry(TriggerMatchContext match,
             DealDamageOnLandTapEffect trigger, UUID tappingPlayerId, UUID tappedLandId) {
+        return createLandTapDamageEntry(match, trigger, tappingPlayerId, tappedLandId, false);
+    }
+
+    private StackEntry createLandTapDamageEntry(TriggerMatchContext match,
+            DealDamageOnLandTapEffect trigger, UUID tappingPlayerId, UUID tappedLandId,
+            boolean tappedLandDealsDamage) {
         var gameData = match.gameData();
         if (trigger.landFilter() != null) {
             Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
@@ -209,18 +231,25 @@ public class LandTapTriggerCollectorService {
         }
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
         UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
+        Permanent damageSource = match.permanent();
+        if (tappedLandDealsDamage) {
+            damageSource = gameQueryService.findPermanentById(gameData, tappedLandId);
+            if (damageSource == null) return null;
+            sourceCard = damageSource.getCard();
+            sourcePermanentId = damageSource.getId();
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
-                match.controllerId(),
+                tappedLandDealsDamage ? tappingPlayerId : match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(new DealDamageToPlayersEffect(
                         trigger.damage(), DamageRecipient.TARGET_PLAYER))),
                 tappingPlayerId,
                 sourcePermanentId);
         entry.setNonTargeting(true);
-        if (match.permanent() != null) {
-            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        if (damageSource != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(damageSource));
         }
         if (match.sourcePlanarObject() != null) {
             entry.setSourcePlanarObject(match.sourcePlanarObject().copy());

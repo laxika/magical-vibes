@@ -65,7 +65,7 @@ public class ReturnTriggeringPermanentToBattlefieldWithCounterEffectHandler
             return;
         }
         long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
-        if (expectedEntryVersion != 0
+        if (expectedEntryVersion >= 0
                 && gameData.graveyardEntryVersion(cardId) != expectedEntryVersion) {
             return;
         }

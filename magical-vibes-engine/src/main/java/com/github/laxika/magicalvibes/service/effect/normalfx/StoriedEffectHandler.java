@@ -43,13 +43,14 @@ public class StoriedEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null || !controlsStoriedPermanent(battlefield)
+        if (battlefield == null || !controlsStoriedPermanent(gameData, battlefield)
                 || battlefield.stream().filter(permanent -> isQualifyingPermanent(gameData, permanent)).count() < 3) {
             return;
         }
 
         gameData.playersWithEnduringStory.add(controllerId);
         Card sourceCard = battlefield.stream()
+                .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
                 .map(Permanent::getCard)
                 .filter(card -> card.getEffects(EffectSlot.STATIC).stream().anyMatch(StoriedEffect.class::isInstance))
                 .findFirst()
@@ -61,10 +62,10 @@ public class StoriedEffectHandler implements NormalEffectHandlerBean {
         log.info("Game {} - {} has an enduring story", gameData.id, controllerId);
     }
 
-    private boolean controlsStoriedPermanent(List<Permanent> battlefield) {
+    private boolean controlsStoriedPermanent(GameData gameData, List<Permanent> battlefield) {
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown())
-                .filter(permanent -> !permanent.isLosesAllAbilitiesUntilEndOfTurn())
+                .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
                 .map(Permanent::getCard)
                 .anyMatch(card -> card.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(StoriedEffect.class::isInstance));

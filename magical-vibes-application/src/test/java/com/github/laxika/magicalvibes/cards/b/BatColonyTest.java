@@ -21,8 +21,8 @@ class BatColonyTest extends BaseCardTest {
     void createsOneBatForEachCaveManaSpentToCastIt() {
         harness.addToBattlefield(player1, new HiddenCourtyard());
         harness.addToBattlefield(player1, new HiddenCourtyard());
-        harness.tapPermanent(player1, 0);
-        harness.tapPermanent(player1, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player1, List.of(new BatColony()));
 
@@ -103,9 +103,9 @@ class BatColonyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HiddenCourtyard());
         harness.addToBattlefield(player1, new HiddenCourtyard());
         harness.addToBattlefield(player1, new HiddenCourtyard());
-        harness.tapPermanent(player1, 0);
-        harness.tapPermanent(player1, 1);
-        harness.tapPermanent(player1, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.activateAbility(player1, 2, 0, null, null);
         harness.setHand(player1, List.of(new BatColony()));
 
         harness.castEnchantment(player1, 0);

@@ -77,10 +77,24 @@ public class DealDamageToTargetAndSharingCreaturesEffectHandler implements Norma
             }
         });
 
-        int damageDealt = 0;
+        UUID sourceId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId() : entry.getCard().getId();
+        java.util.Map<UUID, Integer> damageBefore = new java.util.HashMap<>();
+        java.util.Set<UUID> creatureIds = new java.util.HashSet<>();
+        gameData.forEachPermanent((ignored, permanent) -> {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                creatureIds.add(permanent.getId());
+                damageBefore.put(permanent.getId(), gameData.damageDealtToPermanentsBySourceThisTurn
+                        .getOrDefault(permanent.getId(), java.util.Map.of()).getOrDefault(sourceId, 0));
+            }
+        });
         for (Permanent creature : affectedCreatures) {
-            damageDealt += damageSupport.dealCreatureDamage(gameData, entry, creature, damage);
+            damageSupport.dealCreatureDamage(gameData, entry, creature, damage);
         }
+        int damageDealt = creatureIds.stream().mapToInt(creatureId -> Math.max(0,
+                gameData.damageDealtToPermanentsBySourceThisTurn
+                        .getOrDefault(creatureId, java.util.Map.of()).getOrDefault(sourceId, 0)
+                        - damageBefore.getOrDefault(creatureId, 0))).sum();
         setEventValueIfLifeGainReadsIt(entry, damageDealt);
         gameOutcomeService.checkWinCondition(gameData);
     }

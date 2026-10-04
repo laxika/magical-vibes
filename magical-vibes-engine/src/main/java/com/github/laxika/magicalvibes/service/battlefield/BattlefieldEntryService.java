@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -72,16 +73,25 @@ public class BattlefieldEntryService {
 
     private boolean beginLandCardNameChoice(GameData gameData, UUID controllerId,
                                             Permanent permanent, Zone landPlayZone) {
-        if (permanent.getCard() == null || permanent.isFaceDown() || permanent.getChosenName() != null
-                || !permanent.getCard().hasType(CardType.LAND)) {
+        if (permanent.getCard() == null || permanent.isFaceDown() || permanent.getChosenName() != null) {
             return false;
         }
         ChooseCardNameOnEnterEffect effect = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
                 .stream().filter(ChooseCardNameOnEnterEffect.class::isInstance)
                 .map(ChooseCardNameOnEnterEffect.class::cast).findFirst().orElse(null);
-        return effect != null && playerInputService.beginCardNameChoice(gameData, controllerId,
+        if (effect != null && permanent.getChosenPlayerIds().isEmpty()
+                && permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance)) {
+            List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                    .filter(id -> !id.equals(controllerId)).toList();
+            if (opponents.size() == 1) {
+                permanent.getChosenPlayerIds().add(opponents.getFirst());
+            }
+        }
+        return effect != null && effect.handAccess() == ChooseCardNameOnEnterEffect.HandAccess.NONE
+                && playerInputService.beginCardNameChoice(gameData, controllerId,
                 permanent.getCard(), effect.excludedTypes(), false, effect.nonbasicLandOnly(),
-                null, effect.requiredType(), landPlayZone);
+                permanent.getAttachedTo(), effect.requiredType(), landPlayZone, permanent);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,

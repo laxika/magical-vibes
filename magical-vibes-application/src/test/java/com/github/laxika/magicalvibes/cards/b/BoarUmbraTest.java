@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -156,6 +157,10 @@ class BoarUmbraTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, firstAura, secondAura);
+        harness.handleListChoice(player1, gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)
+                .options().getLast());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, firstAura).doesNotContain(secondAura);
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -171,6 +176,11 @@ class BoarUmbraTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, aura);
         assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        harness.handleListChoice(player1, "Regenerate without an additional effect");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, aura);
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.isTapped()).isTrue();
     }
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {

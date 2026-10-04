@@ -55,7 +55,7 @@ public class ResolveEffectOnTargetDeathThisTurnEffectHandler implements NormalEf
 
         gameData.permanentTriggeringEffectOnDeathThisTurn
                 .computeIfAbsent(target.getCard().getId(), k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(new DelayedEffectOnDeath(delayedEffect, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
+                .add(new DelayedEffectOnDeath(delayedEffect, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), target.getId()));
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, {} triggers",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());

@@ -121,6 +121,7 @@ public class ChoiceHandlerService {
     private final LibraryRevealSupport libraryRevealSupport;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService> gameServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport> exileFreeCastSupportProvider;
 
     private final GameQueryService gameQueryService;
     private final WarpWorldService warpWorldService;
@@ -484,6 +485,30 @@ public class ChoiceHandlerService {
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.CommanderCounterManaColorChoice ctx) {
             handleCommanderCounterManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.ExileFreeCastFaceChoice ctx) {
+            exileFreeCastSupportProvider.getObject().completeFaceChoice(gameData, player, colorName, ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.FixedManaColorThenEffectsChoice ctx) {
+            ManaColor chosen = ManaColor.valueOf(colorName);
+            if (!ctx.colors().contains(chosen)) {
+                throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            ManaColor effective = ManaProductionSupport.effectiveColor(gameData, ctx.recipientPlayerId(), chosen);
+            gameData.playerManaPools.get(ctx.recipientPlayerId()).add(effective, ctx.amount());
+            PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+            gameData.pendingRevertableManaActivation = null;
+            if (parkedActivation != null
+                    && parkedActivation.playerId().equals(ctx.recipientPlayerId())) {
+                AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+            }
+            effectResolutionService.resolveEffects(gameData, ctx.followUp());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -5704,7 +5729,10 @@ public class ChoiceHandlerService {
 
         Permanent from = gameQueryService.findPermanentById(gameData, ctx.fromPermanentId());
         Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
-        if (from != null && to != null && chosen > 0) {
+        if (from != null && to != null && from != to && chosen > 0
+                && !gameQueryService.cantHaveCounters(gameData, to)
+                && (ctx.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, to))) {
             int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
             if (moved > 0) {
                 from.setCounterCount(ctx.counterType(), from.getCounterCount(ctx.counterType()) - moved);

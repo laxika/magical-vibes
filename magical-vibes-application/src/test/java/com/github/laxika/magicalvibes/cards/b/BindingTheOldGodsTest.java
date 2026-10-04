@@ -71,6 +71,8 @@ class BindingTheOldGodsTest extends BaseCardTest {
         assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
         assertThat(opponentsCreature.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.DEATHTOUCH)).isFalse();
     }

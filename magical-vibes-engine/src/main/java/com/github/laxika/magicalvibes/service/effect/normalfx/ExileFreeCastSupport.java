@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -18,6 +21,7 @@ import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostSer
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +45,7 @@ public class ExileFreeCastSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     // @Lazy mirrors ParadigmCastSupport: breaks cycles through InputCompletionService/PlayerInputService.
     public ExileFreeCastSupport(GameLogService gameLogService,
@@ -48,13 +53,15 @@ public class ExileFreeCastSupport {
                                 @Lazy TriggerCollectionService triggerCollectionService,
                                 @Lazy InputCompletionService inputCompletionService,
                                 ExileCastTargetSupport exileCastTargetSupport,
-                                AdditionalSpellCostService additionalSpellCostService) {
+                                AdditionalSpellCostService additionalSpellCostService,
+                                InteractionHandlerRegistry interactionHandlerRegistry) {
         this.gameLogService = gameLogService;
         this.additionalSpellCostService = additionalSpellCostService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
     }
 
     public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId) {
@@ -81,6 +88,52 @@ public class ExileFreeCastSupport {
     public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId,
                                            boolean grantHaste, boolean returnToHandIfUnable, boolean suspendHaste,
                                            boolean completeInput) {
+        castSelectedFace(gameData, player, exileCardId, grantHaste, returnToHandIfUnable,
+                suspendHaste, completeInput, 0);
+    }
+
+    /** Offers every castable Adventure face that satisfies the effect's mana-value restriction. */
+    public void castWithManaValueLimit(GameData gameData, Player player, UUID exileCardId, Integer maxManaValue) {
+        ExiledCardEntry exiled = gameData.findExiledCard(exileCardId);
+        if (exiled == null || maxManaValue == null) {
+            castFromExileWithoutPaying(gameData, player, exileCardId, false, true);
+            return;
+        }
+        Card card = exiled.card();
+        java.util.Map<String, Integer> faces = new java.util.LinkedHashMap<>();
+        if (!card.hasType(CardType.LAND) && card.getManaValue() <= maxManaValue) {
+            faces.put("Cast " + card.getName(), 0);
+        }
+        if (card.getCastingOption(AdventureCast.class).isPresent() && card.getBackFaceCard() != null
+                && card.getBackFaceCard().getManaValue() <= maxManaValue) {
+            faces.put("Cast " + card.getBackFaceCard().getName(), 1);
+        }
+        if (faces.isEmpty()) {
+            returnExiledCardToHand(gameData, exileCardId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else if (faces.size() == 1) {
+            castSelectedFace(gameData, player, exileCardId, false, true, false, true,
+                    faces.values().iterator().next());
+        } else {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    player.getId(), null, null,
+                    new ChoiceContext.ExileFreeCastFaceChoice(exileCardId, faces, false, true, false, true),
+                    new ArrayList<>(faces.keySet()), "Choose which spell to cast."));
+        }
+    }
+
+    public void completeFaceChoice(GameData gameData, Player player, String choice,
+                                   ChoiceContext.ExileFreeCastFaceChoice context) {
+        Integer face = context.faces().get(choice);
+        if (face == null) throw new IllegalStateException("Invalid spell face choice");
+        gameData.interaction.clearAwaitingInput();
+        castSelectedFace(gameData, player, context.exileCardId(), context.grantHaste(),
+                context.returnToHandIfUnable(), context.suspendHaste(), context.completeInput(), face);
+    }
+
+    private void castSelectedFace(GameData gameData, Player player, UUID exileCardId,
+                                  boolean grantHaste, boolean returnToHandIfUnable, boolean suspendHaste,
+                                  boolean completeInput, int face) {
         UUID playerId = player.getId();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
         if (exiledEntry == null) {
@@ -88,7 +141,8 @@ public class ExileFreeCastSupport {
             return;
         }
 
-        Card card = exiledEntry.card();
+        Card physicalCard = exiledEntry.card();
+        Card card = face == 1 ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard()) : physicalCard;
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
         if (card.isCastOnlyFromGraveyard()) {
             if (returnToHandIfUnable) {
@@ -151,7 +205,7 @@ public class ExileFreeCastSupport {
             gameData.recordCardPlayedFromExile(playerId);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, playerId, spellEffects, spellType, false, List.of(), 0, false, 0,
-                    false, false, null, exiledEntry.sourcePermanentId(), 0));
+                    false, false, null, exiledEntry.sourcePermanentId(), 0, physicalCard));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
 
@@ -166,6 +220,8 @@ public class ExileFreeCastSupport {
                 spellEffects, 0, (UUID) null, null
         );
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
+        stackEntry.setPhysicalCard(physicalCard);
+        stackEntry.setCastWithAdventure(face == 1);
         stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         stackEntry.setSourceZone(Zone.EXILE);
         stackEntry.setSuspendHasteOnEntry(suspendHaste && card.hasType(CardType.CREATURE));

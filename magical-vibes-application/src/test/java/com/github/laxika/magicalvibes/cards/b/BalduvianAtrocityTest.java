@@ -50,9 +50,9 @@ class BalduvianAtrocityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Bog Badger");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Bog Badger");
@@ -134,7 +134,7 @@ class BalduvianAtrocityTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Bog Badger");
         assertThat(gd.stack).hasSize(1);

@@ -62,9 +62,10 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             if (!interaction.validCardIds().contains(id)) {
                 throw new IllegalStateException("Invalid card selected");
             }
-            if (!validated.add(id)) {
+            if (validated.contains(id)) {
                 throw new IllegalStateException("Duplicate card IDs in selection");
             }
+            validated.add(id);
         }
 
         gameData.interaction.clearAwaitingInput();

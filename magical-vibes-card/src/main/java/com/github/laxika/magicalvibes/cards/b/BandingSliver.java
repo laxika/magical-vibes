@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class BandingSliver extends Card {
 
     public BandingSliver() {
-        // Banding Sliver is itself a Sliver, so ALL_OWN_CREATURES includes the source.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.BANDING, GrantScope.ALL_OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.BANDING, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 public class BoardTheWeatherlight extends Card {
 
     public BoardTheWeatherlight() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, new CardIsHistoricPredicate()));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(5, new CardIsHistoricPredicate()));
     }
 }

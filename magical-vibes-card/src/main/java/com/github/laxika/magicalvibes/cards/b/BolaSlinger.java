@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 
@@ -40,6 +41,10 @@ public class BolaSlinger extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
         CardEffect attackTrigger = new TapPermanentsEffect(TapUntapScope.TARGET, opponentArtifactOrCreature);
+        target(new PermanentPredicateTargetFilter(opponentArtifactOrCreature,
+                "Target must be an artifact or creature an opponent controls"))
+                .addEffect(EffectSlot.ON_ATTACK,
+                        new TapPermanentsEffect(TapUntapScope.TARGET, opponentArtifactOrCreature));
 
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),

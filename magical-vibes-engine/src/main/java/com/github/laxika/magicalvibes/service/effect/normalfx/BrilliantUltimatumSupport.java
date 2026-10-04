@@ -133,27 +133,8 @@ public class BrilliantUltimatumSupport {
     public void playChosenCards(GameData gameData, Player player, List<UUID> cardIds) {
         gameData.interaction.clearAwaitingInput();
 
-        UUID playerId = player.getId();
-        List<UUID> spellCardIds = new ArrayList<>();
-
-        if (cardIds != null) {
-            for (UUID cardId : cardIds) {
-                ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
-                if (exiledEntry == null) {
-                    continue;
-                }
-                Card card = exiledEntry.card();
-                if (card.hasType(CardType.LAND)) {
-                    playLandFromExile(gameData, playerId, card);
-                } else {
-                    spellCardIds.add(cardId);
-                }
-            }
-        }
-
-        if (!spellCardIds.isEmpty()) {
-            // Reuses the shared exile free-cast queue (handles targeting, the stack, and cast triggers).
-            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, spellCardIds);
+        if (cardIds != null && !cardIds.isEmpty()) {
+            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, cardIds);
             return;
         }
 
@@ -161,7 +142,7 @@ public class BrilliantUltimatumSupport {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void playLandFromExile(GameData gameData, UUID playerId, Card card) {
+    public void playLandFromExile(GameData gameData, UUID playerId, Card card) {
         String playerName = gameData.playerIdToName.get(playerId);
         boolean isControllersTurn = playerId.equals(gameData.activePlayerId);
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);

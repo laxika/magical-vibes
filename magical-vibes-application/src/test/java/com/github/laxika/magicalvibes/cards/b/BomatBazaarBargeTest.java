@@ -121,6 +121,7 @@ class BomatBazaarBargeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         assertThat(gqs.isCreature(gd, barge)).isTrue();
 

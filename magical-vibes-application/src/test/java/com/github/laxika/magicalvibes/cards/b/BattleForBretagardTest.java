@@ -28,8 +28,8 @@ class BattleForBretagardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(countOf("Human Warrior Token")).isEqualTo(1);
-        assertThat(countOf("Elf Warrior Token")).isZero();
+        assertThat(countOf("Human Warrior")).isEqualTo(1);
+        assertThat(countOf("Elf Warrior")).isZero();
         assertThat(saga().getCounterCount(CounterType.LORE)).isEqualTo(1);
     }
 
@@ -41,10 +41,10 @@ class BattleForBretagardTest extends BaseCardTest {
         saga.setCounterCount(CounterType.LORE, 0);
 
         advanceToNextChapter();
-        assertThat(countOf("Human Warrior Token")).isEqualTo(1);
+        assertThat(countOf("Human Warrior")).isEqualTo(1);
 
         advanceToNextChapter();
-        assertThat(countOf("Elf Warrior Token")).isEqualTo(1);
+        assertThat(countOf("Elf Warrior")).isEqualTo(1);
     }
 
     @Test

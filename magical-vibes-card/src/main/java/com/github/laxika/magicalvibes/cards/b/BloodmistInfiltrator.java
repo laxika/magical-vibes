@@ -24,7 +24,7 @@ public class BloodmistInfiltrator extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )),
                         new MakeCreatureUnblockableEffect(true),
-                        "another creature"
+                        "another creature", false, false
                 ),
                 "Sacrifice another creature?"
         ));

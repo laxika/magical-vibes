@@ -125,9 +125,10 @@ class BalthierAndFranTest extends BaseCardTest {
         addCreatureReady(player1, new BalthierAndFran());
         Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
 
-        harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
+            harness.passBothPriorities();
+        });
         vehicle.untap();
         return vehicle;
     }

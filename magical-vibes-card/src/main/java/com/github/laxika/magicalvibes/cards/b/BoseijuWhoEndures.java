@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -80,7 +81,8 @@ public class BoseijuWhoEndures extends Card {
                                 CountScope.CONTROLLER
                         )),
                         new DestroyTargetPermanentThenEffect(
-                                new SearchLibraryEffect(landWithBasicLandType, LibrarySearchDestination.BATTLEFIELD),
+                                new MayEffect(new SearchLibraryEffect(landWithBasicLandType,
+                                        LibrarySearchDestination.BATTLEFIELD), "Search for a land card with a basic land type?"),
                                 ThenEffectRecipient.TARGET_CONTROLLER
                         )
                 ),

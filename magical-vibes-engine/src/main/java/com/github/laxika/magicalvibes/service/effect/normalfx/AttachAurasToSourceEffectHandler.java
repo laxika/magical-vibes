@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -70,9 +71,6 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         List<UUID> choosableIds = choosableAttachmentCardIds(gameData, host, controllerId,
                 auraEffect.includeBattlefield(), auraEffect.includeLibrary(), auraEffect.includeEquipment());
         if (choosableIds.isEmpty()) {
-            if (auraEffect.includeLibrary() && canSearchLibrary(gameData, controllerId)) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            }
             gameLogService.append(gameData,
                     GameLog.cardThen(host.getCard(), " has no "
                             + (auraEffect.includeEquipment() ? "Auras or Equipment" : "Auras")
@@ -88,7 +86,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     /**
      * Move every chosen attachment onto the host: battlefield attachments are reattached, while
      * graveyard and hand cards enter the battlefield already attached. Picks are applied in
-     * begin-time order.
+     * as one event, with timestamps ordered by the active player and then the other players.
      */
     public void completeChoice(GameData gameData, List<UUID> chosenCardIds,
             PendingInteraction.AttachAurasChoice interaction) {
@@ -99,13 +97,31 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
 
         Set<UUID> chosen = new LinkedHashSet<>(chosenCardIds);
         UUID controllerId = interaction.playerId();
+        List<UUID> battlefieldChoices = new ArrayList<>();
+        List<UUID> activePlayerOrder = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = activePlayerOrder.indexOf(gameData.activePlayerId);
+        if (activeIndex >= 0) {
+            java.util.Collections.rotate(activePlayerOrder, -activeIndex);
+        }
+        for (UUID attachmentControllerId : activePlayerOrder) {
+            for (UUID cardId : interaction.validCardIds()) {
+                Permanent attachment = findAttachmentPermanent(gameData, cardId);
+                if (chosen.contains(cardId) && attachment != null
+                        && attachmentControllerId.equals(gameQueryService.findPermanentController(gameData, attachment.getId()))
+                        && canAttach(gameData, attachment, attachmentControllerId, host)) {
+                    battlefieldChoices.add(cardId);
+                }
+            }
+        }
         boolean movedAny = false;
+        for (UUID cardId : battlefieldChoices) {
+            movedAny |= attachFromBattlefield(gameData, host, cardId, true);
+        }
         for (UUID cardId : interaction.validCardIds()) {
-            if (!chosen.contains(cardId)) {
+            if (!chosen.contains(cardId) || findAttachmentPermanent(gameData, cardId) != null) {
                 continue;
             }
-            movedAny |= attachFromBattlefield(gameData, host, cardId)
-                    || attachFromGraveyard(gameData, host, controllerId, cardId)
+            movedAny |= attachFromGraveyard(gameData, host, controllerId, cardId)
                     || attachFromHand(gameData, host, controllerId, cardId)
                     || attachFromLibrary(gameData, host, controllerId, cardId);
         }
@@ -138,8 +154,13 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         addEnchantableCards(gameData, host, controllerId,
                 gameData.playerHands.getOrDefault(controllerId, List.of()), ids, includeEquipment);
         if (includeLibrary && canSearchLibrary(gameData, controllerId)) {
+            List<Card> library = gameData.playerDecks.getOrDefault(controllerId, List.of());
+            int searchLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
+            if (searchLimit > 0) {
+                library = library.subList(0, Math.min(searchLimit, library.size()));
+            }
             addEnchantableCards(gameData, host, controllerId,
-                    gameData.playerDecks.getOrDefault(controllerId, List.of()), ids, includeEquipment);
+                    library, ids, includeEquipment);
         }
         return ids;
     }
@@ -159,13 +180,13 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private boolean attachFromBattlefield(GameData gameData, Permanent host, UUID cardId) {
+    private boolean attachFromBattlefield(GameData gameData, Permanent host, UUID cardId, boolean attachmentWasLegal) {
         Permanent attachment = findAttachmentPermanent(gameData, cardId);
         if (attachment == null) {
             return false;
         }
         UUID attachmentControllerId = gameQueryService.findPermanentController(gameData, attachment.getId());
-        if (!canAttach(gameData, attachment, attachmentControllerId, host)) {
+        if (!attachmentWasLegal && !canAttach(gameData, attachment, attachmentControllerId, host)) {
             return false;
         }
         if (attachment.getCard().isAura()) {
@@ -217,6 +238,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         if (card == null) {
             return false;
         }
+        LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
         library.remove(card);
         putAttachmentOntoBattlefieldAttached(gameData, host, controllerId, card, "library", Zone.LIBRARY);
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);

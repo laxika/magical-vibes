@@ -44,6 +44,7 @@ class BespokeBattlewagonTest extends BaseCardTest {
 
     @Test
     void paysEnergyToDrawACard() {
+        harness.setHand(player1, List.of());
         addReadyWagon();
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));

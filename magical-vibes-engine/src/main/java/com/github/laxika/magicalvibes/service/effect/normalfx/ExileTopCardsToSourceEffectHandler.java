@@ -73,7 +73,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent sourcePermanent = sourcePermanentId != null
                 ? gameQueryService.findPermanentById(gameData, sourcePermanentId) : null;
-        if (sourcePermanent == null) {
+        if (sourcePermanentId == null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             if (bf != null) {
                 for (Permanent p : bf) {

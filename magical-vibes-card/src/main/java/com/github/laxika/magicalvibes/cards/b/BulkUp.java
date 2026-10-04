@@ -15,7 +15,7 @@ public class BulkUp extends Card {
 
     public BulkUp() {
         target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)));
+                new BoostTargetCreatureEffect(new TargetPower(true), new Fixed(0)));
         addCastingOption(new FlashbackCast("{4}{R}{R}"));
     }
 }

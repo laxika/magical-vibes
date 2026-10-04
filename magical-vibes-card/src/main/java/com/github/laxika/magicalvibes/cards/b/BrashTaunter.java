@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -26,7 +29,10 @@ public class BrashTaunter extends Card {
 
     public BrashTaunter() {
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
-                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)
+                        .withTriggeredTargetFilter(new PlayerPredicateTargetFilter(
+                                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                "Target must be an opponent")));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

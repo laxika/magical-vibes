@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -70,6 +71,10 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             case ANY_PLAYER, ANY_OTHER_PLAYER -> null;
         };
         if (payer == null) {
+            return;
+        }
+        if (e.wrapped() instanceof DiscardAndDrawCardEffect
+                && gameData.playerHands.getOrDefault(payer, List.of()).isEmpty()) {
             return;
         }
 

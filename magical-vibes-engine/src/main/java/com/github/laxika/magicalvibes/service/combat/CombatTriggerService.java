@@ -275,9 +275,10 @@ public class CombatTriggerService {
                                 // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                                 // (e.g. equipment-granted Afflict) can resolve.
                                 trigger.setAttackedTargetId(creature.getAttackTarget());
-                                trigger.setDefendingPlayerId(gameData.playerIds.contains(creature.getAttackTarget())
-                                        ? creature.getAttackTarget()
-                                        : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
+                                trigger.setDefendingPlayerId(creature.getAttackTarget() == null ? null
+                                        : gameData.playerIds.contains(creature.getAttackTarget())
+                                                ? creature.getAttackTarget()
+                                                : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
                                 trigger.setTriggeringPermanentId(creature.getId());
                                 trigger.setSourcePermanentSnapshot(new Permanent(perm));
                                 trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());

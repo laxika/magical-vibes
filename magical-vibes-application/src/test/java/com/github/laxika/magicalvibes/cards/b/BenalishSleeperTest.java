@@ -55,12 +55,12 @@ class BenalishSleeperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.context()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+        assertThat(choice.context()).isInstanceOf(com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.ForcedSacrifice.class);
 
-        harness.handlePermanentChosen(player2, spider.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(spider.getId()));
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Giant Spider");
@@ -81,7 +81,7 @@ class BenalishSleeperTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Benalish Sleeper");
         harness.assertNotInGraveyard(player1, "Benalish Sleeper");
 
-        harness.handlePermanentChosen(player2, spider.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(spider.getId()));
 
         harness.assertInGraveyard(player1, "Benalish Sleeper");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -100,13 +100,13 @@ class BenalishSleeperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handlePermanentChosen(player1, bear.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.handlePermanentChosen(player2, spider.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(spider.getId()));
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Giant Spider");

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardOwner;
 import com.github.laxika.magicalvibes.model.effect.ReturnTopCreatureCardFromGraveyardToBattlefieldEffect;
@@ -63,10 +64,14 @@ public class ReturnTopCreatureCardFromGraveyardToBattlefieldEffectHandler implem
             if (!card.hasType(CardType.CREATURE)) {
                 continue;
             }
+            if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                return;
+            }
             graveyard.remove(index);
             graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId, card);
-            graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, card);
-            if (returnEffect.assignNoCombatDamageIfReturned()) {
+            Permanent returned = graveyardReturnSupport.putCardOntoBattlefield(
+                    gameData, controllerId, card, null, null, false, false, null);
+            if (returned != null && returnEffect.assignNoCombatDamageIfReturned()) {
                 assignNoCombatDamage(gameData, entry);
             }
             return;
@@ -79,7 +84,7 @@ public class ReturnTopCreatureCardFromGraveyardToBattlefieldEffectHandler implem
             return;
         }
 
-        gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermanentId);
+        gameData.creaturesAssigningNoCombatDamageThisTurn.add(sourcePermanentId);
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         String sourceName = source != null ? source.getCard().getName() : "the attacking creature";
         gameLogService.append(gameData,

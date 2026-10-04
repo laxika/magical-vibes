@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class BoobyTrap extends Card {
         // The chosen opponent is the (single) opponent; the name is stamped onto the permanent.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(
                 List.of(), ChooseCardNameOnEnterEffect.HandAccess.NONE, false, null, true));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
         // "The chosen player reveals each card they draw." + the draw trigger — handled in DrawService.
         addEffect(EffectSlot.STATIC, new BoobyTrapEffect());
     }

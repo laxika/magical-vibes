@@ -27,7 +27,9 @@ class BygoneColossusTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(colossus.getId()));
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(colossus.getId())).isNotNull();
@@ -40,7 +42,9 @@ class BygoneColossusTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Bygone Colossus");
         assertThat(gd.stack).hasSize(1);
@@ -57,7 +61,9 @@ class BygoneColossusTest extends BaseCardTest {
         harness.castFromHand(player1, new BygoneColossus(), "{9}");
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Bygone Colossus");
         assertThat(gd.stack).isEmpty();
@@ -72,7 +78,9 @@ class BygoneColossusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Bygone Colossus");
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Bygone Colossus");
     }
@@ -86,7 +94,9 @@ class BygoneColossusTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
@@ -96,7 +106,7 @@ class BygoneColossusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, colossus.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         assertThatThrownBy(() -> harness.castFromExile(player1, colossus.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -107,7 +117,7 @@ class BygoneColossusTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Bygone Colossus");
         assertThat(gd.findExiledCard(colossus.getId())).isNull();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Bygone Colossus");
         assertThat(gd.stack).isEmpty();
     }

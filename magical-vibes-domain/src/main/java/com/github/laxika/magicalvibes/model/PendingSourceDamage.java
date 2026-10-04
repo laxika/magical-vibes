@@ -10,11 +10,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Accumulates the damage a single source deals during one non-combat damage event (a stack-entry
- * resolution). A red source that damages several targets at once produces one summed Justice
- * reflection (per the CR ruling), so damage is batched here per source and flushed after the
- * resolution completes. Keyed in {@link GameData#pendingSourceDamageForReflection} by the source
- * card's id.
+ * Accumulates one source's noncombat damage during a damage instruction. Damage to several
+ * recipients from the same instruction is batched together; separate instructions in an instant
+ * or sorcery spell produce separate batches. The engine flushes the batches after resolution.
  */
 public final class PendingSourceDamage {
 
@@ -28,6 +26,7 @@ public final class PendingSourceDamage {
     private final List<DamageRecipient> damageRecipients = new java.util.ArrayList<>();
     private final List<CardEffect> selfDealsDamageEffects;
     private UUID singleCreatureSpellTargetId;
+    private final Set<UUID> instantOrSorceryDamageRecipients = new LinkedHashSet<>();
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount) {
         this(sourceCard, controllerId, sourcePermanentId, amount, null);
@@ -149,6 +148,16 @@ public final class PendingSourceDamage {
         }
     }
 
+    public void recordInstantOrSorceryDamageRecipient(UUID recipientId) {
+        if (recipientId != null) {
+            instantOrSorceryDamageRecipients.add(recipientId);
+        }
+    }
+
+    public int getInstantOrSorceryDamageRecipientCount() {
+        return instantOrSorceryDamageRecipients.size();
+    }
+
     public void rememberSingleCreatureSpellTarget(UUID targetId) {
         if (singleCreatureSpellTargetId == null) {
             singleCreatureSpellTargetId = targetId;
@@ -168,6 +177,7 @@ public final class PendingSourceDamage {
         damageToPermanents.forEach((permanentId, permanentDamage) -> copy.damageToPermanents.put(permanentId, permanentDamage));
         copy.damageToPermanentControllers.addAll(damageToPermanentControllers);
         copy.damageRecipients.addAll(damageRecipients);
+        copy.instantOrSorceryDamageRecipients.addAll(instantOrSorceryDamageRecipients);
         return copy;
     }
 

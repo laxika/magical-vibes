@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Permanent;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOwnerOfTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -24,12 +26,23 @@ public class LoseLifeToOwnerOfTriggeringPermanentEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card triggeringPermanent = gameQueryService.findCardById(gameData, entry.getTriggeringCardId());
-        if (triggeringPermanent == null || triggeringPermanent.getOwnerId() == null) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        Card triggeringCard = permanent == null
+                ? entry.lastKnownPermanentCard(entry.getTriggeringPermanentId()) : permanent.getCard();
+        if (triggeringCard == null) {
+            triggeringCard = entry.getTriggeringCardSnapshot();
+        }
+        UUID ownerId = entry.getTriggeringPermanentOwnerId();
+        if (ownerId == null && permanent != null) {
+            ownerId = permanent.getOriginalCard().getOwnerId();
+        }
+        if (ownerId == null && triggeringCard != null) {
+            ownerId = triggeringCard.getOwnerId();
+        }
+        if (ownerId == null) {
             return;
         }
-
-        lifeSupport.applyLifeLoss(gameData, triggeringPermanent.getOwnerId(), entry.getEventValue(),
-                entry.getCard().getName());
+        int manaValue = triggeringCard == null ? entry.getEventValue() : triggeringCard.getManaValue();
+        lifeSupport.applyLifeLoss(gameData, ownerId, manaValue, entry.getCard().getName());
     }
 }

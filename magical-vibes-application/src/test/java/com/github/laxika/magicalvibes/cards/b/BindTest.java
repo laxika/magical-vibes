@@ -146,12 +146,13 @@ class BindTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
         harness.activateAbility(player2, 0, null, player1.getId());
+        var activationId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, rod.getId());
         harness.assertInGraveyard(player2, "Rod of Ruin");
         harness.passPriority(player2);
 
-        harness.castAndResolveInstant(player1, 0, rod.getId());
+        harness.castAndResolveInstant(player1, 0, activationId);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);

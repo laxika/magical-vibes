@@ -100,8 +100,13 @@ class BirgiGodOfStorytellingTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         resolveAllTriggers();
 
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
@@ -152,6 +157,9 @@ class BirgiGodOfStorytellingTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
@@ -215,6 +223,8 @@ class BirgiGodOfStorytellingTest extends BaseCardTest {
         harness.castFromExile(player1, firstLand.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, secondLand.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(secondLand);
@@ -237,7 +247,7 @@ class BirgiGodOfStorytellingTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No valid card to discard");
+                .hasMessageContaining("Must discard a card");
     }
 
     @Test

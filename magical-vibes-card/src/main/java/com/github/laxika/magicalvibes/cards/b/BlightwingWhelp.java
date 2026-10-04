@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DefendingPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
@@ -29,7 +28,6 @@ public class BlightwingWhelp extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new SeekCardsToHandEffect(
                 new Fixed(1), null,
                 new ManaValueBound(new DefendingPlayerPoisonCounters(), true, 0)));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
     }
 }

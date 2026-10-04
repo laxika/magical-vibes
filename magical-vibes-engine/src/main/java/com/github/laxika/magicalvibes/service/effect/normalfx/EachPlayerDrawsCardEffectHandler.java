@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +40,10 @@ public class EachPlayerDrawsCardEffectHandler implements NormalEffectHandlerBean
         }
         AmountContext base = AmountContext.forStackEntry(entry, source);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        List<UUID> drawingPlayers = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = drawingPlayers.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) Collections.rotate(drawingPlayers, -activeIndex);
+        for (UUID playerId : drawingPlayers) {
             // Evaluate the amount relative to each drawing player so player-relative amounts
             // (e.g. Nature's Resurgence: "a card for each creature card in their graveyard")
             // count that player's own objects. Player-invariant amounts (fixed, X) are unaffected.

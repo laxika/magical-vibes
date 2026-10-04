@@ -78,8 +78,12 @@ public class ControlledCreaturesDealPowerDamageToTargetEffectHandler implements 
             }
 
             int power = gameQueryService.getPowerBasedDamage(gameData, hunter);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
-            damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, hunter);
+            StackEntry damageEntry = new StackEntry(entry.getEntryType(), hunter.getCard(),
+                    gameQueryService.findPermanentController(gameData, hunter.getId()),
+                    entry.getDescription(), List.of(), target.getId(), hunter.getId());
+            damageEntry.setSourcePermanentSnapshot(new Permanent(hunter));
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            damageSupport.dealCreatureDamage(gameData, damageEntry, target, rawDamage, hunter);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

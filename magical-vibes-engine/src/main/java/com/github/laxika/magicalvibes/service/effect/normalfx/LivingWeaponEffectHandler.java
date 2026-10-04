@@ -35,24 +35,9 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.token(), entry.getCard().getSetCode());
         entry.getCreatedPermanentIds().addAll(createdIds);
-        if (createdIds.isEmpty()) {
-            return;
+        if (!createdIds.isEmpty() || gameData.interaction.isAwaitingInput()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToCreatedPermanentEffect(true)));
         }
-
-        Permanent token = gameQueryService.findPermanentById(gameData, createdIds.getLast());
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (token == null || equipment == null) {
-            return;
-        }
-
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
-        UUID oldAttachedTo = equipment.getAttachedTo();
-        equipment.setAttachedTo(token.getId());
-        equipment.setTimestamp(gameData.nextTimestamp());
-        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
-        gameLogService.append(gameData,
-                GameLog.cardThen(entry.getCard(), " is now attached to " + token.getCard().getName() + "."));
-        log.info("Game {} - {} attached to {} token via living weapon", gameData.id,
-                entry.getCard().getName(), token.getCard().getName());
     }
 }

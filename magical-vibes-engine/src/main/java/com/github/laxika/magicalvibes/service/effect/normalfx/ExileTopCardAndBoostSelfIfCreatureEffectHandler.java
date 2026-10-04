@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardAndBoostSelfIfCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class ExileTopCardAndBoostSelfIfCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final BoostSelfEffectHandler boostSelfEffectHandler;
 
@@ -52,8 +54,10 @@ public class ExileTopCardAndBoostSelfIfCreatureEffectHandler implements NormalEf
             return;
         }
 
-        int power = topCard.getPower() != null ? topCard.getPower() : 0;
-        int toughness = topCard.getToughness() != null ? topCard.getToughness() : 0;
+        Integer effectivePower = gameQueryService.getEffectiveCardPower(gameData, topCard);
+        Integer effectiveToughness = gameQueryService.getEffectiveCardToughness(gameData, topCard);
+        int power = effectivePower != null ? effectivePower : 0;
+        int toughness = effectiveToughness != null ? effectiveToughness : 0;
         boostSelfEffectHandler.resolve(gameData, entry, new BoostSelfEffect(power, toughness));
         log.info("Game {} - {} gets {}/{} from exiled creature {}", gameData.id,
                 entry.getCard().getName(), power, toughness, topCard.getName());

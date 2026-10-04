@@ -6,13 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,10 +25,8 @@ import java.util.Set;
 public class Bant extends Card {
 
     public Bant() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
-                new ConditionalEffect(new AttacksAlone(), new BoostSelfEffect(1, 1)),
-                GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                Keyword.EXALTED, GrantScope.ALL_CREATURES_INCLUDING_SELF));
 
         PermanentAllOfPredicate eligibleCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -45,6 +39,6 @@ public class Bant extends Card {
                 new GrantStaticEffectToTargetEffect(new GrantKeywordEffect(
                         Keyword.INDESTRUCTIBLE,
                         GrantScope.SELF,
-                        new PermanentHasCountersPredicate(CounterType.DIVINITY)))));
+                        new PermanentHasCountersPredicate(CounterType.DIVINITY)), CounterType.DIVINITY)));
     }
 }

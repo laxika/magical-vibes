@@ -37,11 +37,13 @@ class BrineElementalTest extends BaseCardTest {
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isZero();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(opponentCreature.isTapped()).isTrue();
 
-        harness.passUntil(player1, TurnStep.UPKEEP);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(opponentCreature.isTapped()).isFalse();
     }
 
@@ -53,7 +55,9 @@ class BrineElementalTest extends BaseCardTest {
         harness.castFromHand(player1, new BrineElemental(), "{4}{U}{U}");
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(opponentCreature.isTapped()).isFalse();
     }
@@ -78,13 +82,15 @@ class BrineElementalTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(opponentCreature.isTapped()).isTrue();
-        harness.passUntil(player1, TurnStep.UPKEEP);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(opponentCreature.isTapped()).isTrue();
-        harness.passUntil(player1, TurnStep.UPKEEP);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(opponentCreature.isTapped()).isFalse();
     }
 
@@ -103,8 +109,10 @@ class BrineElementalTest extends BaseCardTest {
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(elemental));
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(ownCreature.isTapped()).isFalse();
     }

@@ -95,6 +95,8 @@ class BlinkmothNexusTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, nexus)).isTrue();
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, nexus)).isFalse();
@@ -185,6 +187,8 @@ class BlinkmothNexusTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(2);
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, null, null);

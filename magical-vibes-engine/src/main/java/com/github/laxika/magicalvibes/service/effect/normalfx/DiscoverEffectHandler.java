@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -33,6 +34,7 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
+    private final ExileService exileService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,6 +63,7 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
         Card hit = null;
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
+            exileService.exileCard(gameData, controllerId, top);
             revealed.add(top);
             if (!top.hasType(CardType.LAND) && top.getManaValue() <= discoverValue) {
                 hit = top;
@@ -73,6 +76,7 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
         if (hit == null) {
             entry.setEventValue(discoverValue);
             Collections.shuffle(revealed);
+            revealed.forEach(card -> gameData.removeFromExile(card.getId()));
             deck.addAll(revealed);
             gameLogService.append(gameData, GameLog.text(sourceName
                     + " (Discover " + discoverValue + "): no qualifying nonland card was found;"

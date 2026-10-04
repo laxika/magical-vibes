@@ -264,8 +264,9 @@ class BraidedNetTest extends BaseCardTest {
     @Test
     @DisplayName("A borrowed Quipu draws for its controller and goes into its owner's library")
     void quipuDrawsForControllerAndReturnsToOwnersLibrary() {
-        Permanent quipu = addTransformedQuipu();
-        quipu.getOriginalCard().setOwnerId(player2.getId());
+        BraidedNet front = new BraidedNet();
+        front.setOwnerId(player2.getId());
+        Permanent quipu = addTransformedQuipu(front);
         Card drawn = new BraidedNet();
         Card remaining = new BraidedNet();
         List<Card> ownerLibrary = List.of(new BraidedNet(), new BraidedNet(), new BraidedNet());
@@ -286,7 +287,10 @@ class BraidedNetTest extends BaseCardTest {
     }
 
     private Permanent addTransformedQuipu() {
-        BraidedNet front = new BraidedNet();
+        return addTransformedQuipu(new BraidedNet());
+    }
+
+    private Permanent addTransformedQuipu(BraidedNet front) {
         Permanent quipu = new Permanent(front);
         quipu.setCard(front.getBackFaceCard());
         quipu.setTransformed(true);

@@ -163,6 +163,8 @@ class BasriKetTest extends BaseCardTest {
     @Test
     @DisplayName("-2 expires at end of turn")
     void minusTwoDoesNotTriggerOnALaterTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addReadyBasri(3);
         addCreatureReady(player1, new AlpineWatchdog());
 
@@ -171,7 +173,7 @@ class BasriKetTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
 
         assertThat(gd.stack).isEmpty();

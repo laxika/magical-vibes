@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AllowCastCardsExiledWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -20,7 +21,7 @@ import java.util.List;
 public class BoilingRockRioter extends Card {
 
     public BoilingRockRioter() {
-        addEffect(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1));
+        addEffect(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1), TriggerMode.INDEPENDENT);
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -33,7 +34,7 @@ public class BoilingRockRioter extends Card {
         ));
 
         addEffect(EffectSlot.ON_ATTACK,
-                new AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
-                        new CardSubtypePredicate(CardSubtype.ALLY), false, true));
+                new MayCastCardExiledWithSourceEffect(
+                        null, new CardSubtypePredicate(CardSubtype.ALLY), false, false, null, true), TriggerMode.INDEPENDENT);
     }
 }

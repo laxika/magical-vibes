@@ -53,8 +53,6 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
 
         Card conjuredCard = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
         conjuredCard.setOwnerId(entry.getControllerId());
-        conjuredCard.setPower(conjure.basePower());
-        conjuredCard.setToughness(conjure.baseToughness());
 
         Permanent permanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
@@ -71,6 +69,10 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
                         gameData, entry.getControllerId(), conjuredCard, null, false);
             }
         }
+        Card perpetualCard = permanent.getCard().createRuntimeCopy();
+        perpetualCard.setPower(conjure.basePower());
+        perpetualCard.setToughness(conjure.baseToughness());
+        permanent.exchangeCard(perpetualCard);
     }
 
     private Card findCard(String cardName) {

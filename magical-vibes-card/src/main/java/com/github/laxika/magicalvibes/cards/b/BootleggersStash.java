@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
@@ -20,6 +21,6 @@ public class BootleggersStash extends Card {
                 new ActivatedAbility(true, null,
                         List.of(CreateTokenEffect.ofTreasureToken(1)),
                         "{T}: Create a Treasure token."),
-                GrantScope.OWN_LANDS));
+                GrantScope.OWN_PERMANENTS, new PermanentIsLandPredicate()));
     }
 }

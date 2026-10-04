@@ -70,17 +70,19 @@ class BatteringRamTest extends BaseCardTest {
         ram.setAttacking(true);
         Permanent wall = addCreatureReady(player2, new WallOfWood());
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            prepareDeclareBlockers();
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.stack).anyMatch(se ->
-                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && ram.getId().equals(se.getSourcePermanentId())
-                        && se.getTargetId().equals(wall.getId()));
+            assertThat(gd.stack).anyMatch(se ->
+                    se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                            && ram.getId().equals(se.getSourcePermanentId())
+                            && se.getTargetId().equals(wall.getId()));
 
-        harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(wall.getId()));
+            harness.passBothPriorities();
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                    .anyMatch(a -> a.permanentId().equals(wall.getId()));
+        });
     }
 
     @Test
@@ -175,14 +177,16 @@ class BatteringRamTest extends BaseCardTest {
         ram.setAttacking(true);
         Permanent wall = addCreatureReady(player2, new WallOfWood());
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            prepareDeclareBlockers();
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        TestCards.mutableCard(wall).setSubtypes(List.of());
-        harness.passBothPriorities();
+            TestCards.mutableCard(wall).setSubtypes(List.of());
+            harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(wall.getId()));
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                    .anyMatch(a -> a.permanentId().equals(wall.getId()));
+        });
     }
 
     @Test
@@ -193,21 +197,23 @@ class BatteringRamTest extends BaseCardTest {
         Permanent firstWall = addCreatureReady(player2, new WallOfWood());
         Permanent secondWall = addCreatureReady(player2, new WallOfWood());
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(0, 0),
-                new BlockerAssignment(1, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            prepareDeclareBlockers();
+            gs.declareBlockers(gd, player2, List.of(
+                    new BlockerAssignment(0, 0),
+                    new BlockerAssignment(1, 0)));
 
-        assertThat(gd.stack.stream()
-                .filter(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
-                .filter(se -> ram.getId().equals(se.getSourcePermanentId())))
-                .hasSize(2);
+            assertThat(gd.stack.stream()
+                    .filter(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                    .filter(se -> ram.getId().equals(se.getSourcePermanentId())))
+                    .hasSize(2);
 
-        resolveAllTriggers();
+            resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
-                .containsExactlyInAnyOrder(firstWall.getId(), secondWall.getId());
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                    .extracting(DelayedPermanentAction::permanentId)
+                    .containsExactlyInAnyOrder(firstWall.getId(), secondWall.getId());
+        });
     }
 
 }

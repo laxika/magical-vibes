@@ -35,14 +35,9 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
             return;
         }
 
-        if (gameQueryService.cantHaveCounters(gameData, self)) {
-            return;
+        if (!gameQueryService.cantHaveCounters(gameData, self)) {
+            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), 1);
         }
-
-        int before = self.getCounterCount(e.counterType());
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), 1);
-        int placed = self.getCounterCount(e.counterType()) - before;
-        if (placed <= 0) return;
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
 
         // Check threshold and transform if met

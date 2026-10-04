@@ -53,6 +53,10 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
         if (discarded == null) {
             return;
         }
+        long expectedVersion = entry.getTriggeringCardGraveyardEntryVersion();
+        if (expectedVersion >= 0 && expectedVersion != gameData.graveyardEntryVersion(discarded.getId())) {
+            return;
+        }
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, discarded.getId());
         if (exileEffect.addStashCounter()) {

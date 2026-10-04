@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
 
@@ -50,7 +51,8 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) {
+                if (!gameQueryService.cantBeSacrificed(gameData, p)
+                        && predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) {
                     validIds.add(p.getId());
                 }
             }

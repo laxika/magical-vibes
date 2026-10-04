@@ -2997,8 +2997,7 @@ public class TargetLegalityService {
     }
 
     public boolean fitsAtMostOneArtifactOneCreatureAndOneLand(GameData gameData, List<UUID> targetIds) {
-        if (targetIds == null || targetIds.size() > 3
-                || targetIds.stream().distinct().count() != targetIds.size()) {
+        if (targetIds == null || targetIds.size() > 3) {
             return false;
         }
         List<Permanent> targets = new ArrayList<>(targetIds.size());
@@ -3385,9 +3384,10 @@ public class TargetLegalityService {
             }
             if (multiTargetConstraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
                     && targetLegal.length > 0) {
-                UUID requiredControllerId = entry.getRequiredTargetControllerId();
+                UUID requiredControllerId = controllerForMultiTargetConstraint(
+                        gameData, declaredTargetIds.getFirst());
                 if (requiredControllerId == null) {
-                    requiredControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.getFirst());
+                    requiredControllerId = entry.getRequiredTargetControllerId();
                 }
                 for (int i = 0; i < declaredTargetIds.size(); i++) {
                     UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));

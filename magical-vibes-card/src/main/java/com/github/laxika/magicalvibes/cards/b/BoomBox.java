@@ -34,6 +34,7 @@ public class BoomBox extends Card {
                 List.<TargetFilter>of(artifactCreatureOrLand, artifactCreatureOrLand, artifactCreatureOrLand),
                 0,
                 3
-        ).withMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND));
+        ).withAllowSharedTargets()
+                .withMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND));
     }
 }

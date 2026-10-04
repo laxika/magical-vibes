@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -69,15 +71,19 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCastForLifeThisTurnEffectHand
         }
 
         gameData.exilePlayPermissions.put(nonland.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(nonland.getId());
         gameData.exilePlayForLifeEqualToManaValue.add(nonland.getId());
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(), controllerId,
+                List.of(new MayCastExiledCardWithNormalCostEffect(UUID.randomUUID(), false)),
+                "Cast " + nonland.getName() + " by paying life equal to its mana value?",
+                nonland.getId(), null, entry.getSourcePermanentId()));
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(damagedPlayerName + " exiles cards until ").card(nonland)
                 .text(" — " + gameData.playerIdToName.get(controllerId)
-                        + " may cast it this turn by paying life equal to its mana value.")
+                        + " may cast it now by paying life equal to its mana value.")
                 .build());
-        log.info("Game {} - {} dug {} card(s) into {}; {} may cast it this turn by paying life",
+        log.info("Game {} - {} dug {} card(s) into {}; {} may cast it now by paying life",
                 gameData.id, damagedPlayerName, exiledCount, nonland.getName(),
                 gameData.playerIdToName.get(controllerId));
     }

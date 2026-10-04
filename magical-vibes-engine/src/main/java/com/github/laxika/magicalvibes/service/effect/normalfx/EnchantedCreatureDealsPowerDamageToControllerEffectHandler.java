@@ -35,12 +35,16 @@ public class EnchantedCreatureDealsPowerDamageToControllerEffectHandler implemen
         }
 
         UUID recipientId = entry.getControllerId();
-        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        boolean creatureStillPresent = gameQueryService.findPermanentById(gameData, creature.getId()) != null;
+        UUID creatureControllerId = creatureStillPresent
+                ? gameQueryService.findPermanentController(gameData, creature.getId())
+                : entry.getTriggeringPermanentControllerId();
         if (recipientId == null || creatureControllerId == null) {
             return;
         }
 
-        int power = gameQueryService.getPowerBasedDamage(gameData, creature);
+        int power = creatureStillPresent ? gameQueryService.getPowerBasedDamage(gameData, creature)
+                : Math.max(0, entry.getTriggeringPermanentPowerAtTrigger());
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 creature.getCard(),
@@ -49,6 +53,7 @@ public class EnchantedCreatureDealsPowerDamageToControllerEffectHandler implemen
                 List.of(),
                 recipientId,
                 creature.getId());
+        damageEntry.setSourcePermanentSnapshot(creature);
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
         damageSupport.dealDamageToPlayer(gameData, damageEntry, recipientId, rawDamage);
@@ -68,9 +73,13 @@ public class EnchantedCreatureDealsPowerDamageToControllerEffectHandler implemen
         }
 
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || aura.getAttachedTo() == null) {
             return null;
         }
-        return gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        return creature != null ? creature : entry.getAttachedPermanentSnapshot();
     }
 }

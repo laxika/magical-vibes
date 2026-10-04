@@ -216,6 +216,7 @@ class BrutalExpulsionTest extends BaseCardTest {
 
     @Test
     void returnsANoncreaturePermanentSpellFromTheStack() {
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new GideonAllyOfZendikar(), "{2}{W}{W}");
         UUID spellId = gd.stack.getLast().getCard().getId();
 

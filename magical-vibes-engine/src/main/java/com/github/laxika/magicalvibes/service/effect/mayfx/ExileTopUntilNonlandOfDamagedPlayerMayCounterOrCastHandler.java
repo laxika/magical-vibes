@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutCountersOnSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastHandler implements MayEffectHandlerBean {
 
+    private final GameQueryService gameQueryService;
     private final PutCountersOnSourceEffectHandler putCountersOnSourceEffectHandler;
     private final InputCompletionService inputCompletionService;
 
@@ -32,7 +34,10 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastHandler implemen
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        if (accepted) {
+        Permanent source = ability.sourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+        if (accepted && source != null
+                && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
             PutCountersOnSourceEffect counterEffect = new PutCountersOnSourceEffect(1, 1, 1);
             StackEntry counterEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -52,14 +57,7 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastHandler implemen
                 gameData.exilePlayPermissions.put(cardId, ability.controllerId());
                 gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
                 gameData.exilePlayAnyManaType.add(cardId);
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        ability.sourceCard(),
-                        ability.controllerId(),
-                        List.of(new MayCastExiledCardWithNormalCostEffect(UUID.randomUUID())),
-                        "Cast " + exiled.card().getName() + "?",
-                        cardId,
-                        null,
-                        ability.sourcePermanentId()));
+
             }
         }
 

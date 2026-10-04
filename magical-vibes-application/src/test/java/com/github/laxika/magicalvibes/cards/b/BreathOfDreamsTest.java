@@ -208,7 +208,7 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertInGraveyard(player1, "Fyndhorn Elves");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elves);

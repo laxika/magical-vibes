@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -30,7 +32,8 @@ public class BubblingCauldron extends Card {
                 true, "{1}",
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentNamedPredicate("Festering Newt"),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentNamedPredicate("Festering Newt"))),
                                 "Sacrifice a creature named Festering Newt",
                                 false
                         ),

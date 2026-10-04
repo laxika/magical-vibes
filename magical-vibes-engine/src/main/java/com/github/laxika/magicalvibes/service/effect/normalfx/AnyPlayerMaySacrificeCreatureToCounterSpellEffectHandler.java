@@ -93,6 +93,16 @@ public class AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler implements
         }
     }
 
+    public void acceptSacrifice(GameData gameData, Card sourceCard,
+                                AnyPlayerMaySacrificeCreatureToCounterSpellEffect effect,
+                                UUID playerId, UUID permanentId) {
+        List<UUID> chosen = new ArrayList<>(effect.chosenSacrificePermanentIds());
+        chosen.add(permanentId);
+        advance(gameData, sourceCard, new AnyPlayerMaySacrificeCreatureToCounterSpellEffect(
+                effect.remainingPlayerIds(), effect.abilityControllerId(), effect.targetCardId(), true, chosen),
+                playerId, true);
+    }
+
     public void advance(GameData gameData, Card sourceCard,
                          AnyPlayerMaySacrificeCreatureToCounterSpellEffect effect,
                          UUID playerId, boolean anyAccepted) {
@@ -103,7 +113,11 @@ public class AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler implements
 
         if (!remaining.isEmpty()) {
             promptNext(gameData, sourceCard, new AnyPlayerMaySacrificeCreatureToCounterSpellEffect(
-                    List.copyOf(remaining), effect.abilityControllerId(), effect.targetCardId(), anyAccepted));
+                    List.copyOf(remaining), effect.abilityControllerId(), effect.targetCardId(), anyAccepted,
+                    effect.chosenSacrificePermanentIds()));
+        } else if (!effect.chosenSacrificePermanentIds().isEmpty()) {
+            destructionSupport.performSimultaneousSacrifice(gameData, effect.chosenSacrificePermanentIds());
+            counterSpell(gameData, sourceCard, effect);
         }
     }
 

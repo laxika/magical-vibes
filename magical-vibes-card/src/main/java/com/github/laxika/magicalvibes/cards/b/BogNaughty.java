@@ -21,7 +21,7 @@ public class BogNaughty extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD),
-                                "Sacrifice a Food"
+                                "Sacrifice a Food", false
                         ),
                         new BoostTargetCreatureEffect(-3, -3)
                 ),

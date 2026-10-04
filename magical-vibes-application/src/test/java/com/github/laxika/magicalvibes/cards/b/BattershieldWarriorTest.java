@@ -73,7 +73,7 @@ class BattershieldWarriorTest extends BaseCardTest {
         assertThat(warrior.getEffectivePower()).isEqualTo(3);
         assertThat(warrior.getEffectiveToughness()).isEqualTo(3);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(warrior.getEffectivePower()).isEqualTo(2);
         assertThat(warrior.getEffectiveToughness()).isEqualTo(2);

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -112,13 +113,13 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     public void resolvePaidEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect,
             int xValue) {
         enqueuePaidEffects(gameData, entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(),
-                entry.getSourcePermanentSnapshot(), effect.paidEffects(), xValue);
+                entry.getSourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost());
     }
 
     public void resolvePaidEffects(GameData gameData, PendingMayAbility ability, ForcedCostOrElseEffect effect,
             int xValue) {
         enqueuePaidEffects(gameData, ability.sourceCard(), ability.controllerId(), ability.sourcePermanentId(),
-                ability.sourcePermanentSnapshot(), effect.paidEffects(), xValue);
+                ability.sourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost());
     }
 
     public void payFlipCoins(GameData gameData, UUID playerId, Card sourceCard, int count) {
@@ -128,7 +129,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void enqueuePaidEffects(GameData gameData, Card sourceCard, UUID controllerId,
-            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, List<CardEffect> paidEffects, int xValue) {
+            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, List<CardEffect> paidEffects, int xValue,
+            CardEffect forcedCost) {
         if (paidEffects.isEmpty()) {
             return;
         }
@@ -138,6 +140,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
         if (pendingEntry != null
+                && !(forcedCost instanceof PayManaCost manaCost && manaCost.forCumulativeUpkeep())
                 && pendingEntry.getControllerId().equals(controllerId)
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0

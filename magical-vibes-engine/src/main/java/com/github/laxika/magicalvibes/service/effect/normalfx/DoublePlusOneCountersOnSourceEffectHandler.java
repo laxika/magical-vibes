@@ -39,13 +39,18 @@ public class DoublePlusOneCountersOnSourceEffectHandler implements NormalEffectH
             return;
         }
 
-        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                current * MaroGoneNutsSupport.apply(gameData, effect, 2));
+        int added = current * (MaroGoneNutsSupport.apply(gameData, effect, 2) - 1);
+        added = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE,
+                added, entry.getControllerId());
+        if (added <= 0) return;
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, current + added);
+        permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, added,
+                CounterType.PLUS_ONE_PLUS_ONE);
         permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                 gameData, source, entry.getControllerId());
         permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                 gameData, source,
-                current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current,
+                added,
                 entry.getControllerId());
         permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source, entry.getControllerId());
     }

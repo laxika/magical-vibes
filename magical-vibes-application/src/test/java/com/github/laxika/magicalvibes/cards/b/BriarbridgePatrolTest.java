@@ -202,6 +202,7 @@ class BriarbridgePatrolTest extends BaseCardTest {
         addCreatureReady(player2, new BriarbridgePatrol());
         addClues(player1, 3);
         sacrificeClues(3);
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new BriarbridgePatrol()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

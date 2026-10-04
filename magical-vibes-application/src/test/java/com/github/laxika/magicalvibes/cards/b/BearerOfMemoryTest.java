@@ -51,7 +51,7 @@ class BearerOfMemoryTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(bearer), null, target.getId());
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();

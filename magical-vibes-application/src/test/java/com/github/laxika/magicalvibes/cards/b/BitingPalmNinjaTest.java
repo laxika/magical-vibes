@@ -116,7 +116,6 @@ class BitingPalmNinjaTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();

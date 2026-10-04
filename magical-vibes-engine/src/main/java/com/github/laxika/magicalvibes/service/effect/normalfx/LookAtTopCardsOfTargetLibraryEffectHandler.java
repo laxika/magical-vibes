@@ -139,9 +139,9 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
             case MAY_SHUFFLE -> resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
                     deck, actual, controllerName, targetName);
             case PUT_ONE_INTO_GRAVEYARD -> resolvePutOneIntoGraveyard(gameData, entry, controllerId,
-                    targetPlayerId, deck, actual, controllerName, targetName, false);
+                    targetPlayerId, deck, actual, controllerName, targetName, false, e.graveyardCount());
             case REVEAL_AND_PUT_ONE_INTO_GRAVEYARD -> resolvePutOneIntoGraveyard(gameData, entry,
-                    controllerId, targetPlayerId, deck, actual, controllerName, targetName, true);
+                    controllerId, targetPlayerId, deck, actual, controllerName, targetName, true, e.graveyardCount());
             case MAY_PUT_TOP_ON_BOTTOM -> resolveMayPutTopOnBottom(gameData, entry, controllerId,
                     targetPlayerId, deck, controllerName, targetName);
             case KEEP_ONE_ON_TOP_EXILE_REST -> resolveKeepOneOnTopExileRest(gameData, entry,
@@ -412,7 +412,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
 
     private void resolvePutOneIntoGraveyard(GameData gameData, StackEntry entry, UUID controllerId,
             UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName,
-            boolean reveal) {
+            boolean reveal, int graveyardCount) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
         if (reveal) {
             GameLog.Builder revealLog = GameLog.builder().text(targetName + " reveals the top ");
@@ -431,12 +431,14 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
         }
         List<Card> sourceCards = new ArrayList<>(topCards);
-        String prompt = "Put one of these cards into that player's graveyard. The rest will be put on top of the library in any order.";
+        String prompt = "Choose " + Math.min(graveyardCount, actual)
+                + " of these cards to put into that player's graveyard. The rest will be put on top of the library in any order.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, topCards)
                         .reveals(reveal)
                         .canFailToFind(false)
                         .targetPlayerId(targetPlayerId)
+                        .remainingCount(Math.min(graveyardCount, actual))
                         .sourceCards(sourceCards)
                         .reorderRemainingToTop(true)
                         .shuffleAfterSelection(false)

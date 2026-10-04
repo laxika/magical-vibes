@@ -24,7 +24,7 @@ public class BristlebudFarmer extends Card {
                 new SacrificePermanentThenEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                         new MillControllerAndMayReturnMilledPermanentToHandEffect(3),
-                        "a Food"),
+                        "a Food", false, false),
                 "Sacrifice a Food?"));
     }
 

@@ -711,7 +711,6 @@ public class Card {
         setColors(List.of(CardColor.RED));
         setColorIdentity(List.of(CardColor.RED));
         setAdditionalTypes(Set.of());
-        setSupertypes(Set.of());
         setSubtypes(List.of());
         setCardText("Missile deals 2 damage to any target.");
         setPower(null);

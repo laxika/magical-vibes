@@ -21,12 +21,22 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *               {@link DynamicAmount} — {@link Fixed} for a printed number, {@code XValue} for an
  *               {@code {X}} spell (Sealed Fate)
  * @param action what the controller does with the looked-at cards
+ * @param graveyardCount number of cards chosen together for the graveyard actions (defaults to one)
  */
-public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action)
+public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action,
+                                                  int graveyardCount)
         implements CombatDamageTriggerContextEffect {
+
+    public LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action) {
+        this(count, action, 1);
+    }
 
     public LookAtTopCardsOfTargetLibraryEffect(int count, TargetLibraryAction action) {
         this(new Fixed(count), action);
+    }
+
+    public LookAtTopCardsOfTargetLibraryEffect(int count, TargetLibraryAction action, int graveyardCount) {
+        this(new Fixed(count), action, graveyardCount);
     }
 
     @Override

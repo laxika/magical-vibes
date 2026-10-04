@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PaperfinRascal;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,6 +26,10 @@ class BogHoodlumsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new BogHoodlums(), "{5}{B}");
         resolveAllTriggers();
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.Scry scry) {
+            gs.handleInteractionAnswer(gd, scry.playerId().equals(player1.getId()) ? player1 : player2,
+                    new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        }
 
         return findPermanent(player1, "Bog Hoodlums");
     }

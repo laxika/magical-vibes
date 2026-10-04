@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 
 import java.util.List;
 
@@ -20,7 +23,8 @@ public class BodyDropper extends Card {
     public BodyDropper() {
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCreaturePredicate(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                         new PutCountersOnSourceEffect(1, 1, 1)
                 ));
 

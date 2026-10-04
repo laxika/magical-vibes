@@ -146,7 +146,7 @@ class BonecacheOverseerTest extends BaseCardTest {
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Food")), null, null);
         resolveAllTriggers();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -185,7 +185,7 @@ class BonecacheOverseerTest extends BaseCardTest {
         for (int i = 0; i < 3; i++) {
             leaveGraveyardCard(target);
         }
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

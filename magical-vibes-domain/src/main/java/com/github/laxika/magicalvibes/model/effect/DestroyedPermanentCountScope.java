@@ -7,6 +7,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum DestroyedPermanentCountScope {
     /** Count every permanent actually destroyed. */
     ALL,
+    /** Count every nontoken permanent actually destroyed. */
+    ALL_NONTOKEN,
     /** Count permanents actually destroyed that were controlled by the spell's controller. */
     CONTROLLER,
     /** Count nontoken permanents actually destroyed that were controlled by the spell's controller. */

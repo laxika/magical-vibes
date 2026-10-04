@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndSte
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
@@ -643,9 +645,12 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Sacrifice the enchanted permanent, then move the Aura onto the chosen creature or land.
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, ctx.permanentToSacrificeId());
-        if (toSacrifice != null) {
+        if (toSacrifice != null && !gameQueryService.cantBeSacrificed(gameData, toSacrifice)) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, ctx.permanentToSacrificeId());
             permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setSacrificedCard(toSacrifice.getCard());
+            }
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
         }
@@ -1876,11 +1881,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleChampionCreature(GameData gameData, UUID championedPermanentId,
                                        PermanentChoiceContext.ChampionCreature context) {
         Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-        if (source == null) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         Permanent target = gameQueryService.findPermanentById(gameData, championedPermanentId);
         if (target == null) {
             throw new IllegalStateException("Chosen creature no longer exists");
@@ -1891,16 +1891,16 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         permanentRemovalService.removePermanentToExile(gameData, target);
 
-        gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", source.getCard(), "."));
-        log.info("Game {} - {} champions {} (exiled until source leaves)",
-                gameData.id, source.getCard().getName(), card.getName());
-
-        gameData.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(card, ownerId));
+        gameLogService.append(gameData, GameLog.cardThen(card, " is exiled by the champion ability."));
+        if (source != null) {
+            gameData.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(card, ownerId));
+        }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique).
-        List<CardEffect> championedEffects = source.getCard().getEffects(EffectSlot.ON_CHAMPIONED);
+        List<CardEffect> championedEffects = source != null
+                ? source.getCard().getEffects(EffectSlot.ON_CHAMPIONED) : List.of();
         if (championedEffects != null && !championedEffects.isEmpty()) {
             beginChampionedTrigger(gameData, source, context.controllerId(), new ArrayList<>(championedEffects));
             return;
@@ -2063,7 +2063,14 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenSource,
                     " would deal to " + playerName + " is prevented this turn."));
         } else {
-            gameData.permanentsPreventedFromDealingDamage.add(permanentId);
+            StackEntry chosenSpell = gameData.stack.stream()
+                    .filter(candidate -> candidate.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                            && candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                    .filter(candidate -> permanentId.equals(candidate.getTargetableId()))
+                    .findFirst().orElse(null);
+            gameData.targetSpellDamagePreventionShields.add(new TargetSpellDamagePreventionShield(
+                    chosenSpell != null ? chosenSpell.getCard().getId() : null, null,
+                    chosenSpell == null ? permanentId : null, preventSource.requiredColors()));
             gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenSource,
                     " would deal this turn is prevented."));
         }
@@ -2669,12 +2676,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleAnyPlayerMaySacrificeCreatureToCounterSpell(
             GameData gameData, UUID permanentId,
             PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell context) {
-        anyPlayerMaySacrificeCreatureToCounterSpellHandler.sacrificeCreature(
-                gameData, context.sacrificingPlayerId(), permanentId);
-        anyPlayerMaySacrificeCreatureToCounterSpellHandler.counterSpell(
-                gameData, context.sourceCard(), context.effect());
-        anyPlayerMaySacrificeCreatureToCounterSpellHandler.advance(
-                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
+        anyPlayerMaySacrificeCreatureToCounterSpellHandler.acceptSacrifice(
+                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), permanentId);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2704,6 +2707,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         int sacrificedColorCount = gameQueryService.getEffectiveColors(gameData, toSacrifice).size();
         int sacrificedToughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         Permanent sacrificedSnapshot = new Permanent(toSacrifice);
+        Set<CardType> sacrificedTypes = gameQueryService.getEffectiveCardTypes(gameData, toSacrifice);
+        Card sacrificedCharacteristics = toSacrifice.getCard().createRuntimeCopy();
+        sacrificedCharacteristics.setType(sacrificedTypes.stream().findFirst().orElse(null));
+        sacrificedCharacteristics.setAdditionalTypes(Set.copyOf(sacrificedTypes));
+        sacrificedCharacteristics.freeze();
+        sacrificedSnapshot.setCard(sacrificedCharacteristics);
         if (originalEntry != null) {
             originalEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
             originalEntry.setSacrificedPower(sacrificedPower);

@@ -523,6 +523,7 @@ public class DiscardTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setTriggeringCardId(discarded.getId());
+        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(discarded.getId()));
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers to exile discarded card {}{}",

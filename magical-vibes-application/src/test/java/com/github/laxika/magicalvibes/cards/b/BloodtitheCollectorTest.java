@@ -76,7 +76,7 @@ class BloodtitheCollectorTest extends BaseCardTest {
         castBloodtitheCollector();
 
         assertThat(gd.stack).isEmpty();
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss"));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -88,12 +88,14 @@ class BloodtitheCollectorTest extends BaseCardTest {
     void regainingLostLifeDoesNotPreventDiscard() {
         harness.setHand(player2, List.of(new BloodtitheCollector()));
         harness.setLife(player2, 20);
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+            harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+        });
 
         castBloodtitheCollector();
         assertThat(gd.stack).hasSize(1);
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1));
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 

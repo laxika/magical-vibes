@@ -89,8 +89,15 @@ public class PlayerInputService {
                                                   List<Integer> validIndices, String prompt,
                                                   int powerBoost, Set<Keyword> keywords,
                                                   boolean grantBlitz) {
+        beginPerpetualCreatureCardChoice(gameData, playerId, validIndices, prompt, powerBoost, 0, keywords, grantBlitz);
+    }
+
+    public void beginPerpetualCreatureCardChoice(GameData gameData, UUID playerId,
+                                                  List<Integer> validIndices, String prompt,
+                                                  int powerBoost, int toughnessBoost, Set<Keyword> keywords,
+                                                  boolean grantBlitz) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualCreatureCardChoice(
-                playerId, new ArrayList<>(validIndices), prompt, powerBoost, keywords, grantBlitz));
+                playerId, new ArrayList<>(validIndices), prompt, powerBoost, toughnessBoost, keywords, grantBlitz));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, boolean enterTapped) {
@@ -2139,7 +2146,7 @@ public class PlayerInputService {
     public void beginSnowLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
         ChoiceContext.SnowLandwalkGrantChoice choiceContext = new ChoiceContext.SnowLandwalkGrantChoice(targetId);
 
-        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+        List<String> basicLandTypes = CardSubtype.landTypes().stream().map(Enum::name).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, basicLandTypes, "Choose a land type for snow landwalk."));
 

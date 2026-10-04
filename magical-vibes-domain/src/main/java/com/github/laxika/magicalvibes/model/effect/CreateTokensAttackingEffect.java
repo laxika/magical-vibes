@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Creates a counted group of tokens that enter tapped and attacking after their attack targets are chosen. */
+/** Creates tokens attacking after their attack targets are chosen, using the token blueprint for their tapped state. */
 public record CreateTokensAttackingEffect(int amount, CreateTokenEffect tokenEffect, boolean sacrificeAtEndStep,
                                           boolean useTriggeringPermanentController)
         implements CardEffect {

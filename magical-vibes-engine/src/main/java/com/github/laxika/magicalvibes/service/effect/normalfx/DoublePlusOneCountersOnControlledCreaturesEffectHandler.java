@@ -47,18 +47,23 @@ public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements 
             if (doublingEffect.predicate() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(
                     gameData, permanent, doublingEffect.predicate())) continue;
-            if (gameQueryService.cantHaveCounters(gameData, permanent)) continue;
+            if (gameQueryService.cantHaveCounters(gameData, permanent)
+                    || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) continue;
 
             int current = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
             if (current <= 0) continue;
 
-            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                    current * MaroGoneNutsSupport.apply(gameData, effect, 2));
+            int added = current * (MaroGoneNutsSupport.apply(gameData, effect, 2) - 1);
+            added = gameQueryService.replaceCounters(gameData, permanent, CounterType.PLUS_ONE_PLUS_ONE,
+                    added, entry.getControllerId());
+            if (added <= 0) continue;
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, current + added);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, permanent, added,
+                    CounterType.PLUS_ONE_PLUS_ONE);
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
                     gameData, permanent, entry.getControllerId());
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                    gameData, permanent,
-                    current * MaroGoneNutsSupport.apply(gameData, effect, 2) - current);
+                    gameData, permanent, added, entry.getControllerId());
             doubled.add(permanent);
         }
 

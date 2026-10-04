@@ -209,7 +209,9 @@ public class InputCompletionService {
      * (life totals, permanents destroyed, etc.) requiring SBA before continuation.
      */
     public void sbaProcessMayAbilitiesThenAutoPass(GameData gameData) {
-        stateBasedActionService.performStateBasedActions(gameData);
+        if (gameData.pendingEffectResolutionEntry == null) {
+            stateBasedActionService.performStateBasedActions(gameData);
+        }
         if (gameData.status == GameStatus.FINISHED) return;
         processMayAbilitiesThenAutoPass(gameData);
     }
@@ -224,7 +226,9 @@ public class InputCompletionService {
      * battlefield handlers during mid-resolution processing.
      */
     public void sbaProcessMayAbilitiesThenAutoPassPreservingPriority(GameData gameData) {
-        stateBasedActionService.performStateBasedActions(gameData);
+        if (gameData.pendingEffectResolutionEntry == null) {
+            stateBasedActionService.performStateBasedActions(gameData);
+        }
         if (gameData.status == GameStatus.FINISHED) return;
         processMayAbilitiesThenAutoPass(gameData, false);
     }

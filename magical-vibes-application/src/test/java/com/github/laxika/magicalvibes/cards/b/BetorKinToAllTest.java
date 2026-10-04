@@ -16,6 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({BetorKinToAll.class, AvatarOfMight.class})
 class BetorKinToAllTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void clearStartingHand() {
+        harness.setHand(player1, java.util.List.of());
+    }
+
     @Test
     @DisplayName("Does nothing when controlled creatures have total toughness below 10")
     void doesNothingBelowTenToughness() {

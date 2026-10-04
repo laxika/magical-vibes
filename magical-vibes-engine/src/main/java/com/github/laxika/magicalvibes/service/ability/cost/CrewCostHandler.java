@@ -101,7 +101,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         Permanent sourcePermanent = sourcePermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
         lastTappedCreaturePower = Math.max(0,
-                gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, chosen));
+                gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, chosen, cost instanceof CrewCost));
         chosen.tap();
         if (cost instanceof CrewCost && sourcePermanent != null) {
             sourcePermanent.recordCreatureThatCrewedThisTurn(chosen.getId());
@@ -155,7 +155,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(Objects::nonNull)
                 .mapToInt(p -> Math.max(0,
-                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p)))
+                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p, cost instanceof CrewCost)))
                 .min().orElse(0);
         return (totalPower - minPower) < remaining;
     }
@@ -167,7 +167,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(Objects::nonNull)
                 .mapToInt(p -> Math.max(0,
-                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p)))
+                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p, cost instanceof CrewCost)))
                 .sum();
     }
 }

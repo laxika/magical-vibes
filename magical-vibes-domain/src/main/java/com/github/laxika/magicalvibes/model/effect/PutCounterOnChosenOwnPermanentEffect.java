@@ -12,7 +12,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record PutCounterOnChosenOwnPermanentEffect(CounterType counterType, DynamicAmount amount,
                                                     PermanentPredicate predicate,
-                                                    boolean recordPlacement) implements CardEffect {
+                                                    boolean recordPlacement, boolean mandatory) implements CardEffect {
+
+    public PutCounterOnChosenOwnPermanentEffect(CounterType counterType, DynamicAmount amount,
+                                                PermanentPredicate predicate, boolean recordPlacement) {
+        this(counterType, amount, predicate, recordPlacement, false);
+    }
 
     public PutCounterOnChosenOwnPermanentEffect(CounterType counterType, int count,
                                                 PermanentPredicate predicate) {

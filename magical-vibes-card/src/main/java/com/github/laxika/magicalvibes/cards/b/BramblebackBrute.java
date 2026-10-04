@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -16,14 +19,15 @@ import java.util.List;
 public class BramblebackBrute extends Card {
 
     public BramblebackBrute() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCountersOnSourceEffect(-1, -1, 2));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(2)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",
                 List.of(
                         new RemoveCounterFromSourceCost(),
-                        new MakeCreatureUnblockableEffect()
+                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)
                 ),
                 "{1}{R}, Remove a counter from this creature: Target creature can't block this turn. Activate only as a sorcery.",
                 TargetFilters.creature(),

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -73,15 +75,18 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
                     playerName + " pays " + e.manaCost() + " " + chosenPayments
                             + " time(s) for " + cardName + "'s ability."));
 
-            UUID selfId = entry.getSourcePermanentId() != null
-                    ? entry.getSourcePermanentId() : entry.getTargetId();
-            Permanent self = gameQueryService.findPermanentById(gameData, selfId);
-            if (self != null) {
-                permanentCounterSupport.placeCounterOnPermanent(
-                        gameData, entry, self, e.counterType(), chosenPayments);
-            }
             if (e.thenEffect() != null) {
-                queueReflexiveTargetedAbility(gameData, entry, e.thenEffect(), chosenPayments);
+                CardEffect reflexive = SequenceEffect.of(
+                        new PutCountersOnSelfEffect(e.counterType(), chosenPayments), e.thenEffect());
+                queueReflexiveTargetedAbility(gameData, entry, reflexive, chosenPayments);
+            } else {
+                UUID selfId = entry.getSourcePermanentId() != null
+                        ? entry.getSourcePermanentId() : entry.getTargetId();
+                Permanent self = gameQueryService.findPermanentById(gameData, selfId);
+                if (self != null) {
+                    permanentCounterSupport.placeCounterOnPermanent(
+                            gameData, entry, self, e.counterType(), chosenPayments);
+                }
             }
             return;
         }
@@ -112,7 +117,8 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
                                                CardEffect thenEffect, int paymentCount) {
         if (thenEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(thenEffect), null, 0, 0, paymentCount));
+                    entry.getCard(), entry.getControllerId(), List.of(thenEffect), null, 0, 0, paymentCount,
+                    null, entry.isAlternateCost(), entry.getTriggeringPermanentId(), entry.getSourcePermanentId()));
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }

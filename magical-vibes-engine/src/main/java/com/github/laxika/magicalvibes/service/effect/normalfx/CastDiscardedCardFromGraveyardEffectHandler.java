@@ -46,7 +46,7 @@ public class CastDiscardedCardFromGraveyardEffectHandler implements NormalEffect
         }
 
         long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
-        if (expectedEntryVersion != 0
+        if (expectedEntryVersion >= 0
                 && gameData.graveyardEntryVersion(discardedCardId) != expectedEntryVersion) {
             return;
         }

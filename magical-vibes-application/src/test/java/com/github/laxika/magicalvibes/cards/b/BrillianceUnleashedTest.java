@@ -147,14 +147,16 @@ class BrillianceUnleashedTest extends BaseCardTest {
 
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         Permanent returned = findPermanent(player1, "Sol Ring");
         assertThat(gqs.isCreature(gd, returned)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
-        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned));
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned), 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 

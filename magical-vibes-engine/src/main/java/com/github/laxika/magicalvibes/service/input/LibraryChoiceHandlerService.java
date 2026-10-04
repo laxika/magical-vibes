@@ -287,6 +287,28 @@ public class LibraryChoiceHandlerService {
                     : deck;
         }
 
+        if (sourceCards != null && followUp.selectedCardFollowUp() != null
+                && followUp.selectedCardFollowUp().effect() instanceof
+                com.github.laxika.magicalvibes.model.effect.MayPutSelectedCardOntoBattlefieldEffect) {
+            Card chosenCard = cardIndex < 0 ? null : searchCards.get(cardIndex);
+            if (chosenCard != null) {
+                sourceCards.removeIf(card -> card.getId().equals(chosenCard.getId()));
+                if (predicateEvaluationService.matchesCardPredicate(chosenCard,
+                        followUp.selectedCardFollowUp().predicate(), null, gameData, playerId)) {
+                    insertSelectedCardFollowUp(gameData, followUp, chosenCard, playerId);
+                } else {
+                    gameData.addCardToHand(handOwnerId, chosenCard);
+                }
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " reveals ", chosenCard, "."));
+            }
+            List<Card> rest = new ArrayList<>(sourceCards);
+            Collections.shuffle(rest);
+            deck.addAll(rest);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
                 && followUp.selectedCardFollowUp() != null
                 && followUp.selectedCardFollowUp().d20BasicLandSearch() != null) {
@@ -436,7 +458,11 @@ public class LibraryChoiceHandlerService {
                 } else if (destination == LibrarySearchDestination.EXILE) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
                 } else if (toGraveyard) {
-                    graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
+                    if (remainingCount > 1 || !accumulatedCards.isEmpty()) {
+                        accumulatedCards.add(chosenCard);
+                    } else {
+                        graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
+                    }
                 } else if (toBattlefield && !placeBattlefieldCardsSimultaneously) {
                     boolean selectedFromExile = gameData.findExiledCard(chosenCard.getId()) != null;
                     if (selectedFromExile) {
@@ -451,7 +477,6 @@ public class LibraryChoiceHandlerService {
                     if (toBattlefieldTapped) perm.tap();
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
-                    initializeBattleDefenseCounters(perm);
                     landEquilibriumSupport.applyPlan(gameData, playerId, perm, landEquilibriumPlan, null);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
                     if (gameData.pendingEffectResolutionEntry != null) {
@@ -563,7 +588,9 @@ public class LibraryChoiceHandlerService {
                 } else {
                     logEntry = chosenCard == null
                             ? GameLog.text(player.getUsername() + " does not reveal a card.")
-                            : GameLog.textCardText(player.getUsername() + " reveals ", chosenCard, " and puts it into their hand.");
+                            : librarySearch.reveals()
+                            ? GameLog.textCardText(player.getUsername() + " reveals ", chosenCard, " and puts it into their hand.")
+                            : GameLog.text(player.getUsername() + " puts a card into their hand.");
                 }
                 gameLogService.append(gameData, logEntry);
             }
@@ -579,6 +606,27 @@ public class LibraryChoiceHandlerService {
                             new LibraryBottomReorderRequest(deckOwnerId, new ArrayList<>(sourceCards)));
                 }
                 return;
+            }
+
+            if (toGraveyard && !accumulatedCards.isEmpty()) {
+                if (remainingCount > 1 && !sourceCards.isEmpty()) {
+                    beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
+                            LibrarySearchParams.builder(playerId, new ArrayList<>(sourceCards))
+                                    .reveals(reveals)
+                                    .canFailToFind(false)
+                                    .targetPlayerId(deckOwnerId)
+                                    .remainingCount(remainingCount - 1)
+                                    .sourceCards(new ArrayList<>(sourceCards))
+                                    .accumulatedCards(accumulatedCards)
+                                    .reorderRemainingToTop(reorderRemainingToTop)
+                                    .shuffleAfterSelection(false)
+                                    .prompt(librarySearch.prompt())
+                                    .destination(destination)
+                                    .build(), librarySearch.prompt(), false));
+                    return;
+                }
+                graveyardService.addCardsFromLibraryToGraveyard(gameData, deckOwnerId, accumulatedCards);
+                accumulatedCards.clear();
             }
 
             if (destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM
@@ -819,9 +867,16 @@ public class LibraryChoiceHandlerService {
             // Same for hand-then-graveyard (Jarad's Orders): declining the hand pick finds zero,
             // so drop the pending graveyard pick and shuffle.
             if (followUp.basicLandToHand() != null || followUp.cardToGraveyard() != null) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
-                String shuffleLog = player.getUsername() + "'s library is shuffled.";
-                gameLogService.append(gameData, GameLog.text(shuffleLog));
+                if (!shuffleAfterSelection) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                    String shuffleLog = player.getUsername() + "'s library is shuffled.";
+                    gameLogService.append(gameData, GameLog.text(shuffleLog));
+                }
+            }
+            if (followUp.basicLandToHand() != null && !followUp.basicLandToHand().basicOnly()
+                    && followUp.basicLandToHand().subtype() != null) {
+                finishSearchAndResume(gameData);
+                return;
             }
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
             if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
@@ -926,19 +981,14 @@ public class LibraryChoiceHandlerService {
             }
 
             Integer maxManaValue = librarySearch.mayCastManaValueAtMost();
-            boolean mayCast = maxManaValue != null
-                    && !chosenCard.hasType(CardType.LAND)
-                    && (filterCardTypes == null || filterCardTypes.isEmpty()
-                    || filterCardTypes.contains(chosenCard.getType())
-                    || chosenCard.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains))
-                    && chosenCard.getManaValue() <= maxManaValue;
+            boolean mayCast = canCastSearchedFace(chosenCard, filterCardTypes, maxManaValue);
             if (mayCast) {
                 Card sourceCard = gameData.pendingEffectResolutionEntry != null
                         ? gameData.pendingEffectResolutionEntry.getCard() : chosenCard;
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         sourceCard,
                         playerId,
-                        List.of(new MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect()),
+                        List.of(new MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect(maxManaValue)),
                         "Cast " + chosenCard.getName()
                                 + " without paying its mana cost? If you don't, put it into your hand.",
                         chosenCard.getId()));
@@ -1114,7 +1164,6 @@ public class LibraryChoiceHandlerService {
                 Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
-                initializeBattleDefenseCounters(perm);
                 if (chosenCard.hasType(CardType.CREATURE)) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                 }
@@ -1547,7 +1596,6 @@ public class LibraryChoiceHandlerService {
             Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
-            initializeBattleDefenseCounters(perm);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPlayerId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPlayerId());
@@ -1560,7 +1608,6 @@ public class LibraryChoiceHandlerService {
             perm.setAttachedTo(librarySearch.attachToPermanentId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
-            initializeBattleDefenseCounters(perm);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
@@ -2463,7 +2510,6 @@ public class LibraryChoiceHandlerService {
             if (tapped) perm.tap();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch,
                     enterWithCounters);
-            initializeBattleDefenseCounters(perm);
             landEquilibriumSupport.applyPlan(gameData, puttingPlayerId, perm, landEquilibriumPlan, null);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
@@ -2539,12 +2585,6 @@ public class LibraryChoiceHandlerService {
         }
     }
 
-    private void initializeBattleDefenseCounters(Permanent permanent) {
-        Integer defense = permanent.getCard().getDefense();
-        if (permanent.getCard().hasType(CardType.BATTLE) && defense != null) {
-            permanent.setCounterCount(CounterType.DEFENSE, defense);
-        }
-    }
 
     /**
      * If a pending basic-land-to-hand search is queued (e.g. Cultivate second pick),
@@ -4201,6 +4241,20 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
+    private boolean canCastSearchedFace(Card card, Set<CardType> castableTypes, Integer maxManaValue) {
+        if (maxManaValue == null) return false;
+        if (!card.hasType(CardType.LAND) && card.getManaValue() <= maxManaValue
+                && (castableTypes == null || castableTypes.isEmpty()
+                || castableTypes.contains(card.getType())
+                || card.getAdditionalTypes().stream().anyMatch(castableTypes::contains))) return true;
+        Card adventure = card.getBackFaceCard();
+        return card.getCastingOption(com.github.laxika.magicalvibes.model.AdventureCast.class).isPresent()
+                && adventure != null && adventure.getManaValue() <= maxManaValue
+                && (castableTypes == null || castableTypes.isEmpty()
+                || castableTypes.contains(adventure.getType())
+                || adventure.getAdditionalTypes().stream().anyMatch(castableTypes::contains));
+    }
+
     private void handleExileFaceDownAndMayCastOrPutIntoHandChoice(
             GameData gameData, Player player, int cardIndex, boolean canFailToFind,
             List<Card> searchCards, List<Card> sourceCards, List<Card> deck, UUID deckOwnerId,
@@ -4223,18 +4277,14 @@ public class LibraryChoiceHandlerService {
         }
 
         if (chosenCard != null) {
-            boolean mayCast = maxManaValue != null
-                    && (castableTypes == null || castableTypes.isEmpty()
-                    || castableTypes.contains(chosenCard.getType())
-                    || chosenCard.getAdditionalTypes().stream().anyMatch(castableTypes::contains))
-                    && chosenCard.getManaValue() <= maxManaValue;
+            boolean mayCast = canCastSearchedFace(chosenCard, castableTypes, maxManaValue);
             if (mayCast) {
                 Card sourceCard = gameData.pendingEffectResolutionEntry != null
                         ? gameData.pendingEffectResolutionEntry.getCard() : chosenCard;
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         sourceCard,
                         player.getId(),
-                        List.of(new MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect()),
+                        List.of(new MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect(maxManaValue)),
                         "Cast " + chosenCard.getName()
                                 + " without paying its mana cost? If you don't, put it into your hand.",
                         chosenCard.getId()));
@@ -4274,10 +4324,8 @@ public class LibraryChoiceHandlerService {
         }
 
         sourceCards.removeIf(card -> card.getId().equals(discovered.getId()));
-        if (!sourceCards.isEmpty()) {
-            Collections.shuffle(sourceCards);
-            deck.addAll(sourceCards);
-        }
+        gameData.removeFromExile(discovered.getId());
+        putExiledCardsOnBottom(gameData, deck, sourceCards);
 
         if (!cast) {
             gameData.addCardToHand(player.getId(), discovered);

@@ -30,8 +30,12 @@ public class MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffectHandler
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted && ability.targetCardId() != null) {
-            exileFreeCastSupport.castFromExileWithoutPaying(
-                    gameData, player, ability.targetCardId(), false, true);
+            Integer maxManaValue = ability.effects().stream()
+                    .filter(MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect.class::isInstance)
+                    .map(MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect.class::cast)
+                    .map(MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect::maxManaValue)
+                    .filter(java.util.Objects::nonNull).findFirst().orElse(null);
+            exileFreeCastSupport.castWithManaValueLimit(gameData, player, ability.targetCardId(), maxManaValue);
             return;
         }
 

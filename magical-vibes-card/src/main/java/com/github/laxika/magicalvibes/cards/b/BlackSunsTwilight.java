@@ -28,6 +28,7 @@ public class BlackSunsTwilight extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .requiresManaValueAtMostX(true)
                         .enterTapped(true)
+                        .mandatory(true)
                         .build()));
     }
 }

@@ -162,12 +162,14 @@ class BruseTarlRovingRancherTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new BruseTarlRovingRancher());
         resolveAllTriggers();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.forceStep(TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
     }
@@ -185,10 +187,12 @@ class BruseTarlRovingRancherTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);

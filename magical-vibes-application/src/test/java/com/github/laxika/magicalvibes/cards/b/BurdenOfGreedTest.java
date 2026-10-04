@@ -95,7 +95,7 @@ class BurdenOfGreedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.castInstant(player1, 0, player2.getId());
 
-        harness.tapPermanent(player2, 0);
+        artifact.tap();
         assertThat(artifact.isTapped()).isTrue();
         harness.passBothPriorities();
 

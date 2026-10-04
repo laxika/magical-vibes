@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class BillPotts extends Card {
                 new CardTypePredicate(CardType.SORCERY)
         ));
         StackEntryAllOfPredicate targetsOnlyBill = new StackEntryAllOfPredicate(List.of(
-                new StackEntryIsSingleTargetPredicate(),
+                new StackEntryTargetsOnlySinglePermanentOrPlayerPredicate(),
                 new StackEntryTargetsSourcePredicate()
         ));
 

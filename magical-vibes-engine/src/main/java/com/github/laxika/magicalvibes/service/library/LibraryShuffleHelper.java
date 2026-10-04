@@ -22,6 +22,7 @@ public final class LibraryShuffleHelper {
     private LibraryShuffleHelper() {}
 
     public static void shuffleLibrary(GameData gameData, UUID playerId) {
+        gameData.restoreBombardmentLibraryCards(playerId);
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
         gameData.pendingCommanderZoneMoves.replaceAll(move -> move.ownerId().equals(playerId)
                 && move.destination() == com.github.laxika.magicalvibes.model.Zone.LIBRARY ? move.shuffled() : move);

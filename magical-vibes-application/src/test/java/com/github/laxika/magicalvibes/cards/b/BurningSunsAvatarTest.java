@@ -161,7 +161,7 @@ class BurningSunsAvatarTest extends BaseCardTest {
 
     @Test
     void damagesPlaneswalkerAndCreature() {
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player2, new JaceCunningCastaway());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
         harness.setHand(player1, List.of(new BurningSunsAvatar()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -196,7 +196,7 @@ class BurningSunsAvatarTest extends BaseCardTest {
 
     @Test
     void stillDamagesCreatureWhenPlaneswalkerTargetLeaves() {
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player2, new JaceCunningCastaway());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
         harness.setHand(player1, List.of(new BurningSunsAvatar()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -235,7 +235,7 @@ class BurningSunsAvatarTest extends BaseCardTest {
 
     @Test
     void doesNotResolveWhenAllTargetsLeave() {
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player2, new JaceCunningCastaway());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrazingWhiptail());
         harness.setHand(player1, List.of(new BurningSunsAvatar()));
         harness.addMana(player1, ManaColor.RED, 6);

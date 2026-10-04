@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MillControllerThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -22,13 +24,13 @@ import java.util.List;
 public class BlossomingTortoise extends Card {
 
     public BlossomingTortoise() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillControllerThenEffect(3, returnLandEffect()));
-        addEffect(EffectSlot.ON_ATTACK, new MillControllerThenEffect(3, returnLandEffect()));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
+        addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
         addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentControlledBySourceControllerPredicate())), 1));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsLandPredicate()));
     }
 
@@ -36,7 +38,6 @@ public class BlossomingTortoise extends Card {
         return ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.LAND))
-                .mandatory(true)
                 .enterTapped(true)
                 .build();
     }

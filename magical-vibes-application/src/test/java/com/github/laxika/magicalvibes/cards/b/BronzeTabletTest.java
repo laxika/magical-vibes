@@ -271,6 +271,8 @@ class BronzeTabletTest extends BaseCardTest {
     @Test
     void cannotTargetYourPermanentControlledByOpponent() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, java.util.List.of(new ControlMagic()));
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.castEnchantment(player2, 0, bears.getId());

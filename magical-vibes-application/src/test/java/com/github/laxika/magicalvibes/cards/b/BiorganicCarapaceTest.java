@@ -107,6 +107,8 @@ class BiorganicCarapaceTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(creature)));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
 

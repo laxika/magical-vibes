@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -23,9 +24,8 @@ import org.springframework.stereotype.Component;
  * may-ability system (the accept/decline branch lives in {@code BronzeTabletAnteExchangeHandler}); an
  * owner who can't pay resolves the ante swap immediately.
  *
- * <p>The ante "that player owns this card and you own the other exiled card" is resolved as the
- * single-game observable zone movements — see {@link BronzeTabletAnteExchangeEffect} — never a
- * runtime {@code ownerId} change.
+ * <p>Ownership changes replace the immutable exiled cards with frozen runtime copies that
+ * retain the card identities and the new owners.
  */
 @Slf4j
 @Component
@@ -53,7 +53,9 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
 
         // "That player" — the opponent who owns the targeted permanent — pays or loses ownership.
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID opponentId = gameData.stolenCreatures.getOrDefault(target.getId(), targetController);
+        UUID opponentId = target.getOriginalCard().getOwnerId() != null
+                ? target.getOriginalCard().getOwnerId()
+                : gameData.stolenCreatures.getOrDefault(target.getId(), targetController);
         String opponentName = gameData.playerIdToName.get(opponentId);
 
         // Exile the targeted permanent (unconditional — happens before the pay decision).
@@ -72,10 +74,12 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, opponentId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, opponentId)
                 && gameData.getLife(opponentId) >= e.lifeCost();
 
         if (!canPay) {
+            exchangeExiledOwnership(gameData, tabletCard.getId(), opponentId,
+                    target.getOriginalCard().getId(), entry.getControllerId());
             // Can't pay — the ante swap happens. Ownership changes aren't modeled, so within one game
             // both cards simply remain exiled.
             gameLogService.append(gameData, GameLog.textCardText(opponentName + " can't pay " + e.lifeCost() + " life — ownership of the exiled cards is exchanged. (", tabletCard, ")"));
@@ -88,6 +92,29 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
         // card is the source so the pay branch can move it from exile to its owner's graveyard.
         String prompt = "Pay " + e.lifeCost() + " life? If you don't, ownership of the exiled cards is "
                 + "exchanged. (" + tabletCard.getName() + ")";
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(tabletCard, opponentId, List.of(e), prompt));
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                tabletCard, opponentId, List.of(e), prompt, target.getOriginalCard().getId(),
+                null, entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                entry.getSourcePermanentSnapshot(), entry.getControllerId()));
+    }
+    /** Applies the ownership changes to the exiled objects while retaining their identities. */
+    public static void exchangeExiledOwnership(GameData gameData, UUID tabletId, UUID tabletNewOwner,
+                                               UUID otherCardId, UUID otherNewOwner) {
+        replaceExiledOwner(gameData, tabletId, tabletNewOwner);
+        replaceExiledOwner(gameData, otherCardId, otherNewOwner);
+    }
+
+    private static void replaceExiledOwner(GameData gameData, UUID cardId, UUID ownerId) {
+        if (cardId == null || ownerId == null) return;
+        for (int i = 0; i < gameData.exiledCards.size(); i++) {
+            ExiledCardEntry exiled = gameData.exiledCards.get(i);
+            if (!exiled.card().getId().equals(cardId)) continue;
+            Card copy = exiled.card().createRuntimeCopy();
+            copy.setOwnerId(ownerId);
+            copy.freeze();
+            gameData.exiledCards.set(i, new ExiledCardEntry(copy, ownerId, exiled.sourcePermanentId(),
+                    exiled.faceDown(), exiled.exilerId(), exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile()));
+            return;
+        }
     }
 }

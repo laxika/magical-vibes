@@ -56,12 +56,7 @@ public class BedeckBedazzle extends Card {
                         "Bedazzle — Destroy target nonbasic land. Bedazzle deals 2 damage to target opponent or planeswalker",
                         List.of(destroyNonbasicLand, dealDamage),
                         List.of(nonbasicLand, opponentOrPlaneswalker)
-                ).withManaCost("{4}{B}{R}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Bedeck and then Bedazzle",
-                        List.of(bedeck, destroyNonbasicLand, dealDamage),
-                        List.of(creature, nonbasicLand, opponentOrPlaneswalker)
-                ).withManaCost("{4}{B/R}{B/R}{B}{R}")
+                ).withManaCost("{4}{B}{R}")
         )));
     }
 }

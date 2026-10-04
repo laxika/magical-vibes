@@ -15,9 +15,15 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  *
  * @param token token blueprint to create
  * @param attacking whether created attacking creatures attack the trigger's captured target
+ * @param resolveCurrentController use the triggering permanent's current controller, or its last known controller if absent
  */
-public record CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token, boolean attacking)
+public record CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token, boolean attacking,
+                                                  boolean resolveCurrentController)
         implements TokenCreatingEffect, TriggeringSpellManaValueEffect {
+
+    public CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token, boolean attacking) {
+        this(token, attacking, false);
+    }
 
     public CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token) {
         this(token, false);

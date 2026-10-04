@@ -33,21 +33,13 @@ public class SourceBecomesSubtypeUntilEndOfTurnEffectHandler implements NormalEf
         if (self == null) {
             return;
         }
-        if (!e.overriding()) {
-            for (var subtype : e.subtypes()) {
-                gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                        entry.getControllerId(), new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
-                                subtype, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET),
-                        self.getId(), null, null, com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
-            }
-        } else if (e.subtypes().size() == 1) {
-            self.setTransientCreatureTypeOverride(e.subtype());
-            self.getTransientCreatureTypeOverrides().clear();
-        } else {
-            self.setTransientCreatureTypeOverride(null);
-            self.getTransientCreatureTypeOverrides().clear();
-            self.getTransientCreatureTypeOverrides().addAll(e.subtypes());
+        for (int i = 0; i < e.subtypes().size(); i++) {
+            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                    entry.getControllerId(), new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
+                            e.subtypes().get(i), com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
+                            e.overriding() && i == 0),
+                    self.getId(), null, null, com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
         }
         String typeNames = e.subtypes().stream()
                 .map(subtype -> subtype.getDisplayName())

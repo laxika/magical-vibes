@@ -14,7 +14,7 @@ import java.util.List;
 public class BasaltGargoyle extends Card {
 
     public BasaltGargoyle() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{2}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{R}"));
         addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(0, 1)),
                 "{R}: This creature gets +0/+1 until end of turn."));
     }

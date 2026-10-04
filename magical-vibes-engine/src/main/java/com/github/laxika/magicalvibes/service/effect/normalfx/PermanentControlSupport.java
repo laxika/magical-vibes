@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -150,6 +151,13 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
                         gameData, controllerId, token, totalAmount)
                 : List.of();
+        if (!academyManufactorTokenBlueprints.isEmpty()) {
+            int foodCount = (int) academyManufactorTokenBlueprints.stream()
+                    .filter(blueprint -> blueprint.subtypes() != null
+                            && blueprint.subtypes().contains(CardSubtype.FOOD)).count();
+            additionalTreasureTokenCount = TokenCreationReplacementSupport.additionalTreasureTokenCount(
+                    gameData, controllerId, CreateTokenEffect.ofFoodToken(1), foodCount);
+        }
         boolean addClueToken = applyAdditionalReplacements
                 && totalAmount > 0
                 && hasSolvedClueReplacement(gameData, controllerId);

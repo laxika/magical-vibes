@@ -235,6 +235,9 @@ public class CardChoiceHandlerService {
         if (copy.getPower() != null) {
             copy.setPower(copy.getPower() + choice.powerBoost());
         }
+        if (copy.getToughness() != null) {
+            copy.setToughness(copy.getToughness() + choice.toughnessBoost());
+        }
         Set<Keyword> keywords = java.util.EnumSet.noneOf(Keyword.class);
         keywords.addAll(copy.getKeywords());
         keywords.addAll(choice.keywords());
@@ -1852,7 +1855,10 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        if (keepInHand) {
+        boolean exileDurationAlreadyEnded = exileMode && revealedHandChoice.sourcePermanentId() != null
+                && !revealedHandChoice.imprintOnSource()
+                && gameQueryService.findPermanentById(gameData, revealedHandChoice.sourcePermanentId()) == null;
+        if (keepInHand || exileDurationAlreadyEnded) {
             gameData.playerHands.get(targetPlayerId).addAll(chosenCards);
             gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(player.getUsername() + " keeps "), chosenCards)

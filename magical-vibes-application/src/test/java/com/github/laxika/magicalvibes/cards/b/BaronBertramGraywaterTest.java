@@ -127,7 +127,7 @@ class BaronBertramGraywaterTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(countPermanents(player1, "Vampire Rogue")).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 2, null, null);
         resolveAllTriggers();

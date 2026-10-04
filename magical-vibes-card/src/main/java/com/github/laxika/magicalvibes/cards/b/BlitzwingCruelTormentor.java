@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -29,12 +29,10 @@ public class BlitzwingCruelTormentor extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+                new LoseLifeEffect(new LifeLostThisTurn(CountScope.TARGET_PLAYER),
+                        LoseLifeRecipient.TARGET_PLAYER, false, null, null, true),
                 ConditionalEffect.unless(
-                        new TargetPlayerLostLifeThisTurn(),
-                        new LoseLifeEffect(new LifeLostThisTurn(CountScope.TARGET_PLAYER),
-                                LoseLifeRecipient.TARGET_PLAYER)),
-                ConditionalEffect.unless(
-                        new NotCondition(new TargetPlayerLostLifeThisTurn()),
+                        new NotCondition(new EventValueAtLeast(1)),
                         new TransformSelfEffect())));
     }
 

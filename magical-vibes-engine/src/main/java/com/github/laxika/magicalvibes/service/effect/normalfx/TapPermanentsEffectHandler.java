@@ -117,6 +117,9 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
     private void resolveEnchanted(GameData gameData, StackEntry entry) {
         Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (auraPerm == null) {
+            auraPerm = entry.getSourcePermanentSnapshot();
+        }
+        if (auraPerm == null) {
             log.info("Game {} - Aura {} no longer on battlefield, skipping tap enchanted creature",
                     gameData.id, entry.getCard().getName());
             return;

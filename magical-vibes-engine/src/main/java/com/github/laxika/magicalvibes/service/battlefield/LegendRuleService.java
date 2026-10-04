@@ -113,7 +113,7 @@ public class LegendRuleService {
     private boolean hasLegendRuleExemption(GameData gameData, Permanent permanent, String name,
                                             int totalWithName, UUID controllerId) {
         int controlledWithName = countControlledOnBattlefield(gameData, controllerId, name);
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                 .anyMatch(effect -> effect instanceof LegendRuleExemptionEffect
                         && ((LegendRuleExemptionEffect) effect).exemptFromLegendRule(totalWithName)
                         || effect instanceof ControlledNameCountLegendRuleExemptionEffect

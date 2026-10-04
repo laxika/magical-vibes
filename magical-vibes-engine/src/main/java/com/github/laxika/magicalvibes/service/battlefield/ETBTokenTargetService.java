@@ -194,7 +194,8 @@ public class ETBTokenTargetService {
             validSpellTargets.stream()
                     .filter(id -> !validTargetObjects.contains(id))
                     .forEach(validTargetObjects::add);
-            boolean optionalTarget = pending.effects().stream().anyMatch(OptionalTargetEffect.class::isInstance);
+            boolean optionalTarget = pending.effects().stream().anyMatch(effect -> effect instanceof OptionalTargetEffect
+                    || effect.hasOptionalTarget());
             if (!validExiledCardTargets.isEmpty()
                     && validPlayerTargets.isEmpty()
                     && validSpellTargets.isEmpty()) {

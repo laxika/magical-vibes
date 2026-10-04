@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import java.util.List;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HuntedTroll;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +31,9 @@ class BroodingSaurianTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(player1Permanent);
@@ -56,7 +60,9 @@ class BroodingSaurianTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
@@ -77,13 +83,15 @@ class BroodingSaurianTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saurian);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(saurian);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saurian);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(saurian);
     }
@@ -98,7 +106,9 @@ class BroodingSaurianTest extends BaseCardTest {
         stolenLand.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()

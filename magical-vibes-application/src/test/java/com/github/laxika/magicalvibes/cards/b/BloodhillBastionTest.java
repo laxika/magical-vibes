@@ -82,6 +82,8 @@ class BloodhillBastionTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();

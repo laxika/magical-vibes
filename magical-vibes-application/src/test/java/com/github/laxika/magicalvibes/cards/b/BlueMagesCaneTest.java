@@ -94,6 +94,7 @@ class BlueMagesCaneTest extends BaseCardTest {
 
     @Test
     void decliningCopyLeavesOriginalExiledAndRemovesCopy() {
+        harness.setHand(player1, List.of());
         Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         cane.setAttachedTo(attacker.getId());
@@ -135,6 +136,7 @@ class BlueMagesCaneTest extends BaseCardTest {
 
     @Test
     void attackAbilityStillCopiesAfterEquipmentLeavesBattlefield() {
+        harness.setHand(player1, List.of());
         Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         cane.setAttachedTo(attacker.getId());

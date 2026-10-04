@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
+import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
@@ -662,6 +663,10 @@ public class TurnProgressionService {
         DelayedAdditionalCombatBeginningEffect pending =
                 gameData.drainFirstDelayedAction(DelayedAdditionalCombatBeginningEffect.class);
         if (pending != null) {
+            if (pending.effect() instanceof OnlyLandCreaturesCanAttackThisCombatEffect) {
+                gameData.onlyLandCreaturesCanAttackThisCombat = true;
+                return;
+            }
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     pending.sourceCard(),

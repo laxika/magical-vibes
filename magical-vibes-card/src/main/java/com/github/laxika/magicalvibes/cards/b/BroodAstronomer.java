@@ -38,7 +38,7 @@ public class BroodAstronomer extends Card {
                                 KavaronMemorialWorld::new,
                                 SusurSecundiVoidAltar::new,
                                 UthrosTitanicGodcore::new)),
-                        "a land"),
+                        "a land", false, false),
                 "Sacrifice a land?"));
 
         addActivatedAbility(new ActivatedAbility(

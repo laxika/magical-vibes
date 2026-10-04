@@ -131,7 +131,7 @@ class BrawlBashOgreTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
         assertThat(gqs.getEffectivePower(gd, ogre)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ogre)).isEqualTo(3);

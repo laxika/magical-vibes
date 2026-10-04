@@ -10,5 +10,9 @@ import java.util.UUID;
  * Used by Brood of Cockroaches.
  */
 public record DelayedLoseLifeAndReturnFromGraveyard(
-        UUID controllerId, Card sourceCard, int lifeLoss) implements DelayedAction {
+        UUID controllerId, Card sourceCard, int lifeLoss, long graveyardEntryVersion) implements DelayedAction {
+
+    public DelayedLoseLifeAndReturnFromGraveyard(UUID controllerId, Card sourceCard, int lifeLoss) {
+        this(controllerId, sourceCard, lifeLoss, -1);
+    }
 }

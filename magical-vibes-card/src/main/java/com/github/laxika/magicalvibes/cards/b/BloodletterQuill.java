@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class BloodletterQuill extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}{B}",
-                List.of(new RemoveCounterFromSourceCost(1, CounterType.BLOOD)),
+                List.of(new RemoveCounterFromSourceEffect(CounterType.BLOOD, 1)),
                 "{U}{B}: Remove a blood counter from this artifact."
         ));
     }

@@ -33,7 +33,10 @@ public class AdaptEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        boolean adaptsDespiteCounters = source.consumeAdaptOverrideUntilEndOfTurn();
+        boolean adaptsDespiteCounters = false;
+        while (source.consumeAdaptOverrideUntilEndOfTurn()) {
+            adaptsDespiteCounters = true;
+        }
         if (!adaptsDespiteCounters
                 && source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             return;

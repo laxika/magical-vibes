@@ -128,6 +128,7 @@ class BalaGedThiefTest extends BaseCardTest {
     @Test
     void opposingAllyDoesNotTrigger() {
         harness.addToBattlefield(player1, new BalaGedThief());
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new SeaGateLoremaster(), "{4}{U}");
         harness.passBothPriorities();
 

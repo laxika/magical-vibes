@@ -16,5 +16,10 @@ import java.util.UUID;
  *                          registration came from a spell; effects that act on their own source
  *                          (flipping, transforming) read it
  */
-public record DelayedEffectOnDeath(CardEffect effect, UUID controllerId, Card sourceCard, UUID sourcePermanentId) {
+public record DelayedEffectOnDeath(CardEffect effect, UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                  UUID targetPermanentId) {
+
+    public DelayedEffectOnDeath(CardEffect effect, UUID controllerId, Card sourceCard, UUID sourcePermanentId) {
+        this(effect, controllerId, sourceCard, sourcePermanentId, null);
+    }
 }

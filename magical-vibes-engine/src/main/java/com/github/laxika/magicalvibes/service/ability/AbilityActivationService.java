@@ -1503,6 +1503,20 @@ public class AbilityActivationService {
         }
         ActivatedAbility ability = abilities.get(idx);
 
+        if (ability.getDescription() != null && ability.getDescription().startsWith("Scavenge ")) {
+            Integer sourcePower = gameQueryService.getEffectiveCardPower(gameData, card);
+            List<CardEffect> scavengedEffects = ability.getEffects().stream().map(effect -> {
+                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counter
+                        && counter.amount() instanceof com.github.laxika.magicalvibes.model.amount.SourceCardPower) {
+                    return (CardEffect) new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(
+                            counter.counterType(), new Fixed(sourcePower == null ? 0 : Math.max(0, sourcePower)));
+                }
+                return effect;
+            }).toList();
+            ability = new ActivatedAbility(ability.isRequiresTap(), ability.getManaCost(), scavengedEffects,
+                    ability.getDescription(), ability.getTargetFilter(), ability.getLoyaltyCost(),
+                    ability.getMaxActivationsPerTurn(), ability.getTimingRestriction());
+        }
         // Validate targeting before any cost is paid (CR 601.2c) — same contract as hand abilities.
         List<CardEffect> abilityEffects = ability.getEffects();
         if (isMultiTargetGraveyardAbility(ability)) {
@@ -4405,6 +4419,9 @@ public class AbilityActivationService {
                         .orElseThrow();
                 if (exileGraveyardCost.payExiledCardManaCost()) {
                     abilityCost = selectedCard.getManaCost();
+                    if (abilityCost == null || abilityCost.isBlank()) {
+                        throw new IllegalStateException("The exiled card has no payable mana cost");
+                    }
                 }
                 if (exileGraveyardCost.imprintOnSource()) {
                     gameData.setImprintedCard(permanent.getCard(), selectedCard);
@@ -4421,6 +4438,9 @@ public class AbilityActivationService {
                 // Handle "exile and pay its mana cost" abilities (e.g. Back from the Brink)
                 if (exileGraveyardCost.payExiledCardManaCost()) {
                     abilityCost = graveyard.get(exileGraveyardCardIndex).getManaCost();
+                    if (abilityCost == null || abilityCost.isBlank()) {
+                        throw new IllegalStateException("The exiled card has no payable mana cost");
+                    }
                 }
                 if (exileGraveyardCost.imprintOnSource()) {
                     gameData.setImprintedCard(permanent.getCard(), graveyard.get(exileGraveyardCardIndex));
@@ -5474,7 +5494,7 @@ public class AbilityActivationService {
     private void recordSacrificedLandCard(GameData gameData, CardEffect costEffect, Permanent source, int abilityIndex,
                                           Permanent sacrificed) {
         if (costEffect instanceof CostEffect cost && cost.tracksSacrificedCard() && sacrificed != null) {
-            source.setChosenCard(sacrificed.getCard());
+            source.setChosenCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, sacrificed));
         }
         if (costEffect instanceof CostEffect cost
                 && cost.recordsSacrificedPermanentSnapshot() && sacrificed != null) {
@@ -5537,7 +5557,9 @@ public class AbilityActivationService {
                         recordReturnedPermanentCard(gameData, handler.costEffect(), source, chosen);
                         recordSacrificedLandCard(gameData, handler.costEffect(), source, abilityIndex, chosen);
                         recordTrackedExiledCard(handler.costEffect(), source, chosen);
+                        int stackSizeBeforePayment = gameData.stack.size();
                         handler.validateAndPay(gameData, player, chosen);
+                        deferActivatedAbilityCostTriggers(gameData, stackSizeBeforePayment);
                         recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
                         recordTappedCostPermanent(handler.costEffect(), source, chosen.getId());
                         if (handler.costEffect() instanceof CostEffect cost && cost.tracksChosenPermanents()) {
@@ -5744,7 +5766,9 @@ public class AbilityActivationService {
         recordSacrificedLandCard(gameData, context.costEffect(), sourcePermanent, effectiveIndex, chosen);
         recordTrackedExiledCard(context.costEffect(), sourcePermanent, chosen);
 
+        int stackSizeBeforePayment = gameData.stack.size();
         handler.validateAndPay(gameData, player, chosen);
+        deferActivatedAbilityCostTriggers(gameData, stackSizeBeforePayment);
         Integer paymentValue = handler.lastPaymentValue();
         if (tracksChosenPermanents) {
             chosenCostPermanentIds.add(chosenPermanentId);
@@ -5768,7 +5792,9 @@ public class AbilityActivationService {
                     if (autoPay != null) {
                         recordReturnedPermanentCard(gameData, context.costEffect(), sourcePermanent, autoPay);
                         recordTrackedExiledCard(context.costEffect(), sourcePermanent, autoPay);
+                        int stackSizeBeforeAutoPayment = gameData.stack.size();
                         handler.validateAndPay(gameData, player, autoPay);
+                        deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeAutoPayment);
                         paymentValue = handler.lastPaymentValue();
                         if (paymentValue != null) {
                             updatedXValue = paymentValue;
@@ -6565,6 +6591,9 @@ public class AbilityActivationService {
                     : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
             if (equipment == null) {
                 throw new IllegalStateException("The granting Equipment is not on the battlefield");
+            }
+            if (!playerId.equals(gameQueryService.findPermanentController(gameData, equipment.getId()))) {
+                throw new IllegalStateException("You cannot sacrifice an Equipment you do not control");
             }
             if (!gameQueryService.canSacrificePermanentForCosts(gameData, equipment)) {
                 throw new IllegalStateException("Players can't sacrifice this Equipment to activate abilities");
@@ -8554,7 +8583,7 @@ public class AbilityActivationService {
         if (!gameQueryService.getEffectiveColors(gameData, permanent).isEmpty()) {
             subtypes.remove(CardSubtype.ELDRAZI);
         }
-        if (subtypes.contains(CardSubtype.ASSASSIN)) {
+        if (gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.ASSASSIN)) {
             subtypes.add(CardSubtype.ASSASSIN_OR_FREERUNNING);
         }
         if (subtypes.contains(CardSubtype.ASSASSIN)

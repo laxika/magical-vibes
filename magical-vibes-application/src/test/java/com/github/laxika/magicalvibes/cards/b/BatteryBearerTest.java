@@ -156,7 +156,7 @@ class BatteryBearerTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
     @Test
@@ -182,7 +182,7 @@ class BatteryBearerTest extends BaseCardTest {
         gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
     @Test

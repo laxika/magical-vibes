@@ -165,7 +165,7 @@ class BreakOutTest extends BaseCardTest {
         Permanent permanent = findPermanentByCardId(creature.getId());
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
     }

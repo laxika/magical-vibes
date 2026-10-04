@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,7 +26,7 @@ public class BasriTomorrowsChampion extends Card {
                 true,
                 "{W}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, false, true),
                         new CreateTokenEffect(
                                 "Cat", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.CAT), Set.of(Keyword.LIFELINK), Set.of()
@@ -34,17 +35,14 @@ public class BasriTomorrowsChampion extends Card {
                 "{W}, {T}, Exert Basri: Create a 1/1 white Cat creature token with lifelink."
         ));
 
+        addEffect(EffectSlot.ON_SELF_CYCLED, new GrantKeywordEffect(
+                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
+                GrantScope.ALL_OWN_CREATURES,
+                new PermanentHasSubtypePredicate(CardSubtype.CAT)));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}",
-                List.of(
-                        new GrantKeywordEffect(
-                                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
-                                GrantScope.OWN_CREATURES,
-                                new PermanentHasSubtypePredicate(CardSubtype.CAT)
-                        ),
-                        new DrawCardEffect(1)
-                ),
+                List.of(new DrawCardEffect(1)),
                 "Cycling {2}{W} ({2}{W}, Discard this card: Draw a card.)"
         ));
     }

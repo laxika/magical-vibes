@@ -43,7 +43,9 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
         Card sourceCard = entry.getCard();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        Permanent sourcePermanent = findSourcePermanent(gameData, controllerId, sourceCard);
+        Permanent sourcePermanent = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : findSourcePermanent(gameData, controllerId, sourceCard);
         List<UUID> validIds = collectValidChampionTargets(gameData, sourcePermanent, controllerId, e.championedSubtypes());
 
         if (validIds.isEmpty()) {
@@ -56,14 +58,9 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (sourcePermanent == null) {
-            log.info("Game {} - {} no longer on battlefield, champion effect is a no-op",
-                    gameData.id, sourceCard.getName());
-            return;
-        }
-
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.ChampionCreature(sourcePermanent.getId(), controllerId));
+                new PermanentChoiceContext.ChampionCreature(
+                        sourcePermanent != null ? sourcePermanent.getId() : entry.getSourcePermanentId(), controllerId));
         String prompt = "Choose another " + championQualityLabel(e.championedSubtypes())
                 + " you control to exile.";
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds, prompt);
@@ -86,7 +83,7 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
                                                    UUID controllerId, List<CardSubtype> championedSubtypes) {
         List<UUID> validIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null || sourcePermanent == null) {
+        if (battlefield == null) {
             return validIds;
         }
         for (Permanent p : battlefield) {
@@ -99,14 +96,13 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private boolean isValidChampionTarget(GameData gameData, Permanent source, Permanent candidate,
                                           List<CardSubtype> championedSubtypes) {
-        if (candidate.getId().equals(source.getId())) {
+        if (source != null && candidate.getId().equals(source.getId())) {
             return false;
         }
-        if (!gameQueryService.isCreature(gameData, candidate)) {
-            return false;
+        if (championedSubtypes.isEmpty()) {
+            return gameQueryService.isCreature(gameData, candidate);
         }
-        return championedSubtypes.isEmpty()
-                || championedSubtypes.stream()
+        return championedSubtypes.stream()
                         .anyMatch(subtype -> GameQueryService.permanentHasSubtype(candidate, subtype));
     }
 

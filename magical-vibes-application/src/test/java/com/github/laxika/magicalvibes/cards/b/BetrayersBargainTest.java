@@ -138,7 +138,7 @@ class BetrayersBargainTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, target.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Must sacrifice a creature or enchantment or pay");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 

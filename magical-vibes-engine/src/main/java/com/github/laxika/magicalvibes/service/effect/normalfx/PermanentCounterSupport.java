@@ -128,7 +128,7 @@ public class PermanentCounterSupport {
     }
 
     /** Fires "whenever you put one or more counters on a creature you don't control" watchers. */
-    private void fireCountersPutOnCreatureYouDontControlTriggers(
+    public void fireCountersPutOnCreatureYouDontControlTriggers(
             GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
         if (count <= 0 || creature == null || placingPlayerId == null
                 || !gameQueryService.isCreature(gameData, creature)) {
@@ -172,8 +172,13 @@ public class PermanentCounterSupport {
 
     public void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
                                      CounterType counterType, int amount) {
+        notifyCountersPlaced(gameData, entry, target, counterType, amount,
+                placingPlayerId(gameData, entry, target));
+    }
+
+    private void notifyCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
+                                      CounterType counterType, int amount, UUID placingPlayerId) {
         if (target == null || amount <= 0) return;
-        UUID placingPlayerId = placingPlayerId(gameData, entry, target);
         if (triggerCollectionService != null) {
             if (counterType == CounterType.LORE) {
                 for (int i = 0; i < amount; i++) {
@@ -900,7 +905,7 @@ public class PermanentCounterSupport {
         };
         if (counterName == null || count <= 0) return 0;
 
-        notifyCountersPlaced(gameData, entry, target, count, counterType);
+        notifyCountersPlaced(gameData, entry, target, counterType, count, counterPlacingPlayerId);
         notifySelfCountersPlaced(gameData, entry, target, counterType, previousCount, count);
         recordCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
@@ -1317,7 +1322,7 @@ public class PermanentCounterSupport {
 
     public void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target,
                                                    UUID placingPlayerId, List<Permanent> excludedSources) {
-        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
+        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target, placingPlayerId);
         firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                 gameData, target, 1, null, excludedSources);
         firePlusOnePlusOneCountersPutOnControlledHumanTriggers(gameData, target);
@@ -1604,6 +1609,11 @@ public class PermanentCounterSupport {
     }
 
     void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
+        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target, controllerOf(gameData, target));
+    }
+
+    private void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target,
+                                                             UUID placingPlayerId) {
         Card card = target.getCard();
         List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
         if (effects.isEmpty()) {
@@ -1625,6 +1635,10 @@ public class PermanentCounterSupport {
         List<CardEffect> effectsToResolve = new ArrayList<>();
         boolean oncePerTurnQueued = false;
         for (CardEffect effect : effects) {
+            if (effect instanceof YouPutCounterOnControlledCreatureTriggerEffect youPut) {
+                if (!controllerId.equals(placingPlayerId)) continue;
+                effect = youPut.wrapped();
+            }
             if (effect instanceof OncePerTurnTriggerEffect once) {
                 if (gameData.oncePerTurnTriggersFiredThisTurn.contains(target.getId())) {
                     continue;

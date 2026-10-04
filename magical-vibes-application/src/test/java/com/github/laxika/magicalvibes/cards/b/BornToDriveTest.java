@@ -75,10 +75,14 @@ class BornToDriveTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Born to Drive");
 
         pilots.getFirst().setSummoningSick(false);
-        harness.activateAbility(player1,
-                gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
-        harness.handlePermanentChosen(player1, pilots.getFirst().getId());
-        harness.passBothPriorities();
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player1);
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1,
+                    gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
+            harness.handlePermanentChosen(player1, pilots.getFirst().getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();
         assertThat(pilots.getFirst().isTapped()).isTrue();

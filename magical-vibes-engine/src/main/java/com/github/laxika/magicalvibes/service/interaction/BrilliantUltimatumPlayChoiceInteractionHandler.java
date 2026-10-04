@@ -40,6 +40,15 @@ public class BrilliantUltimatumPlayChoiceInteractionHandler
                              PendingInteraction.BrilliantUltimatumPlayChoice interaction,
                              InteractionAnswer answer) {
         List<UUID> cardIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
+        if (!player.getId().equals(interaction.playerId())) {
+            throw new IllegalStateException("Not your play choice");
+        }
+        if (cardIds == null) cardIds = List.of();
+        if (cardIds.size() > interaction.maxCount()
+                || new java.util.HashSet<>(cardIds).size() != cardIds.size()
+                || !interaction.validCardIds().containsAll(cardIds)) {
+            throw new IllegalStateException("Invalid cards selected from the chosen pile");
+        }
         brilliantUltimatumSupport.playChosenCards(gameData, player, cardIds);
     }
 }

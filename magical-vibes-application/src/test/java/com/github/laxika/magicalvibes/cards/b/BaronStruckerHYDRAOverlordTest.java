@@ -154,7 +154,7 @@ class BaronStruckerHYDRAOverlordTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         Permanent second = harness.enterBattlefieldAndReturn(player1, new AgentsOfHYDRA());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

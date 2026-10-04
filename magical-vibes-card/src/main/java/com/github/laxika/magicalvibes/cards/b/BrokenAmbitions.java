@@ -12,15 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class BrokenAmbitions extends Card {
 
     public BrokenAmbitions() {
-        // Counter target spell unless its controller pays {X}. Clash with an opponent. If you win,
-        // that spell's controller mills four cards.
-        //
-        // The clash is listed before the counter so that on a clash win the targeted spell is still
-        // on the stack, letting MillRecipient.TARGET_SPELL_CONTROLLER resolve its controller. The two
-        // instructions are independent (the mill does not depend on whether the spell was countered),
-        // so this ordering is rules-equivalent.
+        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false));
         addEffect(EffectSlot.SPELL,
                 new ClashEffect(new MillEffect(4, MillRecipient.TARGET_SPELL_CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false));
     }
 }

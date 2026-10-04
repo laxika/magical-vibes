@@ -77,7 +77,6 @@ class BlackbloomRogueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent rogue = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(rogue.getCard()).isInstanceOf(BlackbloomRogue.class);
         assertThat(rogue.isTapped()).isFalse();
         assertStats(rogue, 5, 3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();

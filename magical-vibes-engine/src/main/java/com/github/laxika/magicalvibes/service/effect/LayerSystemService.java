@@ -2298,7 +2298,8 @@ public class LayerSystemService {
             }
             case OWN_CREATURES, ALL_OWN_CREATURES, OPPONENT_CREATURES, ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF -> {
                 for (PermanentSlot slot : slots) {
-                    if (slot.permanent() == source.permanent() && scope != GrantScope.ALL_CREATURES_INCLUDING_SELF) continue;
+                    if (slot.permanent() == source.permanent() && scope != GrantScope.ALL_CREATURES_INCLUDING_SELF
+                            && scope != GrantScope.ALL_OWN_CREATURES) continue;
                     boolean own = slot.controllerId().equals(source.controllerId());
                     boolean inScope = scope == GrantScope.ALL_CREATURES
                             || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
@@ -2363,6 +2364,11 @@ public class LayerSystemService {
         }
         if (floating.affectedPermanentId() != null) {
             PermanentSlot slot = slotsById.get(floating.affectedPermanentId());
+            if (slot != null && !matchesL4Filter(slot, floating.scope(), board, gameData,
+                    instance.source() == null ? null : instance.source().permanent(), floating.controllerId(),
+                    floating.sourcePermanentId())) {
+                return List.of();
+            }
             return slot == null ? List.of() : List.of(slot);
         }
         if (floating.scope() != null) {

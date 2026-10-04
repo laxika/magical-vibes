@@ -429,7 +429,7 @@ public class StackResolutionService {
             perm.setBestow(true);
         } else if (entry.getPhysicalCard() != card) {
             perm.setCard(characteristics);
-            if (entry.isCastTransformed()) {
+            if (entry.isCastTransformed() || entry.isCastWithDisturb()) {
                 perm.setTransformed(true);
             }
         } else if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
@@ -1895,4 +1895,3 @@ public class StackResolutionService {
     }
 
 }
-

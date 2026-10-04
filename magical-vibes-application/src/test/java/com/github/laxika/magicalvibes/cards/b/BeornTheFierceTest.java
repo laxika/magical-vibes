@@ -117,7 +117,7 @@ class BeornTheFierceTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(target.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
         assertThat(target.getGrantedSubtypes()).contains(CardSubtype.BEAR);

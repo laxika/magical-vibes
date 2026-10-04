@@ -27,7 +27,8 @@ public class GrantStaticEffectToTargetUntilEndOfCombatEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
+        var targets = entry.targetsForBoundEffectGroup(effect);
+        UUID targetId = targets == null ? entry.getTargetId() : targets.stream().findFirst().orElse(null);
         if (targetId == null || gameQueryService.findPermanentById(gameData, targetId) == null) {
             return;
         }

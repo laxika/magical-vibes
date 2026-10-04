@@ -23,6 +23,7 @@ import java.util.UUID;
 public class ExileEachTargetSpellEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final CounterSupport counterSupport;
     private final GameLogService gameLogService;
     private final StateTriggerService stateTriggerService;
 
@@ -45,6 +46,8 @@ public class ExileEachTargetSpellEffectHandler implements NormalEffectHandlerBea
             stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
             if (target.isCopy()) {
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " (a copy) ceases to exist."));
+            } else if (counterSupport.replaceFlashforwardDestination(gameData, target)) {
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is put on the bottom of its owner's library."));
             } else {
                 exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));

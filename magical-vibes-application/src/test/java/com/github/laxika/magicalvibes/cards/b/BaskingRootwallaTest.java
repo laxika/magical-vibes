@@ -56,7 +56,7 @@ class BaskingRootwallaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -78,7 +78,7 @@ class BaskingRootwallaTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
         assertThat(rootwalla.getEffectiveToughness()).isEqualTo(1);

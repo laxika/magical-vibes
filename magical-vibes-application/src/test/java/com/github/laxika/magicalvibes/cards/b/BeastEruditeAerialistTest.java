@@ -45,7 +45,7 @@ class BeastEruditeAerialistTest extends BaseCardTest {
     @DisplayName("Does not gain flying when an opponent puts a counter on Beast")
     void doesNotGainFlyingFromOpponentsCounter() {
         Permanent beast = addCreatureReady(player1, new BeastEruditeAerialist());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new IronshellBeetle()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
@@ -64,7 +64,7 @@ class BeastEruditeAerialistTest extends BaseCardTest {
         putCounterOnBeast(beast);
         assertThat(gqs.hasKeyword(gd, beast, Keyword.FLYING)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, beast, Keyword.FLYING)).isFalse();

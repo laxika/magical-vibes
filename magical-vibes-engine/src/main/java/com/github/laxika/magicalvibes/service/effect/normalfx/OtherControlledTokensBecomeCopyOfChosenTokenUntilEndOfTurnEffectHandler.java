@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -86,7 +87,7 @@ public class OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHan
         try {
             copyHandler.resolve(gameData, entry,
                     new EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect(
-                            OWN_TOKENS, OWN_TOKENS));
+                            OWN_TOKENS, OWN_TOKENS, false, EffectDuration.PERMANENT));
         } finally {
             entry.restoreTargetIdAfterEffectResolution(previousTargetId);
         }

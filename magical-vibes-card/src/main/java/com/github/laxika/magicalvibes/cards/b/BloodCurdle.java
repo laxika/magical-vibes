@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -17,6 +18,6 @@ public class BloodCurdle extends Card {
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.SPELL,
                         new PutCounterOnChosenOwnPermanentEffect(
-                                CounterType.MENACE, 1, new PermanentIsCreaturePredicate()));
+                                CounterType.MENACE, new Fixed(1), new PermanentIsCreaturePredicate(), false, true));
     }
 }

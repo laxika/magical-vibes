@@ -59,6 +59,7 @@ class BrimstoneVandalTest extends BaseCardTest {
     }
 
     private void makeItDay() {
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
         harness.passBothPriorities();
     }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -36,7 +37,8 @@ public class BardsCompany extends Card {
                         new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),
                         "a card",
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                        false, null, null, DiscardRecipient.CONTROLLER, true));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, recruit);
         addEffect(EffectSlot.ON_ATTACK, recruit);
     }

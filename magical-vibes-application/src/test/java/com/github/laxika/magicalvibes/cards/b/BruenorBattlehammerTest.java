@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import java.util.List;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.Greataxe;
 import com.github.laxika.magicalvibes.cards.l.LeatherArmor;
@@ -142,8 +144,10 @@ class BruenorBattlehammerTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, firstCreature.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player1, 1, 0, null, secondCreature.getId());
         harness.passBothPriorities();
 

@@ -77,7 +77,7 @@ class BrackwaterElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Brackwater Elemental");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Brackwater Elemental");
     }
 

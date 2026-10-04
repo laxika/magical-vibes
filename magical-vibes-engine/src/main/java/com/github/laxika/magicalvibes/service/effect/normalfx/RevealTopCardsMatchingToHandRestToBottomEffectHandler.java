@@ -43,6 +43,7 @@ public class RevealTopCardsMatchingToHandRestToBottomEffectHandler implements No
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
+        if (source == null) source = entry.getSourcePermanentSnapshot();
         CardSubtype chosenSubtype = source != null ? source.getChosenSubtype() : null;
 
         LibraryRevealSupport.TopCardsResult result =

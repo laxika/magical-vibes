@@ -127,7 +127,7 @@ class BeornsHospitalityTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hospitality);
         assertThat(gqs.isCreature(gd, hospitality)).isTrue();

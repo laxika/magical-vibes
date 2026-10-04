@@ -187,6 +187,10 @@ public class Permanent {
     /** Whether this permanent has completed its custom buddy-list choice as it entered. */
     @Setter private boolean buddyListChoiceMade;
     @Setter private CardType chosenCardType;
+    /** Card types checked on an associated tracker list, separate from permanent counters. */
+    private final Set<CardType> trackedSpellCardTypes = EnumSet.noneOf(CardType.class);
+    /** Identifies the characteristics supplying the current tracker, so new copy lists start empty. */
+    @Setter private UUID trackedSpellCardTypesSourceCardId;
     /** Second basic land type chosen "as this enters" when the card chooses two types
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
     @Setter private CardSubtype secondChosenSubtype;
@@ -845,6 +849,8 @@ public class Permanent {
         this.chosenSubtype = source.chosenSubtype;
         this.buddyListChoiceMade = source.buddyListChoiceMade;
         this.chosenCardType = source.chosenCardType;
+        this.trackedSpellCardTypes.addAll(source.trackedSpellCardTypes);
+        this.trackedSpellCardTypesSourceCardId = source.trackedSpellCardTypesSourceCardId;
         this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenMode = source.chosenMode;
         this.chosenAttackDirection = source.chosenAttackDirection;

@@ -184,7 +184,9 @@ class BragoKingEternalTest extends BaseCardTest {
 
         resolveCombatToTargetChoice();
         harness.handlePermanentChosen(player1, brago.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Brago, King Eternal");

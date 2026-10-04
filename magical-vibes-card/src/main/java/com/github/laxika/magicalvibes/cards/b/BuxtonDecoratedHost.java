@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -35,7 +36,7 @@ public class BuxtonDecoratedHost extends Card {
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanent(tappedCreature),
-                new SeekLibraryEffect(tappedCreatures, nonlandPermanent,
+                new SeekLibraryEffect(new Fixed(1), nonlandPermanent,
                         LibrarySearchDestination.BATTLEFIELD,
                         new ManaValueBound(tappedCreatures, false, 0))));
     }

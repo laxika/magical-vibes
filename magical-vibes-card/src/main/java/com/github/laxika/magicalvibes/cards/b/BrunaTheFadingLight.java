@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -24,7 +25,7 @@ public class BrunaTheFadingLight extends Card {
     public BrunaTheFadingLight() {
         // When you cast this spell, you may return target Angel or Human creature card from your
         // graveyard to the battlefield.
-        addEffect(EffectSlot.ON_SELF_CAST, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_SELF_CAST, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
@@ -32,7 +33,6 @@ public class BrunaTheFadingLight extends Card {
                                 new CardSubtypePredicate(CardSubtype.ANGEL),
                                 new CardSubtypePredicate(CardSubtype.HUMAN))))))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return the targeted creature card to the battlefield?"));
     }
 }

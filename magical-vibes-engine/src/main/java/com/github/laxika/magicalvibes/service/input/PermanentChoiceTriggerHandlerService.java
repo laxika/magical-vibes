@@ -1221,6 +1221,8 @@ public class PermanentChoiceTriggerHandlerService {
         for (int i = 0; i < createdIds.size(); i++) {
             Permanent token = gameQueryService.findPermanentById(gameData, createdIds.get(i));
             if (token != null && !chosenTargets.isEmpty()) {
+                token.enterAttacking(context.controllerId().equals(gameData.activePlayerId)
+                        && gameData.currentStep.isCombatPhase());
                 token.setAttackTarget(chosenTargets.get(i % chosenTargets.size()));
             }
         }

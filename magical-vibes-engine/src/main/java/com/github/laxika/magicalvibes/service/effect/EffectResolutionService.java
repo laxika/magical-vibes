@@ -171,7 +171,7 @@ public class EffectResolutionService {
                 // Another creature entering attacking later cannot undo that event.
                 boolean attackEventAlreadyMatched = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && conditional.condition() instanceof AttacksAlone;
-                if (!evaluatedWhenEtbTriggered && !attackEventAlreadyMatched
+                if (!conditional.triggerTimeOnly() && !evaluatedWhenEtbTriggered && !attackEventAlreadyMatched
                         && !isConditionMet(gameData, entry, conditional.condition(), conditionContext)) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
@@ -196,6 +196,7 @@ public class EffectResolutionService {
             if (effectToResolve instanceof MayEffect may
                     && may.wrapped() instanceof ConditionalEffect conditional
                     && conditional.interveningIf()
+                    && !conditional.triggerTimeOnly()
                     && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
                     entry.getEventValue())) {
                 continue;
@@ -330,7 +331,8 @@ public class EffectResolutionService {
             // after the re-entry branches above have unwrapped it. Apply the same condition logic
             // here before dispatching the now-unwrapped effect.
             if (effectToResolve != effect && effectToResolve instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                if (!conditional.triggerTimeOnly()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
                         entry.getEventValue())) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("

@@ -202,6 +202,22 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             return;
         }
 
+        if (!e.attachToSourceHost() && cardsToReturn.stream().anyMatch(Card::isAura)) {
+            List<Permanent> preparedPermanents = new ArrayList<>();
+            for (Card card : cardsToReturn) {
+                Permanent prepared = new Permanent(card);
+                graveyardReturnSupport.applyPermanentGrants(prepared, e.grantColor(), e.grantSubtype());
+                if (e.enterTapped()) prepared.tap();
+                prepared.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+                applyReturnRiders(gameData, prepared, e);
+                preparedPermanents.add(prepared);
+                entry.rememberReturnedPermanent(prepared.getId());
+            }
+            graveyardReturnSupport.returnPreparedPermanentsWithAuraChoices(
+                    gameData, graveyardOwnerId, preparedPermanents, enteringCounters(e));
+            return;
+        }
+
         Set<CardType> enterTappedTypes =
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();

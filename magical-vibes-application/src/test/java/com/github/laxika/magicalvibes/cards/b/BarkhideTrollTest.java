@@ -221,7 +221,7 @@ class BarkhideTrollTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gqs.hasKeyword(gd, troll, Keyword.HEXPROOF)).isTrue();
 

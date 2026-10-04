@@ -1008,7 +1008,8 @@ public class GraveyardTargetingService {
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
                     if ((eligibleBeforeCosts == null || eligibleBeforeCosts.contains(graveyardCard.getId()))
-                            && predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                            && predicateEvaluationService.matchesCardPredicate(
+                            graveyardCard, filter, card.getId(), gameData, graveyardOwner)) {
                         matchingCards.add(graveyardCard);
                     }
                 }

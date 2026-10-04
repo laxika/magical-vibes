@@ -10,7 +10,7 @@ import java.util.UUID;
  * targeted player draws cards instead. The card-definition constructor leaves the resolution
  * state unset; the normal and may handlers carry the APNAP queue between player choices.
  *
- * @param damage             damage dealt to the first player who accepts
+ * @param damage             damage dealt to every player who accepts
  * @param drawCount          cards drawn by the targeted player if everyone declines
  * @param targetPlayerId     the spell's target player
  * @param remainingPlayerIds players still eligible to accept the damage
@@ -21,8 +21,18 @@ public record AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect(
         int drawCount,
         UUID targetPlayerId,
         List<UUID> remainingPlayerIds,
-        UUID sourceControllerId
+        UUID sourceControllerId,
+        List<UUID> acceptedPlayerIds
 ) implements DamageDealingEffect {
+
+    public AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect(int damage, int drawCount,
+            UUID targetPlayerId, List<UUID> remainingPlayerIds, UUID sourceControllerId) {
+        this(damage, drawCount, targetPlayerId, remainingPlayerIds, sourceControllerId, List.of());
+    }
+
+    public AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect {
+        acceptedPlayerIds = List.copyOf(acceptedPlayerIds);
+    }
 
     public AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect(int damage, int drawCount) {
         this(damage, drawCount, null, null, null);

@@ -57,6 +57,8 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
                 : amountEvaluationService.evaluate(gameData, castEffect.manaValue(),
                         AmountContext.forStackEntry(entry, null));
         List<Card> exiled = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
+                .filter(card -> !castEffect.ownOnly()
+                        || controllerId.equals(gameData.findExiledCard(card.getId()).ownerId()))
                 .filter(card -> castEffect.filter() == null
                         ? !card.hasType(CardType.LAND)
                         : predicateEvaluationService.matchesCardPredicate(

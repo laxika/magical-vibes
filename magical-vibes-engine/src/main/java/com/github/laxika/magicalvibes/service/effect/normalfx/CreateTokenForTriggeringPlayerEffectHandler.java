@@ -33,6 +33,11 @@ public class CreateTokenForTriggeringPlayerEffectHandler implements NormalEffect
         UUID playerId = entry.getTriggeringPermanentControllerId() != null
                 ? entry.getTriggeringPermanentControllerId()
                 : entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
+        if (e.resolveCurrentController() && entry.getTriggeringPermanentId() != null) {
+            UUID currentController = gameQueryService.findPermanentController(
+                    gameData, entry.getTriggeringPermanentId());
+            if (currentController != null) playerId = currentController;
+        }
         if (playerId == null || !gameData.playerIds.contains(playerId)) {
             return;
         }

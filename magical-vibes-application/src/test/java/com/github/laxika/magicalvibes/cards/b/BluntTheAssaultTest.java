@@ -123,8 +123,8 @@ class BluntTheAssaultTest extends BaseCardTest {
     void doesNotPreventNoncombatDamage() {
         harness.setHand(player1, List.of(new BluntTheAssault(), new GalvanicBlast()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.assertLife(player2, 18);
     }
@@ -137,8 +137,8 @@ class BluntTheAssaultTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new VulshokReplica()));
         harness.setHand(player1, List.of(new BluntTheAssault(), new GalvanicBlast()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, removed.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

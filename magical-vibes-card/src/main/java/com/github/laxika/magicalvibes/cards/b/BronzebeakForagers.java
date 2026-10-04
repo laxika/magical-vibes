@@ -18,7 +18,7 @@ import java.util.List;
 public class BronzebeakForagers extends Card {
 
     public BronzebeakForagers() {
-        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, 99)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentUntilSourceLeavesEffect());

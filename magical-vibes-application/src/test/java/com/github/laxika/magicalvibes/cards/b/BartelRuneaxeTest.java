@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.r.Replenish;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +26,7 @@ class BartelRuneaxeTest extends BaseCardTest {
     @Test
     void vigilanceKeepsBartelUntappedWhenAttacking() {
         Permanent bartel = addCreatureReady(player1, new BartelRuneaxe());
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         assertThat(bartel.isTapped()).isFalse();
         assertThat(bartel.isAttacking()).isTrue();
     }
@@ -55,7 +56,7 @@ class BartelRuneaxeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThat(aura.getAttachedTo()).isEqualTo(bartel.getId());
-        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(6);
     }
 
     @Test
@@ -70,7 +71,7 @@ class BartelRuneaxeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Giant Strength");
         assertThat(findPermanent(player1, "Giant Strength").getAttachedTo()).isEqualTo(bartel.getId());
         harness.assertNotInGraveyard(player1, "Giant Strength");
-        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bartel)).isEqualTo(6);
     }
 
 

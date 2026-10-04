@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -61,6 +62,11 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class PermanentChoiceHandlerService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+
+    private final PlayerInputService playerInputService;
 
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
 
@@ -411,6 +417,19 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
         } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {
             gameData.pendingEffectResolutionEntry.setTargetId(permanentId);
+            var sorceries = gameData.getSpellsCastThisTurn(permanentId).stream()
+                    .filter(card -> card.hasType(CardType.SORCERY))
+                    .map(card -> card.getId()).distinct().toList();
+            if (sorceries.size() > 1) {
+                playerInputService.beginPermanentChoice(gameData, player.getId(), sorceries,
+                        new PermanentChoiceContext.BackdraftSorceryChoice(),
+                        "Backdraft — Choose the sorcery whose damage to use.");
+            } else {
+                gameData.pendingEffectResolutionEntry.setChosenPermanentId(sorceries.getFirst());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+        } else if (context instanceof PermanentChoiceContext.BackdraftSorceryChoice) {
+            gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanentId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.LyndeOpponentChoice lyndeOpponentChoice) {
             attachCurseToOpponentAndDrawEffectHandler.completeOpponentChoice(
@@ -610,6 +629,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleExploitPlayerTrigger(gameData, permanentId, exploitPl);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
+        } else if (context instanceof PermanentChoiceContext.FreeCastSacrificeCost sacrificeCost) {
+            exileFreeCastQueueSupport.completeSacrificeCost(gameData, permanentId, sacrificeCost);
         } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {
             spellHandler.handleExileCastSpellTarget(gameData, permanentId, ect);
         } else if (context instanceof PermanentChoiceContext.ChandraTorchCastSpellTarget ctc) {

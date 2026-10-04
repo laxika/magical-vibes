@@ -79,7 +79,7 @@ class BackdraftHellkiteTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(looting));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
 

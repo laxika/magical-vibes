@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AuraAttachmentService auraAttachmentService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -44,18 +46,24 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached()) {
-            return;
-        }
-
-        UUID enchantedPermanentId = aura.getAttachedTo();
+        boolean auraOnBattlefield = aura != null;
+        if (aura == null) aura = entry.getSourcePermanentSnapshot();
+        if (aura == null) return;
+        Permanent originalAura = entry.getSourcePermanentSnapshot() != null
+                ? entry.getSourcePermanentSnapshot() : aura;
+        UUID enchantedPermanentId = originalAura.getAttachedTo() != null
+                ? originalAura.getAttachedTo() : originalAura.getLastAttachedTo();
         Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedPermanentId);
-        if (enchanted == null) {
+        if (enchanted == null || gameQueryService.cantBeSacrificed(gameData, enchanted)) {
             return;
         }
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, enchantedPermanentId);
         if (controllerId == null) {
+            return;
+        }
+        if (!auraOnBattlefield) {
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted);
             return;
         }
 
@@ -68,7 +76,8 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
             for (Permanent p : battlefield) {
                 if (p.getId().equals(enchantedPermanentId)) continue;
                 if (predicateEvaluationService.matchesPermanentPredicate(gameData, p,
-                        reattachEffect.destinationFilter())) {
+                        reattachEffect.destinationFilter())
+                        && auraAttachmentService.canEnchant(gameData, aura.getCard(), entry.getControllerId(), p)) {
                     validTargetIds.add(p.getId());
                 }
             }
@@ -86,6 +95,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
 
         // Sacrifice the enchanted permanent.
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted);
+        entry.setSacrificedCard(enchanted.getCard());
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));
 

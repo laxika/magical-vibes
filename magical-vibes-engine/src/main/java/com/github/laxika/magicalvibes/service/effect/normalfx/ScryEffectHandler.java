@@ -48,7 +48,8 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
                     ? entry.getTriggeringPermanentControllerId() : controllerId;
             default -> controllerId;
         };
-        UUID scryingPlayerId = e.owner() == LibraryOwner.OPPONENT
+        UUID scryingPlayerId = e.owner() == LibraryOwner.TARGET_PLAYER
+                || e.owner() == LibraryOwner.OPPONENT
                 || e.owner() == LibraryOwner.DYING_CREATURE_CONTROLLER
                 ? libraryOwnerId : controllerId;
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
@@ -78,7 +79,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
                     : gameData.playerIdToName.get(scryingPlayerId) + " scries " + scryAmount
                             + " but their library is empty.";
             gameLogService.append(gameData, GameLog.text(logMsg));
-            if (!targetLibrary && e.causesScryTriggers()) {
+            if (e.causesScryTriggers()) {
                 triggerCollectionService.checkScryTriggers(gameData, scryingPlayerId, 0);
             }
             return;

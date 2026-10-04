@@ -22,7 +22,7 @@ public class BreechesTheBlastmaker extends Card {
                         new SacrificePermanentThenEffect(
                                 new PermanentIsArtifactPredicate(),
                                 new FlipCoinCopyTriggeringSpellOrDealDamageEffect(),
-                                "an artifact"),
+                                "an artifact", false, false),
                         "Sacrifice an artifact?"))
         ));
     }

@@ -16,10 +16,10 @@ public class BuildersBane extends Card {
         // they controlled that were put into a graveyard this way. The destroy effect stamps the
         // controller of every artifact actually destroyed onto the entry's per-player tally, which
         // the damage rider reads to give each player their own amount.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
-        ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
 
         addEffect(EffectSlot.SPELL, new DealDamageToEachDestroyedPermanentControllerEffect());
     }

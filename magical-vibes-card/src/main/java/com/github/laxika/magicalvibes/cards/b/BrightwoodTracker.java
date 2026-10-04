@@ -16,7 +16,7 @@ public class BrightwoodTracker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}{G}",
-                List.of(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4, new CardTypePredicate(CardType.CREATURE))),
+                List.of(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(4, new CardTypePredicate(CardType.CREATURE))),
                 "{5}{G}, {T}: Look at the top four cards of your library. You may reveal a creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."
         ));
     }

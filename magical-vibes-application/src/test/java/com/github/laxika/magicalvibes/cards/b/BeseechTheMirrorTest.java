@@ -115,6 +115,7 @@ class BeseechTheMirrorTest extends BaseCardTest {
         castBargained(sacrifice);
         resolveAndChoose();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Cast Ferocious Werefox");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ferocious Werefox");

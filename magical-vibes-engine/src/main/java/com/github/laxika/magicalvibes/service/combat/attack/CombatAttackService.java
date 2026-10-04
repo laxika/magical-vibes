@@ -1197,7 +1197,7 @@ public class CombatAttackService {
                     // like Cyclops Gladiator's may-fight).
                     List<CardEffect> nonTargetingMayEffects = allEffects.stream()
                             .filter(e -> e instanceof com.github.laxika.magicalvibes.model.effect.MayEffect
-                                    && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && !e.targetSpec().admits(TargetPredicate.Kind.PLAYER)).toList();
+                                    && e.targetSpec().declaredTarget() == null).toList();
                     List<CardEffect> otherEffects = allEffects.stream()
                             .filter(e -> !nonTargetingMayEffects.contains(e)).toList();
 
@@ -1248,9 +1248,12 @@ public class CombatAttackService {
                                         || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                                         || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
                         UUID attackedTargetId = attacker.getAttackTarget();
+                        Permanent attackedPermanent = attackedTargetId == null ? null
+                                : gameQueryService.findPermanentById(gameData, attackedTargetId);
                         UUID defendingPlayerId = attackedTargetId == null ? null
-                                : gameData.playerIds.contains(attackedTargetId)
-                                        ? attackedTargetId
+                                : gameData.playerIds.contains(attackedTargetId) ? attackedTargetId
+                                : attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
+                                        ? attackedPermanent.getProtectorPlayerId()
                                         : gameQueryService.findPermanentController(gameData, attackedTargetId);
                         if (isTriggerTimeModal) {
                             CardEffect modalEffect = otherEffects.getFirst();
@@ -2253,22 +2256,36 @@ public class CombatAttackService {
 
                 int previousCopies = beginAttackTriggerCopies(gameData, attackedPlayerId, perm);
                 try {
-                    StackEntry attackedTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            attackedPlayerId,
-                            perm.getCard().getName() + "'s trigger",
-                            new ArrayList<>(attackedTriggerEffects),
-                            attacker.getId(),
-                            perm.getId()
-                    );
-                    attackedTrigger.setNonTargeting(true);
-                    attackedTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-                    gameData.stack.add(attackedTrigger);
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                    log.info("Game {} - {} attacked-player trigger for {} attacking",
-                            gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+                    List<List<CardEffect>> abilities = new ArrayList<>();
+                    List<CardEffect> bundledEffects = new ArrayList<>(attackedTriggerEffects);
+                    for (EffectSlot triggerSlot : List.of(EffectSlot.ON_CREATURE_ATTACKS_YOU,
+                            EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY)) {
+                        for (var registration : perm.getCard().getEffectRegistrations(triggerSlot)) {
+                            if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
+                                    && bundledEffects.remove(registration.effect())) {
+                                abilities.add(List.of(registration.effect()));
+                            }
+                        }
+                    }
+                    if (!bundledEffects.isEmpty()) abilities.addFirst(bundledEffects);
+                    for (List<CardEffect> abilityEffects : abilities) {
+                        StackEntry attackedTrigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                attackedPlayerId,
+                                perm.getCard().getName() + "'s trigger",
+                                new ArrayList<>(abilityEffects),
+                                attacker.getId(),
+                                perm.getId()
+                        );
+                        attackedTrigger.setNonTargeting(true);
+                        attackedTrigger.setSourcePermanentSnapshot(new Permanent(perm));
+                        gameData.stack.add(attackedTrigger);
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                        log.info("Game {} - {} attacked-player trigger for {} attacking",
+                                gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+                    }
                 } finally {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
@@ -3184,8 +3201,7 @@ public class CombatAttackService {
                     || sourceStaticBonus.losesAllNonManaAbilities()
                     || source.getCard().getEffects(EffectSlot.ON_CREWS_VEHICLE).stream()
                     .noneMatch(RegisterDelayedVehicleAttackEffect.class::isInstance)
-                    || !gameQueryService.effectiveCreatureSubtypes(gameData, vehicle)
-                    .contains(CardSubtype.VEHICLE)) {
+                    || !gameQueryService.hasEffectiveSubtype(gameData, vehicle, CardSubtype.VEHICLE)) {
                 continue;
             }
 

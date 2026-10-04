@@ -14,10 +14,10 @@ public class BlueDragon extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new BoostTargetCreatureEffect(-3, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN));
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1)
+        target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN));
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1)
+        target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new BoostTargetCreatureEffect(-1, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN));
     }

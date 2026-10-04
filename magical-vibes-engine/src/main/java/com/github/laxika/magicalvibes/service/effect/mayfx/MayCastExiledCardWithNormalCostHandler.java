@@ -66,11 +66,23 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
             exileReducedCastSupport.castFromExileWithCostReduction(
                     gameData, player, ability.targetCardId(), genericCostReduction,
                     effect.putOnBottomOfOwnersLibraryInsteadOfGraveyard());
+            if (!gameData.interaction.isAwaitingInput()) {
+                revokeResolutionLifeCastPermission(gameData, ability);
+            }
             return;
         }
 
+        revokeResolutionLifeCastPermission(gameData, ability);
         gameLogService.append(gameData,
                 GameLog.textCardText(player.getUsername() + " declines to cast ", ability.sourceCard(), "."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+    private void revokeResolutionLifeCastPermission(GameData gameData, PendingMayAbility ability) {
+        if (ability.targetCardId() != null
+                && gameData.exilePlayForLifeEqualToManaValue.remove(ability.targetCardId())) {
+            gameData.exilePlayPermissions.remove(ability.targetCardId());
+            gameData.exilePlayPermissionsExpireEndOfTurn.remove(ability.targetCardId());
+            gameData.exilePlayCostModifiers.remove(ability.targetCardId());
+        }
     }
 }

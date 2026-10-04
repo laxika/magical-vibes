@@ -125,6 +125,8 @@ class BiomancersFamiliarTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, eel.getId());
         harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.addMana(player1, ManaColor.BLUE, 1);

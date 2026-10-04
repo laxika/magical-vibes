@@ -255,7 +255,7 @@ class BackFromTheBrinkTest extends BaseCardTest {
         var token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
         token.setSummoningSick(false);
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(token), null, null);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(token));
 
         assertThat(token.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);

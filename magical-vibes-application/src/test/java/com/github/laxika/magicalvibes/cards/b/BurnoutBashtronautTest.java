@@ -90,6 +90,7 @@ class BurnoutBashtronautTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bashtronaut)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bashtronaut)).isEqualTo(1);

@@ -40,7 +40,7 @@ public class BraveTheWilds extends Card {
                                 3, 3,
                                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
                                 null, Set.of(),
-                                GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN)));
+                                GrantScope.TARGET, EffectDuration.PERMANENT)));
         addEffect(EffectSlot.SPELL, new SearchLibraryEffect(CardPredicateUtils.basicLand()));
     }
 }

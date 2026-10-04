@@ -10,5 +10,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * part of the ability's resolution rather than a cost: if the target is illegal on resolution the
  * whole ability is countered and the source stays on the battlefield.
  */
-public record ExileSelfEffect() implements CardEffect {
+public record ExileSelfEffect(boolean outsideGame) implements CardEffect {
+
+    public ExileSelfEffect() {
+        this(false);
+    }
 }

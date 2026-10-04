@@ -35,7 +35,7 @@ public class BudokaGardener extends Card {
                         ),
                         new ConditionalEffect(
                                 new ControlsPermanentCount(10, new PermanentIsLandPredicate()),
-                                new TransformToBackFaceEffect()
+                                new TransformToBackFaceEffect(true)
                         )
                 ),
                 "{T}: You may put a land card from your hand onto the battlefield. If you control ten or "

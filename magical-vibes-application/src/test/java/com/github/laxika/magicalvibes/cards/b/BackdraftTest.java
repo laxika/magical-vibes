@@ -122,7 +122,8 @@ class BackdraftTest extends BaseCardTest {
 
     @Test
     void controllerChoosesWhichSorceryDeterminesDamage() {
-        harness.setHand(player1, List.of(new ChainLightning(), new Cleanse()));
+        Cleanse cleanse = new Cleanse();
+        harness.setHand(player1, List.of(new ChainLightning(), cleanse));
         harness.setHand(player2, List.of(new Backdraft()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -136,6 +137,9 @@ class BackdraftTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, player1.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player2, cleanse.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Backdraft");
     }
 }

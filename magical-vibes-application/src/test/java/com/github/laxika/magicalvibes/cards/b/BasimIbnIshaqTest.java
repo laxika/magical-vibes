@@ -153,7 +153,7 @@ class BasimIbnIshaqTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(basim.isCantBeBlocked()).isFalse();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new MindStone()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);

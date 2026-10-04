@@ -52,7 +52,7 @@ class BalduvianFallenTest extends BaseCardTest {
 
         assertThat(fallen.getPowerModifier()).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(fallen.getPowerModifier()).isZero();
     }

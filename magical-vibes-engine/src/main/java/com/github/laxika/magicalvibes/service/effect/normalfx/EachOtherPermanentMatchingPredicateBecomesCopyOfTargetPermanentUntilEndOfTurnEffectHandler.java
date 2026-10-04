@@ -90,7 +90,7 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
                 supertypes.remove(CardSupertype.LEGENDARY);
                 permanent.getCard().setSupertypes(supertypes);
             }
-            permanent.setCopyUntilEndOfTurn(true);
+            permanent.setCopyUntilEndOfTurn(copyEffect.duration() != EffectDuration.PERMANENT);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(),
                     entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),

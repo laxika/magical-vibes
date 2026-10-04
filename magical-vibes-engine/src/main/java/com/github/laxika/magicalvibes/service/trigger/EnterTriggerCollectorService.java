@@ -496,6 +496,10 @@ public class EnterTriggerCollectorService {
             entry.setTriggeringCardId(pe.enteringCard().getId());
             if (usesTriggeringPermanentManaValue(effect)) {
                 entry.setEventValue(pe.enteringCard().getManaValue());
+                entry.setTriggeringCardSnapshot(pe.enteringCard());
+                Permanent enteringPermanent = findEnteringPermanent(match.gameData(), pe);
+                entry.setTriggeringPermanentOwnerId(enteringPermanent == null
+                        ? pe.enteringCard().getOwnerId() : enteringPermanent.getOriginalCard().getOwnerId());
             }
             if (match.sourcePlanarObject() != null) {
                 entry.setSourcePlanarObject(match.sourcePlanarObject().copy());

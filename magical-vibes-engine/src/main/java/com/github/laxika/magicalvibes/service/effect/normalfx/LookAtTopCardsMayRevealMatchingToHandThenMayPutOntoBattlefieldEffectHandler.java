@@ -59,7 +59,7 @@ public class LookAtTopCardsMayRevealMatchingToHandThenMayPutOntoBattlefieldEffec
             return;
         }
 
-        String prompt = "You may reveal a matching creature card from among them and put it into your hand.";
+        String prompt = "You may reveal a matching creature card. Put an eligible card onto the battlefield or into your hand.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(result.controllerId(), matchingCards)
                         .reveals(true)

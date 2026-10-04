@@ -88,7 +88,7 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
         }
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(
-                targetSpell.getCard().getId(), indexedTarget ? 0 : null));
+                targetSpell.getTargetableId(), indexedTarget ? 0 : null));
         playerInputService.beginPermanentChoice(
                 gameData,
                 controllerId,

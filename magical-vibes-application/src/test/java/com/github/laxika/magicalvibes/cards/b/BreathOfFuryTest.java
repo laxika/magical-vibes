@@ -170,7 +170,7 @@ class BreathOfFuryTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, otherCreature.getId());
         }
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker, aura);
         assertThat(aura.getAttachedTo()).isEqualTo(attacker.getId());
         assertThat(otherCreature.isTapped()).isTrue();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.turnup;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -60,6 +61,13 @@ public class TurnFaceUpCopyService {
             return;
         }
 
+        Card physicalCard = permanent.getOriginalCard();
+        if (physicalCard.hasType(CardType.INSTANT) || physicalCard.hasType(CardType.SORCERY)) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(controllerId) + " reveals ", physicalCard,
+                    " and leaves it face down."));
+            return;
+        }
         permanent.turnFaceUp();
         List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
                 .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()

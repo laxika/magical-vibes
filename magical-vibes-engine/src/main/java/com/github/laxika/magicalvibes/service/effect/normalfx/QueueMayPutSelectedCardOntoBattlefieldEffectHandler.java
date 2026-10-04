@@ -28,11 +28,11 @@ public class QueueMayPutSelectedCardOntoBattlefieldEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MayPutSelectedCardOntoBattlefieldEffect typed = (MayPutSelectedCardOntoBattlefieldEffect) effect;
         List<Card> hand = gameData.playerHands.get(entry.getControllerId());
-        if (hand == null || hand.isEmpty()) {
+        if (typed.chosenCard() == null && (hand == null || hand.isEmpty())) {
             return;
         }
 
-        Card selectedCard = hand.getLast();
+        Card selectedCard = typed.chosenCard() != null ? typed.chosenCard() : hand.getLast();
         if (!predicateEvaluationService.matchesCardPredicate(
                 selectedCard, typed.predicate(), entry.getCard().getId(), gameData, entry.getControllerId())
                 || selectedCard.getManaValue() > typed.manaValueAtMost()) {

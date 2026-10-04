@@ -21,10 +21,10 @@ public class BrinelinTheMoonKraken extends Card {
                                 "Return target nonland permanent to its owner's hand?"));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new MayEffect(
-                        new SpellCastTriggerEffect(
-                                new CardMinManaValuePredicate(6, true),
-                                List.of(ReturnToHandEffect.target())),
-                        "Return target nonland permanent to its owner's hand?"));
+                new SpellCastTriggerEffect(
+                        new CardMinManaValuePredicate(6, true),
+                        List.of(new MayEffect(ReturnToHandEffect.target(),
+                                "Return target nonland permanent to its owner's hand?")),
+                        null, TargetFilters.nonlandPermanent()));
     }
 }

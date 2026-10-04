@@ -20,7 +20,7 @@ public class BasalSliver extends Card {
 
     public BasalSliver() {
         ActivatedAbility manaAbility = new ActivatedAbility(
-                true,
+                false,
                 null,
                 List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.BLACK, 2)),
                 "Sacrifice this permanent: Add {B}{B}."

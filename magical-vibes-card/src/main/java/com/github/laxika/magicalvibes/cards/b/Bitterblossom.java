@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -26,10 +27,9 @@ public class Bitterblossom extends Card {
 
     public Bitterblossom() {
         // At the beginning of your upkeep, you lose 1 life and create a 1/1 black Faerie Rogue creature token with flying.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new LoseLifeEffect(1));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(new LoseLifeEffect(1), new CreateTokenEffect(
                 "Faerie Rogue", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.FAERIE, CardSubtype.ROGUE),
-                Set.of(Keyword.FLYING), Set.of()));
+                Set.of(Keyword.FLYING), Set.of())));
     }
 }

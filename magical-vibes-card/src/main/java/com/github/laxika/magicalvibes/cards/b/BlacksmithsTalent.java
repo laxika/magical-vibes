@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -47,7 +47,7 @@ public class BlacksmithsTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(new ClassLevelUpEffect(2)),
                 "Level up {2}{R} ({2}{R}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
@@ -56,7 +56,7 @@ public class BlacksmithsTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(new ClassLevelUpEffect(3)),
                 "Level up {3}{R} ({3}{R}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(

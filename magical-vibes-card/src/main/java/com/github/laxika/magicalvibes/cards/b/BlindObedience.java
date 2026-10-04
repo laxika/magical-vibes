@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 
 import java.util.List;
@@ -26,13 +26,9 @@ public class BlindObedience extends Card {
     public BlindObedience() {
         addEffect(EffectSlot.STATIC, new EnterPermanentsOfTypesTappedEffect(
                 Set.of(CardType.ARTIFACT, CardType.CREATURE), true));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)),
-                        "{W/B}"
-                ),
-                "Pay {W/B} to extort?"
-        ));
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                null, List.of(new MayPayManaEffect("{W/B}",
+                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true),
+                        "Pay {W/B} to extort?"))));
     }
 }

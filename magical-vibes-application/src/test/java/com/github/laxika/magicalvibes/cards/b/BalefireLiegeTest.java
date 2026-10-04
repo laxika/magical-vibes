@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -148,6 +149,9 @@ class BalefireLiegeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, player2.getId());
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice order) {
+            harness.handleListChoice(player1, order.options().getFirst());
+        }
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);

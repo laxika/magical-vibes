@@ -49,8 +49,10 @@ class BattleCryGoblinTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0, 1, 2));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1, 2));
+            resolveAllTriggers();
+        });
 
         Permanent token = findPermanent(player1, "Goblin");
         assertThat(token.isTapped()).isTrue();
@@ -135,8 +137,10 @@ class BattleCryGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        declareAttackers(List.of(0, 1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanents(player1, "Goblin")).hasSize(2);
         for (Permanent token : findPermanents(player1, "Goblin")) {

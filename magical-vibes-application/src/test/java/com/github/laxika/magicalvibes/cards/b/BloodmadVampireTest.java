@@ -128,7 +128,7 @@ class BloodmadVampireTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
 
         assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(otherVampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -149,7 +149,7 @@ class BloodmadVampireTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
 
         vampire.setMarkedDamage(1);
         harness.runStateBasedActions();

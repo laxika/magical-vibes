@@ -17,6 +17,24 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
+    /** Chooses a legal front or Adventure spell face for a cast granted during resolution. */
+    record ExileFreeCastFaceChoice(UUID exileCardId, Map<String, Integer> faces,
+                                  boolean grantHaste, boolean returnToHandIfUnable,
+                                  boolean suspendHaste, boolean completeInput) implements ChoiceContext {
+        public ExileFreeCastFaceChoice {
+            faces = Map.copyOf(faces);
+        }
+    }
+
+    /** Adds chosen fixed-color mana before resolving the remaining effects of a mana ability. */
+    record FixedManaColorThenEffectsChoice(UUID recipientPlayerId, List<ManaColor> colors,
+                                           int amount, StackEntry followUp) implements ChoiceContext {
+        public FixedManaColorThenEffectsChoice {
+            colors = List.copyOf(colors);
+            followUp = new StackEntry(followUp);
+        }
+    }
+
     /** Orders simultaneous spell-cast triggers from the bottom of the stack upward. */
     record SpellCastTriggerOrder(List<UUID> remainingIds, List<UUID> orderedIds) implements ChoiceContext {
         public SpellCastTriggerOrder {

@@ -50,7 +50,8 @@ public class BoostTargetCreatureAndAllWithSameNameEffectHandler implements Norma
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
-                        && gameQueryService.getEffectiveName(gameData, permanent).equals(targetName)) {
+                        && (permanent.getId().equals(target.getId())
+                        || targetName != null && targetName.equals(gameQueryService.getEffectiveName(gameData, permanent)))) {
                     toBoost.add(permanent);
                 }
             }

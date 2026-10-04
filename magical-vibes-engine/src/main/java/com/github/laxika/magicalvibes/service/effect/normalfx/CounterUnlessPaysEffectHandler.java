@@ -41,6 +41,7 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(
                 gameData, targetCardId, entry);
         if (targetEntry == null) return;
+        entry.getRemovedPermanentControllers().put(targetCardId, targetEntry.getControllerId());
         if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
                 && e.onNotPaidEffects().isEmpty() && e.onPaidEffects().isEmpty()) {
             return;

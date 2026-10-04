@@ -144,8 +144,7 @@ class BattleAngelsOfTyrTest extends BaseCardTest {
         assertThat(copy.isAttacking()).isTrue();
         assertThat(copy.getAttackTarget()).isEqualTo(thirdPlayer.getId());
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy).contains(angels);

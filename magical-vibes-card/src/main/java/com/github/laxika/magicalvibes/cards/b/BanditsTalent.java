@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsTwoUnlessNonlandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class BanditsTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(new ClassLevelUpEffect(2)),
                 "Level up {B} ({B}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
@@ -39,7 +39,7 @@ public class BanditsTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(new ClassLevelUpEffect(3)),
                 "Level up {3}{B} ({3}{B}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
@@ -49,9 +49,10 @@ public class BanditsTalent extends Card {
                 "This Class must be level 2."));
 
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new ConditionalEffect(
-                new ActivePlayerHandAtMost(1),
+                new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL),
+                        new ActivePlayerHandAtMost(1))),
                 new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
-        addEffect(EffectSlot.DRAW_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new DrawCardEffect(new PlayersWithCardsInHandAtMost(CountScope.OPPONENTS, 1))));
     }

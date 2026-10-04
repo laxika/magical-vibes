@@ -44,9 +44,7 @@ public class AnyPlayerMaySacrificeCreatureToCounterSpellHandler implements MayEf
                 return;
             }
             if (creatures.size() == 1) {
-                effectHandler.sacrificeCreature(gameData, chooserId, creatures.getFirst());
-                effectHandler.counterSpell(gameData, ability.sourceCard(), effect);
-                effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, true);
+                effectHandler.acceptSacrifice(gameData, ability.sourceCard(), effect, chooserId, creatures.getFirst());
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }

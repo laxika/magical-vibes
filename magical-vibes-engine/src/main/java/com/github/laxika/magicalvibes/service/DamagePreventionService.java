@@ -478,7 +478,7 @@ public class DamagePreventionService {
                 .applyDamageToPermanentByRemovingCountersOrSacrificing(gameData, permanent, damage)) {
             return 0;
         }
-        var preventRemoveEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        var preventRemoveEffect = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                 .filter(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect)
                 .map(e -> (PreventDamageAndRemovePlusOnePlusOneCountersEffect) e)
                 .findFirst().orElse(null);
@@ -1088,7 +1088,7 @@ public class DamagePreventionService {
         if (controllerId == null) return false;
         return gameData.playerBattlefields.entrySet().stream()
                 .anyMatch(entry -> entry.getValue().stream()
-                        .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
                                 .anyMatch(e -> e instanceof PreventDamageToCreaturesEffect prevent
                                         && !(isCombatDamage && prevent.noncombatOnly())
                                         && (prevent.allCreatures() || controllerId.equals(entry.getKey()))

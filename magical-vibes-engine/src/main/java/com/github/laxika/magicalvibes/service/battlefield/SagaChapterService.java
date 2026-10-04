@@ -88,7 +88,7 @@ public class SagaChapterService {
         gameLogService.append(gameData, GameLog.cardThen(card, " enters with " + chapter + " lore counter(s)."));
         log.info("Game {} - {} enters with lore counter(s) {}", gameData.id, card.getName(), chapter);
         triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, sagaPermanent, controllerId);
-        triggerSagaChapter(gameData, sagaPermanent, card, controllerId, chapter);
+        triggerSagaChapter(gameData, sagaPermanent, card, controllerId, loreCounters);
     }
 
     private boolean hasReadAhead(GameData gameData, UUID controllerId) {
@@ -135,6 +135,13 @@ public class SagaChapterService {
 
     private void triggerSagaChapter(GameData gameData, Permanent sagaPermanent, Card card,
                                     UUID controllerId, int loreCount, boolean copied) {
+        if (!copied && sagaPermanent != null && loreCount != sagaPermanent.getCounterCount(CounterType.LORE)
+                && gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
+                .flatMap(List::stream).anyMatch(entered -> entered.getId().equals(card.getId()))
+                && (hasReadAhead(gameData, controllerId)
+                || gameQueryService.hasActiveStaticEffect(gameData, sagaPermanent, ReadAheadEffect.class))) {
+            return;
+        }
         EffectSlot chapterSlot = switch (loreCount) {
             case 1 -> EffectSlot.SAGA_CHAPTER_I;
             case 2 -> EffectSlot.SAGA_CHAPTER_II;

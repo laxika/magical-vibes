@@ -16,7 +16,7 @@ import java.util.List;
 public class BehindTheScenes extends Card {
 
     public BehindTheScenes() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SKULK, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SKULK, GrantScope.ALL_OWN_CREATURES));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",

@@ -7,10 +7,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.List;
@@ -24,6 +28,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final EffectHandlerRegistry effectHandlerRegistry;
+    private final DrawService drawService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -108,8 +114,26 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             gameData.resolvingMayEffectFromStack = false;
             return;
         }
-        if (e.wrapped() instanceof SacrificeEnchantedCreatureEffect
-                && !canSacrificeEnchantedPermanent(gameData, entry, choicePlayerId)) {
+        CardEffect optionalAction = e.wrapped() instanceof SequenceEffect sequence
+                && !sequence.steps().isEmpty() ? sequence.steps().getFirst() : e.wrapped();
+        if (optionalAction instanceof DrawCardEffect
+                && drawService.isDrawPrevented(gameData, choicePlayerId)) {
+            gameData.resolvingMayEffectFromStack = false;
+            return;
+        }
+        boolean cannotSacrifice = e.wrapped() instanceof SacrificeEnchantedCreatureEffect
+                && !canSacrificeEnchantedPermanent(gameData, entry, choicePlayerId);
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect sacrifice
+                && sacrifice.count() instanceof com.github.laxika.magicalvibes.model.amount.Fixed count
+                && count.value() > 0
+                && (sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.TARGET_PLAYER
+                || sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER)) {
+            cannotSacrifice = gameData.playerBattlefields.getOrDefault(choicePlayerId, List.of()).stream()
+                    .noneMatch(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                            && (sacrifice.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, sacrifice.filter())));
+        }
+        if (cannotSacrifice) {
             gameData.resolvingMayEffectFromStack = false;
             if (e.elseEffect() != null) {
                 EffectHandler elseHandler = effectHandlerRegistry.getHandler(e.elseEffect());
@@ -156,7 +180,9 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             enchantedId = aura == null ? null : aura.getAttachedTo();
         }
         return enchantedId != null
-                && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchantedId));
+                && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchantedId))
+                && !gameQueryService.cantBeSacrificed(gameData,
+                gameQueryService.findPermanentById(gameData, enchantedId));
     }
 
     private UUID findTriggeringPermanentControllerId(GameData gameData, StackEntry entry, UUID fallback) {

@@ -162,6 +162,5 @@ class BoggartMischiefTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 }

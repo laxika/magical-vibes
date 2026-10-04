@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 import java.util.List;
@@ -25,14 +29,15 @@ public class BlasterHulk extends Card {
         addEffect(EffectSlot.STATIC,
                 new ReduceOwnCastCostEffect(new EnergyCountersPaidOrLostThisTurn()));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
-        addEffect(EffectSlot.ON_ATTACK, new EnergyCountersEffect(2));
-
-        target(0, 8).addEffect(EffectSlot.ON_ATTACK,
+        var damage = new DealDividedDamageEffect(
+                new Fixed(8), null, DivisionMode.CHOSEN, new PermanentIsCreaturePredicate(),
+                8, false, false, true);
+        target(TargetFilters.creature(), 0, 8);
+        registerEffectTargetIndex(damage, 0);
+        addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
+                new EnergyCountersEffect(2),
                 new ForcedCostOrElseEffect(
-                        new PayEnergyCost(8),
-                        List.of(),
-                        true,
-                        List.of(new DealDividedDamageEffect(
-                                new Fixed(8), null, DivisionMode.CHOSEN, null, 8, false, false, true))));
+                        new PayEnergyCost(8), List.of(), true,
+                        List.of(new QueueReflexiveAbilityEffect(damage)))));
     }
 }

@@ -22,7 +22,7 @@ public class BroodSliver extends Card {
     public BroodSliver() {
         MayEffect createToken = new MayEffect(
                 new CreateTokenForTriggeringPlayerEffect(new CreateTokenEffect(
-                        "Sliver", 1, 1, null, List.of(CardSubtype.SLIVER), Set.of(), Set.of())),
+                        "Sliver", 1, 1, null, List.of(CardSubtype.SLIVER), Set.of(), Set.of()), false, true),
                 "Create a 1/1 colorless Sliver creature token?",
                 null,
                 MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);

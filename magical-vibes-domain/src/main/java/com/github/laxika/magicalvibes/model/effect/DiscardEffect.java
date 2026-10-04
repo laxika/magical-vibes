@@ -94,7 +94,8 @@ public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, bo
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return recipient == DiscardRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
+        return recipient == DiscardRecipient.TARGET_PLAYER || recipient == DiscardRecipient.TRIGGERING_PLAYER
+                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 
     @Override

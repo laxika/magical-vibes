@@ -176,8 +176,10 @@ class BridgeFromBelowTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, bridge.getId());
         harness.assertNotInGraveyard(player1, "Bridge from Below");
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, player1.getId());
         harness.assertInGraveyard(player1, "Bridge from Below");
         assertThat(gd.stack).hasSize(1);

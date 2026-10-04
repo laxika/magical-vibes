@@ -2,13 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardsInLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -38,10 +36,10 @@ public class PerpetuallyBoostCreatureCardsInLibraryEffectHandler implements Norm
                 continue;
             }
 
-            Card modifiedCard = card.createRuntimeCopy();
-            modifiedCard.addEffect(EffectSlot.STATIC,
-                    new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(), GrantScope.SELF));
-            library.set(i, modifiedCard);
+            gameData.perpetualPowerToughnessModifiers.merge(card.getId(),
+                    new PerpetualPowerToughnessModifier(boost.powerBoost(), boost.toughnessBoost()),
+                    (previous, added) -> new PerpetualPowerToughnessModifier(
+                            previous.power() + added.power(), previous.toughness() + added.toughness()));
         }
     }
 }

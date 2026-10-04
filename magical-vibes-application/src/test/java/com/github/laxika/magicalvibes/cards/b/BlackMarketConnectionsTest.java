@@ -82,6 +82,7 @@ class BlackMarketConnectionsTest extends BaseCardTest {
         harness.handleListChoice(player1, SELL_CONTRABAND);
         harness.handleListChoice(player1, BUY_INFORMATION);
         harness.handleListChoice(player1, HIRE_A_MERCENARY);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 6);
@@ -151,6 +152,7 @@ class BlackMarketConnectionsTest extends BaseCardTest {
             harness.handleListChoice(player, mode);
         }
         harness.handleListChoice(player, ChooseOneEffect.FINISH_MODE_SELECTION);
+        harness.passBothPriorities();
     }
 
     private void advanceToPrecombatMain(Player player) {

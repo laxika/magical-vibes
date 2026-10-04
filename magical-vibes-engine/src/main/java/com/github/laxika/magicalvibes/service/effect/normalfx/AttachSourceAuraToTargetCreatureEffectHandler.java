@@ -45,6 +45,8 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
             return;
         }
 
+        if (target.getId().equals(aura.getAttachedTo())) return;
+
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(target.getId());
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.

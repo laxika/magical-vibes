@@ -79,6 +79,10 @@ public class CreatureControlService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler ascendEffectHandler;
 
     @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler storiedEffectHandler;
+
+    @Autowired
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
                                   UnattachTriggerSupport unattachTriggerSupport,
                                   @Lazy TriggerCollectionService triggerCollectionService) {
@@ -231,6 +235,9 @@ public class CreatureControlService {
         permanent.setSummoningSick(true);
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPermanentAscend(gameData, derived);
+        }
+        if (storiedEffectHandler != null) {
+            storiedEffectHandler.checkPermanentStoried(gameData, derived);
         }
         if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
                 && gameData.getDelayedActions(EchoAtNextUpkeep.class).stream()

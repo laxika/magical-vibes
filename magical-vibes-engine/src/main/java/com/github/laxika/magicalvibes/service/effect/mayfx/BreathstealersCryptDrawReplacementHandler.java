@@ -72,7 +72,7 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
                 continue;
             }
 
-            boolean canPay = gameQueryService.canPlayerLifeChange(gameData, drawingPlayerId)
+            boolean canPay = gameQueryService.canPlayerLoseLife(gameData, drawingPlayerId)
                     && gameData.getLife(drawingPlayerId) >= crypt.effect().lifeCost();
             if (!canPay) {
                 discardDrawnCard(gameData, drawingPlayerId, drawn.getId(), crypt.sourceCard(), crypt.controllerId());
@@ -101,7 +101,7 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
                 .orElseThrow();
 
         UUID playerId = ability.controllerId();
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
         boolean paid = accepted && canPay;
 

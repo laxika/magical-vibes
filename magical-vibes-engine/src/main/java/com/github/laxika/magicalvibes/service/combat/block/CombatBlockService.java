@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMa
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatureBlocksThisTurnIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
@@ -143,7 +144,7 @@ public class CombatBlockService {
         // CR 509.1a: if only one creature can block and it has "can't block alone", remove it
         if (indices.size() == 1) {
             Permanent sole = battlefield.get(indices.getFirst());
-            if (hasCantAttackOrBlockAlone(sole)) {
+            if (hasCantAttackOrBlockAlone(gameData, sole)) {
                 return List.of();
             }
         }
@@ -499,7 +500,7 @@ public class CombatBlockService {
 
         // CR 509.1a: validate "can't block alone" — if any declared blocker has this restriction,
         // there must be at least 2 total blockers
-        validateCantBlockAlone(defenderBattlefield, blockerAssignments);
+        validateCantBlockAlone(gameData, defenderBattlefield, blockerAssignments);
 
         // Okk: "can't block unless a creature with greater power also blocks"
         validateGreaterPowerAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
@@ -887,6 +888,7 @@ public class CombatBlockService {
             return;
         }
 
+        boolean blockerWasBlocking = blocker.isBlocking();
         blocker.setBlocking(true);
         blocker.setBlockedThisTurn(true);
         blocker.addBlockingTarget(attackerIndex);
@@ -927,25 +929,27 @@ public class CombatBlockService {
             checkAnyCreatureBecomesBlockedTriggers(gameData, attackerBattlefield, defenderBattlefield,
                     assignments, Set.of(attackerIndex));
 
-            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLANKING)
-                    && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
-                for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
-                    StackEntry flankingTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            attacker.getCard(),
-                            activeId,
-                            attacker.getCard().getName() + "'s flanking trigger",
-                            List.of(new BoostTargetCreatureEffect(-1, -1)),
-                            blocker.getId(),
-                            attacker.getId());
-                    flankingTrigger.setNonTargeting(true);
-                    gameData.stack.add(flankingTrigger);
-                }
-            }
         }
 
+        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLANKING)
+                && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
+            for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
+                StackEntry flankingTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        activeId,
+                        attacker.getCard().getName() + "'s flanking trigger",
+                        List.of(new BoostTargetCreatureEffect(-1, -1)),
+                        blocker.getId(),
+                        attacker.getId());
+                flankingTrigger.setNonTargeting(true);
+                gameData.stack.add(flankingTrigger);
+            }
+        }
         checkAnyCreaturesBlockTriggers(gameData, assignments);
-        processDelayedBlockerBoostTriggers(gameData, assignments, defenderBattlefield);
+        if (!blockerWasBlocking) {
+            processDelayedBlockerBoostTriggers(gameData, assignments, defenderBattlefield);
+        }
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeTriggers, gameData.activePlayerId);
     }
 
@@ -2334,6 +2338,7 @@ public class CombatBlockService {
             Permanent blocker = defenderBattlefield.get(blockerIndex);
             for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
                 for (Permanent watcher : List.copyOf(battlefield.getValue())) {
+                    if (gameQueryService.hasLostPrintedAbilities(gameData, watcher)) continue;
                     List<CardEffect> effects = watcher.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_BLOCKS);
                     if (effects.isEmpty()) {
                         continue;
@@ -2881,7 +2886,7 @@ public class CombatBlockService {
                 gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 assignedAttackerIdx, blockerIdx);
 
-        if (hasCantAttackOrBlockAlone(blocker) && maximumAdditionalBlockers < 1) {
+        if (hasCantAttackOrBlockAlone(gameData, blocker) && maximumAdditionalBlockers < 1) {
             return false;
         }
         if (gameQueryService.hasLostPrintedAbilities(gameData, blocker)) {
@@ -3062,9 +3067,14 @@ public class CombatBlockService {
      * {@link MustBlockEachCombatEffect} on itself or on an Aura attached to it.
      */
     private boolean mustBlockIfAble(GameData gameData, Permanent blocker) {
-        return blocker.isMustBlockThisTurnIfAble()
-                || blocker.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(MustBlockEachCombatEffect.class::isInstance)
+        UUID blockerController = gameQueryService.findPermanentController(gameData, blocker.getId());
+        boolean opponentRequirement = gameData.playerStaticEffectsUntilEndOfTurn.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(blockerController))
+                .flatMap(entry -> entry.getValue().stream())
+                .anyMatch(EachOpponentCreatureBlocksThisTurnIfAbleEffect.class::isInstance);
+        return opponentRequirement || blocker.isMustBlockThisTurnIfAble()
+                || gameQueryService.hasActiveStaticEffectIncludingGranted(gameData, blocker,
+                        MustBlockEachCombatEffect.class)
                 || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)
                 || hasGlobalMustBlockEachCombat(gameData);
     }
@@ -3077,7 +3087,7 @@ public class CombatBlockService {
                 .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance);
     }
 
-    private void validateCantBlockAlone(List<Permanent> defenderBattlefield,
+    private void validateCantBlockAlone(GameData gameData, List<Permanent> defenderBattlefield,
                                          List<BlockerAssignment> blockerAssignments) {
         if (blockerAssignments.isEmpty()) return;
         Set<Integer> uniqueBlockerIndices = new HashSet<>();
@@ -3087,14 +3097,14 @@ public class CombatBlockService {
         if (uniqueBlockerIndices.size() == 1) {
             int soleIdx = uniqueBlockerIndices.iterator().next();
             Permanent sole = defenderBattlefield.get(soleIdx);
-            if (hasCantAttackOrBlockAlone(sole)) {
+            if (hasCantAttackOrBlockAlone(gameData, sole)) {
                 throw new IllegalStateException(sole.getCard().getName() + " can't block alone");
             }
         }
     }
 
-    private boolean hasCantAttackOrBlockAlone(Permanent creature) {
-        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+    private boolean hasCantAttackOrBlockAlone(GameData gameData, Permanent creature) {
+        return gameQueryService.getActiveStaticEffects(gameData, creature).stream()
                 .filter(CantAttackOrBlockAloneEffect.class::isInstance)
                 .map(CantAttackOrBlockAloneEffect.class::cast)
                 .anyMatch(CantAttackOrBlockAloneEffect::restrictsBlocking);

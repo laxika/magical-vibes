@@ -67,7 +67,9 @@ class BilboFellowConspiratorTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player2, 0, null, null);
-        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Grizzly Bears"));
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Grizzly Bears"));
+        }
         harness.passBothPriorities();
 
         assertThat(countPermanents(player2, "Food")).isOne();
@@ -81,7 +83,9 @@ class BilboFellowConspiratorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WitchsOven());
 
         harness.activateAbility(player1, 1, null, null);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Bilbo, Fellow Conspirator"));
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Bilbo, Fellow Conspirator"));
+        }
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Bilbo, Fellow Conspirator");

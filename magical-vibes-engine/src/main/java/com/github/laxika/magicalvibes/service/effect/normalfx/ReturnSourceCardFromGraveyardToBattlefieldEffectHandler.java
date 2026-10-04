@@ -107,5 +107,8 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                     permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
         }
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
+        if (e.useReturnedPermanentAsSource()) {
+            entry.useReturnedPermanentAsSource(permanent, ownerId);
+        }
     }
 }

@@ -29,7 +29,7 @@ public class BrutalHordechief extends Card {
                 "{3}{R/W}{R/W}",
                 List.of(
                         new EachOpponentCreatureBlocksThisTurnIfAbleEffect(),
-                        new ChooseBlockersThisCombatEffect()
+                        new ChooseBlockersThisCombatEffect(true)
                 ),
                 "{3}{R/W}{R/W}: Creatures your opponents control block this turn if able, and you choose how those creatures block."
         ));

@@ -56,6 +56,7 @@ class BallistaWatcherTest extends BaseCardTest {
 
     @Test
     void transformsWithTheDayNightDesignation() {
+        gd.previousTurnActivePlayerId = player1.getId();
         gd.dayNight = DayNight.DAY;
         Permanent watcher = addCreatureReady(player1, new BallistaWatcher());
 
@@ -128,6 +129,7 @@ class BallistaWatcherTest extends BaseCardTest {
 
     @Test
     void dayRemainsWhenPreviousActivePlayerCastOneSpell() {
+        gd.previousTurnActivePlayerId = player1.getId();
         gd.dayNight = DayNight.DAY;
         Permanent watcher = addCreatureReady(player1, new BallistaWatcher());
         gd.spellsCastLastTurn.put(player1.getId(), 1);
@@ -140,6 +142,7 @@ class BallistaWatcherTest extends BaseCardTest {
 
     @Test
     void nonactivePlayersSpellsDoNotPreventNight() {
+        gd.previousTurnActivePlayerId = player1.getId();
         gd.dayNight = DayNight.DAY;
         Permanent watcher = addCreatureReady(player1, new BallistaWatcher());
         gd.spellsCastLastTurn.put(player2.getId(), 2);

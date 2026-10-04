@@ -106,7 +106,7 @@ class BorrowedMalevolenceTest extends BaseCardTest {
         assertThat(weakened.getPowerModifier()).isEqualTo(-1);
         assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(boosted.getPowerModifier()).isZero();
         assertThat(boosted.getToughnessModifier()).isZero();

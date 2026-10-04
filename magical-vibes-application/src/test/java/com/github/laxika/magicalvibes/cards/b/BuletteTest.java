@@ -105,7 +105,7 @@ class BuletteTest extends BaseCardTest {
         advanceToEndStep(player1);
         assertThat(gd.stack).isEmpty();
 
-        burnCreature(victim);
+        harness.withAutoStop(TurnStep.END_STEP, () -> burnCreature(victim));
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();

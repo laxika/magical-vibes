@@ -10,21 +10,29 @@ import java.util.UUID;
  *
  * <p>Populated at trigger time by {@code TriggerCollectionService} from a {@link StormEffect} or a
  * similar spell-copy trigger on a just-cast spell; {@code copies} is fixed when the trigger is
- * collected. The snapshot preserves the spell's state at cast time.</p>
+ * collected unless {@code resolutionCount} supplies a count evaluated when the trigger resolves.
+ * The snapshot preserves the spell's state at cast time.</p>
  *
  * @param spellSnapshot   snapshot of the spell on the stack at trigger time
  * @param castingPlayerId the player who cast the spell (and controls the copies)
  * @param copies          number of copies to create
  * @param tokenCopy       whether the copies enter the battlefield as tokens when they resolve
  * @param removeLegendary whether token copies lose the legendary supertype
+ * @param resolutionCount optional descriptor for a copy count evaluated during resolution
  */
 public record StormCopyEffect(
         StackEntry spellSnapshot,
         UUID castingPlayerId,
         int copies,
         boolean tokenCopy,
-        boolean removeLegendary
+        boolean removeLegendary,
+        SpellCastCopyTriggerEffect resolutionCount
 ) implements CardEffect {
+
+    public StormCopyEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies,
+                           boolean tokenCopy, boolean removeLegendary) {
+        this(spellSnapshot, castingPlayerId, copies, tokenCopy, removeLegendary, null);
+    }
 
     public StormCopyEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies) {
         this(spellSnapshot, castingPlayerId, copies, false, false);

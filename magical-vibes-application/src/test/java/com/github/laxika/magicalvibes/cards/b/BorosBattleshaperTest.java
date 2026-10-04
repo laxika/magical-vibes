@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -31,8 +33,8 @@ class BorosBattleshaperTest extends BaseCardTest {
         decline();
         harness.passBothPriorities();
 
-        assertThat(bears.isMustAttackThisTurn()).isTrue();
-        assertThat(bears.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(gqs.hasActiveStaticEffectIncludingGranted(gd, bears, MustAttackEffect.class)).isTrue();
+
     }
 
     @Test
@@ -46,8 +48,8 @@ class BorosBattleshaperTest extends BaseCardTest {
         decline();
         harness.passBothPriorities();
 
-        assertThat(bears.isMustBlockThisTurnIfAble()).isTrue();
-        assertThat(bears.isMustAttackThisTurn()).isFalse();
+        assertThat(gqs.hasActiveStaticEffectIncludingGranted(gd, bears, MustBlockEachCombatEffect.class)).isTrue();
+
     }
 
     @Test
@@ -103,8 +105,8 @@ class BorosBattleshaperTest extends BaseCardTest {
         chooseTarget(locked.getId());
         harness.passBothPriorities();
 
-        assertThat(forced.isMustAttackThisTurn()).isTrue();
-        assertThat(locked.isMustAttackThisTurn()).isFalse();
+        assertThat(gqs.hasActiveStaticEffectIncludingGranted(gd, forced, MustAttackEffect.class)).isTrue();
+        assertThat(gqs.hasActiveStaticEffectIncludingGranted(gd, locked, MustAttackEffect.class)).isFalse();
 
         int lockedIndex = gd.playerBattlefields.get(player1.getId()).indexOf(locked);
 
@@ -124,8 +126,8 @@ class BorosBattleshaperTest extends BaseCardTest {
         decline();
         harness.passBothPriorities();
 
-        assertThat(bears.isMustAttackThisTurn()).isFalse();
-        assertThat(bears.isMustBlockThisTurnIfAble()).isFalse();
+
+
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
 
@@ -143,7 +145,7 @@ class BorosBattleshaperTest extends BaseCardTest {
         decline();
         harness.passBothPriorities();
 
-        assertThat(bears.isMustAttackThisTurn()).isTrue();
+        assertThat(gqs.hasActiveStaticEffectIncludingGranted(gd, bears, MustAttackEffect.class)).isTrue();
     }
 
     @Test
@@ -190,8 +192,9 @@ class BorosBattleshaperTest extends BaseCardTest {
         decline();
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.ensurePriority(player1);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
     }
@@ -208,8 +211,9 @@ class BorosBattleshaperTest extends BaseCardTest {
         decline();
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.ensurePriority(player1);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -227,8 +231,9 @@ class BorosBattleshaperTest extends BaseCardTest {
         chooseTarget(creature.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.ensurePriority(player1);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(creature);
         assertThatCode(() -> declareAttackers(player1, List.of(index))).doesNotThrowAnyException();

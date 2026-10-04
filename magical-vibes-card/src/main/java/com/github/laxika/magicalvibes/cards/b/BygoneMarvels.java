@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -17,8 +18,8 @@ public class BygoneMarvels extends Card {
     public BygoneMarvels() {
         GraveyardCardThreshold descendEight = new GraveyardCardThreshold(8, new CardIsPermanentPredicate());
 
-        addEffect(EffectSlot.ON_SELF_CAST, CopyThisSpellIfConditionEffect.whenCastWhile(descendEight, false));
-        addEffect(EffectSlot.ON_SELF_CAST, CopyThisSpellIfConditionEffect.whenCastWhile(descendEight, false));
+        addEffect(EffectSlot.ON_SELF_CAST, new ConditionalEffect(descendEight,
+                new CopyThisSpellIfConditionEffect(descendEight, false, false, false, 2)));
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardIsPermanentPredicate())

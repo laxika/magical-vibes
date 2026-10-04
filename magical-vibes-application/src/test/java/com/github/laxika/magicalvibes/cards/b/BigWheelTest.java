@@ -79,6 +79,8 @@ class BigWheelTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, wheel)).isTrue();
         assertThat(crew.isTapped()).isTrue();
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, wheel)).isFalse();

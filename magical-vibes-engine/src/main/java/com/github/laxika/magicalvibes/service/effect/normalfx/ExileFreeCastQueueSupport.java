@@ -60,6 +60,12 @@ public class ExileFreeCastQueueSupport {
     private final SpellCastingService spellCastingService;
     private final CastingPermissionService castingPermissionService;
     private final OutsideGameNormalCostCastSupport outsideGameNormalCostCastSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private BrilliantUltimatumSupport brilliantUltimatumSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -202,6 +208,13 @@ public class ExileFreeCastQueueSupport {
         }
 
         Card card = exiledEntry.card();
+        if (card.hasType(CardType.LAND) && gameData.pendingEffectResolutionEntry != null
+                && gameData.pendingEffectResolutionEntry.getCard().getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.BrilliantUltimatumEffect.class::isInstance)) {
+            brilliantUltimatumSupport.playLandFromExile(gameData, playerId, card);
+            if (!gameData.interaction.isAwaitingInput()) castNextFromQueue(gameData, playerId);
+            return;
+        }
         if (card.isCastOnlyFromGraveyard()
                 || !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
             if (asCopy) {
@@ -253,6 +266,13 @@ public class ExileFreeCastQueueSupport {
         }
 
         if (additionalCosts.any()) {
+            if (additionalCosts.sacrificeCreature()
+                    && spellEffects.stream().filter(CostEffect.class::isInstance)
+                    .allMatch(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance)
+                    && additionalSpellCostService.satisfiable(gameData, playerId, cardToCast)) {
+                castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
+                return;
+            }
             if (modal == null && additionalCosts.discardCost() != null
                     && spellEffects.stream().filter(CostEffect.class::isInstance)
                     .allMatch(DiscardCardTypeCost.class::isInstance)
@@ -459,6 +479,7 @@ public class ExileFreeCastQueueSupport {
         if (!asCopy) {
             entry.setSourceZone(Zone.EXILE);
         }
+        if (beginSacrificeCostIfNeeded(gameData, entry)) return;
         gameData.stack.add(entry);
         gameData.recordSpellCast(playerId, cardToCast);
         gameData.priorityPassedBy.clear();
@@ -471,11 +492,38 @@ public class ExileFreeCastQueueSupport {
         castNextFromQueue(gameData, playerId);
     }
 
+    /** Pauses a prepared free cast for a required creature sacrifice, after target selection. */
+    public boolean beginSacrificeCostIfNeeded(GameData gameData, StackEntry entry) {
+        boolean needsSacrifice = entry.getEffectsToResolve().stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance);
+        if (!needsSacrifice) return false;
+        List<UUID> candidates = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeSacrificed(gameData, permanent)
+                        && entry.getEffectsToResolve().stream()
+                        .filter(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance)
+                        .map(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::cast)
+                        .noneMatch(cost -> cost.excludeSelf() && permanent.getCard().getId().equals(entry.getCard().getId())))
+                .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
+        if (candidates.isEmpty()) throw new IllegalStateException("No creature can pay the sacrifice cost");
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.FreeCastSacrificeCost(entry));
+        playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
+                "Choose a creature to sacrifice to cast " + entry.getCard().getName() + ".");
+        return true;
+    }
+
+    public void completeSacrificeCost(GameData gameData, UUID permanentId,
+                                      PermanentChoiceContext.FreeCastSacrificeCost context) {
+        spellCastingService.paySacrificeCreatureCostForFreeCast(gameData, context.entry(), permanentId);
+        completeCastAfterDiscard(gameData, context.entry());
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+    }
+
     /** Adds a spell to the stack only after its queued discard cost has been paid. */
     public void completeCastAfterDiscard(GameData gameData, StackEntry entry) {
         UUID playerId = entry.getControllerId();
-        gameData.removeFromExile(entry.getCard().getId());
-        if (!entry.isCopy()) gameData.recordCardPlayedFromExile(playerId);
+        boolean leftExile = gameData.removeFromExile(entry.getCard().getId());
+        if (!entry.isCopy() && leftExile) gameData.recordCardPlayedFromExile(playerId);
         gameData.stack.add(entry);
         gameData.recordSpellCast(playerId, entry.getCard());
         gameData.priorityPassedBy.clear();

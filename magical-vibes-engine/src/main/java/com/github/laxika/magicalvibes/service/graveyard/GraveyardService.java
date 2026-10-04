@@ -166,7 +166,7 @@ public class GraveyardService {
                         || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
                     return;
                 }
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                     if (effect instanceof ControllerOpponentMillBonusEffect millBonus) {
                         bonus[0] += millBonus.amount();
                     }
@@ -678,6 +678,7 @@ public class GraveyardService {
             return false;
         }
 
+        card = gameData.restoreBombardmentCardForZoneChange(card);
         gameData.playerGraveyards.get(ownerId).add(card);
         if (sourceZone == Zone.BATTLEFIELD && card.hasType(CardType.ARTIFACT)) {
             gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn++;
@@ -995,6 +996,17 @@ public class GraveyardService {
                 .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
             return true;
         }
+        String selectedReplacement = gameData.chosenRegenerationShields.remove(perm.getId());
+        if (selectedReplacement != null) {
+            spendRegenerationShield(gameData, perm, selectedReplacement);
+            return true;
+        }
+        Map<String, String> replacements = destructionReplacementOptions(
+                gameData, perm, allowRegeneration, allowShieldCounter);
+        if (replacements.size() > 1) {
+            queueDestructionReplacementChoice(gameData, perm, replacements, false);
+            return true;
+        }
         if (allowShieldCounter && perm.getLandDestructionShield() > 0) {
             perm.setLandDestructionShield(perm.getLandDestructionShield() - 1);
             perm.healDamage();
@@ -1078,22 +1090,59 @@ public class GraveyardService {
         return options;
     }
 
+    /** Lists the applicable alternatives so the affected permanent's controller can choose. */
+    private Map<String, String> destructionReplacementOptions(GameData gameData, Permanent perm,
+                                                               boolean allowRegeneration, boolean allowShieldCounter) {
+        Map<String, String> options = new LinkedHashMap<>();
+        if (allowShieldCounter && perm.getLandDestructionShield() > 0) {
+            options.put("Remove damage instead of destroying it", "LAND_SHIELD");
+        }
+        for (Permanent aura : findDestructionReplacementSources(gameData, perm,
+                DestructionReplacement.SACRIFICE_AURA_AND_GRANT_INDESTRUCTIBLE)) {
+            if (!gameQueryService.cantBeSacrificed(gameData, aura)) {
+                options.put("Sacrifice " + aura.getCard().getName() + " (choice " + (options.size() + 1) + ")",
+                        "SACRIFICE_AURA:" + aura.getId());
+            }
+        }
+        for (Permanent aura : findDestructionReplacementSources(gameData, perm, DestructionReplacement.UMBRA_ARMOR)) {
+            options.put("Use " + aura.getCard().getName() + " (choice " + (options.size() + 1) + ") umbra armor",
+                    "UMBRA:" + aura.getId());
+        }
+        if (allowShieldCounter && perm.getCounterCount(CounterType.SHIELD) > 0) {
+            options.put("Remove a shield counter", "SHIELD");
+        }
+        if (allowRegeneration && !perm.isCantRegenerateThisTurn()
+                && !damagedByRegenerationDenyingSource(gameData, perm)) {
+            if (findDestructionReplacementSource(gameData, perm, DestructionReplacement.REGENERATE) != null) {
+                options.put("Regenerate using its ability", "INTRINSIC");
+            }
+            if (perm.getRegenerationShield() > 0) {
+                options.putAll(regenerationOptions(gameData, perm));
+            }
+        }
+        return options;
+    }
+
+    private void queueDestructionReplacementChoice(GameData gameData, Permanent perm,
+                                                   Map<String, String> options, boolean stateBased) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+        gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
+                controllerId, perm.getId(), null,
+                new ChoiceContext.RegenerationShieldChoice(perm.getId(), options, stateBased),
+                List.copyOf(options.keySet()), "Choose how to save " + perm.getCard().getName()));
+        processPendingRegenerationChoice(gameData);
+    }
+
     /** Collects choices before any replacement or death in the state-based batch is performed. */
     public void prepareRegenerationChoice(GameData gameData, Permanent perm) {
-        if (perm.getRegenerationShield() < 2 || gameData.chosenRegenerationShields.containsKey(perm.getId())
-                || perm.isCantRegenerateThisTurn() || damagedByRegenerationDenyingSource(gameData, perm)
-                || findDestructionReplacementSource(gameData, perm, DestructionReplacement.UMBRA_ARMOR) != null
-                || findDestructionReplacementSource(gameData, perm, DestructionReplacement.REGENERATE) != null) {
+        if (gameData.chosenRegenerationShields.containsKey(perm.getId())
+                || pendingRegenerationChoices(gameData).stream()
+                .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
             return;
         }
-        Map<String, String> shields = regenerationOptions(gameData, perm);
+        Map<String, String> shields = destructionReplacementOptions(gameData, perm, true, true);
         if (shields.size() > 1) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-            gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
-                    controllerId, perm.getId(), null,
-                    new ChoiceContext.RegenerationShieldChoice(perm.getId(), shields, true),
-                    List.copyOf(shields.keySet()), "Choose a regeneration shield for " + perm.getCard().getName()));
-            processPendingRegenerationChoice(gameData);
+            queueDestructionReplacementChoice(gameData, perm, shields, true);
         }
     }
 
@@ -1141,6 +1190,31 @@ public class GraveyardService {
     }
 
     private void spendRegenerationShield(GameData gameData, Permanent perm, String shield) {
+        if (shield.startsWith("UMBRA:") || shield.startsWith("SACRIFICE_AURA:")) {
+            Permanent aura = gameQueryService.findPermanentById(gameData,
+                    UUID.fromString(shield.substring(shield.indexOf(':') + 1)));
+            if (aura != null) {
+                if (shield.startsWith("UMBRA:")) {
+                    performUmbraArmorReplacement(gameData, perm, aura);
+                } else {
+                    performSacrificeAuraAndGrantIndestructibleReplacement(gameData, perm, aura);
+                }
+            }
+            return;
+        }
+        if (shield.equals("SHIELD")) {
+            perm.setCounterCount(CounterType.SHIELD, perm.getCounterCount(CounterType.SHIELD) - 1);
+            return;
+        }
+        if (shield.equals("LAND_SHIELD")) {
+            perm.setLandDestructionShield(perm.getLandDestructionShield() - 1);
+            perm.healDamage();
+            return;
+        }
+        if (shield.equals("INTRINSIC")) {
+            performRegeneration(gameData, perm);
+            return;
+        }
         perm.setRegenerationShield(perm.getRegenerationShield() - 1);
         performRegeneration(gameData, perm);
         if (shield.equals("MINUS")) {
@@ -1156,9 +1230,17 @@ public class GraveyardService {
 
     private Permanent findDestructionReplacementSource(GameData gameData, Permanent destroyedPermanent,
                                                        DestructionReplacement replacement) {
+        return findDestructionReplacementSources(gameData, destroyedPermanent, replacement).stream()
+                .findFirst().orElse(null);
+    }
+
+    private List<Permanent> findDestructionReplacementSources(GameData gameData, Permanent destroyedPermanent,
+                                                              DestructionReplacement replacement) {
+        List<Permanent> sources = new ArrayList<>();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
-                boolean applies = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean applies = !gameQueryService.hasLostPrintedAbilities(gameData, source)
+                        && source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(DestructionReplacementEffect.class::isInstance)
                         .map(DestructionReplacementEffect.class::cast)
                         .anyMatch(effect -> effect.replacement() == replacement
@@ -1171,11 +1253,11 @@ public class GraveyardService {
                                     && effect.appliesTo(source, destroyedPermanent));
                 }
                 if (applies) {
-                    return source;
+                    sources.add(source);
                 }
             }
         }
-        return null;
+        return sources;
     }
 
     private void performUmbraArmorReplacement(GameData gameData, Permanent protectedPermanent, Permanent aura) {
@@ -1210,6 +1292,7 @@ public class GraveyardService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
                 if (source.isDamagedCreaturesCantRegenerateThisTurn()
+                        && !gameQueryService.hasLostAllAbilities(gameData, source)
                         && gameData.creatureCardsDamagedThisTurnBySourcePermanent
                         .getOrDefault(source.getId(), Set.of()).contains(cardId)) {
                     return true;

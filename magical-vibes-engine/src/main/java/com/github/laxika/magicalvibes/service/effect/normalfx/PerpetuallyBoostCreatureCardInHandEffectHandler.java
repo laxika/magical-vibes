@@ -46,6 +46,6 @@ public class PerpetuallyBoostCreatureCardInHandEffectHandler implements NormalEf
 
         playerInputService.beginPerpetualCreatureCardChoice(
                 gameData, entry.getControllerId(), creatureIndices,
-                "Choose a matching creature card in your hand.", boost.powerBoost(), boost.keywords());
+                "Choose a matching creature card in your hand.", boost.powerBoost(), boost.toughnessBoost(), boost.keywords(), false);
     }
 }

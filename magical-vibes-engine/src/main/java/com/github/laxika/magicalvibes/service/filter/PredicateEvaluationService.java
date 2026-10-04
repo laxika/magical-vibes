@@ -1292,7 +1292,9 @@ public class PredicateEvaluationService {
                             && landManaTypeSupport.manaTypesCouldProduce(gameData, permanent)
                             .contains(couldProduceMana.manaColor());
             case PermanentHasMorphAbilityPredicate ignored ->
-                    !permanent.isFaceDown() && permanent.getCard().getMorphCost() != null;
+                    !permanent.isFaceDown() && permanent.getCard().getMorphCost() != null
+                            && (gameData == null
+                            || !gameQueryService.hasLostPrintedAbilities(gameData, permanent));
             case PermanentHasNoAbilitiesPredicate ignored ->
                     !hasAnyEffectiveAbility(gameData, permanent);
             case PermanentHasNoNonKeywordAbilitiesPredicate ignored ->
@@ -2473,11 +2475,14 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
-                if (sourcePermanent == null && filterContext != null) {
+                boolean sourceIsLive = sourcePermanent != null;
+                if (!sourceIsLive && filterContext != null) {
                     sourcePermanent = filterContext.sourcePermanentSnapshot();
                 }
                 Integer sourcePower = sourcePermanent != null
-                        ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        ? !sourceIsLive && sourcePermanent.getLastKnownPower() != null
+                                ? sourcePermanent.getLastKnownPower()
+                                : gameQueryService.getEffectivePower(gameData, sourcePermanent)
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 if (sourcePower == null) {
                     yield false;
@@ -3042,11 +3047,8 @@ public class PredicateEvaluationService {
         Set<CardType> permanentTypes = gameData == null
                 ? cardTypesWithoutGameData(permanent)
                 : gameQueryService.getEffectiveCardTypes(gameData, permanent);
-        Set<CardType> sourceTypes = gameData == null
-                ? cardTypesWithoutGameData(source)
-                : gameQueryService.getEffectiveCardTypes(gameData, source);
+        Set<CardType> sourceTypes = cardTypesWithoutGameData(source);
         return sourceTypes.stream()
-                .filter(CardType::isPermanentType)
                 .anyMatch(permanentTypes::contains);
     }
 
@@ -3603,6 +3605,10 @@ public class PredicateEvaluationService {
         if (context == null || context.sourceControllerId() == null || context.gameData() == null) {
             return false;
         }
+        Card originalCard = permanent.getOriginalCard();
+        if (originalCard.getOwnerId() != null) {
+            return originalCard.getOwnerId().equals(context.sourceControllerId());
+        }
         GameData gameData = context.gameData();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -3612,10 +3618,6 @@ public class PredicateEvaluationService {
             }
         }
         // Death triggers evaluate the last-known permanent after it has left the battlefield.
-        Card originalCard = permanent.getOriginalCard();
-        if (originalCard.getOwnerId() != null) {
-            return originalCard.getOwnerId().equals(context.sourceControllerId());
-        }
         return gameData.playerGraveyards.getOrDefault(context.sourceControllerId(), List.of()).stream()
                 .anyMatch(card -> card.getId().equals(originalCard.getId()));
     }
@@ -4018,10 +4020,10 @@ public class PredicateEvaluationService {
         for (Permanent candidate : battlefield) {
             if (matchesStaticLeaf(candidate, STATIC_CREATURE_LEAF)
                     || matchesStaticLeaf(candidate, new PermanentIsPlaneswalkerPredicate())) {
-                greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                greatest = Math.max(greatest, gameQueryService.getPermanentManaValue(candidate));
             }
         }
-        return target.getCard().getManaValue() == greatest;
+        return gameQueryService.getPermanentManaValue(target) == greatest;
     }
 
     /** The subtype the ability's source chose as it entered, or {@code null} if it made no choice. */
@@ -4966,6 +4968,4 @@ public class PredicateEvaluationService {
         if (predicate instanceof PermanentAllOfPredicate all) {
             return all.predicates().stream().anyMatch(this::requiresCreature);
         }
-        return false;
-    }
-}
+   

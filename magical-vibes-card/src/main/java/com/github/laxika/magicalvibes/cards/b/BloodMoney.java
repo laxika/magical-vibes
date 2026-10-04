@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.DestroyedPermanentCountScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -16,7 +17,7 @@ public class BloodMoney extends Card {
     public BloodMoney() {
         addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
                 new PermanentIsCreaturePredicate(),
-                new CreateTokenForEachDestroyedPermanentControllerEffect(
-                        CreateTokenEffect.ofTappedTreasureToken(1), true)));
+                CreateTokenEffect.ofTappedTreasureToken(new EventValue()),
+                DestroyedPermanentCountScope.ALL_NONTOKEN));
     }
 }

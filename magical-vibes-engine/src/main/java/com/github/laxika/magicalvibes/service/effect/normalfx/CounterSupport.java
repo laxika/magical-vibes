@@ -159,6 +159,11 @@ public class CounterSupport {
     }
 
     public boolean counterSpellAndPutInHand(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashforward()) {
+            counterSpell(gameData, source, target);
+            return true;
+        }
+
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -192,6 +197,11 @@ public class CounterSupport {
     }
 
     public void counterSpellAndPutOnTopOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashforward()) {
+            counterSpell(gameData, source, target);
+            return;
+        }
+
         if (target.isCastWithFlashback()) {
             counterSpellAndExile(gameData, source, target);
             return;
@@ -216,8 +226,12 @@ public class CounterSupport {
     }
 
     public void counterSpellAndPutOnBottomOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
-        if (target.isCastWithFlashback() || target.isCastWithEscape()
-                || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+        if (target.isCastWithFlashforward()) {
+            counterSpell(gameData, source, target);
+            return;
+        }
+
+        if (target.isCastWithFlashback()) {
             counterSpellAndExile(gameData, source, target);
             return;
         }
@@ -246,6 +260,11 @@ public class CounterSupport {
      * is no card to place (a copy, or a controlled-counter replacement such as Guile applied).
      */
     public Card counterSpellOntoLibraryPendingEndChoice(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashforward()) {
+            counterSpell(gameData, source, target);
+            return null;
+        }
+
         if (target.isCastWithFlashback()) {
             counterSpellAndExile(gameData, source, target);
             return null;
@@ -279,6 +298,11 @@ public class CounterSupport {
      * controlled-counter effect (Guile).
      */
     public Card counterSpellGainingArtifactOrCreatureControl(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.isCastWithFlashforward()) {
+            counterSpell(gameData, source, target);
+            return null;
+        }
+
         if (target.isCastWithFlashback()) {
             counterSpellAndExile(gameData, source, target);
             return null;
@@ -324,6 +348,11 @@ public class CounterSupport {
 
     public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target,
                                         UUID exileOwnerId) {
+        if (target.isCastWithFlashforward()) {
+            counterSpell(gameData, source, target);
+            return false;
+        }
+
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -363,6 +392,7 @@ public class CounterSupport {
         }
 
         Card spell = target.getPhysicalCard();
+        if (replaceFlashforwardDestination(gameData, target)) return true;
         exileService.exileCard(gameData, target.getOwnerId(), spell);
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 spell,
@@ -375,6 +405,14 @@ public class CounterSupport {
         gameLogService.append(gameData, GameLog.cardThen(spell, " is exiled instead of countered (Guile)."));
         log.info("Game {} - {} exiled {} instead of countering (Guile)", gameData.id,
                 source.getDescription(), spell.getName());
+        return true;
+    }
+
+    /** Replaces a flashforward spell's stack departure with its owner's library bottom. */
+    public boolean replaceFlashforwardDestination(GameData gameData, StackEntry target) {
+        if (!target.isCastWithFlashforward() || target.isCopy()) return false;
+        gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         return true;
     }
 

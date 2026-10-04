@@ -33,7 +33,7 @@ public class BeckCall extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Fuse — Beck and then Call",
                         List.of(beck, call)
-                ).withManaCost("{4}{G}{W}{U}")
+                ).withManaCost("{4}{G}{W}{U}{U}")
         )));
     }
 }

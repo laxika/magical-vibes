@@ -74,6 +74,7 @@ class BelladonnaTookTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent tokens only trigger their controller's Belladonna")
     void opponentTokensDoNotTriggerOrAdvanceOwnAbility() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new BelladonnaTook());
         harness.addToBattlefield(player2, new BelladonnaTook());
         harness.setLibrary(player1, List.of(new BelladonnaTook()));
@@ -110,6 +111,7 @@ class BelladonnaTookTest extends BaseCardTest {
     @Test
     @DisplayName("Resolution count resets on a new turn")
     void resolutionCountResetsEachTurn() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new BelladonnaTook());
         harness.setLibrary(player1, List.of(new BelladonnaTook(), new BelladonnaTook(),
                 new BelladonnaTook(), new BelladonnaTook()));
@@ -121,7 +123,7 @@ class BelladonnaTookTest extends BaseCardTest {
         harness.assertLife(player1, 21);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new KrenkosCommand()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveSorcery(player1, 0, 0);

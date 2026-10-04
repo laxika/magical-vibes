@@ -231,6 +231,8 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
 
     @Test
     void chapterIVReductionExpiresAfterTheTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         addSagaWithLore(3);

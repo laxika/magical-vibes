@@ -35,6 +35,11 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID cardId = entry.getCard().getId();
+        long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
+        if (expectedEntryVersion >= 0
+                && gameData.graveyardEntryVersion(cardId) != expectedEntryVersion) {
+            return;
+        }
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));

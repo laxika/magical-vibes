@@ -868,7 +868,7 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDestroy(TriggerMatchContext match,
             DestroyReferencedPermanentEffect e, TriggerContext ctx) {
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -876,7 +876,10 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(e)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        trigger.setTriggeringPermanentId(((TriggerContext.EnchantedPermanentTap) ctx).tappedPermanent().getId());
+        trigger.setNonTargeting(true);
+        match.gameData().enqueueTrigger(trigger);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to destroy enchanted permanent",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -1645,6 +1648,10 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_GETS_ENERGY)
     private boolean handleEnergyGainDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
+        if (!conditionEvaluationService.isInterveningIfMet(match.gameData(), effect,
+                match.permanent(), match.controllerId())) {
+            return false;
+        }
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         List<CardEffect> effects = new ArrayList<>(List.of(effect));

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,7 +36,9 @@ public class BattlefieldEntryBatchSupport {
     public void completeChoice(GameData gameData, UUID attachmentId,
                                PermanentChoiceContext.AuraEntryBatchChoice choice) {
         List<BattlefieldEntryCard> ready = new ArrayList<>(choice.ready());
-        ready.add(choice.remaining().getFirst().withAttachment(attachmentId));
+        ready.add(choice.choosingProtector()
+                ? choice.remaining().getFirst().withProtector(attachmentId)
+                : choice.remaining().getFirst().withAttachment(attachmentId));
         continueChoices(gameData, choice.remaining().subList(1, choice.remaining().size()), ready);
     }
 
@@ -44,6 +47,20 @@ public class BattlefieldEntryBatchSupport {
         for (int i = 0; i < remaining.size(); i++) {
             BattlefieldEntryCard candidate = remaining.get(i);
             if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, candidate.card(), candidate.origin())) {
+                continue;
+            }
+            if (candidate.card().getSubtypes().contains(CardSubtype.SIEGE)
+                    && candidate.protectorPlayerId() == null) {
+                List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                        .filter(id -> !id.equals(candidate.controllerId()))
+                        .toList();
+                if (opponents.size() > 1) {
+                    playerInputService.beginPermanentChoice(gameData, candidate.controllerId(), opponents,
+                            new PermanentChoiceContext.AuraEntryBatchChoice(remaining.subList(i, remaining.size()), ready, true),
+                            "Choose an opponent to protect " + candidate.card().getName() + ".");
+                    return;
+                }
+                ready.add(opponents.isEmpty() ? candidate : candidate.withProtector(opponents.getFirst()));
                 continue;
             }
             if (!candidate.card().isAura() || candidate.card().isEnchantZone()) {
@@ -88,12 +105,18 @@ public class BattlefieldEntryBatchSupport {
                     case LIBRARY -> gameData.playerDecks.get(candidate.zoneOwnerId());
                     default -> gameData.playerHands.get(candidate.zoneOwnerId());
                 };
-                if (zone == null || !zone.remove(candidate.card())) continue;
+                if (candidate.origin() == Zone.EXILE) {
+                    if (!gameData.removeFromExile(candidate.card().getId())) continue;
+                } else if (zone == null || !zone.remove(candidate.card())) {
+                    continue;
+                }
                 if (candidate.origin() == Zone.GRAVEYARD) {
                     graveyardService.notifyCardsLeftGraveyard(gameData, candidate.zoneOwnerId(), candidate.card());
                 }
                 Permanent permanent = new Permanent(candidate.card(), candidate.origin());
                 permanent.setAttachedTo(candidate.attachmentId());
+                if (candidate.origin() == Zone.EXILE) permanent.setEnteredFromExile(true);
+                permanent.setProtectorPlayerId(candidate.protectorPlayerId());
                 if (candidate.origin() == Zone.GRAVEYARD) {
                     permanent.setEnteredFromGraveyardOwnerId(candidate.zoneOwnerId());
                 }

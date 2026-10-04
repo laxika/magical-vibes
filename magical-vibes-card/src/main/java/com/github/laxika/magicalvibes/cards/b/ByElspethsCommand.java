@@ -57,7 +57,7 @@ public class ByElspethsCommand extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 HAND_SOLDIER_MODE,
                                 new PerpetuallyBoostCreatureCardInHandEffect(
-                                        1, Set.of(Keyword.VIGILANCE), soldierCard)),
+                                        1, 1, Set.of(Keyword.VIGILANCE), soldierCard)),
                         new ChooseOneEffect.ChooseOneOption(
                                 TOKEN_MODE,
                                 new CreateTokenEffect(1, "Soldier", 1, 1, null,

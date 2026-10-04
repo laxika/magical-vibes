@@ -42,8 +42,13 @@ public class ExileSelfEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        permanentRemovalService.removePermanentToExile(gameData, self);
-        gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is exiled."));
+        if (((ExileSelfEffect) effect).outsideGame()) {
+            permanentRemovalService.removePermanentToOutsideGame(gameData, self);
+            gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is removed from the game."));
+        } else {
+            permanentRemovalService.removePermanentToExile(gameData, self);
+            gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is exiled."));
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
         log.info("Game {} - {} exiles itself", gameData.id, self.getCard().getName());
     }

@@ -30,6 +30,7 @@ class BansheeOfTheDreadChoirTest extends BaseCardTest {
     @DisplayName("Myriad creates a tapped and attacking copy for another opponent")
     void myriadCreatesCopyForAnotherOpponentAndExilesItAtEndOfCombat() {
         addThirdPlayer();
+        harness.setHand(player2, List.of());
         Permanent banshee = addCreatureReady(player1, new BansheeOfTheDreadChoir());
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
@@ -48,8 +49,7 @@ class BansheeOfTheDreadChoirTest extends BaseCardTest {
         assertThat(copy.isAttacking()).isTrue();
         assertThat(copy.getAttackTarget()).isEqualTo(player3.getId());
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
@@ -101,7 +101,7 @@ class BansheeOfTheDreadChoirTest extends BaseCardTest {
         });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(banshee);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -119,7 +119,7 @@ class BansheeOfTheDreadChoirTest extends BaseCardTest {
 
         harness.assertLife(player2, 16);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 
     @Test
@@ -185,6 +185,7 @@ class BansheeOfTheDreadChoirTest extends BaseCardTest {
     @DisplayName("Myriad exile uses the stack and leaves a response window")
     void exileAtEndOfCombatUsesStack() {
         addThirdPlayer();
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new BansheeOfTheDreadChoir());
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0));

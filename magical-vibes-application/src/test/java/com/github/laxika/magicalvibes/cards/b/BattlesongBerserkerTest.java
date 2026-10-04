@@ -60,7 +60,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
@@ -99,7 +99,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, firstAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(firstAttacker.getPowerModifier()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, firstAttacker, Keyword.MENACE)).isTrue();
@@ -128,7 +128,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
                 () -> declareAttackers(player2, List.of(0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(berserker.getPowerModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.MENACE)).isFalse();
     }

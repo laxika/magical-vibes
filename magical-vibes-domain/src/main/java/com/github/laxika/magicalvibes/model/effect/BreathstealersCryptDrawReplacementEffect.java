@@ -10,6 +10,11 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record BreathstealersCryptDrawReplacementEffect(int lifeCost) implements CardEffect {
 
+    @Override
+    public boolean pausesDrawInstruction() {
+        return true;
+    }
+
     public BreathstealersCryptDrawReplacementEffect() {
         this(3);
     }

@@ -95,7 +95,6 @@ class BoostedSloopTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         declareAttackers(player2, List.of(0));
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);

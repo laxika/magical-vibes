@@ -93,7 +93,7 @@ class BreenaTheDemagogueTest extends BaseCardTest {
 
         declareAttackers(player2, 0, defenderId);
         assertThat(gd.stack).hasSize(1);
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -114,7 +114,7 @@ class BreenaTheDemagogueTest extends BaseCardTest {
         declareAttackers(player1, 1, player2.getId());
         assertThat(gd.stack).hasSize(1);
         gd.playerLifeTotals.put(otherOpponentId, 25);
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(breena.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -185,7 +185,7 @@ class BreenaTheDemagogueTest extends BaseCardTest {
         declareAttackers(player2, 0, defenderId);
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).clear();
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player2.getId()).getFirst()

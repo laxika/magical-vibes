@@ -48,7 +48,7 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
         }
 
         long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
-        if (expectedEntryVersion != 0
+        if (expectedEntryVersion >= 0
                 && gameData.graveyardEntryVersion(triggeringCardId) != expectedEntryVersion) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card is no longer in the expected graveyard entry)."));
             return;

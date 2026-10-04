@@ -25,6 +25,6 @@ public class BrinkOfDisaster extends Card {
                 "Target must be a creature or land"
         ));
         // When enchanted permanent becomes tapped, destroy it.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

@@ -149,8 +149,8 @@ class BarbarianGuidesTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Balduvian Bears");
 
-        // Advance to the end step — the creature is bounced to its owner's hand.
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Balduvian Bears");
         harness.assertInHand(player1, "Balduvian Bears");

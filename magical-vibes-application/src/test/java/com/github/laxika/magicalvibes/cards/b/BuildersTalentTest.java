@@ -149,7 +149,10 @@ class BuildersTalentTest extends BaseCardTest {
         Permanent wall = findPermanent(player1, "Wall");
         prepareForLeveling(player1);
         levelUp(player1, builder);
-        harness.enterBattlefieldAndReturn(player1, new ShortBow());
+        harness.setHand(player1, List.of(new ShortBow()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, wall.getId());
 
         harness.setHand(player2, List.of(new IntoTheFloodMaw()));

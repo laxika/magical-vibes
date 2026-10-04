@@ -46,6 +46,10 @@ public record RemoveCounterFromSourceThenEffect(CounterType counterType, int cou
 
     @Override
     public TriggerContext combatDamageTriggerContext() {
+        if (thenEffect instanceof CombatDamageTriggerContextEffect contextEffect
+                && contextEffect.combatDamageTriggerContext() == TriggerContext.DAMAGED_PLAYER) {
+            return TriggerContext.DAMAGED_PLAYER;
+        }
         return TriggerContext.SOURCE_SELF;
     }
 }

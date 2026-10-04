@@ -8,7 +8,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * back to the source permanent when the source itself is the creature that entered. Restrict the
  * target with the card's own {@code TargetFilter} (Gruul Ragebeast: a creature an opponent controls).
  */
-public record EnteringCreatureFightsTargetCreatureEffect(PermanentPredicate targetPredicate) implements CardEffect {
+public record EnteringCreatureFightsTargetCreatureEffect(PermanentPredicate targetPredicate, boolean optionalTarget) implements CardEffect {
+
+    public EnteringCreatureFightsTargetCreatureEffect(PermanentPredicate targetPredicate) {
+        this(targetPredicate, false);
+    }
+
+    @Override
+    public boolean hasOptionalTarget() {
+        return optionalTarget;
+    }
 
     public EnteringCreatureFightsTargetCreatureEffect() {
         this(null);

@@ -18,6 +18,13 @@ public record DelayedGraveyardToBattlefieldSelfReturn(
         CounterType counterType,
         int counterAmount,
         boolean atNextUpkeep,
-        boolean tapped
+        boolean tapped,
+        UUID upkeepPlayerId,
+        long graveyardEntryVersion
 ) implements DelayedAction {
+
+    public DelayedGraveyardToBattlefieldSelfReturn(UUID cardId, UUID ownerId, CounterType counterType,
+                                                  int counterAmount, boolean atNextUpkeep, boolean tapped) {
+        this(cardId, ownerId, counterType, counterAmount, atNextUpkeep, tapped, ownerId, -1);
+    }
 }

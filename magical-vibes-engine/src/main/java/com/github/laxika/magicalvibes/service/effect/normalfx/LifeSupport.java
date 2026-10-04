@@ -238,14 +238,15 @@ public class LifeSupport {
         }
 
         int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - amount);
+        int lifeLoss = amount * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.text(
-                playerName + " loses " + amount + " life (" + sourceName + ")."));
-        log.info("Game {} - {} loses {} life from paying for {}", gameData.id, playerName, amount, sourceName);
+                playerName + " loses " + lifeLoss + " life (" + sourceName + ")."));
+        log.info("Game {} - {} loses {} life from paying for {}", gameData.id, playerName, lifeLoss, sourceName);
 
-        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
+        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
     }
 

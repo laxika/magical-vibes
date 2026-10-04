@@ -1406,7 +1406,8 @@ public class CombatDamageService {
                 gameQueryService.hasKeyword(gameData, creature, Keyword.DEATHTOUCH),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.TRAMPLE),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.INFECT),
-                gameQueryService.isPreventedFromDealingDamage(gameData, creature, true),
+                gameData.creaturesAssigningNoCombatDamageThisTurn.contains(creature.getId())
+                        || gameQueryService.isPreventedFromDealingDamage(gameData, creature, true),
                 gameQueryService.getEffectiveColor(gameData, creature));
     }
 
@@ -1809,6 +1810,14 @@ public class CombatDamageService {
                         creature.getId(), defenderId) < threshold.minimumDamage()) {
                     continue;
                 }
+                if (effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect modal) {
+                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                            creature.getCard(), attackerId, modal.choice(), creature.getId(),
+                            false, false, null, defenderId));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
+                    continue;
+                }
+
                 if (effect instanceof ChooseModeNotYetChosenEffect modal) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                             creature.getCard(), attackerId, new ChooseOneEffect(modal.options()),
@@ -2054,7 +2063,8 @@ public class CombatDamageService {
                                 : null;
                 if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            desc, List.of(effect), damageDealt, defenderId, null);
+                            desc, List.of(effect), defenderId, creature.getId());
+                    se.setXValue(damageDealt);
                 } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), null, creature.getId());
@@ -2066,7 +2076,7 @@ public class CombatDamageService {
                             desc, List.of(effect), creature.getRememberedTargetPlayerId(), creature.getId());
                 } else {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            desc, List.of(effect));
+                            desc, List.of(effect), null, creature.getId());
                 }
                 if (se.getSourcePermanentId() != null) {
                     se.setSourcePermanentSnapshot(new Permanent(creature));
@@ -3344,6 +3354,7 @@ public class CombatDamageService {
     }
 
     private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId, int damageDealt,
+                                          Permanent sourceSnapshot,
                                           Card sourceCard, UUID sourcePermanentId, UUID sourceControllerId,
                                           List<CardEffect> dealtDamageEffects,
                                           List<CardEffect> combatDamageReceivedEffects) {}
@@ -3376,14 +3387,12 @@ public class CombatDamageService {
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
                 List<CardEffect> sourceSpecificEffects = effects.stream()
-                        .filter(effect -> effect instanceof DamageSourceAwareEffect
-                                || effect instanceof DamageSourceControllerAwareEffect
-                                || effect instanceof PerDamageSourceTriggerEffect)
+                        .filter(effect -> requiresDistinctDamageSource(effect))
                         .toList();
                 effects.removeAll(sourceSpecificEffects);
                 if (!sourceSpecificEffects.isEmpty()) {
                     sourceSpecificTriggers.add(new DealtDamageTriggerData(
-                            target.getCard(), target.getId(), controllerId, damageAmount,
+                            target.getCard(), target.getId(), controllerId, damageAmount, new Permanent(target),
                             source.getCard(), source.getId(), sourceControllerId,
                             sourceSpecificEffects, List.of()));
                 }
@@ -3391,13 +3400,13 @@ public class CombatDamageService {
                 DealtDamageTriggerData previous = triggersByDamagedPermanent.get(targetId);
                 if (previous == null) {
                     triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
-                            target.getCard(), target.getId(), controllerId, damageAmount,
+                            target.getCard(), target.getId(), controllerId, damageAmount, new Permanent(target),
                             source.getCard(), source.getId(), sourceControllerId,
                             effects, combatDamageReceivedEffects));
                 } else {
                     triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
                             previous.card(), previous.permanentId(), previous.controllerId(),
-                            previous.damageDealt() + damageAmount,
+                            previous.damageDealt() + damageAmount, previous.sourceSnapshot(),
                             previous.sourceCard(), previous.sourcePermanentId(), previous.sourceControllerId(),
                             previous.dealtDamageEffects(), previous.combatDamageReceivedEffects()));
                 }
@@ -3405,6 +3414,21 @@ public class CombatDamageService {
         }
         sourceSpecificTriggers.addAll(triggersByDamagedPermanent.values());
         return sourceSpecificTriggers;
+    }
+
+    private boolean requiresDistinctDamageSource(CardEffect effect) {
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(this::requiresDistinctDamageSource);
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return requiresDistinctDamageSource(conditional.wrapped());
+        }
+        if (effect instanceof MayEffect may) {
+            return requiresDistinctDamageSource(may.wrapped());
+        }
+        return effect instanceof DamageSourceAwareEffect
+                || effect instanceof DamageSourceControllerAwareEffect
+                || effect instanceof PerDamageSourceTriggerEffect;
     }
 
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
@@ -3502,6 +3526,7 @@ public class CombatDamageService {
                         data.permanentId()
                 );
                 triggerEntry.setEventValue(data.damageDealt());
+                triggerEntry.setSourcePermanentSnapshot(data.sourceSnapshot());
                 gameData.stack.add(triggerEntry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                 log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
@@ -5111,7 +5136,8 @@ public class CombatDamageService {
                                                 List<Permanent> defBf) {
         // A creature with 0 or negative power deals no combat damage (CR 510.1a),
         // so there is nothing for the player to distribute.
-        if (gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
+        if (gameData.creaturesAssigningNoCombatDamageThisTurn.contains(atk.getId())
+                || gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
         // Blocked with no blockers (CR 510.1c): no damage is assigned, so nothing to divide.
         if (livingBlockerIndices.isEmpty() && atk.isBlockedWithoutBlockers()) return false;
         if (livingBlockerIndices.isEmpty()) {

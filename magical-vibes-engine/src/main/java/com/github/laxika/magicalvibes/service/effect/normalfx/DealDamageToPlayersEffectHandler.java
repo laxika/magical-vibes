@@ -74,7 +74,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
     /** Deals damage to the player already identified by the stack entry's target. */
     private void resolveSingleTargetPlayer(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
         UUID targetId = entry.getTargetId();
-        if (!gameData.playerIds.contains(targetId)) return;
+        if (targetId == null || !gameData.playerIds.contains(targetId)) return;
 
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             int amount = evaluateAmount(gameData, entry, e, targetId);

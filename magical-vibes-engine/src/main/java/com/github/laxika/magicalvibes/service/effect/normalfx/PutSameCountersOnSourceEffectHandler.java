@@ -35,10 +35,11 @@ public class PutSameCountersOnSourceEffectHandler implements NormalEffectHandler
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent target = gameQueryService.findPermanentById(gameData, e.targetPermanentId());
-        if (source == null || target == null || source.getId().equals(target.getId())
+        if (source == null || (e.placingPlayerId() == null
+                && (target == null || source.getId().equals(target.getId())
                 || !gameQueryService.isCreature(gameData, target)
                 || (e.requiresNonKree()
-                && gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.KREE))) {
+                && gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.KREE))))) {
             return;
         }
 

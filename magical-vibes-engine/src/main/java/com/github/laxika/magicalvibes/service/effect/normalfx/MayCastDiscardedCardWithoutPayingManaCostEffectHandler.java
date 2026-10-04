@@ -45,7 +45,7 @@ public class MayCastDiscardedCardWithoutPayingManaCostEffectHandler implements N
         }
 
         long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
-        if (expectedEntryVersion != 0 && gameData.graveyardEntryVersion(discardedCardId) != expectedEntryVersion) {
+        if (expectedEntryVersion >= 0 && gameData.graveyardEntryVersion(discardedCardId) != expectedEntryVersion) {
             return;
         }
 

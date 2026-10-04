@@ -173,6 +173,13 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
     private void castTomekeeper(int mode, UUID targetId) {
         harness.setHand(player1, List.of(new BiblioplexTomekeeper()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode < 0
+                ? com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.NO_MODE_LABEL
+                : mode == 0 ? "Target creature becomes prepared" : "Target creature becomes unprepared");
+        if (targetId != null) {
+            harness.handlePermanentChosen(player1, targetId);
+        }
     }
 }

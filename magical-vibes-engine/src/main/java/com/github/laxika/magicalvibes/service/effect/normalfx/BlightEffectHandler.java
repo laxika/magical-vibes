@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +32,9 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    @Autowired
+    @Lazy
+    private EffectResolutionService effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,6 +71,9 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
 
     public void placeCountersAndQueueThen(GameData gameData, StackEntry entry, Permanent creature,
                                           BlightEffect blight) {
+        if (gameQueryService.cantHaveCounters(gameData, creature)) {
+            return;
+        }
         permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, creature, CounterType.MINUS_ONE_MINUS_ONE, blight.count());
         if (blight.thenEffect() == null) {
@@ -76,14 +85,18 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.stack.add(new StackEntry(
+        StackEntry followUp = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
                 entry.getControllerId(),
-                entry.getCard().getName() + "'s reflexive ability",
+                entry.getDescription(),
                 new ArrayList<>(List.of(blight.thenEffect())),
                 creature.getId(),
-                entry.getSourcePermanentId()));
+                entry.getSourcePermanentId());
+        followUp.setNonTargeting(true);
+        followUp.setTriggeringPermanentId(creature.getId());
+        followUp.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        effectResolutionService.resolveEffects(gameData, followUp);
     }
 
     private void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
@@ -135,6 +148,7 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
         }
         return battlefield.stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

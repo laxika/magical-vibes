@@ -125,7 +125,7 @@ class BlitzwingCruelTormentorTest extends BaseCardTest {
     @Test
     void randomKeywordSurvivesConversionAndExpiresAfterTheTurn() {
         Permanent blitzwing = castConvertedBlitzwing();
-        resolveBeginningOfCombat();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, this::resolveBeginningOfCombat);
         Keyword gained = gqs.hasKeyword(gd, blitzwing, Keyword.FLYING)
                 ? Keyword.FLYING : Keyword.INDESTRUCTIBLE;
         blitzwing.setAttacking(true);

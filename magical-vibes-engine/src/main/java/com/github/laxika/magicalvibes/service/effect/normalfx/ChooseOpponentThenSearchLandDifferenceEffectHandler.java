@@ -46,6 +46,7 @@ public class ChooseOpponentThenSearchLandDifferenceEffectHandler implements Norm
         UUID controllerId = entry.getControllerId();
         List<UUID> eligibleOpponents = eligibleOpponents(gameData, controllerId);
         if (eligibleOpponents.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 
@@ -87,6 +88,7 @@ public class ChooseOpponentThenSearchLandDifferenceEffectHandler implements Norm
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " searches their library but it is empty. Library is shuffled."));
             return;
@@ -94,8 +96,6 @@ public class ChooseOpponentThenSearchLandDifferenceEffectHandler implements Norm
 
         List<Card> matchingCards = deck.stream()
                 .filter(card -> card.getSubtypes().contains(subtype))
-                .filter(card -> !gameQueryService.isCardBlockedFromEnteringFromZone(
-                        gameData, card, Zone.LIBRARY))
                 .toList();
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);

@@ -98,7 +98,8 @@ class BeatrixLoyalGeneralTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, beatrix.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT,
+                () -> harness.handleMayAbilityChosen(player1, false));
 
         assertThat(equipment.getAttachedTo()).isNull();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -149,7 +150,8 @@ class BeatrixLoyalGeneralTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, beatrix.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

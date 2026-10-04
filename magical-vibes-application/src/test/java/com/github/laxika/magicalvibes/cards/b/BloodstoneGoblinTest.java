@@ -170,6 +170,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         assertThat(goblin.getToughnessModifier()).isEqualTo(1);
         assertThat(goblin.getGrantedKeywords()).contains(Keyword.MENACE);
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(goblin.getPowerModifier()).isZero();

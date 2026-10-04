@@ -22,6 +22,7 @@ public class BishopOfRebirth extends Card {
         MayEffect returnEffect = new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .targetGraveyard(true)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardMaxManaValuePredicate(3)

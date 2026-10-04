@@ -20,7 +20,7 @@ import java.util.List;
 public class BlitzballStadium extends Card {
 
     public BlitzballStadium() {
-        targetUpTo(new XValue(), TargetFilters.creature(), 100)
+        targetUpTo(new XValue(), TargetFilters.creature(), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 

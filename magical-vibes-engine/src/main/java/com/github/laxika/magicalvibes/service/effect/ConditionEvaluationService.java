@@ -2527,8 +2527,10 @@ public class ConditionEvaluationService {
 
     /** Returns {@code true} if the given permanent is the condition's own source. */
     private boolean isSource(Permanent permanent, ConditionContext ctx) {
-        return (ctx.sourcePermanentId() != null && permanent.getId().equals(ctx.sourcePermanentId()))
-                || (ctx.sourceCard() != null && permanent.getCard() == ctx.sourceCard());
+        if (ctx.sourcePermanentId() != null) {
+            return permanent.getId().equals(ctx.sourcePermanentId());
+        }
+        return ctx.sourceCard() != null && permanent.getCard() == ctx.sourceCard();
     }
 
     /** True when the stack entry's source card object is still in its controller's command zone. */

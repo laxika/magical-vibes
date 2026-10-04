@@ -156,6 +156,9 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             lifeSupport.applyLifeLoss(gameData, targetPlayerId, targetAmount, sourceName);
             totalLifeLost += Math.max(0, lifeBefore - gameData.getLife(targetPlayerId));
         }
+        if (effect.recordTargetLifeLost()) {
+            entry.setEventValue(totalLifeLost);
+        }
         if (controllerGainsLifeLost(gameData, entry, effect) && totalLifeLost > 0) {
             lifeSupport.applyGainLife(gameData, entry.getControllerId(), totalLifeLost);
         }

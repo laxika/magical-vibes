@@ -122,8 +122,9 @@ final class TokenCardFactory {
         }
 
         if ("Incubator".equals(token.tokenName())) {
+            tokenCard.setSubtypes(java.util.List.of(CardSubtype.INCUBATOR));
             Card backFace = new Card();
-            backFace.setName("Phyrexian");
+            backFace.setName("Phyrexian Token");
             backFace.setType(CardType.CREATURE);
             backFace.setAdditionalTypes(Set.of(CardType.ARTIFACT));
             backFace.setManaCost("");

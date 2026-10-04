@@ -15,7 +15,7 @@ public class BurningSunCavalry extends Card {
     public BurningSunCavalry() {
         ControlsPermanent controlsDinosaur = new ControlsPermanent(
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(controlsDinosaur, new BoostSelfEffect(1, 1)));
-        addEffect(EffectSlot.ON_BLOCK, new ConditionalEffect(controlsDinosaur, new BoostSelfEffect(1, 1)));
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(controlsDinosaur, new BoostSelfEffect(1, 1)));
+        addEffect(EffectSlot.ON_BLOCK, ConditionalEffect.atTriggerTime(controlsDinosaur, new BoostSelfEffect(1, 1)));
     }
 }

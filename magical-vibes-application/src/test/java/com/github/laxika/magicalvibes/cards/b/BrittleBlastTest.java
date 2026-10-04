@@ -79,7 +79,7 @@ class BrittleBlastTest extends BaseCardTest {
 
     @Test
     void dealsExactlyFiveDamageToPlaneswalker() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GarrukPrimalHunter());
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new GarrukPrimalHunter());
         target.setCounterCount(CounterType.LOYALTY, 6);
         harness.setHand(player1, List.of(new BrittleBlast()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -93,7 +93,7 @@ class BrittleBlastTest extends BaseCardTest {
 
     @Test
     void exilesPlaneswalkerWithLethalDamage() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GarrukPrimalHunter());
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new GarrukPrimalHunter());
         target.setCounterCount(CounterType.LOYALTY, 3);
         harness.setHand(player1, List.of(new BrittleBlast()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -109,7 +109,7 @@ class BrittleBlastTest extends BaseCardTest {
     @Test
     void grantsReplacementToUntargetedOpposingPlaneswalker() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent other = harness.addToBattlefieldAndReturn(player2, new GarrukPrimalHunter());
+        Permanent other = harness.enterBattlefieldAndReturn(player2, new GarrukPrimalHunter());
         harness.setHand(player1, List.of(new BrittleBlast()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -148,6 +148,7 @@ class BrittleBlastTest extends BaseCardTest {
 
     @Test
     void perpetualGrantSurvivesReturningToHandAndBeingRecast() {
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new BrittleBlast(), new Unsummon(), new DoomBlade()));

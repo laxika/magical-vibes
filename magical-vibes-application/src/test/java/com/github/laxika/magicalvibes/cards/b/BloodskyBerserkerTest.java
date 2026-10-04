@@ -132,6 +132,8 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(berserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);

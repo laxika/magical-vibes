@@ -44,10 +44,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Panglacial Shinobi: choose the unblocked attacker returned for library ninjutsu. */
     record LibraryNinjutsu(PendingInteraction.LibrarySearch search, Card card, String manaCost)
             implements PermanentChoiceContext {}
-    record BackdraftPlayerChoice() implements PermanentChoiceContext {}
+    /** Pays a selected creature sacrifice after a free spell's targets have been announced. */
+    record FreeCastSacrificeCost(StackEntry entry) implements PermanentChoiceContext {
+        public FreeCastSacrificeCost deepCopy() {
+            return new FreeCastSacrificeCost(new StackEntry(entry));
+        }
+    }
 
-    record AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready)
+    record BackdraftPlayerChoice() implements PermanentChoiceContext {}
+    record BackdraftSorceryChoice() implements PermanentChoiceContext {}
+
+    record AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready,
+                               boolean choosingProtector)
             implements PermanentChoiceContext {
+        public AuraEntryBatchChoice(List<BattlefieldEntryCard> remaining, List<BattlefieldEntryCard> ready) {
+            this(remaining, ready, false);
+        }
         public AuraEntryBatchChoice {
             remaining = List.copyOf(remaining);
             ready = List.copyOf(ready);
@@ -1149,7 +1161,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  (Auriok Replica) or to everything (Burrenton Forge-Tender). The legal source choices are
      *  already filtered when the choice begins. */
     record PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly,
-                                     boolean gainLifeForBlackOrRedSource) implements PermanentChoiceContext {
+                                     boolean gainLifeForBlackOrRedSource, Set<CardColor> requiredColors) implements PermanentChoiceContext {
+        public PreventDamageSourceChoice {
+            requiredColors = Set.copyOf(requiredColors);
+        }
+
+        public PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly,
+                                         boolean gainLifeForBlackOrRedSource) {
+            this(controllerId, controllerOnly, gainLifeForBlackOrRedSource, Set.of());
+        }
+
         public PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly) {
             this(controllerId, controllerOnly, false);
         }
@@ -1923,7 +1944,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                 boolean resolutionCast, int lifeLossAfterCast,
                                 boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost,
                                 CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId,
-                                int xValue) implements PermanentChoiceContext {
+                                int xValue, Card physicalCard) implements PermanentChoiceContext {
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                    StackEntryType spellType, boolean copy, List<UUID> chosenTargets,
+                                    int genericCostReduction, boolean resolutionCast, int lifeLossAfterCast,
+                                    boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost,
+                                    CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId, int xValue) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets,
+                    genericCostReduction, resolutionCast, lifeLossAfterCast,
+                    putOnBottomOfOwnersLibraryInsteadOfGraveyard, payManaCost,
+                    afterSuccessfulCastEffect, sourcePermanentId, xValue, null);
+        }
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                     boolean copy, List<UUID> chosenTargets, int genericCostReduction,
                                     boolean resolutionCast, int lifeLossAfterCast,

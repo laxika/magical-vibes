@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreatureUnpreparedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -18,7 +19,7 @@ public class BiblioplexTomekeeper extends Card {
         PermanentPredicateTargetFilter creatureFilter = TargetFilters.creature();
 
         // When this creature enters, choose up to one —
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature becomes prepared",
                         new MakeTargetCreaturePreparedEffect(),
@@ -29,6 +30,6 @@ public class BiblioplexTomekeeper extends Card {
                         new MakeTargetCreatureUnpreparedEffect(),
                         creatureFilter
                 )
-        ), true));
+        ), true)));
     }
 }

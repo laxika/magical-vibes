@@ -131,6 +131,7 @@ class BoundDeterminedTest extends BaseCardTest {
     void boundCanReturnTheCreatureItJustSacrificed() {
         SimicInitiate initiate = new SimicInitiate();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, initiate);
+        creature.setPlusOnePlusOneCounters(1);
         BoundDetermined bound = new BoundDetermined();
         harness.setHand(player1, List.of(bound));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -212,7 +213,7 @@ class BoundDeterminedTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, initiate.getId());
-        harness.passPriority(player2);
+        harness.ensurePriority(player1);
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
 

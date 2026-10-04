@@ -33,9 +33,11 @@ class BogStriderAshTest extends BaseCardTest {
     void goblinSpellTriggersMayPay() {
         harness.addToBattlefield(player1, new BogStriderAsh());
         giveGoblinSpell(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreature(player1, 0);
 
+        harness.passBothPriorities();
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -57,6 +59,7 @@ class BogStriderAshTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -75,6 +78,7 @@ class BogStriderAshTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -96,7 +100,6 @@ class BogStriderAshTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castCreature(player2, 0);
-        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
@@ -120,6 +123,7 @@ class BogStriderAshTest extends BaseCardTest {
     @DisplayName("Any player casting a Goblin spell triggers the controller's ability")
     void opponentGoblinTriggersController() {
         harness.addToBattlefield(player1, new BogStriderAsh());
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -128,6 +132,7 @@ class BogStriderAshTest extends BaseCardTest {
 
         harness.castCreature(player2, 0);
 
+        harness.passBothPriorities();
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());

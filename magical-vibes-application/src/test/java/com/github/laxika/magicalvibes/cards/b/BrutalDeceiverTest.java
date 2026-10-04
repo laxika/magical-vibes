@@ -250,7 +250,7 @@ class BrutalDeceiverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(nonland);

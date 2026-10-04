@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -25,8 +25,8 @@ public class BloodthirstyBlade extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new EquipEffect()),
-                "Equip {1}",
+                List.of(new AttachSourceEquipmentToTargetCreatureEffect()),
+                "{1}: Attach Bloodthirsty Blade to target creature an opponent controls. Activate only as a sorcery.",
                 TargetFilters.creatureAnOpponentControls(),
                 null,
                 null,

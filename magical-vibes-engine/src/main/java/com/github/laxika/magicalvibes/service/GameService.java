@@ -469,7 +469,8 @@ public class GameService {
                     .map(ManaCost::new)
                     .orElse(null)
                     : castingCostService.getForetellCost(gameData, player.getId(), card);
-            if (foretellCost == null) {
+            if (foretellCost == null && (castingCostService == null
+                    || !castingCostService.canForetellCard(gameData, player.getId(), card))) {
                 throw new IllegalStateException("Card does not have foretell");
             }
 
@@ -1491,8 +1492,8 @@ public class GameService {
                 throw new IllegalStateException("Spellmorph cards are cast from the battlefield instead");
             }
             if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
-                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
+                    || (!manifestedOrCloaked && (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()))) {
                 throw new IllegalStateException("Permanent cannot be turned face up");
             }
             List<UUID> additionalCostPermanentIds = morphAdditionalCostPermanentIds != null

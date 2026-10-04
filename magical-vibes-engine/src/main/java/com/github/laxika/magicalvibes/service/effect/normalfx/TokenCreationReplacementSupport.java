@@ -318,6 +318,18 @@ public final class TokenCreationReplacementSupport {
         if (amount <= 0 || original.subtypes() == null || !original.subtypes().contains(CardSubtype.FOOD)) {
             return 0;
         }
+        return additionalTreasureTokenCount(gameData, controllerId, amount);
+    }
+
+    static int additionalTreasureTokenCount(GameData gameData, UUID controllerId,
+                                            Card tokenCard, int amount) {
+        if (amount <= 0 || tokenCard == null || !tokenCard.getSubtypes().contains(CardSubtype.FOOD)) {
+            return 0;
+        }
+        return additionalTreasureTokenCount(gameData, controllerId, amount);
+    }
+
+    private static int additionalTreasureTokenCount(GameData gameData, UUID controllerId, int amount) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return 0;

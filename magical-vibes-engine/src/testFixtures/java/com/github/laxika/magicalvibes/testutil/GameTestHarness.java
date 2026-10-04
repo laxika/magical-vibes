@@ -1943,6 +1943,23 @@ public class GameTestHarness {
         passUntil(null, targetStep);
     }
 
+    /** Advances to a step while explicitly declining to attack in intervening combats. */
+    public void passUntilWithNoAttackers(Player activePlayer, TurnStep targetStep) {
+        for (int attempts = 0; attempts < PASS_UNTIL_PRIORITY_ROUND_LIMIT; attempts++) {
+            try {
+                passUntil(activePlayer, targetStep);
+                return;
+            } catch (IllegalStateException failure) {
+                PendingInteraction.AttackerDeclaration declaration = gameData.interaction
+                        .activeInteraction(PendingInteraction.AttackerDeclaration.class);
+                if (declaration == null) throw failure;
+                Player attacker = declaration.activePlayerId().equals(player1.getId()) ? player1 : player2;
+                gameService.declareAttackers(gameData, attacker, List.of());
+            }
+        }
+        throw new IllegalStateException("Could not reach the requested step without attacking");
+    }
+
     /** Runs an action with a temporary priority stop, preserving each player's configured stops. */
     public void withAutoStop(TurnStep step, Runnable action) {
         Map<UUID, Set<TurnStep>> originalStops = new HashMap<>(gameData.playerAutoStopSteps);

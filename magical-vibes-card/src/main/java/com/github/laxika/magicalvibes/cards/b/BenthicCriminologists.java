@@ -14,7 +14,7 @@ public class BenthicCriminologists extends Card {
     public BenthicCriminologists() {
         MayEffect sacrificeArtifactToDraw = new MayEffect(
                 new SacrificePermanentThenEffect(
-                        new PermanentIsArtifactPredicate(), new DrawCardEffect(1), "an artifact"),
+                        new PermanentIsArtifactPredicate(), new DrawCardEffect(1), "an artifact", false, false),
                 "Sacrifice an artifact?");
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, sacrificeArtifactToDraw);
         addEffect(EffectSlot.ON_ATTACK, sacrificeArtifactToDraw);

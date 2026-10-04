@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -181,7 +182,7 @@ class BloodHypnotistTest extends BaseCardTest {
         addCreatureReady(player1, new BloodHypnotist());
         Permanent target = addCreatureReady(player2, new TravelingMinister());
         Permanent blood = addBloodToken(player1);
-        blood.getCard().setToken(false);
+        TestCards.mutableCard(blood).setToken(false);
 
         sacrificeToken(player1, blood, target);
 

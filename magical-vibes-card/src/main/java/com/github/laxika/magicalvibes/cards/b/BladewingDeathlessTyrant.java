@@ -20,7 +20,7 @@ import java.util.Set;
 public class BladewingDeathlessTyrant extends Card {
 
     public BladewingDeathlessTyrant() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new CreateTokenEffect(
+        addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER, new CreateTokenEffect(
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 "Zombie Knight", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.ZOMBIE, CardSubtype.KNIGHT), Set.of(Keyword.MENACE), Set.of()));

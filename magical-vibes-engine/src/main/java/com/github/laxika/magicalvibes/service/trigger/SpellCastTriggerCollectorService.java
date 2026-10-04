@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
 import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.CastSameNameCardFromGraveyardOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -258,6 +260,24 @@ public class SpellCastTriggerCollectorService {
     private final ValidTargetService validTargetService;
 
     // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
+
+    @CollectsTrigger(value = com.github.laxika.magicalvibes.model.effect.TrackCastSpellCardTypesEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleTrackCastSpellCardTypes(TriggerMatchContext match,
+            com.github.laxika.magicalvibes.model.effect.TrackCastSpellCardTypesEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.SpellCast cast = (TriggerContext.SpellCast) ctx;
+        var resolved = new com.github.laxika.magicalvibes.model.effect.TrackCastSpellCardTypesEffect(
+                effect.trackedTypes(), effect.trackedTypes().stream()
+                        .filter(cast.spellCard()::hasType).collect(java.util.stream.Collectors.toSet()));
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability", List.of(resolved),
+                null, match.permanent().getId());
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        match.gameData().stack.add(entry);
+        return true;
+    }
 
     @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleAnyPlayerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
@@ -1900,7 +1920,8 @@ public class SpellCastTriggerCollectorService {
 
         if (needsAnyTarget) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(trigger.resolvedEffects())
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(trigger.resolvedEffects()),
+                    false, null, 0, match.permanent().getId()
             ));
             gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
@@ -1910,7 +1931,7 @@ public class SpellCastTriggerCollectorService {
                     match.permanent().getCard(),
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(trigger.resolvedEffects())
+                    new ArrayList<>(trigger.resolvedEffects()), null, match.permanent().getId()
             ));
         }
         log.info("Game {} - {} cast-from-graveyard trigger queued",
@@ -2875,6 +2896,13 @@ public class SpellCastTriggerCollectorService {
                 && !match.gameData().spellCastUsedTreasureMana(spellCard.getId())) {
             return false;
         }
+        if (trigger.resolvedEffects().stream().anyMatch(
+                GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect.class::isInstance)
+                && spellCard.getColors().stream().map(CardColor::name).map(ManaColor::valueOf)
+                .noneMatch(color -> match.gameData()
+                        .getSpellCastSnowManaSpentByColor(spellCard.getId(), color) > 0)) {
+            return false;
+        }
 
         // "Whenever you cast a spell during an opponent's turn" — the source's controller must not be
         // the active player when the spell is cast (Glen Elendra Pranksters).
@@ -3263,6 +3291,11 @@ public class SpellCastTriggerCollectorService {
     private CardEffect snapshotTriggeringSpell(CardEffect effect, StackEntry spellSnapshot,
                                                UUID castingPlayerId, GameData gameData,
                                                UUID sourceControllerId) {
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.DiscoverEffect discover
+                && discover.discoverValue() instanceof com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue) {
+            return new com.github.laxika.magicalvibes.model.effect.DiscoverEffect(
+                    new Fixed(spellSnapshot.getCard().getManaValue() + spellSnapshot.getXValue()));
+        }
         if (effect instanceof TriggeringSpellManaValueEffect manaValueAware) {
             return manaValueAware.snapshotTriggeringSpellManaValue(
                     spellSnapshot.getCard().getManaValue() + spellSnapshot.getXValue());

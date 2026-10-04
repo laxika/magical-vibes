@@ -612,7 +612,7 @@ public class StepTriggerService {
         // Phytotitan: "return it to the battlefield tapped under its owner's control at the beginning
         // of their next upkeep" — only at the owner's own upkeep.
         resolveDelayedSelfReturns(gameData,
-                pending -> pending.atNextUpkeep() && pending.ownerId().equals(gameData.activePlayerId));
+                pending -> pending.atNextUpkeep() && pending.upkeepPlayerId().equals(gameData.activePlayerId));
         resolveDelayedGraveyardCardsUnderControlAtUpkeep(gameData);
 
         if (gameData.hasDelayedAction(DimensionalBreachUpkeepReturn.class)) {
@@ -4215,7 +4215,8 @@ public class StepTriggerService {
                     break;
                 }
             }
-            if (cardToReturn == null) {
+            if (cardToReturn == null || (pending.graveyardEntryVersion() >= 0
+                    && gameData.graveyardEntryVersion(pending.cardId()) != pending.graveyardEntryVersion())) {
                 log.info("Game {} - Delayed graveyard return for card {} skipped (no longer in graveyard)",
                         gameData.id, pending.cardId());
                 continue;
@@ -4223,13 +4224,14 @@ public class StepTriggerService {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     cardToReturn,
-                    pending.ownerId(),
+                    pending.upkeepPlayerId(),
                     cardToReturn.getName() + "'s delayed return ability",
                     new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
                             pending.tapped(), false, pending.counterType(), pending.counterAmount()))));
             entry.setTriggeringCardId(cardToReturn.getId());
             entry.setTriggeringCardGraveyardEntryVersion(
-                    gameData.graveyardEntryVersion(cardToReturn.getId()));
+                    pending.graveyardEntryVersion() >= 0 ? pending.graveyardEntryVersion()
+                            : gameData.graveyardEntryVersion(cardToReturn.getId()));
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData,
@@ -5152,7 +5154,7 @@ public class StepTriggerService {
             List<DelayedLoseLifeAndReturnFromGraveyard> pendingReturns =
                     gameData.drainDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class);
             for (DelayedLoseLifeAndReturnFromGraveyard pending : pendingReturns) {
-                gameData.stack.add(new StackEntry(
+                StackEntry delayedEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
                         pending.controllerId(),
@@ -5161,13 +5163,11 @@ public class StepTriggerService {
                                 + " life and return to hand",
                         new ArrayList<>(List.of(
                                 new LoseLifeEffect(pending.lifeLoss()),
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.HAND)
-                                        .filter(new CardIsSelfPredicate())
-                                        .returnAll(true)
-                                        .build()
+                                new com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect()
                         ))
-                ));
+                );
+                delayedEntry.setTriggeringCardGraveyardEntryVersion(pending.graveyardEntryVersion());
+                gameData.stack.add(delayedEntry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed trigger — lose " + pending.lifeLoss()
                                 + " life and return to hand."));

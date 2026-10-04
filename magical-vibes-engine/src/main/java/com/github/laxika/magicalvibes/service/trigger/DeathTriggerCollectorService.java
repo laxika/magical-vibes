@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureAttachmentsAware
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreaturePermanentAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureManaValueAwareEffect;
@@ -769,10 +770,7 @@ public class DeathTriggerCollectorService {
     boolean handleDeathGainLifeEqualToPower(TriggerMatchContext match,
             GainLifeEqualToDyingSourcePowerEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        Permanent dyingPermanent = sd.dyingPermanent();
-        int power = dyingPermanent != null
-                ? dyingPermanent.getEffectivePower()
-                : (sd.dyingCard().getPower() != null ? sd.dyingCard().getPower() : 0);
+        int power = sd.dyingPower();
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sd.dyingCard(),
@@ -974,7 +972,20 @@ public class DeathTriggerCollectorService {
     boolean handleDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect
+                && !sd.controllerId().equals(gameQueryService.findGraveyardOwnerById(match.gameData(), sd.dyingCard().getId()))) {
+            return true;
+        }
         CardEffect triggerEffect = snapshotDynamicMaxManaValue(match, effect, sd);
+        if (triggerEffect instanceof SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect stats) {
+            UUID dyingCardId = sd.dyingCard().getId();
+            java.util.Set<UUID> damagingIds = new java.util.HashSet<>();
+            match.gameData().creatureCardsDamagedBySourceThatDiedThisTurn.forEach((sourceId, cardIds) -> {
+                if (cardIds.contains(dyingCardId)) damagingIds.add(sourceId);
+            });
+            triggerEffect = new SetBasePowerToughnessOfCreaturesThatDamagedSourceEffect(
+                    stats.power(), stats.toughness(), damagingIds);
+        }
         if (triggerEffect instanceof DyingCreaturePermanentAwareEffect aware
                 && sd.dyingPermanent() != null) {
             triggerEffect = aware.boundToDyingCreature(sd.dyingPermanent());
@@ -2511,10 +2522,33 @@ public class DeathTriggerCollectorService {
                         death.dyingCard().getId(), match.controllerId()), ctx);
     }
 
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAllyPermanentGraveyardConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
+        if (death.dyingPermanent() == null || !predicateEvaluationService.matchesPermanentPredicate(
+                death.dyingPermanent(), effect.predicate(), FilterContext.of(match.gameData())
+                        .withSourceCardId(match.permanent().getCard().getId())
+                        .withSourcePermanentId(match.permanent().getId())
+                        .withSourcePermanentSnapshot(match.permanent())
+                        .withSourceControllerId(match.controllerId()))) {
+            return false;
+        }
+        return handleAllyPermanentGraveyardDefault(match, effect.wrapped(), ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
+        if (effect.targetSpec().declaredTarget() != null) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    null, new Permanent(match.permanent()), false));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            return true;
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -2870,14 +2904,16 @@ public class DeathTriggerCollectorService {
             DyingCreatureControllerSacrificesPermanentsEffect effect, TriggerContext ctx) {
         // Earthlink: the dying creature's controller (not the source's controller) sacrifices.
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
-                cd.dyingCreatureControllerId(),
+                match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new SacrificePermanentsEffect(
-                        effect.count(), effect.filter(), SacrificeRecipient.CONTROLLER)))
-        ));
+                        effect.count(), effect.filter(), SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER)))
+        );
+        entry.setTriggeringPermanentControllerId(cd.dyingCreatureControllerId());
+        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }
@@ -2901,6 +2937,7 @@ public class DeathTriggerCollectorService {
                 death.dyingCreatureControllerId(),
                 match.permanent().getId()
         );
+        entry.setNonTargeting(true);
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);

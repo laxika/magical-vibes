@@ -26,7 +26,7 @@ public class BattleOfFrostAndFire extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I, new MassDamageEffect(
                 4,
                 false,
-                true,
+                false,
                 true,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),

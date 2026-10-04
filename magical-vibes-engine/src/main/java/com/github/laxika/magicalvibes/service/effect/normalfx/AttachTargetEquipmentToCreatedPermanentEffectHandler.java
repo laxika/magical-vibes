@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToCreatedPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,7 @@ public class AttachTargetEquipmentToCreatedPermanentEffectHandler implements Nor
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,21 +39,37 @@ public class AttachTargetEquipmentToCreatedPermanentEffectHandler implements Nor
             return;
         }
 
+        var attachment = (AttachTargetEquipmentToCreatedPermanentEffect) effect;
         List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty()) {
+        UUID equipmentId = attachment.useSourceEquipment() ? entry.getSourcePermanentId()
+                : targetIds.isEmpty() ? null : targetIds.getFirst();
+        if (equipmentId == null) {
             return;
         }
 
-        Permanent equipment = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
-        Permanent host = gameQueryService.findPermanentById(gameData, entry.getCreatedPermanentIds().getFirst());
+        Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
         if (equipment == null || !gameQueryService.hasEffectiveSubtype(gameData, equipment, CardSubtype.EQUIPMENT)) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), "'s ability fizzles (the Equipment is no longer on the battlefield)."));
             return;
         }
-        if (host == null || !gameQueryService.isCreature(gameData, host)) {
+        List<Permanent> hosts = entry.getCreatedPermanentIds().stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .filter(host -> gameQueryService.isCreature(gameData, host)
+                        && equipSupport.canAttachEquipment(gameData, equipment, host))
+                .toList();
+        if (hosts.isEmpty()) {
             return;
         }
+        if (hosts.size() > 1) {
+            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(),
+                    hosts.stream().map(Permanent::getId).toList(),
+                    new PermanentChoiceContext.AttachEquipmentToCreature(equipment.getId(), entry.getControllerId()),
+                    "Choose a created creature to attach " + equipment.getCard().getName() + " to.");
+            return;
+        }
+        Permanent host = hosts.getFirst();
 
         UUID oldAttachedTo = equipment.getAttachedTo();
         if (!equipSupport.canAttachEquipment(gameData, equipment, host)) {

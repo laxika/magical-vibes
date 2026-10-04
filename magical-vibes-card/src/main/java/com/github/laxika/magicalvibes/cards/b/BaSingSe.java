@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
@@ -21,7 +23,9 @@ public class BaSingSe extends Card {
 
     public BaSingSe() {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new ControlsPermanentCountAtMost(0, new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
+                new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSupertypePredicate(CardSupertype.BASIC),
+                        new PermanentIsLandPredicate()))),
                 new EntersTappedEffect()));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));

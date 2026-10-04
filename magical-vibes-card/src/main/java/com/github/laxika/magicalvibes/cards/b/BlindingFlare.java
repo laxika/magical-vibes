@@ -15,7 +15,7 @@ public class BlindingFlare extends Card {
         setAdditionalManaCostPerExtraTarget("{R}");
 
         // Any number of target creatures can't block this turn.
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
     }
 }

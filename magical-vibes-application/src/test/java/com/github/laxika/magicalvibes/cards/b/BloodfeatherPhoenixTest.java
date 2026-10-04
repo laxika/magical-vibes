@@ -42,7 +42,7 @@ class BloodfeatherPhoenixTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent phoenix = findPermanent(player1, "Bloodfeather Phoenix");
-        assertThat(phoenix.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, phoenix, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Bloodfeather Phoenix");
     }
 
@@ -157,6 +157,8 @@ class BloodfeatherPhoenixTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, phoenix, Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, phoenix, Keyword.HASTE)).isFalse();

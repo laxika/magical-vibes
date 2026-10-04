@@ -149,6 +149,8 @@ class BonehoardDracosaurTest extends BaseCardTest {
         resolveWithLibrary(land, creature);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land, creature);

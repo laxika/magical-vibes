@@ -163,7 +163,9 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             }
             case ALL_DAMAGE_THIS_TURN -> {
                 context = new PermanentChoiceContext.PreventDamageSourceChoice(
-                        controllerId, e.controllerOnly(), e.gainLifeForBlackOrRedSource());
+                        controllerId, e.controllerOnly(), e.gainLifeForBlackOrRedSource(),
+                        sourceFilter instanceof PermanentColorInPredicate colorFilter
+                                ? colorFilter.colors() : Set.of());
                 prompt = e.sourceActivationManaColor()
                         ? "Choose a source that shares a color with the mana spent on this activation. Prevent all damage it would deal "
                                 + (e.controllerOnly() ? "to you" : "") + " this turn."

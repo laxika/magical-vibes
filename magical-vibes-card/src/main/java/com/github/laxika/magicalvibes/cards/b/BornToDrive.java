@@ -56,7 +56,7 @@ public class BornToDrive extends Card {
                         List.of(CardSubtype.PILOT),
                         Set.of(),
                         Set.of(),
-                        Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2)))),
+                        Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true)))),
                 "Channel — {2}{W}, Discard this card: Create two 1/1 colorless Pilot creature tokens with \"This token crews Vehicles as though its power were 2 greater.\""
         ));
     }

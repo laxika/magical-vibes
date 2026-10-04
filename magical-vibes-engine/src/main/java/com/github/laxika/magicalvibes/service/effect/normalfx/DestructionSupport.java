@@ -426,6 +426,7 @@ public class DestructionSupport {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> matching = battlefield == null ? List.of() : battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                .filter(p -> !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE))
                 .toList();
 
         if (matching.isEmpty()) {

@@ -117,6 +117,7 @@ class BileVialBoggartTest extends BaseCardTest {
         setupCombatWhereBoggartDies();
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();

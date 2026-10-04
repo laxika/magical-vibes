@@ -245,6 +245,16 @@ public class CastingCostService {
         return null;
     }
 
+    public boolean canForetellCard(GameData gameData, UUID playerId, Card card) {
+        if (getForetellCost(gameData, playerId, card) != null) {
+            return true;
+        }
+        return !card.hasType(com.github.laxika.magicalvibes.model.CardType.LAND)
+                && buildCostModifierSnapshot(gameData, playerId).modifiers().stream().anyMatch(modifier ->
+                modifier.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantForetellToNonlandCardsInHandEffect
+                        && modifier.source().controlledBy(playerId));
+    }
+
     /** Returns the net generic-mana delta applied to the foretell special action. */
     public int getForetellCostModifier(GameData gameData, UUID playerId) {
         return getForetellCostModifier(gameData, playerId, buildCostModifierSnapshot(gameData, playerId));
@@ -2474,7 +2484,11 @@ public class CastingCostService {
                 .forEach(perTargetEffects::add);
 
         int perTargetReduction = perTargetEffects.stream()
+                .filter(effect -> effect.spellPredicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                                card, effect.spellPredicate(), null, gameData, playerId))
                 .mapToInt(effect -> (int) targetIds.stream()
+                        .distinct()
                         .map(targetId -> targetId == null
                                 ? null : gameQueryService.findPermanentById(gameData, targetId))
                         .filter(java.util.Objects::nonNull)

@@ -396,12 +396,15 @@ public class PermanentChoiceSpellHandlerService {
                             null
             );
             entry.setCopy(ect.copy());
+            entry.setPhysicalCard(ect.physicalCard());
+            entry.setCastWithAdventure(ect.physicalCard() != null && ect.physicalCard() != ect.cardToCast());
             entry.setSourceZone(Zone.EXILE);
             entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
                 entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
             }
             entry.setSuspendHasteOnEntry(gameData.spellsGrantedSuspendHasteOnEntry.remove(ect.cardToCast().getId()));
+            if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
@@ -493,7 +496,7 @@ public class PermanentChoiceSpellHandlerService {
                     card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
                     ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
                     ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost(),
-                    ect.afterSuccessfulCastEffect(), ect.sourcePermanentId(), ect.xValue()));
+                    ect.afterSuccessfulCastEffect(), ect.sourcePermanentId(), ect.xValue(), ect.physicalCard()));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
@@ -564,12 +567,15 @@ public class PermanentChoiceSpellHandlerService {
                 chosen
         );
         entry.setCopy(ect.copy());
+        entry.setPhysicalCard(ect.physicalCard());
+        entry.setCastWithAdventure(ect.physicalCard() != null && ect.physicalCard() != card);
         entry.setSourceZone(Zone.EXILE);
         entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(card.getId()));
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
             entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
         entry.setSuspendHasteOnEntry(gameData.spellsGrantedSuspendHasteOnEntry.remove(card.getId()));
+        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
         gameData.stack.add(entry);
 
         gameData.recordSpellCast(ect.controllerId(), card);

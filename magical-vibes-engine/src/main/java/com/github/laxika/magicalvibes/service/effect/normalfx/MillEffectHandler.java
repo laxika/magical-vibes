@@ -71,6 +71,9 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
             case TARGET_SPELL_CONTROLLER -> {
                 int count = evaluateCount(gameData, entry, mill, source, null);
                 UUID spellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());
+                if (spellControllerId == null) {
+                    spellControllerId = entry.getRemovedPermanentControllers().get(entry.getTargetId());
+                }
                 if (spellControllerId != null) {
                     graveyardService.resolveMillPlayer(gameData, spellControllerId, count);
                 }

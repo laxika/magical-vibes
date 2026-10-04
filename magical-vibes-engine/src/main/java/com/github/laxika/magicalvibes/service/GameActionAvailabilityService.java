@@ -105,7 +105,7 @@ public class GameActionAvailabilityService {
         ManaCost actionCost = castingCostService.getForetellActionCost(gameData, playerId);
         List<Integer> playable = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
-            if (castingCostService.getForetellCost(gameData, playerId, hand.get(i)) != null
+            if (castingCostService.canForetellCard(gameData, playerId, hand.get(i))
                     && actionCost.canPayForForetell(pool)) {
                 playable.add(i);
             }
@@ -596,6 +596,8 @@ public class GameActionAvailabilityService {
                         && effect.hasOptionalTarget()
                         || effect instanceof ReturnCardFromGraveyardEffect returnEffect
                         && returnEffect.upTo()
+                        || effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
+                        && (returnEffect.xScaled() || returnEffect.minTargets() == 0)
                         || effect instanceof DealDividedDamageEffect dividedDamage
                         && dividedDamage.maxTargets() == 0);
         boolean allTargetsOptional = allEffectTargetsOptional || !card.getSpellTargets().isEmpty()
@@ -1581,8 +1583,10 @@ public class GameActionAvailabilityService {
                     && card.getBackFaceCard() != null
                     && (card.getBackFaceCard().hasType(CardType.SORCERY)
                     || card.getBackFaceCard().hasType(CardType.INSTANT))
-                    && castingPermissionService.hasGrantedGraveyardAdventureCastPermission(
-                    gameData, card, playerId);
+                    && (castingPermissionService.hasGrantedGraveyardAdventureCastPermission(
+                    gameData, card, playerId)
+                    || castingPermissionService.canCastTopInstantOrSorceryFromGraveyard(
+                    gameData, playerId, card, card.getBackFaceCard()));
             Card castHalf = flashback.isPresent()
                     ? card.graveyardCastHalf()
                     : grantedAdventure ? card.getBackFaceCard() : card;

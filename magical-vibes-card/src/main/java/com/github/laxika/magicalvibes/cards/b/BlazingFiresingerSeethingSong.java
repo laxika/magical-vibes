@@ -20,7 +20,7 @@ public class BlazingFiresingerSeethingSong extends Card {
         setBackFaceCard(new SeethingSong());
 
         // This creature enters prepared.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addEffect(EffectSlot.STATIC, new BecomePreparedEffect());
     }
 
     @Override

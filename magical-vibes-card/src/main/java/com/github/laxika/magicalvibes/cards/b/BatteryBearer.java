@@ -36,7 +36,7 @@ public class BatteryBearer extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
-                        new CardMinManaValuePredicate(6)
+                        new CardMinManaValuePredicate(6, true)
                 )),
                 List.of(new DrawCardEffect(1))
         ));

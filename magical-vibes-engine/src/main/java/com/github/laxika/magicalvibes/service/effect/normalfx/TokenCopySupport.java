@@ -186,6 +186,15 @@ public class TokenCopySupport {
             tokens.add(new Permanent(foodTokenCard));
         }
 
+        int additionalTreasureTokenCount = tokens.stream().mapToInt(token ->
+                TokenCreationReplacementSupport.additionalTreasureTokenCount(
+                        gameData, tokenControllerId, token.getCard(), 1)).sum();
+        for (int treasure = 0; treasure < additionalTreasureTokenCount; treasure++) {
+            Card treasureToken = TokenCardFactory.create(CreateTokenEffect.ofTreasureToken(1), 0, 0,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            tokens.add(new Permanent(treasureToken));
+        }
+
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = tokens;
         List<UUID> createdIds = new ArrayList<>();

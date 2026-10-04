@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.condition.ControlsMoreCreaturesThanOpponent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithFewerCreaturesThanController;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -32,7 +32,7 @@ public class BirthOfTheImperium extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_II, new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ConditionalEffect(
-                new ControlsMoreCreaturesThanOpponent(), new DrawCardEffect(2)));
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new DrawCardEffect(
+                new Scaled(new OpponentsWithFewerCreaturesThanController(), 2)));
     }
 }

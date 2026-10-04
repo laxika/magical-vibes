@@ -16,8 +16,8 @@ import java.util.List;
 public class BoostedSloop extends Card {
 
     public BoostedSloop() {
-        addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect());
-        addEffect(EffectSlot.ON_ATTACK, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new DrawCardEffect());
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

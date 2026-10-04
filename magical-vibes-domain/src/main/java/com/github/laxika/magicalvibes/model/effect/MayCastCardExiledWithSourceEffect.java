@@ -18,7 +18,13 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
                                                 boolean random, boolean withoutPayingManaCost,
-                                                DynamicAmount genericCostReduction) implements CardEffect {
+                                                DynamicAmount genericCostReduction, boolean ownOnly) implements CardEffect {
+
+    public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
+                                            boolean random, boolean withoutPayingManaCost,
+                                            DynamicAmount genericCostReduction) {
+        this(manaValue, filter, random, withoutPayingManaCost, genericCostReduction, false);
+    }
 
     public MayCastCardExiledWithSourceEffect() {
         this(null, null, false, true, null);

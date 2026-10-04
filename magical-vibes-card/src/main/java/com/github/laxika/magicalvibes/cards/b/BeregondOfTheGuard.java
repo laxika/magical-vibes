@@ -18,11 +18,13 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class BeregondOfTheGuard extends Card {
 
     public BeregondOfTheGuard() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        SequenceEffect ability = SequenceEffect.of(
+                new BoostAllOwnCreaturesEffect(1, 1),
+                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ability);
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.HUMAN),
-                        SequenceEffect.of(
-                                new BoostAllOwnCreaturesEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES))));
+                        ability));
     }
 }

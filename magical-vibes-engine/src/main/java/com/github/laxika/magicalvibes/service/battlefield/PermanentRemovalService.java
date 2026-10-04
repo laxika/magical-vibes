@@ -1637,7 +1637,8 @@ public class PermanentRemovalService {
                                                    boolean checkExileInsteadOfDie, String destinationDescription) {
         boolean permanentGraveyardReplacement = checkExileInsteadOfDie
                 && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
-        boolean perpetualGraveyardReplacement = checkExileInsteadOfDie
+        boolean perpetualGraveyardReplacement = !gameQueryService.hasLostAllAbilities(gameData, target)
+                && checkExileInsteadOfDie
                 && target.getOriginalCard() != null
                 && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
         if (!target.isExileIfLeavesBattlefield()
@@ -1716,6 +1717,12 @@ public class PermanentRemovalService {
                     }
                     if (target.getId().equals(entry.getSourcePermanentId())) {
                         entry.setSourcePermanentSnapshot(new Permanent(target));
+                    }
+                    if (entry.getAttachedPermanentSnapshot() != null
+                            && target.getId().equals(entry.getAttachedPermanentSnapshot().getId())) {
+                        entry.setAttachedPermanentSnapshot(new Permanent(target));
+                        entry.setTriggeringPermanentPowerAtTrigger(target.getLastKnownPower());
+                        entry.setTriggeringPermanentControllerId(playerId);
                     }
                     if (entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.getLastKnownTargetColors().put(target.getId(),
@@ -2353,14 +2360,14 @@ public class PermanentRemovalService {
                             gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath,
                             target, creatureSubtypesAtDeath);
                     triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
-                    collectUndyingTrigger(gameData, target, ownerId, hadUndying);
+                    collectUndyingTrigger(gameData, target, controllerId, hadUndying);
                     collectPersistTriggers(gameData, target, controllerId, persistInstances);
                 }
             }
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.triggerDelayedEffectOnDeath(
                         gameData, target.getCard().getId(), controllerId, target.getEffectivePower(),
-                        target.getCard().getManaValue(), Map.copyOf(target.getCounters()));
+                        target.getCard().getManaValue(), Map.copyOf(target.getCounters()), target.getId());
                 triggerCollectionService.triggerDelayedReturnOnDeath(
                         gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
             }
@@ -2494,7 +2501,7 @@ public class PermanentRemovalService {
      * "if it had no +1/+1 counters" intervening-if uses the counter count at the moment it died (the
      * permanent has already left the battlefield, so this is last-known information).
      */
-    private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID ownerId, boolean hadUndying) {
+    private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID controllerId, boolean hadUndying) {
         if (!hadUndying) return;
         if (dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) return;
 
@@ -2502,7 +2509,7 @@ public class PermanentRemovalService {
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 dyingCard,
-                ownerId,
+                controllerId,
                 dyingCard.getName() + "'s undying ability",
                 new ArrayList<>(List.of(new UndyingReturnEffect()))
         ));
@@ -2661,7 +2668,8 @@ public class PermanentRemovalService {
         boolean returnsThroughLeavesTrigger = java.util.stream.Stream.of(
                         EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.ON_TURNED_FACE_UP)
                 .flatMap(slot -> removedPermanent.getCard().getEffects(slot).stream()).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect exile
-                        && exile.returnToHand());
+                        && exile.returnToHand()
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect);
         if (returnsThroughLeavesTrigger) {
             if (!hadPrintedAbilities) {
                 phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());

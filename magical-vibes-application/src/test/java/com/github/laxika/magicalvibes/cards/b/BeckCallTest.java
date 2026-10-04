@@ -107,6 +107,7 @@ class BeckCallTest extends BaseCardTest {
 
     @Test
     void beckDrawsForOpponentsCreature() {
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new KraulWarrior()));
         harness.setHand(player1, List.of(new BeckCall()));
         harness.addMana(player1, ManaColor.GREEN, 1);

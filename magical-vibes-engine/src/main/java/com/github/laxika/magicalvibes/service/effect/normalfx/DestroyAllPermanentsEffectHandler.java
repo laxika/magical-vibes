@@ -123,6 +123,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         int destroyedCount = switch (e.destroyedCountScope()) {
             case ALL -> destroyed.size();
+            case ALL_NONTOKEN -> destroyedNontokenControllerIds.size();
             case CONTROLLER -> (int) destroyedControllerIds.stream()
                     .filter(entry.getControllerId()::equals)
                     .count();

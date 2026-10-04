@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.cards.g.GreaterSandwurm;
@@ -113,8 +115,8 @@ class BontuTheGlorifiedTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
-        gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))));
         assertThat(findPermanent(player1, "Bontu the Glorified").isBlockedThisTurn()).isTrue();
     }
 

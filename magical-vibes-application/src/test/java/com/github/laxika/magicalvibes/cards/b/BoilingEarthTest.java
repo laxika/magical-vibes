@@ -128,13 +128,14 @@ class BoilingEarthTest extends BaseCardTest {
 
     @Test
     void awakenPersistsAcrossTurnsAndCanAwakenTheSameLandAgain() {
+        harness.setHand(player2, List.of());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new BoilingEarth(), new BoilingEarth()));
         harness.addMana(player1, ManaColor.RED, 7);
 
         harness.castWithAlternateCost(player1, 0, land.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.isLand(gd, land)).isTrue();
@@ -143,7 +144,7 @@ class BoilingEarthTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, land, CardSubtype.ELEMENTAL)).isTrue();
 
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 7);
         harness.castWithAlternateCost(player1, 0, land.getId());
         harness.passBothPriorities();

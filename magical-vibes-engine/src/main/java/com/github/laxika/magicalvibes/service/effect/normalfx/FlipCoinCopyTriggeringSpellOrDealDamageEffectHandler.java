@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOrDealDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,6 @@ import java.util.UUID;
 public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final CoinFlipService coinFlipService;
-    private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final TriggerCollectionService triggerCollectionService;
@@ -62,7 +61,12 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
                     breechesEffect.castingPlayerId() != null
                             ? breechesEffect.castingPlayerId()
                             : triggeringSpell.getControllerId());
-            effectHandlerRegistry.getHandler(copyEffect).resolve(gameData, entry, copyEffect);
+            StackEntry reflexiveTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, entry.getCard(), controllerId,
+                    entry.getCard().getName() + "'s coin-flip trigger", new ArrayList<>(List.of(copyEffect)),
+                    null, entry.getSourcePermanentId());
+            reflexiveTrigger.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+            gameData.enqueueTrigger(reflexiveTrigger);
             return;
         }
 

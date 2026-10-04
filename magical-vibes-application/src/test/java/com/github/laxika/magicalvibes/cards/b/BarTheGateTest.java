@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,9 @@ class BarTheGateTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         gd.playerDungeonProgress.put(player2.getId(),
-                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 1));
         harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.handleListChoice(player2, "Storeroom");
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -55,8 +57,9 @@ class BarTheGateTest extends BaseCardTest {
         harness.castPlaneswalker(player1, 0);
         harness.passPriority(player1);
         gd.playerDungeonProgress.put(player2.getId(),
-                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+                new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 1));
         harness.castAndResolveInstant(player2, 0, jace.getId());
+        harness.handleListChoice(player2, "Storeroom");
 
         harness.assertInGraveyard(player1, "Jace Beleren");
         harness.assertNotOnBattlefield(player1, "Jace Beleren");
@@ -97,7 +100,11 @@ class BarTheGateTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Hill Giant Herdgorger");
         assertThat(gd.playerDungeonProgress).doesNotContainKey(player2.getId());
-        assertThat(gd.pendingInteractions).isNotEmpty();
+        PendingInteraction.ColorChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options()).contains("Lost Mine of Phandelver");
     }
 
     @Test
@@ -119,8 +126,8 @@ class BarTheGateTest extends BaseCardTest {
         harness.castInstant(player2, 0, giant.getId());
         harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, giant.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Dark Pool");
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Hill Giant Herdgorger");
         harness.assertInGraveyard(player2, "Bar the Gate");

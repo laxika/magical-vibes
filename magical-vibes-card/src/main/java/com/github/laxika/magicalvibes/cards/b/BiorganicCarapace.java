@@ -12,7 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "124")
 @CardRegistration(set = "SPM", collectorNumber = "269")
@@ -28,7 +31,8 @@ public class BiorganicCarapace extends Card {
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new DrawCardEffect(new PermanentCount(
-                        new PermanentIsModifiedPredicate(), CountScope.CONTROLLER)),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsModifiedPredicate(),
+                                new PermanentIsCreaturePredicate())), CountScope.CONTROLLER)),
                 GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

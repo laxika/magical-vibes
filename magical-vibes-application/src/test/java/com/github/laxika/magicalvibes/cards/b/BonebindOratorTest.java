@@ -134,6 +134,7 @@ class BonebindOratorTest extends BaseCardTest {
 
     @Test
     void canReturnAnotherBonebindOrator() {
+        harness.setHand(player1, List.of());
         Card orator = new BonebindOrator();
         Card other = new BonebindOrator();
         harness.setGraveyard(player1, List.of(orator, other));

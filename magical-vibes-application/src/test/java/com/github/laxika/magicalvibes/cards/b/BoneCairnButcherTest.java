@@ -33,7 +33,7 @@ class BoneCairnButcherTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(2).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttackedThisTurn()).isFalse();
             assertThat(token.isAttacking()).isTrue();
             assertThat(gqs.hasKeyword(gd, token, Keyword.DEATHTOUCH)).isTrue();
         });

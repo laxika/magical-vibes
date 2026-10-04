@@ -3,6 +3,13 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -80,8 +87,9 @@ class BoomerangBasicsTest extends BaseCardTest {
     @Test
     @DisplayName("Returns a stolen permanent to its owner but draws for its controller")
     void returnsStolenPermanentToOwnerAndDrawsForCaster() {
-        var permanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(permanent.getId(), player2.getId());
+        harness.setHand(player1, List.of());
+        var permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        changeControl(permanent, player1);
         harness.setLibrary(player1, List.of(new Island()));
 
         castAt(permanent.getId());
@@ -95,8 +103,8 @@ class BoomerangBasicsTest extends BaseCardTest {
     @Test
     @DisplayName("Owning an opponent-controlled permanent does not cause a draw")
     void doesNotDrawForOwnedPermanentControlledByOpponent() {
-        var permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.stolenCreatures.put(permanent.getId(), player1.getId());
+        var permanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        changeControl(permanent, player2);
         harness.setLibrary(player1, List.of(new Island()));
 
         castAt(permanent.getId());
@@ -135,9 +143,7 @@ class BoomerangBasicsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BoomerangBasics()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castSorcery(player1, 0, permanent.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(permanent);
-        gd.playerBattlefields.get(player2.getId()).add(permanent);
-        gd.stolenCreatures.put(permanent.getId(), player1.getId());
+        changeControl(permanent, player2);
 
         harness.passBothPriorities();
 
@@ -154,14 +160,18 @@ class BoomerangBasicsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BoomerangBasics()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castSorcery(player1, 0, permanent.getId());
-        gd.playerBattlefields.get(player2.getId()).remove(permanent);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        gd.stolenCreatures.put(permanent.getId(), player2.getId());
+        changeControl(permanent, player1);
 
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertInHand(player1, "Island");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+    private void changeControl(Permanent permanent, Player controller) {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, controller.getId(), permanent,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
     }
 }

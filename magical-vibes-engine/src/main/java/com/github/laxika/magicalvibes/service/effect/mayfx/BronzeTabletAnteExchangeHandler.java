@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * Bronze Tablet ante ability — the owner of the exiled permanent "may pay 10 life. If they do, put
  * this card into its owner's graveyard. Otherwise, that player owns this card and you own the other
  * exiled card." Accept-and-can-pay costs them the life and returns Bronze Tablet to its owner's
- * graveyard; otherwise the ante swap resolves and both cards remain exiled (ownership not modeled).
+ * graveyard; otherwise the ante swap resolves and both cards remain exiled under their new owners.
  */
 @Slf4j
 @Component
@@ -53,7 +53,7 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
         UUID opponentId = ability.controllerId();   // the owner of the exiled permanent — the decision maker
         Card tabletCard = ability.sourceCard();
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, opponentId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, opponentId)
                 && gameData.getLife(opponentId) >= effect.lifeCost();
 
         if (accepted && canPay) {
@@ -63,6 +63,9 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
             log.info("Game {} - {} pays {} life to keep {}", gameData.id, player.getUsername(),
                     effect.lifeCost(), tabletCard.getName());
         } else {
+            com.github.laxika.magicalvibes.service.effect.normalfx.BronzeTabletAnteExchangeEffectHandler
+                    .exchangeExiledOwnership(gameData, tabletCard.getId(), opponentId,
+                            ability.targetCardId(), ability.sourceControllerId());
             // Declined (or can no longer pay) — the ante swap resolves; both cards remain exiled.
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to pay — ownership of the exiled cards is exchanged. (", tabletCard, ")"));
             log.info("Game {} - {} declines the {} ante swap", gameData.id, player.getUsername(), tabletCard.getName());

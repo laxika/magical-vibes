@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import java.util.List;
+
 import com.github.laxika.magicalvibes.cards.i.ImperialMoth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -118,6 +120,7 @@ class BefriendingTheMothsTest extends BaseCardTest {
 
     @Test
     void returnedMothIsNewObjectAndCannotAttackUntilNextTurn() {
+        harness.setHand(player2, List.of());
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new BefriendingTheMoths());
         saga.setCounterCount(CounterType.LORE, 2);
         saga.tap();
@@ -132,7 +135,7 @@ class BefriendingTheMothsTest extends BaseCardTest {
         assertThat(als.canAttack(gd, moth, player1.getId())).isFalse();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(als.canAttack(gd, moth, player1.getId())).isTrue();
     }

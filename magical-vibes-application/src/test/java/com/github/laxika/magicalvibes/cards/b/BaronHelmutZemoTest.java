@@ -23,6 +23,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({BaronHelmutZemo.class, DarkRitual.class, GrizzlyBears.class, Swamp.class, BoneSplinters.class})
 class BaronHelmutZemoTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void clearStartingHand() {
+        harness.setHand(player1, List.of());
+    }
+
     @Test
     void blackSpellCastFromHandCausesConnive() {
         Permanent zemo = addCreatureReady(player1, new BaronHelmutZemo());

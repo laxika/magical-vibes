@@ -128,6 +128,7 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
         assertThat(blackBolt.getEffectivePower()).isEqualTo(7);
         assertThat(blackBolt.getEffectiveToughness()).isEqualTo(7);

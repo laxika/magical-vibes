@@ -267,16 +267,6 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveSelectedPlayers(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             List<UUID> playerIds, boolean creatureSingleSac) {
-        if (creatureSingleSac) {
-            for (UUID playerId : playerIds) {
-                if (isSacrificeProtected(gameData, entry, playerId)) {
-                    continue;
-                }
-                destructionSupport.performSacrificeCreatureForPlayer(gameData, playerId);
-            }
-            return;
-        }
-
         if (e.recordSacrificedCount()) {
             entry.setEventValue(0);
         }

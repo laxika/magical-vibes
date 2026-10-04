@@ -30,7 +30,8 @@ public class DefendingPlayerChoosesPermanentsToExileEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID defendingPlayerId = defendingPlayerId(gameData, entry.getAttackedTargetId());
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId() : defendingPlayerId(gameData, entry.getAttackedTargetId());
         if (defendingPlayerId == null) {
             return;
         }

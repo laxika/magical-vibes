@@ -63,7 +63,7 @@ public class PsychicBattleSupport {
         Set<UUID> candidates = collectCandidates(gameData, entry);
         List<UUID> valid = new ArrayList<>();
         for (UUID candidate : candidates) {
-            if (chosen.contains(candidate)) {
+            if (chosen.get(targetIndex).equals(candidate)) {
                 continue;
             }
             if (isLegalReplacement(gameData, entry, targetIndex, candidate)) {

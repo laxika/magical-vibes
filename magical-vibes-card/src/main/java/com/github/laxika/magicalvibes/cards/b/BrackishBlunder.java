@@ -9,16 +9,19 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LCI", collectorNumber = "46")
 public class BrackishBlunder extends Card {
 
     public BrackishBlunder() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, SequenceEffect.of(
-                new ConditionalEffect(
+        target(TargetFilters.creature())
+                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                        new TargetPermanentMatches(new PermanentNotPredicate(new PermanentIsTappedPredicate())),
+                        ReturnToHandEffect.target(), false))
+                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsTappedPredicate()),
-                        CreateTokenEffect.ofMapToken(1)),
-                ReturnToHandEffect.target()));
+                        SequenceEffect.of(ReturnToHandEffect.target(), CreateTokenEffect.ofMapToken(1)), false));
     }
 }

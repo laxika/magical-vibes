@@ -17,10 +17,12 @@ public class BloodForBones extends Card {
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
+                .mandatory(true)
                 .build());
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
+                .mandatory(true)
                 .build());
     }
 }

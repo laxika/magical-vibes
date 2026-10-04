@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class BloodfeatherPhoenix extends Card {
 
     public BloodfeatherPhoenix() {
+        addEffect(EffectSlot.STATIC, new CantBlockEffect());
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
                 new MayPayManaEffect("{R}",
                         ReturnCardFromGraveyardEffect.builder()

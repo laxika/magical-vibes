@@ -53,6 +53,9 @@ public class InteractionState {
         copy.activeDecisionId = this.activeDecisionId;
         copy.permanentChoiceContext = this.permanentChoiceContext instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                 ? trigger.copyPlanarSnapshot() : this.permanentChoiceContext;
+        if (this.permanentChoiceContext instanceof PermanentChoiceContext.FreeCastSacrificeCost sacrificeCost) {
+            copy.permanentChoiceContext = sacrificeCost.deepCopy();
+        }
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOriginalCard = this.pendingAuraOriginalCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;

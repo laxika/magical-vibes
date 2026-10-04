@@ -118,6 +118,7 @@ class BedeckBedazzleTest extends BaseCardTest {
     void bedazzleDamagesOwnPlaneswalker() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new RakdosGuildgate());
         Permanent dovin = harness.addToBattlefieldAndReturn(player1, new DovinGrandArbiter());
+        dovin.setCounterCount(CounterType.LOYALTY, 3);
         prepareBedazzle();
 
         harness.castModalInstant(player1, 0, BEDAZZLE, List.of(land.getId(), dovin.getId()));

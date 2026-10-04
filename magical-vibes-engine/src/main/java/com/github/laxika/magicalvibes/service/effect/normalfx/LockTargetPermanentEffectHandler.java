@@ -43,14 +43,9 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LockTargetPermanentEffect lock = (LockTargetPermanentEffect) effect;
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
-                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
-            for (UUID targetId : entry.getTargetIds()) {
-                lockOne(gameData, entry, lock, targetId);
-            }
-            return;
+        for (UUID targetId : entry.targetsForEffect(lock)) {
+            lockOne(gameData, entry, lock, targetId);
         }
-        lockOne(gameData, entry, lock, entry.getTargetId());
     }
 
     private void lockOne(GameData gameData, StackEntry entry, LockTargetPermanentEffect lock, UUID targetId) {

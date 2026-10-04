@@ -244,14 +244,16 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
 
     private void putPlayerTargetedReflexiveTriggerOnStack(GameData gameData, StackEntry entry,
                                                            CardEffect thenEffect, UUID targetPlayerId) {
-        gameData.stack.add(new StackEntry(
+        StackEntry reflexive = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
                 entry.getControllerId(),
                 entry.getCard().getName() + "'s ability",
                 List.of(thenEffect),
                 targetPlayerId,
-                entry.getSourcePermanentId()));
+                entry.getSourcePermanentId());
+        reflexive.setNonTargeting(true);
+        gameData.stack.add(reflexive);
     }
 
     private CounterType findCounterType(Permanent source, CounterType requestedType, int count) {

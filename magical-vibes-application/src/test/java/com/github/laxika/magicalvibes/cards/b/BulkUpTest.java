@@ -138,6 +138,7 @@ class BulkUpTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(10);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
 
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(13);

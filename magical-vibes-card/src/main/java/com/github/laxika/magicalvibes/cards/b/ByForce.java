@@ -16,9 +16,9 @@ public class ByForce extends Card {
         // Destroy X target artifacts.
         // Single X-scaled target group: the number of artifacts targeted is bounded by
         // X at cast time, and every chosen target is destroyed.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
-        ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
     }
 }

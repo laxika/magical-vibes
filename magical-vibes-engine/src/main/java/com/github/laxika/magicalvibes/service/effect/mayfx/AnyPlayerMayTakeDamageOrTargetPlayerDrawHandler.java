@@ -26,11 +26,7 @@ public class AnyPlayerMayTakeDamageOrTargetPlayerDrawHandler implements MayEffec
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         var effect = (AnyPlayerMayTakeDamageOrTargetPlayerDrawEffect) ability.effects().getFirst();
-        if (accepted) {
-            effectHandler.dealDamage(gameData, ability, effect, ability.controllerId());
-        } else {
-            effectHandler.advance(gameData, ability, effect, ability.controllerId());
-        }
+        effectHandler.advance(gameData, ability, effect, ability.controllerId(), accepted);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

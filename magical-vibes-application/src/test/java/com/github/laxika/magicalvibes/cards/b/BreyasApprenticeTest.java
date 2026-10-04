@@ -117,15 +117,17 @@ class BreyasApprenticeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 0, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
         assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(land);
     }
@@ -168,7 +170,9 @@ class BreyasApprenticeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, apprentice)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, apprentice)).isEqualTo(3);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.getEffectivePower(gd, apprentice)).isEqualTo(2);
     }
 
@@ -178,12 +182,14 @@ class BreyasApprenticeTest extends BaseCardTest {
         Forest land = new Forest();
         harness.setLibrary(player1, List.of(land, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.ensurePriority(player1);
         harness.activateAbility(player1, 0, 0, 0, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.castFromExile(player1, land.getId());
 
         harness.assertOnBattlefield(player1, "Forest");
@@ -204,11 +210,13 @@ class BreyasApprenticeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
         assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(land);
     }

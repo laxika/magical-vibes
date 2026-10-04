@@ -911,8 +911,8 @@ public class AmountEvaluationService {
                     targetEffectiveToughness(gameData, ctx);
             case TriggeringPermanentToughness ignored ->
                     triggeringPermanentToughness(gameData, ctx);
-            case TargetPower ignored ->
-                    targetEffectivePower(gameData, ctx);
+            case TargetPower power ->
+                    targetEffectivePower(gameData, ctx, power.allowNegative());
             case TargetPowerPlusToughness ignored ->
                     targetEffectivePowerPlusToughness(gameData, ctx);
             case TotalPowerOfTargetGroup targetGroup ->
@@ -1138,14 +1138,22 @@ public class AmountEvaluationService {
     }
 
     private int targetEffectivePower(GameData gameData, AmountContext ctx) {
+        return targetEffectivePower(gameData, ctx, false);
+    }
+
+    private int targetEffectivePower(GameData gameData, AmountContext ctx, boolean allowNegative) {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         // No legal target at resolution -> 0, matching the fizzle behaviour of the handlers this replaces.
-        if (target != null) return Math.max(0, gameQueryService.getEffectivePower(gameData, target));
+        if (target != null) {
+            int power = gameQueryService.getEffectivePower(gameData, target);
+            return allowNegative ? power : Math.max(0, power);
+        }
         return ctx.stackEntry() != null && ctx.stackEntry().isNonTargeting()
                 && ctx.targetPermanentId().equals(ctx.stackEntry().getTriggeringPermanentId())
                 && ctx.triggeringPermanentPowerAtTrigger() != null
-                ? Math.max(0, ctx.triggeringPermanentPowerAtTrigger()) : 0;
+                ? allowNegative ? ctx.triggeringPermanentPowerAtTrigger()
+                        : Math.max(0, ctx.triggeringPermanentPowerAtTrigger()) : 0;
     }
 
     private int targetEffectivePowerPlusToughness(GameData gameData, AmountContext ctx) {
@@ -1837,8 +1845,10 @@ public class AmountEvaluationService {
             if (graveyard == null) continue;
             for (Card card : graveyard) {
                 if (card.isToken()) continue;
-                if (count.excludeSourceCard() && ctx.sourceCard() != null
-                        && ctx.sourceCard().getId().equals(card.getId())) continue;
+                Card sourceCard = ctx.sourceCard() != null ? ctx.sourceCard()
+                        : ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard() : null;
+                if (count.excludeSourceCard() && sourceCard != null
+                        && sourceCard.getId().equals(card.getId())) continue;
                 if (matchesGraveyardCountFilter(gameData, card, count.filter(), playerId, spellName)) {
                     matches++;
                 }
@@ -1958,6 +1968,8 @@ public class AmountEvaluationService {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             for (Card card : gameData.getPlayerExiledCards(playerId)) {
                 if (card.isToken()) continue;
+                var exiledEntry = gameData.findExiledCard(card.getId());
+                if (exiledEntry != null && exiledEntry.faceDown() && count.filter() != null) continue;
                 if (predicateEvaluationService.matchesCardPredicate(card, count.filter(), null)) {
                     matches++;
                 }
@@ -3444,12 +3456,9 @@ public class AmountEvaluationService {
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return 0;
         }
-        return gameData.getSpellsCastThisTurn(targetPlayerId).stream()
-                .filter(card -> card.hasType(CardType.SORCERY))
-                .mapToInt(card -> gameData.sorcerySpellDamageDealtThisTurn
-                        .getOrDefault(card.getId(), 0))
-                .max()
-                .orElse(0);
+        UUID sorceryId = ctx.chosenPermanentId();
+        return sorceryId == null ? 0 : gameData.sorcerySpellDamageDealtThisTurn
+                .getOrDefault(sorceryId, 0);
     }
 
     private int noncombatDamageDealtToOpponentsThisTurn(GameData gameData, AmountContext ctx) {

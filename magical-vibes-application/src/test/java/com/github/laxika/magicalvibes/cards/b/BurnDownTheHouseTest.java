@@ -27,7 +27,7 @@ class BurnDownTheHouseTest extends BaseCardTest {
     void damageMode() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        Permanent chandra = harness.enterBattlefieldAndReturn(player2, new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, 8);
 
         castBurnDownTheHouse(0);
@@ -92,7 +92,7 @@ class BurnDownTheHouseTest extends BaseCardTest {
     @DisplayName("Token mode leaves existing creatures and planeswalkers unharmed")
     void tokenModeDoesNotDealMassDamage() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        Permanent chandra = harness.enterBattlefieldAndReturn(player2, new ChandraNalaar());
 
         castBurnDownTheHouse(1);
 
@@ -135,7 +135,7 @@ class BurnDownTheHouseTest extends BaseCardTest {
     @Test
     @DisplayName("A Devil's death trigger can remove loyalty from a planeswalker")
     void devilDeathCanTargetPlaneswalker() {
-        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        Permanent chandra = harness.enterBattlefieldAndReturn(player2, new ChandraNalaar());
         castBurnDownTheHouse(1);
         Permanent devil = findPermanents(player1, "Devil").getFirst();
 

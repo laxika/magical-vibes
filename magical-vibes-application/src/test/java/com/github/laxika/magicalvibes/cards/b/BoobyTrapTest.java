@@ -32,6 +32,7 @@ class BoobyTrapTest extends BaseCardTest {
     private Permanent addTrap(Player controller, String chosenName) {
         Permanent perm = harness.addToBattlefieldAndReturn(controller, new BoobyTrap());
         perm.setChosenName(chosenName);
+        perm.getChosenPlayerIds().add(controller == player1 ? player2.getId() : player1.getId());
         return perm;
     }
 

@@ -8,12 +8,16 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.Set;
 
 /** Lets the controller choose a creature card in hand and perpetually modifies that card. */
-public record PerpetuallyBoostCreatureCardInHandEffect(int powerBoost, Set<Keyword> keywords,
+public record PerpetuallyBoostCreatureCardInHandEffect(int powerBoost, int toughnessBoost, Set<Keyword> keywords,
                                                        CardPredicate cardFilter)
         implements CardEffect {
 
     public PerpetuallyBoostCreatureCardInHandEffect(int powerBoost, Set<Keyword> keywords) {
-        this(powerBoost, keywords, new CardTypePredicate(CardType.CREATURE));
+        this(powerBoost, 0, keywords, new CardTypePredicate(CardType.CREATURE));
+    }
+
+    public PerpetuallyBoostCreatureCardInHandEffect(int powerBoost, Set<Keyword> keywords, CardPredicate cardFilter) {
+        this(powerBoost, 0, keywords, cardFilter);
     }
 
     public PerpetuallyBoostCreatureCardInHandEffect {

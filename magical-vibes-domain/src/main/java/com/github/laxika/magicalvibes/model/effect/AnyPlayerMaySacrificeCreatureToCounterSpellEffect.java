@@ -5,7 +5,7 @@ import java.util.UUID;
 
 /**
  * Cast trigger for Brain Gorgers: each player may sacrifice a creature, and the spell is countered
- * as soon as any player does. Remaining players still receive their choices.
+ * after every player has made their choice and the chosen creatures are sacrificed.
  *
  * @param remainingPlayerIds players still to receive the choice
  * @param abilityControllerId controller of the triggered ability
@@ -16,8 +16,18 @@ public record AnyPlayerMaySacrificeCreatureToCounterSpellEffect(
         List<UUID> remainingPlayerIds,
         UUID abilityControllerId,
         UUID targetCardId,
-        boolean anyAccepted
+        boolean anyAccepted,
+        List<UUID> chosenSacrificePermanentIds
 ) implements TriggeringSpellReferencingEffect {
+
+    public AnyPlayerMaySacrificeCreatureToCounterSpellEffect(List<UUID> remainingPlayerIds,
+            UUID abilityControllerId, UUID targetCardId, boolean anyAccepted) {
+        this(remainingPlayerIds, abilityControllerId, targetCardId, anyAccepted, List.of());
+    }
+
+    public AnyPlayerMaySacrificeCreatureToCounterSpellEffect {
+        chosenSacrificePermanentIds = List.copyOf(chosenSacrificePermanentIds);
+    }
 
     public AnyPlayerMaySacrificeCreatureToCounterSpellEffect() {
         this(null, null, null, false);

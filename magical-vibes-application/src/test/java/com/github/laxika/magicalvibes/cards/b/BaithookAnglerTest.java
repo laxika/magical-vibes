@@ -79,10 +79,13 @@ class BaithookAnglerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, drifter.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player2, 0, drifter.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drifter.getOriginalCard());
         assertThat(gd.exiledCards).isEmpty();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
@@ -151,7 +154,8 @@ class BaithookAnglerTest extends BaseCardTest {
 
     private Permanent castWithDisturb() {
         prepareDisturb();
-        harness.castAndResolveFlashback(player1, 0, null);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveFlashback(player1, 0, null));
         return gd.playerBattlefields.get(player1.getId()).getFirst();
     }
 }

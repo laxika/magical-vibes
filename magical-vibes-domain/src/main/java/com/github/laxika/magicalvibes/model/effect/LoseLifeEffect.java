@@ -27,11 +27,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param controllerGainsLifeLost when {@code true} the controller gains the total life lost
  * @param exemptIfControls        when non-null, players controlling a matching permanent are skipped
  * @param controllerGainsLifeLostCondition optional condition gating the controller's life gain
+ * @param recordTargetLifeLost record the actual single-target life loss as the resolution event value
  */
 public record LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
                              boolean controllerGainsLifeLost,
                              PermanentPredicate exemptIfControls,
-                             Condition controllerGainsLifeLostCondition) implements CombatDamageTriggerContextEffect {
+                             Condition controllerGainsLifeLostCondition,
+                             boolean recordTargetLifeLost) implements CombatDamageTriggerContextEffect {
+
+    public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
+            boolean controllerGainsLifeLost, PermanentPredicate exemptIfControls,
+            Condition controllerGainsLifeLostCondition) {
+        this(amount, recipient, controllerGainsLifeLost, exemptIfControls,
+                controllerGainsLifeLostCondition, false);
+    }
 
     public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
             boolean controllerGainsLifeLost, PermanentPredicate exemptIfControls) {

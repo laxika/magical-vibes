@@ -13,11 +13,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>don't pay (or can't) → the ownership of both exiled cards is exchanged.</li>
  * </ul>
  *
- * <p>The oracle "that player owns this card and you own the other exiled card" is an ante concept:
- * the permanent, cross-game transfer of card ownership is outside a single game's scope and is not
- * modeled (mirroring {@link TempestEfreetAnteExchangeEffect}). Within one game this effect resolves
- * to the observable zone movements only — both cards are exiled, and on a pay the Tablet is moved to
- * its owner's graveyard; the {@code ownerId} stamped at game setup is frozen and left unchanged.
+ * <p>The ownership changes are reflected on both exiled objects for the current game.
+ * Cross-game collection ownership is outside the game state.
  *
  * <p>Targets the nontoken permanent — the ability declares the legal targets through a permanent
  * predicate target filter; {@link #targetSpec()} declares the harmful permanent category. The paying

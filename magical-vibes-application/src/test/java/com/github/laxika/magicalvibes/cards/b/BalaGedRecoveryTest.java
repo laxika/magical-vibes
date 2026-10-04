@@ -92,7 +92,8 @@ class BalaGedRecoveryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(other, recovery);
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(other.getId(), recovery.getId());
         assertThat(gd.stack).isEmpty();
     }
 

@@ -27,7 +27,7 @@ public class BuzzardWaspColony extends Card {
                                 new PermanentIsCreaturePredicate()
                         )),
                         new DrawCardEffect(),
-                        "an artifact or creature"),
+                        "an artifact or creature", false, false),
                 "Sacrifice an artifact or creature?"));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
