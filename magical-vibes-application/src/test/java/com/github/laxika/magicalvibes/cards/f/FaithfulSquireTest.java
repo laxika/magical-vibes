@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.CultOfTheWaxingMoon;
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.k.KaisoMemoryOfLoyalty;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
@@ -18,9 +19,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FaithfulSquire.class, KaisoMemoryOfLoyalty.class, KamiOfFalseHope.class,
-        VitalSurge.class, GoblinCohort.class, TorrentOfStone.class})
+        VitalSurge.class, GoblinCohort.class, TorrentOfStone.class, CultOfTheWaxingMoon.class})
 class FaithfulSquireTest extends BaseCardTest {
 
     @Test
@@ -28,10 +30,7 @@ class FaithfulSquireTest extends BaseCardTest {
     void spiritSpellPlacesKiCounter() {
         Permanent squire = addSquire();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new KamiOfFalseHope()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KamiOfFalseHope(), "{W}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -43,11 +42,7 @@ class FaithfulSquireTest extends BaseCardTest {
     void arcaneSpellPlacesKiCounter() {
         Permanent squire = addSquire();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new VitalSurge()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -59,11 +54,7 @@ class FaithfulSquireTest extends BaseCardTest {
     void decliningPlacesNoCounter() {
         Permanent squire = addSquire();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new VitalSurge()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -75,10 +66,7 @@ class FaithfulSquireTest extends BaseCardTest {
     void unrelatedSpellDoesNotTrigger() {
         Permanent squire = addSquire();
         prepareMainPhase();
-        harness.setHand(player1, List.of(new GoblinCohort()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinCohort(), "{R}");
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Faithful Squire"));
         assertThat(squire.getCounterCount(CounterType.KI)).isZero();
@@ -89,10 +77,7 @@ class FaithfulSquireTest extends BaseCardTest {
     void opponentCastingSpiritDoesNotTrigger() {
         Permanent squire = addSquire();
         prepareMainPhase(player2);
-        harness.setHand(player2, List.of(new KamiOfFalseHope()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new KamiOfFalseHope(), "{W}");
         harness.passBothPriorities();
 
         assertThat(squire.getCounterCount(CounterType.KI)).isZero();
@@ -182,10 +167,69 @@ class FaithfulSquireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TorrentOfStone()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, targetCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreature.getId());
 
         assertThat(targetCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Flipping does not trigger abilities that watch for transformation")
+    void flippingDoesNotTriggerTransformationAbilities() {
+        Permanent squire = addSquire();
+        squire.setCounterCount(CounterType.KI, 2);
+        harness.addToBattlefield(player1, new CultOfTheWaxingMoon());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(squire.isTransformed()).isTrue();
+        assertThat(findPermanents(player1, "Wolf")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Kaiso can prevent repeated damage to an opposing creature while tapped and summoning sick")
+    void preventionCoversRepeatedDamageWithoutTapOrSummoningRestriction() {
+        Permanent squire = addSquire();
+        squire.setSummoningSick(true);
+        squire.setTapped(true);
+        squire.setCounterCount(CounterType.KI, 2);
+        Permanent target = addCreatureReady(player2, new GoblinCohort());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(squire.getCounterCount(CounterType.KI)).isEqualTo(2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(squire.getCounterCount(CounterType.KI)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            harness.setHand(player1, List.of(new TorrentOfStone()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.castAndResolveInstant(player1, 0, target.getId());
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+            assertThat(target.getMarkedDamage()).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("Kaiso cannot activate without a ki counter")
+    void cannotActivateWithoutKiCounter() {
+        Permanent squire = addSquire();
+        squire.setCounterCount(CounterType.KI, 2);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        squire.setCounterCount(CounterType.KI, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, squire.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+        assertThat(squire.getCounterCount(CounterType.KI)).isZero();
     }
 
     private Permanent addSquire() {
